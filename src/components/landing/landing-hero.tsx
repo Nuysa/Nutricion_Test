@@ -12,7 +12,7 @@ import { EditableLink } from "@/components/dashboard/admin/editable-link";
 export function LandingHero() {
     const videoRef = useRef<HTMLVideoElement>(null);
     const { isEditable } = useVisualEditor();
-    const [activeCartel, setActiveCartel] = useState<"proteina" | "carbo" | "lipido" | null>(null);
+    const [activeCartel, setActiveCartel] = useState<"proteina" | "carbo" | "lipido" | null>("proteina");
     const [content, setContent] = useState({
         subtitle: "VE A TU PROPIO RITMO",
         title: "Listo para iniciar \ntu cambio?",
@@ -41,40 +41,39 @@ export function LandingHero() {
     useEffect(() => {
         const fetchContent = async () => {
             const supabase = createClient();
-            const { data } = await supabase.from('landing_content').select('content').eq('section', 'hero').single();
-            if (data?.content) {
-                setContent(prev => ({
-                    ...prev,
-                    ...data.content
-                }));
+            try {
+                const { data, error } = await supabase.from('landing_content').select('content').eq('section', 'hero').single();
+                if (data?.content) {
+                    setContent(prev => ({
+                        ...prev,
+                        ...data.content
+                    }));
+                }
+            } catch (err) {
+                console.error("Error fetching landing content:", err);
             }
         };
         fetchContent();
     }, []);
 
-    useEffect(() => {
+    const handleVideoSync = () => {
         const video = videoRef.current;
         if (!video) return;
 
-        const handleTimeUpdate = () => {
-            const currentTime = video.currentTime;
-            const totalDuration = video.duration;
-            if (!totalDuration || isNaN(totalDuration)) return;
+        const currentTime = video.currentTime;
+        const totalDuration = video.duration;
+        if (!totalDuration || isNaN(totalDuration)) return;
 
-            const tercio = totalDuration / 3;
+        const tercio = totalDuration / 3;
 
-            if (currentTime >= 0 && currentTime < tercio) {
-                setActiveCartel("proteina");
-            } else if (currentTime >= tercio && currentTime < (tercio * 2)) {
-                setActiveCartel("carbo");
-            } else if (currentTime >= (tercio * 2)) {
-                setActiveCartel("lipido");
-            }
-        };
-
-        video.addEventListener("timeupdate", handleTimeUpdate);
-        return () => video.removeEventListener("timeupdate", handleTimeUpdate);
-    }, []);
+        if (currentTime >= 0 && currentTime < tercio) {
+            if (activeCartel !== "proteina") setActiveCartel("proteina");
+        } else if (currentTime >= tercio && currentTime < (tercio * 2)) {
+            if (activeCartel !== "carbo") setActiveCartel("carbo");
+        } else if (currentTime >= (tercio * 2)) {
+            if (activeCartel !== "lipido") setActiveCartel("lipido");
+        }
+    };
 
     return (
         <section id="inicio" className="relative pt-40 pb-20 lg:pt-48 lg:pb-32 min-h-screen flex items-center">
@@ -150,6 +149,8 @@ export function LandingHero() {
                                 muted
                                 playsInline
                                 key={content.videoUrl}
+                                onTimeUpdate={handleVideoSync}
+                                onLoadedMetadata={handleVideoSync}
                             >
                                 <source src={content.videoUrl} type="video/mp4" />
                                 Tu navegador no soporta el formato de video.
