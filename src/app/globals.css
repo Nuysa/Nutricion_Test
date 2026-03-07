@@ -1,0 +1,342 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+
+    --radius: 0.5rem;
+
+    --chart-1: 12 76% 61%;
+
+    --chart-2: 173 58% 39%;
+
+    --chart-3: 197 37% 24%;
+
+    --chart-4: 43 74% 66%;
+
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 222 49% 9%;
+    /* #0B1120 */
+    --foreground: 210 40% 98%;
+
+    --card: 218 41% 14%;
+    /* #151F32 */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 218 41% 14%;
+    /* #151F32 */
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 29 100% 50%;
+    /* #FF7A00 - NuySa Brand */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217 32% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 32% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 32% 17% / 0.8;
+    --input: 217 32% 17% / 0.5;
+    --ring: 29 100% 50%;
+
+    --radius: 1rem;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Smooth transitions */
+.transition-smooth {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Glass effect */
+.glass {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* Gradient backgrounds */
+.gradient-primary {
+  background: linear-gradient(135deg, hsl(25 100% 50%) 0%, hsl(25 100% 35%) 100%);
+}
+
+.gradient-warm {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+}
+
+.gradient-fresh {
+  background: linear-gradient(135deg, #fffcf5 0%, #ffe9d3 100%);
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
+}
+
+/* Pulse animation for notifications */
+@keyframes pulse-soft {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes bell-swing {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  20% {
+    transform: rotate(15deg);
+  }
+
+  40% {
+    transform: rotate(-10deg);
+  }
+
+  60% {
+    transform: rotate(5deg);
+  }
+
+  80% {
+    transform: rotate(-5deg);
+  }
+}
+
+.animate-swing {
+  animation: bell-swing 2s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+/* Animated Border Effect */
+@keyframes rotate-border {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animated-border-card {
+  position: relative;
+  z-index: 0;
+  overflow: hidden !important;
+}
+
+.animated-border-card::before {
+  content: '';
+  position: absolute;
+  z-index: -2;
+  left: -50%;
+  top: -50%;
+  width: 200%;
+  height: 200%;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 50% 50%, 50% 50%;
+  background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+  background-image: conic-gradient(from 0deg, transparent, var(--border-glow-color, #22c55e), transparent 30%);
+  animation: rotate-border 4s linear infinite;
+}
+
+/* Inner overlay to hide the center of the gradient, creating the border effect */
+.animated-border-inner {
+  position: absolute;
+  inset: 2px;
+  background: #151F32;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+.animated-border-card.bg-nutrition-50 .animated-border-inner,
+.animated-border-card.bg-orange-50 .animated-border-inner,
+.animated-border-card.bg-sky-50 .animated-border-inner,
+.animated-border-card.bg-purple-50 .animated-border-inner {
+  background: #151F32;
+}
+
+/* NuySa Landing Specific Styles */
+.organic-grid {
+  background-image: radial-gradient(rgba(255, 122, 0, 0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+}
+
+.bio-panel {
+  background: rgba(21, 31, 50, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 122, 0, 0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.bio-cut {
+  clip-path: polygon(0 0, 92% 0, 100% 15%, 100% 100%, 8% 100%, 0 85%);
+}
+
+.cartel-base {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 30;
+}
+
+@media (min-width: 768px) {
+  .pos-proteina {
+    top: -5%;
+    left: -20%;
+    transform: translate(-20px, -20px) scale(0.9);
+  }
+
+  .pos-proteina.cartel-active {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+    pointer-events: auto;
+  }
+
+  .pos-carbo {
+    top: 50%;
+    right: -45%;
+    transform: translate(20px, -50%) scale(0.9);
+  }
+
+  .pos-carbo.cartel-active {
+    opacity: 1;
+    transform: translate(0, -50%) scale(1);
+    pointer-events: auto;
+  }
+
+  .pos-lipido {
+    bottom: -5%;
+    left: -20%;
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+
+  .pos-lipido.cartel-active {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 767px) {
+
+  .pos-proteina,
+  .pos-carbo,
+  .pos-lipido {
+    bottom: -5%;
+    left: 50%;
+    transform: translate(-50%, 20px) scale(0.95);
+    width: 90%;
+    max-width: 320px;
+  }
+
+  .cartel-active {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+    pointer-events: auto;
+  }
+}
+
+.dashed-border-custom {
+  border-left: 3px dashed #FF7A00;
+  padding-left: 1rem;
+}
+
+.fade-list {
+  transition: opacity 0.25s ease-in-out;
+}

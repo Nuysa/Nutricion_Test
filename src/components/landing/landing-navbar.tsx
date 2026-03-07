@@ -1,0 +1,169 @@
+"use client";
+
+import Link from "next/link";
+import { User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { useVisualEditor } from "@/components/dashboard/admin/visual-editor-context";
+import { EditableText } from "@/components/dashboard/admin/editable-text";
+import { EditableImage } from "@/components/dashboard/admin/editable-image";
+import { EditableLink } from "@/components/dashboard/admin/editable-link";
+
+export function LandingNavbar() {
+    const { isEditable } = useVisualEditor();
+    const [content, setContent] = useState({
+        welcomeText: "¡Bienvenido(a) a NUYSA!",
+        brandMain: "Nuy",
+        brandHighlight: "Sa",
+        logoUrl: "/logo Nuysa.png",
+        logoHref: "/",
+        menuHome: "Inicio",
+        menuAbout: "Sobre Nosotros",
+        menuServices: "Servicios",
+        menuPlans: "Planes",
+        menuTestimonials: "Testimonios",
+        menuContact: "Contacto",
+        loginText: "Iniciar sesión / Registrarse"
+    });
+
+    useEffect(() => {
+        const fetchContent = async () => {
+            const supabase = createClient();
+            const { data } = await supabase.from('landing_content').select('content').eq('section', 'navbar').single();
+            if (data?.content) {
+                setContent(prev => ({ ...prev, ...data.content }));
+            }
+        };
+        fetchContent();
+    }, []);
+
+    const handleSave = async (field: string, value: string) => {
+        const supabase = createClient();
+        const newContent = { ...content, [field]: value };
+        const { error } = await supabase
+            .from('landing_content')
+            .upsert({ section: 'navbar', content: newContent }, { onConflict: 'section' });
+
+        if (!error) {
+            setContent(newContent);
+        } else {
+            throw error;
+        }
+    };
+
+    return (
+        <>
+            <div className={cn(
+                "w-full h-10 z-[60] bg-gradient-to-r from-nutri-brand to-nutri-mint text-nutri-base flex items-center justify-center font-tech font-black text-xs md:text-sm tracking-[0.2em] uppercase shadow-[0_0_15px_rgba(163,230,53,0.3)] overflow-hidden",
+                isEditable ? "absolute top-0" : "fixed top-0"
+            )}>
+                {isEditable ? (
+                    <EditableText
+                        label="Texto Bienvenida"
+                        value={content.welcomeText}
+                        onSave={(val) => handleSave('welcomeText', val)}
+                    />
+                ) : content.welcomeText}
+            </div>
+
+            <nav className={cn(
+                "w-full bg-nutri-base/90 backdrop-blur-xl z-50 border-b border-white/5 shadow-2xl transition-all",
+                isEditable ? "absolute top-10" : "fixed top-10"
+            )}>
+                <div className="max-w-full mx-auto px-4 lg:px-6">
+                    <div className="flex justify-between h-20 items-center gap-4">
+                        <div className="flex-shrink-0 flex items-center gap-2">
+                            <div className="relative group overflow-visible">
+                                <Link href={content.logoHref || "/"} className="cursor-pointer hover:opacity-80 transition-opacity">
+                                    <img src={content.logoUrl} alt="Logo NuySa" className="h-10 md:h-12 w-auto object-contain bg-white rounded-lg p-1 drop-shadow-[0_0_10px_rgba(255,122,0,0.3)]" />
+                                </Link>
+                                {isEditable && (
+                                    <div className="absolute -top-2 -right-2 flex flex-col gap-1">
+                                        <EditableImage
+                                            label="Logo"
+                                            src={content.logoUrl}
+                                            onSave={(val) => handleSave('logoUrl', val)}
+                                            className="static"
+                                        />
+                                        <EditableLink
+                                            label="Link Logo"
+                                            href={content.logoHref || "/"}
+                                            onSave={(val) => handleSave('logoHref', val)}
+                                            className="static mt-0"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex items-center">
+                                {isEditable ? (
+                                    <>
+                                        <EditableText
+                                            label="Marca Base"
+                                            value={content.brandMain}
+                                            onSave={(val) => handleSave('brandMain', val)}
+                                            className="font-tech font-bold text-xl md:text-3xl tracking-tight text-white"
+                                        />
+                                        <EditableText
+                                            label="Marca Resaltado"
+                                            value={content.brandHighlight}
+                                            onSave={(val) => handleSave('brandHighlight', val)}
+                                            className="font-tech font-bold text-xl md:text-3xl tracking-tight text-nutri-brand ml-1"
+                                        />
+                                    </>
+                                ) : (
+                                    <Link href="/" className="font-tech font-bold text-xl md:text-3xl tracking-tight text-white">
+                                        {content.brandMain}<span className="text-nutri-brand">{content.brandHighlight}</span>
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="hidden xl:flex space-x-1 items-center font-tech font-semibold text-[12px] text-slate-300 tracking-widest uppercase flex-grow justify-center px-4">
+                            {[
+                                { id: 'menuHome', href: '#inicio', label: content.menuHome },
+                                { id: 'menuAbout', href: '#nosotros', label: content.menuAbout },
+                                { id: 'menuServices', href: '#servicios', label: content.menuServices },
+                                { id: 'menuPlans', href: '#planes', label: content.menuPlans },
+                                { id: 'menuTestimonials', href: '#testimonios', label: content.menuTestimonials },
+                                { id: 'menuContact', href: '#contacto', label: content.menuContact },
+                            ].map((item) => (
+                                <div key={item.id} className="relative">
+                                    {isEditable ? (
+                                        <EditableText
+                                            label={item.id}
+                                            value={item.label}
+                                            onSave={(val) => handleSave(item.id, val)}
+                                            className="px-2 py-2 rounded-full hover:bg-white/5 hover:text-white transition-all cursor-pointer whitespace-nowrap"
+                                        />
+                                    ) : (
+                                        <a href={item.href} className="px-3 py-2 rounded-full hover:bg-white/5 hover:text-white transition-all whitespace-nowrap">{item.label}</a>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex-shrink-0 flex items-center">
+                            {isEditable ? (
+                                <div className="flex items-center gap-2 bg-nutri-panel border border-white/10 px-4 md:px-6 py-2 rounded-full relative group/login-btn">
+                                    <User className="h-4 w-4 text-nutri-brand/70" />
+                                    <EditableText
+                                        label="Botón Login"
+                                        value={content.loginText}
+                                        onSave={(val) => handleSave('loginText', val)}
+                                        className="font-tech font-bold tracking-wider text-[10px] md:text-xs text-white"
+                                    />
+                                </div>
+                            ) : (
+                                <Link href="/login" className="flex items-center gap-2 font-tech font-bold tracking-wider text-xs bg-nutri-panel border border-white/10 text-white px-6 py-2.5 rounded-full hover:bg-nutri-brand hover:text-nutri-base hover:border-nutri-brand transition-all whitespace-nowrap">
+                                    <User className="h-4 w-4" /> {content.loginText}
+                                </Link>
+                            )}
+                        </div>
+
+                    </div>
+                </div>
+            </nav>
+        </>
+    );
+}

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NuySa | Panel Nutricionista - Diseño de Plan</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], tech: ['Outfit', 'sans-serif'], },
+                    colors: { nutri: { base: '#0B1120', panel: '#151F32', brand: '#FF7A00', } }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0B1120; color: #e2e8f0; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #FF7A00; }
+        
+        /* Ocultar flechas numéricas nativas para diseño limpio */
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .table-input { background: transparent; color: white; outline: none; text-align: center; width: 100%; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); transition: border-color 0.2s;}
+        .table-input:focus { border-color: #FF7A00; }
+        .row-subtotal { background-color: rgba(255, 255, 255, 0.03); font-weight: 600; }
+        .row-total { background-color: rgba(255, 122, 0, 0.1); font-weight: bold; color: #FF7A00; }
+        
+        .form-input { background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 0.5rem; padding: 0.35rem 0.75rem; width: 100%; outline: none; transition: border 0.2s; font-weight: 500; font-family: 'Inter', sans-serif; font-size: 0.875rem;}
+        .form-input:focus { border-color: #FF7A00; }
+        .form-readonly { background-color: transparent; border: 1px solid transparent; color: #94a3b8; font-weight: bold; text-align: right; }
+        select option { background-color: #151F32; color: white; }
+
+        /* Textarea auto-expandible visualmente */
+        .comment-area { resize: vertical; min-height: 38px; line-height: 1.4; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden antialiased selection:bg-nutri-brand selection:text-white">
+
+    <aside class="w-64 bg-nutri-panel border-r border-white/5 flex flex-col justify-between flex-shrink-0 z-10 hidden xl:flex">
+        <div>
+            <div class="h-20 flex items-center px-8 border-b border-white/5">
+                <span class="font-tech font-bold text-2xl tracking-tight text-white">Nuy<span class="text-nutri-brand">Sa</span></span>
+            </div>
+            <nav class="p-4 space-y-2 font-sans text-sm font-medium">
+                <button class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-nutri-brand/20 to-transparent text-nutri-brand border-l-4 border-nutri-brand transition-colors text-left">
+                    <i class="fa-solid fa-calculator w-5"></i> Cálculo Dietético
+                </button>
+                <button class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent text-left">
+                    <i class="fa-solid fa-utensils w-5"></i> Editor Visual
+                </button>
+            </nav>
+        </div>
+        <div class="p-4 border-t border-white/5">
+            <div class="flex items-center gap-3 px-4 py-3">
+                <div class="w-10 h-10 rounded-full bg-nutri-brand text-white flex items-center justify-center font-bold">D</div>
+                <div>
+                    <p class="text-sm font-bold text-white">Lic. Delia</p>
+                    <p class="text-xs text-slate-500">Nutricionista</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-nutri-base">
+        
+        <div class="flex flex-col h-full w-full overflow-hidden">
+            
+            <header class="h-20 bg-nutri-base flex items-center justify-between px-8 border-b border-white/5 flex-shrink-0 z-40">
+                <div>
+                    <h1 class="font-tech font-bold text-xl text-white">Diseño del Plan de Alimentación</h1>
+                    <p class="text-xs text-slate-400">Paciente: <span class="text-nutri-brand font-bold">Jose Romero</span></p>
+                </div>
+                <button class="bg-nutri-brand text-white px-5 py-2.5 rounded-lg font-tech font-bold text-sm hover:bg-[#e66a00] transition-colors flex items-center gap-2 shadow-[0_0_15px_rgba(255,122,0,0.3)]">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar Plan
+                </button>
+            </header>
+
+            <div class="flex-1 overflow-auto p-6 relative">
+                
+                <div class="flex bg-nutri-panel rounded-xl p-1 w-max mb-6 border border-white/10 shadow-lg mx-auto md:mx-0">
+                    <button id="btn-sub-calculos" onclick="switchSubTab('calculos')" class="px-6 py-2.5 rounded-lg bg-nutri-brand text-white font-bold text-sm transition-all shadow-[0_0_15px_rgba(255,122,0,0.3)]">Cálculos del Plan</button>
+                    <button id="btn-sub-resumen" onclick="switchSubTab('resumen')" class="px-6 py-2.5 rounded-lg text-slate-400 hover:text-white font-bold text-sm transition-all">Resumen del Plan</button>
+                </div>
+
+                <div id="subview-calculos" class="grid grid-cols-1 2xl:grid-cols-12 gap-8 pb-20">
+                    
+                    <div class="2xl:col-span-4 flex flex-col gap-6">
+                        <div class="bg-nutri-panel border border-white/5 rounded-2xl shadow-lg p-5">
+                            <h2 class="text-sm font-tech font-bold text-white uppercase tracking-widest mb-4 border-b border-white/5 pb-2"><i class="fa-solid fa-clipboard-user text-nutri-brand mr-2"></i> Biometría y Gasto</h2>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center gap-2"><label class="text-xs text-slate-400 w-1/2">Género</label><select id="calc-genero" onchange="runFullCalculation()" class="form-input w-1/2 font-bold text-center"><option value="M" selected>Hombre</option><option value="F">Mujer</option></select></div>
+                                <div class="flex justify-between items-center gap-2"><label class="text-xs text-slate-400 w-1/2">Edad (años)</label><div class="flex items-center bg-white/5 rounded-lg border border-white/10 w-1/2"><button onclick="stepValue('calc-edad', -1)" class="w-8 h-8 text-slate-400 hover:text-white">-</button><input type="number" id="calc-edad" value="44" oninput="runFullCalculation()" class="w-full bg-transparent text-center text-white font-bold outline-none text-sm"><button onclick="stepValue('calc-edad', 1)" class="w-8 h-8 text-slate-400 hover:text-white">+</button></div></div>
+                                <div class="flex justify-between items-center gap-2"><label class="text-xs text-slate-400 w-1/2">Talla (cm)</label><div class="flex items-center bg-white/5 rounded-lg border border-white/10 w-1/2"><button onclick="stepValue('calc-talla', -1)" class="w-8 h-8 text-slate-400 hover:text-white">-</button><input type="number" id="calc-talla" value="166" oninput="runFullCalculation()" class="w-full bg-transparent text-center text-white font-bold outline-none text-sm"><button onclick="stepValue('calc-talla', 1)" class="w-8 h-8 text-slate-400 hover:text-white">+</button></div></div>
+                                <div class="flex justify-between items-center gap-2"><label class="text-xs font-bold text-white w-1/2">Peso (kg)</label><div class="flex items-center bg-white/5 rounded-lg border border-white/10 w-1/2"><button onclick="stepValue('calc-peso', -0.1)" class="w-8 h-8 text-slate-400 hover:text-white">-</button><input type="number" id="calc-peso" value="62.0" step="0.1" oninput="runFullCalculation()" class="w-full bg-transparent text-center text-white font-bold outline-none text-sm"><button onclick="stepValue('calc-peso', 0.1)" class="w-8 h-8 text-slate-400 hover:text-white">+</button></div></div>
+                                
+                                <div class="flex justify-between items-center gap-2 bg-blue-500/10 p-2 rounded-lg border border-blue-500/30 mt-2 mb-2"><label class="text-xs font-bold text-blue-400 w-1/2">Metabolismo Basal</label><input type="text" id="out-tmb" class="form-input form-readonly text-blue-400 font-bold w-1/2 text-lg" value="1452" readonly></div>
+                                
+                                <div class="flex justify-between items-center gap-2 pt-2 border-t border-white/5"><label class="text-xs text-slate-400 w-1/2">Factor Actividad</label><div class="flex items-center bg-white/5 rounded-lg border border-white/10 w-1/2"><button onclick="stepValue('calc-fa', -0.1)" class="w-8 h-8 text-slate-400 hover:text-white">-</button><input type="number" id="calc-fa" value="1.3" step="0.1" oninput="runFullCalculation()" class="w-full bg-transparent text-center text-white outline-none text-sm"><button onclick="stepValue('calc-fa', 0.1)" class="w-8 h-8 text-slate-400 hover:text-white">+</button></div></div>
+                                <div class="flex justify-between items-center gap-2 bg-white/5 p-2 rounded border border-white/5"><label class="text-xs text-slate-400 w-1/2">Gasto Energético s/ Ejerc.</label><input type="text" id="out-gasto-base" class="form-input form-readonly w-1/2" value="1888" readonly></div>
+                                <div class="flex justify-between items-center gap-2"><label class="text-xs text-slate-400 w-1/2">Calorías gastadas (Kcal)</label><input type="text" id="out-calorias-gastadas" class="form-input form-readonly w-1/2 text-slate-500" value="436" readonly></div>
+                                <div class="flex justify-between items-center gap-2 border-t border-white/5 pt-2"><label class="text-xs text-slate-400 w-1/2">Gasto Entrenamiento</label><input type="number" id="calc-gasto-entreno" value="300" oninput="runFullCalculation()" class="form-input w-1/2 text-center"></div>
+                                <div class="flex justify-between items-center gap-2 bg-white/5 p-2 rounded border border-white/5"><label class="text-xs font-bold text-white w-1/2">Gasto Total (Día Activo)</label><input type="text" id="out-gasto-total" class="form-input form-readonly text-white font-bold w-1/2" value="2188" readonly></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-nutri-panel border border-white/5 rounded-2xl shadow-lg p-5">
+                            <h2 class="text-sm font-tech font-bold text-white uppercase tracking-widest mb-4 border-b border-white/5 pb-2"><i class="fa-solid fa-bullseye text-blue-400 mr-2"></i> Ajuste Calórico Semanal</h2>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center gap-2"><label class="text-xs text-slate-400 w-1/2">Días de Entreno (0-7)</label><div class="flex items-center bg-white/5 rounded-lg border border-white/10 w-1/2"><button onclick="stepValue('calc-dias-entreno', -1)" class="w-8 h-8 text-slate-400 hover:text-white">-</button><input type="number" id="calc-dias-entreno" value="0" min="0" max="7" oninput="runFullCalculation()" class="w-full bg-transparent text-center text-white font-bold outline-none text-sm"><button onclick="stepValue('calc-dias-entreno', 1)" class="w-8 h-8 text-slate-400 hover:text-white">+</button></div></div>
+                                <div class="flex justify-between items-center gap-2"><label class="text-xs text-slate-400 w-1/2">Promedio semanal</label><input type="text" id="calc-promedio" class="form-input form-readonly w-1/2 text-blue-400 font-bold border-blue-500/30" value="1887.6" readonly></div>
+                                <div class="flex justify-between items-center gap-2"><label class="text-xs font-bold text-white w-1/2">Ajustes (%)</label><div class="relative w-1/2 flex items-center bg-yellow-500/10 border border-yellow-500/50 rounded-lg"><button onclick="stepValue('calc-ajuste-pct', -1)" class="w-8 h-8 text-yellow-400 hover:bg-yellow-500/20">-</button><input type="number" id="calc-ajuste-pct" value="-22" oninput="runFullCalculation()" class="w-full bg-transparent text-center text-yellow-400 font-bold outline-none text-sm pr-2"><span class="text-xs text-yellow-400 font-bold mr-2">%</span><button onclick="stepValue('calc-ajuste-pct', 1)" class="w-8 h-8 text-yellow-400 hover:bg-yellow-500/20">+</button></div></div>
+                                <div class="flex justify-between items-center gap-2 bg-white/5 p-2 rounded border border-white/5"><label class="text-xs text-slate-400 w-1/2">Ajustes (Kcal)</label><input type="text" id="out-ajuste-kcal" class="form-input form-readonly text-green-400 w-1/2" value="-415.3" readonly></div>
+                                <div class="flex justify-between items-center gap-2 bg-green-500/10 p-3 rounded-lg border border-green-500/30 mt-2"><label class="text-sm font-bold text-white w-1/2">CALORÍAS TOTALES</label><input type="text" id="out-kcal-totales" class="form-input form-readonly text-green-400 text-xl font-tech font-bold w-1/2" value="1472.3" readonly></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="2xl:col-span-8 flex flex-col gap-6">
+                        
+                        <div class="bg-nutri-panel border border-white/5 rounded-2xl shadow-lg overflow-hidden">
+                            <div class="bg-gradient-to-r from-nutri-brand/20 to-transparent p-4 border-b border-white/5 flex justify-between items-center">
+                                <h2 class="text-sm font-tech font-bold text-white uppercase tracking-widest"><i class="fa-solid fa-chart-pie text-nutri-brand mr-2"></i> Requerimiento de Macronutrientes</h2>
+                            </div>
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-white/5 text-slate-400 text-xs uppercase tracking-wider">
+                                    <tr><th class="px-6 py-3 font-bold">Macronutrientes</th><th class="px-6 py-3 text-center font-bold text-white bg-white/5 w-32">g/Kg</th><th class="px-6 py-3 text-center font-bold">Total (gr)</th><th class="px-6 py-3 text-center font-bold">Kcal</th><th class="px-6 py-3 text-center font-bold">%</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-white/5 text-slate-300 font-medium">
+                                    <tr class="hover:bg-white/5 transition-colors"><td class="px-6 py-3 border-l-4 border-blue-400">CHO (Carbohidratos)</td><td class="px-2 py-2 text-center bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto overflow-hidden"><button onclick="stepValue('req-g-cho', -0.1)" class="w-7 h-7 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="req-g-cho" value="2.8" step="0.1" oninput="runFullCalculation()" class="w-12 bg-transparent text-center text-blue-400 font-bold outline-none text-sm"><button onclick="stepValue('req-g-cho', 0.1)" class="w-7 h-7 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-6 py-3 text-center text-white font-bold" id="req-tot-cho">173.6</td><td class="px-6 py-3 text-center" id="req-kcal-cho">694.4</td><td class="px-6 py-3 text-center text-slate-400" id="req-pct-cho">47.2%</td></tr>
+                                    <tr class="hover:bg-white/5 transition-colors"><td class="px-6 py-3 border-l-4 border-nutri-brand">Proteína</td><td class="px-2 py-2 text-center bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto overflow-hidden"><button onclick="stepValue('inp-g-pro', -0.1)" class="w-7 h-7 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="inp-g-pro" value="1.6" step="0.1" oninput="runFullCalculation()" class="w-12 bg-transparent text-center text-nutri-brand font-bold outline-none text-sm"><button onclick="stepValue('inp-g-pro', 0.1)" class="w-7 h-7 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-6 py-3 text-center text-white font-bold" id="req-tot-pro">99.2</td><td class="px-6 py-3 text-center" id="req-kcal-pro">396.8</td><td class="px-6 py-3 text-center text-slate-400" id="req-pct-pro">27.0%</td></tr>
+                                    <tr class="hover:bg-white/5 transition-colors"><td class="px-6 py-3 border-l-4 border-yellow-400">Grasa</td><td class="px-2 py-2 text-center bg-white/5"><span id="req-g-fat" class="text-yellow-400 font-bold text-sm">0.7</span></td><td class="px-6 py-3 text-center text-white font-bold" id="req-tot-fat">42.3</td><td class="px-6 py-3 text-center" id="req-kcal-fat">381.1</td><td class="px-6 py-3 text-center text-slate-400" id="req-pct-fat">25.9%</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="bg-nutri-panel border border-white/5 rounded-2xl shadow-lg overflow-hidden">
+                            <div class="bg-gradient-to-r from-blue-500/20 to-transparent p-4 border-b border-white/5 flex justify-between items-center">
+                                <h2 class="text-sm font-tech font-bold text-white uppercase tracking-widest"><i class="fa-solid fa-layer-group text-blue-400 mr-2"></i> Grupo de Alimentos (Equivalencias)</h2>
+                            </div>
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-white/5 text-slate-400 uppercase tracking-widest text-[10px]">
+                                    <tr><th class="px-4 py-3 font-bold w-1/4">Grupo</th><th class="px-4 py-3 text-center font-bold text-white bg-white/10 w-28">Porc.</th><th class="px-4 py-3 text-center font-bold">Calorías</th><th class="px-4 py-3 text-center font-bold text-blue-400">CHO (g)</th><th class="px-4 py-3 text-center font-bold text-nutri-brand">Proteínas (g)</th><th class="px-4 py-3 text-center font-bold text-yellow-400">Grasa (g)</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-white/5 text-slate-300 font-medium">
+                                    <tr class="hover:bg-white/5"><td class="px-4 py-1.5">Almidón</td><td class="px-2 py-1.5 bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto"><button onclick="stepValue('p-almidon', -1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="p-almidon" value="5" step="1" oninput="calcPortions()" class="w-10 bg-transparent text-center text-white font-bold outline-none text-xs"><button onclick="stepValue('p-almidon', 1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-4 py-1.5 text-center" id="k-almidon">0</td><td class="px-4 py-1.5 text-center" id="c-almidon">0</td><td class="px-4 py-1.5 text-center" id="pr-almidon">0</td><td class="px-4 py-1.5 text-center" id="f-almidon">0</td></tr>
+                                    <tr class="hover:bg-white/5"><td class="px-4 py-1.5">Fruta</td><td class="px-2 py-1.5 bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto"><button onclick="stepValue('p-fruta', -1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="p-fruta" value="4" step="1" oninput="calcPortions()" class="w-10 bg-transparent text-center text-white font-bold outline-none text-xs"><button onclick="stepValue('p-fruta', 1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-4 py-1.5 text-center" id="k-fruta">0</td><td class="px-4 py-1.5 text-center" id="c-fruta">0</td><td class="px-4 py-1.5 text-center" id="pr-fruta"></td><td class="px-4 py-1.5 text-center" id="f-fruta"></td></tr>
+                                    <tr class="hover:bg-white/5"><td class="px-4 py-1.5">Azúcares simples</td><td class="px-2 py-1.5 bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto"><button onclick="stepValue('p-azucar', -1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="p-azucar" value="1" step="1" oninput="calcPortions()" class="w-10 bg-transparent text-center text-white font-bold outline-none text-xs"><button onclick="stepValue('p-azucar', 1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-4 py-1.5 text-center" id="k-azucar">0</td><td class="px-4 py-1.5 text-center" id="c-azucar">0</td><td class="px-4 py-1.5 text-center" id="pr-azucar"></td><td class="px-4 py-1.5 text-center" id="f-azucar"></td></tr>
+                                    <tr class="hover:bg-white/5"><td class="px-4 py-1.5">Verduras</td><td class="px-2 py-1.5 bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto"><button onclick="stepValue('p-verdura', -1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="p-verdura" value="2" step="1" oninput="calcPortions()" class="w-10 bg-transparent text-center text-white font-bold outline-none text-xs"><button onclick="stepValue('p-verdura', 1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-4 py-1.5 text-center" id="k-verdura">0</td><td class="px-4 py-1.5 text-center" id="c-verdura">0</td><td class="px-4 py-1.5 text-center" id="pr-verdura">0</td><td class="px-4 py-1.5 text-center" id="f-verdura"></td></tr>
+                                    <tr class="row-subtotal text-slate-400 text-[10px]"><td colspan="2" class="px-4 py-1.5 text-right uppercase tracking-widest">Subtotal</td><td class="px-4 py-1.5 text-center" id="sub-k-1">0</td><td class="px-4 py-1.5 text-center" id="sub-c-1">0</td><td class="px-4 py-1.5 text-center" id="sub-pr-1">0</td><td class="px-4 py-1.5 text-center" id="sub-f-1">0</td></tr>
+
+                                    <tr class="hover:bg-white/5"><td class="px-4 py-1.5">Lácteos descremados</td><td class="px-2 py-1.5 bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto"><button onclick="stepValue('p-lac-des', -1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="p-lac-des" value="0" step="1" oninput="calcPortions()" class="w-10 bg-transparent text-center text-white font-bold outline-none text-xs"><button onclick="stepValue('p-lac-des', 1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-4 py-1.5 text-center" id="k-lac-des">0</td><td class="px-4 py-1.5 text-center" id="c-lac-des">0</td><td class="px-4 py-1.5 text-center" id="pr-lac-des">0</td><td class="px-4 py-1.5 text-center" id="f-lac-des">0</td></tr>
+                                    <tr class="hover:bg-white/5"><td class="px-4 py-1.5">Lácteos semidescremados</td><td class="px-2 py-1.5 bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto"><button onclick="stepValue('p-lac-semi', -1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="p-lac-semi" value="1" step="1" oninput="calcPortions()" class="w-10 bg-transparent text-center text-white font-bold outline-none text-xs"><button onclick="stepValue('p-lac-semi', 1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-4 py-1.5 text-center" id="k-lac-semi">0</td><td class="px-4 py-1.5 text-center" id="c-lac-semi">0</td><td class="px-4 py-1.5 text-center" id="pr-lac-semi">0</td><td class="px-4 py-1.5 text-center" id="f-lac-semi">0</td></tr>
+                                    <tr class="hover:bg-white/5"><td class="px-4 py-1.5">Lácteos enteros</td><td class="px-2 py-1.5 bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto"><button onclick="stepValue('p-lac-ent', -1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="p-lac-ent" value="0" step="1" oninput="calcPortions()" class="w-10 bg-transparent text-center text-white font-bold outline-none text-xs"><button onclick="stepValue('p-lac-ent', 1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-4 py-1.5 text-center" id="k-lac-ent">0</td><td class="px-4 py-1.5 text-center" id="c-lac-ent">0</td><td class="px-4 py-1.5 text-center" id="pr-lac-ent">0</td><td class="px-4 py-1.5 text-center" id="f-lac-ent">0</td></tr>
+                                    <tr class="row-subtotal text-slate-400 text-[10px]"><td colspan="2" class="px-4 py-1.5 text-right uppercase tracking-widest">Subtotal</td><td class="px-4 py-1.5 text-center" id="sub-k-2">0</td><td class="px-4 py-1.5 text-center" id="sub-c-2">0</td><td class="px-4 py-1.5 text-center" id="sub-pr-2">0</td><td class="px-4 py-1.5 text-center" id="sub-f-2">0</td></tr>
+
+                                    <tr class="hover:bg-white/5"><td class="px-4 py-1.5">Alim. proteicos ceros en grasa</td><td class="px-2 py-1.5 bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto"><button onclick="stepValue('p-pro-cero', -1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="p-pro-cero" value="0" step="1" oninput="calcPortions()" class="w-10 bg-transparent text-center text-white font-bold outline-none text-xs"><button onclick="stepValue('p-pro-cero', 1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-4 py-1.5 text-center" id="k-pro-cero">0</td><td class="px-4 py-1.5 text-center" id="c-pro-cero"></td><td class="px-4 py-1.5 text-center" id="pr-pro-cero">0</td><td class="px-4 py-1.5 text-center" id="f-pro-cero">0</td></tr>
+                                    <tr class="hover:bg-white/5"><td class="px-4 py-1.5">Alim. proteicos bajos en grasa</td><td class="px-2 py-1.5 bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto"><button onclick="stepValue('p-pro-bajo', -0.5)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="p-pro-bajo" value="11.5" step="0.5" oninput="calcPortions()" class="w-10 bg-transparent text-center text-white font-bold outline-none text-xs"><button onclick="stepValue('p-pro-bajo', 0.5)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-4 py-1.5 text-center" id="k-pro-bajo">0</td><td class="px-4 py-1.5 text-center" id="c-pro-bajo"></td><td class="px-4 py-1.5 text-center" id="pr-pro-bajo">0</td><td class="px-4 py-1.5 text-center" id="f-pro-bajo">0</td></tr>
+                                    <tr class="hover:bg-white/5"><td class="px-4 py-1.5">Alim. proteicos c/moderada grasa</td><td class="px-2 py-1.5 bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto"><button onclick="stepValue('p-pro-mod', -1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="p-pro-mod" value="0" step="1" oninput="calcPortions()" class="w-10 bg-transparent text-center text-white font-bold outline-none text-xs"><button onclick="stepValue('p-pro-mod', 1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-4 py-1.5 text-center" id="k-pro-mod">0</td><td class="px-4 py-1.5 text-center" id="c-pro-mod"></td><td class="px-4 py-1.5 text-center" id="pr-pro-mod">0</td><td class="px-4 py-1.5 text-center" id="f-pro-mod">0</td></tr>
+                                    <tr class="hover:bg-white/5"><td class="px-4 py-1.5">Alim. proteicos c/alta grasa</td><td class="px-2 py-1.5 bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto"><button onclick="stepValue('p-pro-alta', -1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="p-pro-alta" value="1" step="1" oninput="calcPortions()" class="w-10 bg-transparent text-center text-white font-bold outline-none text-xs"><button onclick="stepValue('p-pro-alta', 1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-4 py-1.5 text-center" id="k-pro-alta">0</td><td class="px-4 py-1.5 text-center" id="c-pro-alta"></td><td class="px-4 py-1.5 text-center" id="pr-pro-alta">0</td><td class="px-4 py-1.5 text-center" id="f-pro-alta">0</td></tr>
+                                    <tr class="row-subtotal text-slate-400 text-[10px]"><td colspan="2" class="px-4 py-1.5 text-right uppercase tracking-widest">Subtotal</td><td class="px-4 py-1.5 text-center" id="sub-k-3">0</td><td class="px-4 py-1.5 text-center" id="sub-c-3">0</td><td class="px-4 py-1.5 text-center" id="sub-pr-3">0</td><td class="px-4 py-1.5 text-center" id="sub-f-3">0</td></tr>
+                                    
+                                    <tr class="hover:bg-white/5"><td class="px-4 py-1.5">Grasas</td><td class="px-2 py-1.5 bg-white/5"><div class="flex items-center justify-center bg-black/20 rounded border border-white/10 w-max mx-auto"><button onclick="stepValue('p-grasa', -1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">-</button><input type="number" id="p-grasa" value="3" step="1" oninput="calcPortions()" class="w-10 bg-transparent text-center text-white font-bold outline-none text-xs"><button onclick="stepValue('p-grasa', 1)" class="w-6 h-6 text-slate-400 hover:text-white hover:bg-white/10">+</button></div></td><td class="px-4 py-1.5 text-center" id="k-grasa">0</td><td class="px-4 py-1.5 text-center" id="c-grasa"></td><td class="px-4 py-1.5 text-center" id="pr-grasa"></td><td class="px-4 py-1.5 text-center" id="f-grasa">0</td></tr>
+                                </tbody>
+                                <tfoot class="border-t-2 border-white/10">
+                                    <tr class="row-total text-sm"><td colspan="2" class="px-4 py-3 text-right uppercase tracking-widest text-xs">TOTALES LOGRADOS:</td><td class="px-4 py-3 text-center text-white" id="tot-k">0</td><td class="px-4 py-3 text-center text-blue-400" id="tot-c">0</td><td class="px-4 py-3 text-center text-nutri-brand" id="tot-pr">0</td><td class="px-4 py-3 text-center text-yellow-400" id="tot-f">0</td></tr>
+                                    <tr class="bg-nutri-base text-xs font-bold border-t border-white/5"><td colspan="2" class="px-4 py-3 text-right text-slate-400 uppercase tracking-widest">% ADECUACIÓN:</td><td class="px-4 py-3 text-center transition-colors" id="ade-k">0%</td><td class="px-4 py-3 text-center transition-colors" id="ade-c">0%</td><td class="px-4 py-3 text-center transition-colors" id="ade-pr">0%</td><td class="px-4 py-3 text-center transition-colors" id="ade-f">0%</td></tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="subview-resumen" class="hidden flex-col gap-6 pb-20 fade-in max-w-6xl mx-auto">
+                    
+                    <div class="flex justify-between items-center bg-nutri-panel p-6 rounded-2xl border border-white/5 shadow-lg">
+                        <div class="flex items-center gap-4">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-pre-entreno" class="sr-only peer" onchange="togglePreEntreno()" checked>
+                                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-nutri-brand"></div>
+                                <span class="ml-3 text-sm font-bold text-white">Activar Pre Entreno</span>
+                            </label>
+                        </div>
+                        <div class="bg-[#FF7A00]/10 border border-[#FF7A00]/30 px-6 py-2 rounded-xl text-right">
+                            <span class="text-xs text-[#FF7A00] uppercase tracking-widest font-bold">Calorías Totales</span>
+                            <p class="text-2xl font-tech font-bold text-white" id="resumen-total-kcal">1410.5</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-6">
+
+                        <div id="block-pre-entreno" class="bg-nutri-panel border border-white/5 rounded-2xl flex flex-col xl:flex-row overflow-hidden shadow-lg">
+                            <div class="w-full xl:w-48 bg-white/5 p-5 flex flex-col justify-center items-center border-b xl:border-b-0 xl:border-r border-white/5 relative flex-shrink-0">
+                                <div class="absolute left-0 top-0 w-2 h-full bg-[#FF7A00]"></div>
+                                <span class="font-tech font-bold text-lg text-white tracking-widest text-center">PRE ENTRENO</span>
+                                <div class="mt-3 flex items-center gap-2 bg-nutri-base px-3 py-1.5 rounded-lg border border-white/10">
+                                    <i class="fa-regular fa-clock text-nutri-brand"></i>
+                                    <input type="time" value="08:30" class="bg-transparent text-white text-sm font-bold outline-none w-20 text-center">
+                                </div>
+                            </div>
+                            
+                            <div class="flex-1 flex flex-col">
+                                <input type="text" value="Huevos cocidos + Bowl de fruta c/ yogurt" class="w-full bg-[#FF7A00] text-white font-bold text-center py-2.5 px-4 outline-none placeholder-white/70 text-sm">
+                                
+                                <div class="p-5 flex flex-col gap-3">
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Lácteos semidescremados</option></select>
+                                            <input type="number" value="1" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Yogurt Dan Lac (100g) o Leche light roja Eva Gloria (100g)</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Alimentos proteicos alt...</option></select>
+                                            <input type="number" value="1" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Huevos (1 unid) o Queso fresco (25g) o Hot dog San fernando vive bien (55g)</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Fruta</option></select>
+                                            <input type="number" value="2" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Platano de seda (80*2)=160g - 1 unid o Papaya (240g*2)=480g - 2 tz o combinar (papaya 240g + piña 180g)</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Misceláneos</option></select>
+                                            <input type="number" value="1" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Creatina + Jamaica</textarea>
+                                    </div>
+                                    <button class="mt-1 text-[10px] uppercase tracking-widest text-nutri-brand font-bold hover:text-white transition-colors text-left w-max"><i class="fa-solid fa-plus mr-1"></i> Agregar fila</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-nutri-panel border border-white/5 rounded-2xl flex flex-col xl:flex-row overflow-hidden shadow-lg">
+                            <div class="w-full xl:w-48 bg-white/5 p-5 flex flex-col justify-center items-center border-b xl:border-b-0 xl:border-r border-white/5 relative flex-shrink-0">
+                                <div class="absolute left-0 top-0 w-2 h-full bg-[#FF7A00]"></div>
+                                <span class="font-tech font-bold text-lg text-white tracking-widest text-center">DESAYUNO</span>
+                                <div class="mt-3 flex items-center gap-2 bg-nutri-base px-3 py-1.5 rounded-lg border border-white/10">
+                                    <i class="fa-regular fa-clock text-nutri-brand"></i>
+                                    <input type="time" value="10:00" class="bg-transparent text-white text-sm font-bold outline-none w-20 text-center">
+                                </div>
+                            </div>
+                            
+                            <div class="flex-1 flex flex-col">
+                                <input type="text" value="Wraps de atún + Bowl de fruta" class="w-full bg-[#FF7A00] text-white font-bold text-center py-2.5 px-4 outline-none placeholder-white/70 text-sm">
+                                
+                                <div class="p-5 flex flex-col gap-3">
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Almidón</option></select>
+                                            <input type="number" value="3" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Tostada Integral (60g)-3 Unid o Galleta salmas (3 paq) - o Rapiditas (84) - 3 unid</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Alimentos proteicos ba...</option></select>
+                                            <input type="number" value="2" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Jamon de pavita braedt (40*2)=80g o Claras de huevo (50*2)=100g o Queso light mozzarella (18*2)=36g o Quark (45*2)=90g o Atún en agua y sal (30*2)=60g</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Azúcares simples</option></select>
+                                            <input type="number" value="1" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Mermelada de fresa light campestre (40g)</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Misceláneos</option></select>
+                                            <input type="number" value="1" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Cafe</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Fruta</option></select>
+                                            <input type="number" value="1" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Plátano bizcochito (80g) - 3 unid o Plátano seda (80g) - 1/2 unid</textarea>
+                                    </div>
+                                    <button class="mt-1 text-[10px] uppercase tracking-widest text-nutri-brand font-bold hover:text-white transition-colors text-left w-max"><i class="fa-solid fa-plus mr-1"></i> Agregar fila</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-nutri-panel border border-white/5 rounded-2xl flex flex-col xl:flex-row overflow-hidden shadow-lg">
+                            <div class="w-full xl:w-48 bg-white/5 p-5 flex flex-col justify-center items-center border-b xl:border-b-0 xl:border-r border-white/5 relative flex-shrink-0">
+                                <div class="absolute left-0 top-0 w-2 h-full bg-[#FF7A00]"></div>
+                                <span class="font-tech font-bold text-lg text-white tracking-widest text-center">MEDIA MAÑANA</span>
+                                <div class="mt-3 flex items-center gap-2 bg-nutri-base px-3 py-1.5 rounded-lg border border-white/10">
+                                    <i class="fa-regular fa-clock text-nutri-brand"></i>
+                                    <input type="time" value="11:30" class="bg-transparent text-white text-sm font-bold outline-none w-20 text-center">
+                                </div>
+                            </div>
+                            <div class="flex-1 flex flex-col">
+                                <input type="text" value="Snack Fresco" class="w-full bg-[#FF7A00] text-white font-bold text-center py-2.5 px-4 outline-none placeholder-white/70 text-sm">
+                                <div class="p-5 flex flex-col gap-3">
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Fruta</option></select>
+                                            <input type="number" value="1" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Manzana roja (150g) o Pera (120g)</textarea>
+                                    </div>
+                                    <button class="mt-1 text-[10px] uppercase tracking-widest text-nutri-brand font-bold hover:text-white transition-colors text-left w-max"><i class="fa-solid fa-plus mr-1"></i> Agregar fila</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-nutri-panel border border-white/5 rounded-2xl flex flex-col xl:flex-row overflow-hidden shadow-lg">
+                            <div class="w-full xl:w-48 bg-white/5 p-5 flex flex-col justify-center items-center border-b xl:border-b-0 xl:border-r border-white/5 relative flex-shrink-0">
+                                <div class="absolute left-0 top-0 w-2 h-full bg-[#FF7A00]"></div>
+                                <span class="font-tech font-bold text-lg text-white tracking-widest text-center">ALMUERZO</span>
+                                <div class="mt-3 flex items-center gap-2 bg-nutri-base px-3 py-1.5 rounded-lg border border-white/10">
+                                    <i class="fa-regular fa-clock text-nutri-brand"></i>
+                                    <input type="time" value="13:00" class="bg-transparent text-white text-sm font-bold outline-none w-20 text-center">
+                                </div>
+                            </div>
+                            
+                            <div class="flex-1 flex flex-col">
+                                <input type="text" value="Fideos rojos c/ verdura" class="w-full bg-[#FF7A00] text-white font-bold text-center py-2.5 px-4 outline-none placeholder-white/70 text-sm">
+                                
+                                <div class="p-5 flex flex-col gap-3">
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Almidón</option></select>
+                                            <input type="number" value="2" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Papa amarilla (80*2)=160g o Camote (80*2)=160g o Fideos cocidos (51*2)=102g o Platano bellaco (80*2)=160g o menestras cocidas (75*2)=150g - 1 tz</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Verduras</option></select>
+                                            <input type="number" value="2" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Verdura fresca o al pavor (2 tz) o Verduras cocida (1 tz)</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Alimentos proteicos ba...</option></select>
+                                            <input type="number" value="4" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Pescado Tilapia (25*4)=100g o Trucha (30*4)=120g o Pollo peso pulpa crudo (30*4)=120g o cocido (25*4)=100g o Jamón de pavita braedt (40*4)=160g o Carne de cuy (35*4)=140g</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Misceláneos</option></select>
+                                            <input type="number" value="1" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Refresco de limón o Maracuya o Jamaica</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Grasa</option></select>
+                                            <input type="number" value="2" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Palta (44*2)=88g - 1/2 unid o Aceite (5*2)=10g o Mayonesa Alacena light (14*2)=28g</textarea>
+                                    </div>
+                                    <button class="mt-1 text-[10px] uppercase tracking-widest text-nutri-brand font-bold hover:text-white transition-colors text-left w-max"><i class="fa-solid fa-plus mr-1"></i> Agregar fila</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-nutri-panel border border-white/5 rounded-2xl flex flex-col xl:flex-row overflow-hidden shadow-lg">
+                            <div class="w-full xl:w-48 bg-white/5 p-5 flex flex-col justify-center items-center border-b xl:border-b-0 xl:border-r border-white/5 relative flex-shrink-0">
+                                <div class="absolute left-0 top-0 w-2 h-full bg-[#FF7A00]"></div>
+                                <span class="font-tech font-bold text-lg text-white tracking-widest text-center">MEDIA TARDE</span>
+                                <div class="mt-3 flex items-center gap-2 bg-nutri-base px-3 py-1.5 rounded-lg border border-white/10">
+                                    <i class="fa-regular fa-clock text-nutri-brand"></i>
+                                    <input type="time" value="17:00" class="bg-transparent text-white text-sm font-bold outline-none w-20 text-center">
+                                </div>
+                            </div>
+                            <div class="flex-1 flex flex-col">
+                                <input type="text" value="Gelatina + pecanas" class="w-full bg-[#FF7A00] text-white font-bold text-center py-2.5 px-4 outline-none placeholder-white/70 text-sm">
+                                <div class="p-5 flex flex-col gap-3">
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Alimentos proteicos ba...</option></select>
+                                            <input type="number" value="1" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Gelatina light Universal o Cuisine & co (19g)</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Grasa</option></select>
+                                            <input type="number" value="1" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Pecanas (7g)- 2 unid o Palta (44g) - 1/4 unid</textarea>
+                                    </div>
+                                    <button class="mt-1 text-[10px] uppercase tracking-widest text-nutri-brand font-bold hover:text-white transition-colors text-left w-max"><i class="fa-solid fa-plus mr-1"></i> Agregar fila</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-nutri-panel border border-white/5 rounded-2xl flex flex-col xl:flex-row overflow-hidden shadow-lg">
+                            <div class="w-full xl:w-48 bg-white/5 p-5 flex flex-col justify-center items-center border-b xl:border-b-0 xl:border-r border-white/5 relative flex-shrink-0">
+                                <div class="absolute left-0 top-0 w-2 h-full bg-[#FF7A00]"></div>
+                                <span class="font-tech font-bold text-lg text-white tracking-widest text-center">CENA</span>
+                                <div class="mt-3 flex items-center gap-2 bg-nutri-base px-3 py-1.5 rounded-lg border border-white/10">
+                                    <i class="fa-regular fa-clock text-nutri-brand"></i>
+                                    <input type="time" value="20:00" class="bg-transparent text-white text-sm font-bold outline-none w-20 text-center">
+                                </div>
+                            </div>
+                            <div class="flex-1 flex flex-col">
+                                <input type="text" value="Fideos c/ pollo + bowl de fruta c/ frutos secos" class="w-full bg-[#FF7A00] text-white font-bold text-center py-2.5 px-4 outline-none placeholder-white/70 text-sm">
+                                <div class="p-5 flex flex-col gap-3">
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Almidón</option></select>
+                                            <input type="number" value="1" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Fideos cocidos (51g) o Galletas salmas (1 paq) o Tostadas (20g) o papa coctel (80g)</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Alimentos proteicos ba...</option></select>
+                                            <input type="number" value="3" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Pollo pulpa (30*3)=90g o Res (30*3)=90g o carne de cuy pulpa en crudo (35*3)=105g o alitas de pollo crudo (35*3)=105g</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Grasa</option></select>
+                                            <input type="number" value="2" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Palta (44*2)=88g - 1/2 unid o Pecanas (7*2)=14g - 4 unid enteras</textarea>
+                                    </div>
+                                    <div class="flex flex-col md:flex-row items-start md:items-start gap-3">
+                                        <div class="flex items-center gap-2 w-full md:w-1/3 flex-shrink-0">
+                                            <select class="form-input flex-1 text-xs py-2 px-2"><option selected>Fruta</option></select>
+                                            <input type="number" value="1" class="form-input w-14 text-center text-xs py-2 font-bold">
+                                        </div>
+                                        <textarea class="form-input flex-1 text-xs py-2 px-3 text-slate-300 comment-area" spellcheck="false">Mandarina (210g) - 2 unid medianas</textarea>
+                                    </div>
+                                    <button class="mt-1 text-[10px] uppercase tracking-widest text-nutri-brand font-bold hover:text-white transition-colors text-left w-max"><i class="fa-solid fa-plus mr-1"></i> Agregar fila</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- SISTEMA DE PESTAÑAS (TABS) ---
+        function switchSubTab(tab) {
+            const btnCalculos = document.getElementById('btn-sub-calculos');
+            const btnResumen = document.getElementById('btn-sub-resumen');
+            const viewCalculos = document.getElementById('subview-calculos');
+            const viewResumen = document.getElementById('subview-resumen');
+
+            if(tab === 'calculos') {
+                viewCalculos.classList.remove('hidden');
+                viewResumen.classList.add('hidden');
+                
+                btnCalculos.className = 'px-6 py-2.5 rounded-lg bg-nutri-brand text-white font-bold text-sm transition-all shadow-[0_0_15px_rgba(255,122,0,0.3)]';
+                btnResumen.className = 'px-6 py-2.5 rounded-lg text-slate-400 hover:text-white font-bold text-sm transition-all';
+            } else {
+                viewCalculos.classList.add('hidden');
+                viewResumen.classList.remove('hidden');
+                viewResumen.classList.add('flex');
+                
+                btnResumen.className = 'px-6 py-2.5 rounded-lg bg-nutri-brand text-white font-bold text-sm transition-all shadow-[0_0_15px_rgba(255,122,0,0.3)]';
+                btnCalculos.className = 'px-6 py-2.5 rounded-lg text-slate-400 hover:text-white font-bold text-sm transition-all';
+                
+                // Auto-ajustar las textareas al entrar a la vista
+                const textareas = document.querySelectorAll('.comment-area');
+                textareas.forEach(ta => {
+                    ta.style.height = 'auto';
+                    ta.style.height = (ta.scrollHeight) + 'px';
+                    
+                    ta.addEventListener('input', function() {
+                        this.style.height = 'auto';
+                        this.style.height = (this.scrollHeight) + 'px';
+                    });
+                });
+            }
+        }
+
+        // --- TOGGLE PRE ENTRENO ---
+        function togglePreEntreno() {
+            const checkbox = document.getElementById('toggle-pre-entreno');
+            const block = document.getElementById('block-pre-entreno');
+            
+            if(checkbox.checked) {
+                block.classList.remove('hidden');
+                block.classList.add('flex');
+            } else {
+                block.classList.add('hidden');
+                block.classList.remove('flex');
+            }
+        }
+
+        // --- BASE DE DATOS Y CÁLCULOS CLÍNICOS ---
+        const dbPorciones = {
+            'almidon':  { kcal: 80, cho: 15,   pro: 2,    fat: 1 },
+            'fruta':    { kcal: 60, cho: 15,   pro: null, fat: null },
+            'azucar':   { kcal: 20, cho: 5,    pro: null, fat: null },
+            'verdura':  { kcal: 25, cho: 5,    pro: 1,    fat: null },
+            'lac-des':  { kcal: 72, cho: 12,   pro: 6,    fat: 0 },
+            'lac-semi': { kcal: 117, cho: 12,  pro: 6,    fat: 5 },
+            'lac-ent':  { kcal: 144, cho: 12,  pro: 6,    fat: 8 },
+            'pro-cero': { kcal: 24, cho: null, pro: 6,    fat: 0 },
+            'pro-bajo': { kcal: 33, cho: null, pro: 6,    fat: 1 },
+            'pro-mod':  { kcal: 51, cho: null, pro: 6,    fat: 3 },
+            'pro-alta': { kcal: 69, cho: null, pro: 6,    fat: 5 },
+            'grasa':    { kcal: 45, cho: null, pro: null, fat: 5 }
+        };
+
+        const formatOutput = (num) => {
+            if (num === null || isNaN(num)) return '';
+            return num % 1 === 0 ? num : num.toFixed(1);
+        };
+
+        function stepValue(id, stepAmount) {
+            const input = document.getElementById(id);
+            let val = parseFloat(input.value) || 0;
+            val += stepAmount;
+            
+            if(id !== 'calc-ajuste-pct' && val < 0) val = 0; 
+            if(id === 'calc-dias-entreno' && val > 7) val = 7;
+            val = Math.round(val * 10) / 10;
+
+            if(stepAmount % 1 === 0 && id !== 'req-g-cho' && id !== 'inp-g-pro') {
+                input.value = Math.round(val);
+            } else {
+                input.value = val.toFixed(1);
+            }
+            runFullCalculation();
+        }
+
+        function runFullCalculation() {
+            const peso = parseFloat(document.getElementById('calc-peso').value) || 0;
+            const talla = parseFloat(document.getElementById('calc-talla').value) || 0;
+            const edad = parseFloat(document.getElementById('calc-edad').value) || 0;
+            const genero = document.getElementById('calc-genero').value;
+            const fa = parseFloat(document.getElementById('calc-fa').value) || 0;
+            
+            let tmb = 0;
+            if (genero === 'M') { tmb = 66.47 + (13.75 * peso) + (5.0 * talla) - (6.75 * edad); } 
+            else { tmb = 655.09 + (9.56 * peso) + (1.85 * talla) - (4.68 * edad); }
+            document.getElementById('out-tmb').value = Math.round(tmb);
+
+            const gastoBase = tmb * fa;
+            document.getElementById('out-gasto-base').value = Math.round(gastoBase);
+
+            const caloriasGastadas = gastoBase - tmb;
+            document.getElementById('out-calorias-gastadas').value = Math.round(caloriasGastadas);
+
+            const gastoEntreno = parseFloat(document.getElementById('calc-gasto-entreno').value) || 0;
+            const gastoTotal = gastoBase + gastoEntreno;
+            document.getElementById('out-gasto-total').value = Math.round(gastoTotal);
+
+            const diasEntreno = parseInt(document.getElementById('calc-dias-entreno').value) || 0;
+            let promedio = 0;
+            if(gastoBase > 0) { promedio = ((gastoTotal * diasEntreno) + (gastoBase * (7 - diasEntreno))) / 7; }
+            document.getElementById('calc-promedio').value = promedio.toFixed(1);
+
+            const ajustePct = parseFloat(document.getElementById('calc-ajuste-pct').value) || 0;
+            const ajusteKcal = promedio * (ajustePct / 100);
+            document.getElementById('out-ajuste-kcal').value = ajusteKcal.toFixed(1);
+
+            const kcalTotales = promedio + ajusteKcal;
+            document.getElementById('out-kcal-totales').value = kcalTotales.toFixed(1);
+            
+            document.getElementById('resumen-total-kcal').innerText = kcalTotales.toFixed(1);
+
+            const gChoKg = parseFloat(document.getElementById('req-g-cho').value) || 0;
+            const gProKg = parseFloat(document.getElementById('inp-g-pro').value) || 0;
+
+            const totCho = gChoKg * peso;
+            const totPro = gProKg * peso;
+            const kcalCho = totCho * 4;
+            const kcalPro = totPro * 4;
+
+            let kcalFat = kcalTotales - kcalCho - kcalPro;
+            if(kcalFat < 0) kcalFat = 0;
+            
+            const totFat = kcalFat / 9;
+            
+            document.getElementById('req-g-fat').innerText = (totFat / peso).toFixed(1);
+            document.getElementById('req-tot-cho').innerText = totCho.toFixed(1);
+            document.getElementById('req-tot-pro').innerText = totPro.toFixed(1);
+            document.getElementById('req-tot-fat').innerText = totFat.toFixed(1);
+            document.getElementById('req-kcal-cho').innerText = kcalCho.toFixed(1);
+            document.getElementById('req-kcal-pro').innerText = kcalPro.toFixed(1);
+            document.getElementById('req-kcal-fat').innerText = kcalFat.toFixed(1);
+
+            calcPortions();
+        }
+
+        function calcPortions() {
+            const calculateRow = (idInput, dbKey) => {
+                const el = document.getElementById(idInput);
+                if(!el) return { k:0, c:null, pr:null, f:null };
+                const p = parseFloat(el.value) || 0;
+                const d = dbPorciones[dbKey];
+                const k = p * d.kcal; const c = d.cho !== null ? p * d.cho : null; const pr = d.pro !== null ? p * d.pro : null; const f = d.fat !== null ? p * d.fat : null;
+                document.getElementById('k-'+dbKey).innerText = formatOutput(k); document.getElementById('c-'+dbKey).innerText = formatOutput(c); document.getElementById('pr-'+dbKey).innerText = formatOutput(pr); document.getElementById('f-'+dbKey).innerText = formatOutput(f);
+                return { k, c, pr, f };
+            };
+
+            const rAlm = calculateRow('p-almidon', 'almidon'); const rFru = calculateRow('p-fruta', 'fruta'); const rAzu = calculateRow('p-azucar', 'azucar'); const rVer = calculateRow('p-verdura', 'verdura');
+            const rLDe = calculateRow('p-lac-des', 'lac-des'); const rLSe = calculateRow('p-lac-semi', 'lac-semi'); const rLEn = calculateRow('p-lac-ent', 'lac-ent');
+            const rPCe = calculateRow('p-pro-cero', 'pro-cero'); const rPBa = calculateRow('p-pro-bajo', 'pro-bajo'); const rPMo = calculateRow('p-pro-mod', 'pro-mod'); const rPAl = calculateRow('p-pro-alta', 'pro-alta');
+            const rGra = calculateRow('p-grasa', 'grasa');
+
+            const sub1 = { k: (rAlm.k||0)+(rFru.k||0)+(rAzu.k||0)+(rVer.k||0), c: (rAlm.c||0)+(rFru.c||0)+(rAzu.c||0)+(rVer.c||0), pr: (rAlm.pr||0)+(rFru.pr||0)+(rAzu.pr||0)+(rVer.pr||0), f: (rAlm.f||0)+(rFru.f||0)+(rAzu.f||0)+(rVer.f||0) };
+            document.getElementById('sub-k-1').innerText = formatOutput(sub1.k); document.getElementById('sub-c-1').innerText = formatOutput(sub1.c); document.getElementById('sub-pr-1').innerText = formatOutput(sub1.pr); document.getElementById('sub-f-1').innerText = formatOutput(sub1.f);
+
+            const sub2 = { k: (rLDe.k||0)+(rLSe.k||0)+(rLEn.k||0), c: (rLDe.c||0)+(rLSe.c||0)+(rLEn.c||0), pr: (rLDe.pr||0)+(rLSe.pr||0)+(rLEn.pr||0), f: (rLDe.f||0)+(rLSe.f||0)+(rLEn.f||0) };
+            document.getElementById('sub-k-2').innerText = formatOutput(sub2.k); document.getElementById('sub-c-2').innerText = formatOutput(sub2.c); document.getElementById('sub-pr-2').innerText = formatOutput(sub2.pr); document.getElementById('sub-f-2').innerText = formatOutput(sub2.f);
+
+            const sub3 = { k: (rPCe.k||0)+(rPBa.k||0)+(rPMo.k||0)+(rPAl.k||0), c: null, pr: (rPCe.pr||0)+(rPBa.pr||0)+(rPMo.pr||0)+(rPAl.pr||0), f: (rPCe.f||0)+(rPBa.f||0)+(rPMo.f||0)+(rPAl.f||0) };
+            document.getElementById('sub-k-3').innerText = formatOutput(sub3.k); document.getElementById('sub-c-3').innerText = formatOutput(sub3.c); document.getElementById('sub-pr-3').innerText = formatOutput(sub3.pr); document.getElementById('sub-f-3').innerText = formatOutput(sub3.f);
+
+            const totK = sub1.k + sub2.k + sub3.k + (rGra.k||0); const totC = sub1.c + sub2.c + (sub3.c||0) + (rGra.c||0); const totPr = sub1.pr + sub2.pr + sub3.pr + (rGra.pr||0); const totF = sub1.f + sub2.f + sub3.f + (rGra.f||0);
+            document.getElementById('tot-k').innerText = formatOutput(totK); document.getElementById('tot-c').innerText = formatOutput(totC); document.getElementById('tot-pr').innerText = formatOutput(totPr); document.getElementById('tot-f').innerText = formatOutput(totF);
+
+            const targetKcal = parseFloat(document.getElementById('out-kcal-totales').value)||0;
+            const targetCho = parseFloat(document.getElementById('req-tot-cho').innerText)||0;
+            const targetPro = parseFloat(document.getElementById('req-tot-pro').innerText)||0;
+            const targetFat = parseFloat(document.getElementById('req-tot-fat').innerText)||0;
+
+            const calcAdeq = (totLogrado, totObjetivo, elId) => {
+                if(totObjetivo <= 0) { document.getElementById(elId).innerText = "0%"; return; }
+                const pct = (totLogrado / totObjetivo) * 100;
+                const el = document.getElementById(elId);
+                el.innerText = pct.toFixed(1) + "%";
+                if(pct >= 95 && pct <= 105) { el.className = "px-4 py-3 text-center text-green-400 font-bold transition-colors"; }
+                else if (pct < 95) { el.className = "px-4 py-3 text-center text-yellow-400 font-bold transition-colors"; }
+                else { el.className = "px-4 py-3 text-center text-red-400 font-bold transition-colors"; }
+            };
+
+            calcAdeq(totK, targetKcal, 'ade-k'); calcAdeq(totC, targetCho, 'ade-c'); calcAdeq(totPr, targetPro, 'ade-pr'); calcAdeq(totF, targetFat, 'ade-f');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        }
+
+        // Ejecutar simulación al cargar la página
+        runFullCalculation();
+    </script>
+</body>
+</html>
