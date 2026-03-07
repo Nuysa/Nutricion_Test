@@ -78,7 +78,7 @@ export function PatientHistoryCharts({
                 tooltip: {
                     enabled: true,
                     backgroundColor: '#1e293b',
-                    titleFont: { family: 'inherit', size: 10, weight: 'bold' },
+                    titleFont: { family: 'inherit', size: 10, weight: 'bold' as const },
                     bodyFont: { family: 'inherit', size: 12 },
                     padding: 12,
                     cornerRadius: 12,
@@ -91,7 +91,7 @@ export function PatientHistoryCharts({
                     grid: { display: false },
                     ticks: {
                         color: '#64748b',
-                        font: { size: 9, weight: '800', family: 'var(--font-tech)' },
+                        font: { size: 9, weight: '800' as const, family: 'var(--font-tech)' },
                         padding: 10,
                         maxRotation: 0,
                         callback: function (value: any, index: number) {
@@ -107,7 +107,7 @@ export function PatientHistoryCharts({
                 }
             },
             layout: { padding: { top: 20, bottom: 0, left: 10, right: 10 } }
-        };
+        } as any;
     };
 
     const getChartData = (dataPoints: number[], lineColor: string, customLabels?: any[]) => ({
@@ -142,7 +142,7 @@ export function PatientHistoryCharts({
         </div>
     );
 
-    const ChartCard = ({ title, subtitle, dataPoints, lineColor, customLabels }: any) => (
+    const ChartCard = ({ title, subtitle, dataPoints, lineColor, customLabels }: { title: string, subtitle?: string, dataPoints: number[], lineColor: string, customLabels?: any[] }) => (
         <div className="flex items-center justify-between bg-[#151F32] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl hover:border-white/10 transition-all group overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/[0.01] blur-3xl -mr-16 -mt-16" />
             <div className="w-1/3 relative z-10">
