@@ -1,60 +1,73 @@
 import Link from "next/link";
-import { Leaf } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="min-h-screen flex">
-            {/* Left: Branding panel */}
-            <div className="hidden lg:flex lg:w-1/2 gradient-primary relative overflow-hidden items-center justify-center p-12">
-                <div className="absolute inset-0 opacity-10">
-                    <svg className="w-full h-full" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="100" cy="100" r="80" fill="white" opacity="0.1" />
-                        <circle cx="300" cy="300" r="120" fill="white" opacity="0.08" />
-                        <circle cx="350" cy="80" r="60" fill="white" opacity="0.06" />
-                        <circle cx="50" cy="350" r="90" fill="white" opacity="0.05" />
-                    </svg>
-                </div>
-                <div className="relative z-10 text-white max-w-md">
-                    <Link href="/" className="flex items-center gap-3 mb-8 hover:opacity-80 transition-opacity">
-                        <div className="h-14 w-14 rounded-2xl bg-white flex items-center justify-center">
-                            <img src="/logo Nuysa.png" alt="NuySa Logo" className="h-8 w-auto object-contain drop-shadow-md" />
+        <div className="min-h-screen bg-nutri-base flex items-center justify-center relative overflow-hidden font-tech">
+            {/* Background elements to match the "premium" feel */}
+            <div className="absolute inset-0 organic-grid opacity-20 pointer-events-none" />
+
+            {/* Animated Glows */}
+            <div className="absolute top-1/4 -left-20 w-96 h-96 bg-nutri-brand/20 rounded-full blur-[120px] animate-pulse" />
+            <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-green-500/10 rounded-full blur-[120px] animate-pulse" />
+
+            <div className="w-full max-w-[1240px] px-6 lg:px-12 flex flex-col lg:flex-row items-center gap-12 lg:gap-24 relative z-10 py-12">
+
+                {/* Left: Branding panel (Premium) */}
+                <div className="w-full lg:w-1/2 space-y-8 text-center lg:text-left">
+                    <Link href="/" className="inline-flex items-center gap-4 hover:opacity-80 transition-all group">
+                        <div className="h-20 w-20 rounded-[2rem] bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center p-4 shadow-2xl group-hover:scale-110 transition-transform">
+                            <img src="/logo Nuysa.png" alt="NuySa Logo" className="h-full w-full object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />
                         </div>
-                        <span className="text-3xl font-bold font-tech text-white">NuySa</span>
+                        <div>
+                            <span className="text-4xl font-black text-white tracking-widest uppercase">NuySa</span>
+                            <div className="h-1 w-full bg-gradient-to-r from-nutri-brand to-transparent rounded-full mt-1" />
+                        </div>
                     </Link>
-                    <h1 className="text-4xl font-bold font-tech leading-tight mb-4">
-                        Tu camino hacia una vida más saludable
-                    </h1>
-                    <p className="text-lg text-white/80 leading-relaxed">
-                        Sincroniza tu biología con recetas fáciles, nutrición clínica, asesoría personalizada y planes con resultados sostenibles.
-                    </p>
-                    <div className="mt-12 grid grid-cols-3 gap-6">
-                        <div className="text-center">
-                            <div className="text-3xl font-bold">5K+</div>
-                            <div className="text-sm text-white/70">Pacientes</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-3xl font-bold">200+</div>
-                            <div className="text-sm text-white/70">Nutricionistas</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-3xl font-bold">98%</div>
-                            <div className="text-sm text-white/70">Satisfacción</div>
-                        </div>
+
+                    <div className="space-y-6">
+                        <h1 className="text-5xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase italic">
+                            Tu Biología <br />
+                            <span className="text-nutri-brand drop-shadow-[0_0_30px_rgba(255,122,0,0.3)]">Optimizada.</span>
+                        </h1>
+                        <p className="text-slate-400 text-lg lg:text-xl font-bold leading-relaxed max-w-lg mx-auto lg:mx-0">
+                            Sincroniza tus metas con nutrición clínica de precisión y seguimiento en tiempo real.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 pt-8">
+                        {[
+                            { label: "Pacientes", val: "5K+" },
+                            { label: "Resultados", val: "100%" },
+                            { label: "Precisión", val: "Gold" },
+                        ].map((stat, i) => (
+                            <div key={i} className="bg-white/5 backdrop-blur-md border border-white/5 p-4 rounded-2xl">
+                                <div className="text-2xl font-black text-white italic">{stat.val}</div>
+                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{stat.label}</div>
+                            </div>
+                        ))}
                     </div>
                 </div>
-            </div>
 
-            {/* Right: Auth form */}
-            <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-background">
-                <div className="w-full max-w-md">
-                    {/* Mobile logo */}
-                    <Link href="/" className="lg:hidden flex items-center gap-2 mb-8 justify-center hover:opacity-80 transition-opacity">
-                        <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center p-1 shadow-sm border">
-                            <img src="/logo Nuysa.png" alt="NuySa Logo" className="h-full w-full object-contain" />
+                {/* Right: Auth form Wrapper (Glassmorphism) */}
+                <div className="w-full lg:w-[480px] shrink-0">
+                    <div className="nutri-panel p-8 sm:p-12 relative group">
+                        {/* Decorative Corner */}
+                        <div className="absolute -top-1 -right-1 w-12 h-12 border-t-2 border-r-2 border-nutri-brand/50 rounded-tr-3xl" />
+
+                        {/* Top Badge for Mobile */}
+                        <div className="lg:hidden flex justify-center mb-8">
+                            <Badge className="bg-nutri-brand/20 text-nutri-brand border-nutri-brand/30 py-1.5 px-4 font-black tracking-widest uppercase text-[10px]">
+                                Acceso Seguro
+                            </Badge>
                         </div>
-                        <span className="text-2xl font-bold font-tech text-primary">NuySa</span>
-                    </Link>
-                    {children}
+
+                        {children}
+                    </div>
+
+                    <p className="mt-8 text-center text-slate-500 text-xs font-bold uppercase tracking-[0.2em]">
+                        &copy; 2026 NuySa Clinical Nutrition • Todos los derechos reservados
+                    </p>
                 </div>
             </div>
         </div>

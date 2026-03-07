@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, Loader2, Mail, Lock, User, Stethoscope, UserCheck } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Lock, User, Stethoscope, UserCheck, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function RegisterPage() {
     const [fullName, setFullName] = useState("");
@@ -57,9 +58,6 @@ export default function RegisterPage() {
                 return;
             }
 
-            // Profile creation is handled automatically by the Supabase trigger
-            // (on_auth_user_created -> handle_new_user)
-
             setSuccess(true);
         } catch {
             setError("Ocurrió un error inesperado. Intenta de nuevo.");
@@ -70,160 +68,154 @@ export default function RegisterPage() {
 
     if (success) {
         return (
-            <Card className="border-none shadow-none bg-transparent">
-                <CardHeader className="px-0 text-center">
-                    <div className="mx-auto h-16 w-16 rounded-full bg-nutrition-100 flex items-center justify-center mb-4">
-                        <UserCheck className="h-8 w-8 text-nutrition-600" />
-                    </div>
-                    <CardTitle className="text-2xl font-bold">¡Registro exitoso!</CardTitle>
-                    <CardDescription className="text-base">
-                        Revisa tu correo electrónico para confirmar tu cuenta. Luego podrás iniciar sesión.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="px-0">
-                    <Button onClick={() => router.push("/login")} className="w-full h-11">
-                        Ir a Iniciar Sesión
-                    </Button>
-                </CardContent>
-            </Card>
+            <div className="text-center space-y-6 animate-in zoom-in-95 duration-500">
+                <div className="mx-auto h-24 w-24 rounded-[2.5rem] bg-nutri-brand/10 border border-nutri-brand/20 flex items-center justify-center p-6 shadow-[0_0_50px_rgba(255,122,0,0.1)]">
+                    <UserCheck className="h-full w-full text-nutri-brand" />
+                </div>
+                <div className="space-y-2">
+                    <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">¡Casí listo!</h2>
+                    <p className="text-slate-400 font-bold text-sm leading-relaxed px-4">
+                        Hemos enviado un enlace de confirmación a <span className="text-white">{email}</span>. Únete a la revolución nutricional.
+                    </p>
+                </div>
+                <Button
+                    onClick={() => router.push("/login")}
+                    className="w-full h-14 bg-white text-nutri-base font-tech font-black uppercase tracking-widest rounded-2xl hover:bg-nutri-brand hover:text-white transition-all"
+                >
+                    Ir a Iniciar Sesión
+                </Button>
+            </div>
         );
     }
 
     return (
-        <Card className="border-none shadow-none bg-transparent">
-            <CardHeader className="space-y-1 px-0">
-                <CardTitle className="text-2xl font-bold">Crear cuenta</CardTitle>
-                <CardDescription className="text-base">
-                    Elige tu rol y completa tus datos para comenzar
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="px-0">
-                <form onSubmit={handleRegister} className="space-y-4">
-                    {error && (
-                        <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm border border-destructive/20">
-                            {error}
-                        </div>
-                    )}
+        <div className="space-y-8">
+            <div className="space-y-2 text-center lg:text-left">
+                <h2 className="text-3xl font-black text-white tracking-tight uppercase italic flex items-center justify-center lg:justify-start gap-3">
+                    <div className="h-2 w-8 bg-nutri-brand hidden lg:block" />
+                    Nueva Cuenta
+                </h2>
+                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">
+                    Define tu perfil e inicia tu transformación
+                </p>
+            </div>
 
-                    {/* Role selection */}
-                    <div className="space-y-2">
-                        <Label>Tipo de cuenta</Label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setRole("paciente")}
-                                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${role === "paciente"
-                                    ? "border-primary bg-primary/5 text-primary"
-                                    : "border-border hover:border-primary/30"
-                                    }`}
-                            >
-                                <User className="h-6 w-6" />
-                                <span className="text-sm font-medium">Paciente</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setRole("nutricionista")}
-                                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${role === "nutricionista"
-                                    ? "border-primary bg-primary/5 text-primary"
-                                    : "border-border hover:border-primary/30"
-                                    }`}
-                            >
-                                <Stethoscope className="h-6 w-6" />
-                                <span className="text-sm font-medium">Nutricionista</span>
-                            </button>
-                        </div>
+            <form onSubmit={handleRegister} className="space-y-6">
+                {error && (
+                    <div className="p-4 rounded-2xl bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20">
+                        {error}
                     </div>
+                )}
 
-                    <div className="space-y-2">
-                        <Label htmlFor="fullName">Nombre completo</Label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                {/* Role selection - Premium Style */}
+                <div className="space-y-3">
+                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Elegir Rol</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                        {[
+                            { id: "paciente", label: "Paciente", icon: User },
+                            { id: "nutricionista", label: "Especialista", icon: Stethoscope },
+                        ].map((r) => (
+                            <button
+                                key={r.id}
+                                type="button"
+                                onClick={() => setRole(r.id as any)}
+                                className={cn(
+                                    "flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all relative overflow-hidden group",
+                                    role === r.id
+                                        ? "border-nutri-brand bg-nutri-brand/10 text-white"
+                                        : "border-white/5 bg-white/5 text-slate-500 hover:border-white/10"
+                                )}
+                            >
+                                <r.icon className={cn(
+                                    "h-6 w-6 transition-transform group-hover:scale-110",
+                                    role === r.id ? "text-nutri-brand" : "text-slate-600"
+                                )} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">{r.label}</span>
+                                {role === r.id && <div className="absolute top-0 right-0 h-6 w-6 bg-nutri-brand flex items-center justify-center rounded-bl-xl"><Check className="h-3 w-3 text-nutri-base" /></div>}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="fullName" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Nombre</Label>
                             <Input
                                 id="fullName"
-                                type="text"
-                                placeholder="Juan Pérez"
+                                placeholder="Nombre completo"
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
-                                className="pl-10 h-11"
+                                className="h-12 bg-white/5 border-white/10 rounded-xl text-white font-bold placeholder:text-slate-600 focus:ring-nutri-brand/20 focus:border-nutri-brand transition-all"
                                 required
                             />
                         </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Correo electrónico</Label>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <div className="space-y-2">
+                            <Label htmlFor="email" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email</Label>
                             <Input
                                 id="email"
                                 type="email"
                                 placeholder="tu@email.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="pl-10 h-11"
+                                className="h-12 bg-white/5 border-white/10 rounded-xl text-white font-bold placeholder:text-slate-600 focus:ring-nutri-brand/20 focus:border-nutri-brand transition-all"
                                 required
                             />
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Contraseña</Label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="password" exports-ignore className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Contraseña</Label>
                             <Input
                                 id="password"
                                 type={showPassword ? "text" : "password"}
-                                placeholder="Mínimo 6 caracteres"
+                                placeholder="Mínimo 6"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="pl-10 pr-10 h-11"
+                                className="h-12 bg-white/5 border-white/10 rounded-xl text-white font-bold placeholder:text-slate-600 focus:ring-nutri-brand/20 focus:border-nutri-brand transition-all"
                                 required
                             />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                            >
-                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
                         </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmPassword" exports-ignore className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Repetir</Label>
                             <Input
                                 id="confirmPassword"
                                 type="password"
-                                placeholder="Repite tu contraseña"
+                                placeholder="Validar"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="pl-10 h-11"
+                                className="h-12 bg-white/5 border-white/10 rounded-xl text-white font-bold placeholder:text-slate-600 focus:ring-nutri-brand/20 focus:border-nutri-brand transition-all"
                                 required
                             />
                         </div>
                     </div>
-
-                    <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={loading}>
-                        {loading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Creando cuenta...
-                            </>
-                        ) : (
-                            "Crear Cuenta"
-                        )}
-                    </Button>
-                </form>
-
-                <div className="mt-6 text-center text-sm text-muted-foreground">
-                    ¿Ya tienes cuenta?{" "}
-                    <Link href="/login" className="text-primary hover:text-primary/80 font-semibold">
-                        Inicia sesión
-                    </Link>
                 </div>
-            </CardContent>
-        </Card>
+
+                <Button
+                    type="submit"
+                    className="w-full h-14 bg-nutri-brand hover:bg-white text-nutri-base font-tech font-black text-sm uppercase tracking-widest rounded-2xl transition-all shadow-[0_10px_30px_rgba(255,122,0,0.2)]"
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <>
+                            <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                            Creando...
+                        </>
+                    ) : (
+                        "Registrarme"
+                    )}
+                </Button>
+            </form>
+
+            <div className="text-center pt-4 border-t border-white/5">
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">
+                    ¿Ya eres miembro? {" "}
+                    <Link href="/login" className="text-white hover:text-nutri-brand font-black transition-colors ml-1">
+                        Inicia Sesión
+                    </Link>
+                </p>
+            </div>
+        </div>
     );
 }

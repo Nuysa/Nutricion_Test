@@ -13,7 +13,7 @@ import {
     Bell, UserCheck as UserCheckIcon, Clock, Settings, ArrowRight,
     Plus, Trash2, DatabaseZap as DbIcon, Mail, Edit3, Save, Loader2,
     BarChart3, TrendingUp, Target, DollarSign, Activity,
-    Shield, User, FileText, ChevronRight, Play, Layers, Filter, LayoutGrid, LayoutList, LayoutTemplate
+    Shield, ShieldPlus, User, FileText, ChevronRight, Play, Layers, Filter, LayoutGrid, LayoutList, LayoutTemplate
 } from "lucide-react";
 import { VariablesConfig } from "@/components/dashboard/admin/variables-config";
 import { TableEditor } from "@/components/dashboard/admin/table-editor";
@@ -37,7 +37,7 @@ import {
 
 export function AdminStaffDashboardContent({ initialTab = "overview" }: { initialTab?: any }) {
     const { toast } = useToast();
-    const [activeTab, setActiveTab] = useState<"overview" | "verification" | "assignments" | "subscriptions" | "metrics" | "calendar" | "settings" | "visualization" | "landing_cms" | "plans_management" | "food_database">(initialTab);
+    const [activeTab, setActiveTab] = useState<"overview" | "verification" | "assignments" | "subscriptions" | "metrics" | "calendar" | "settings" | "visualization" | "landing_cms" | "plans_management" | "food_database" | "users_management">(initialTab);
     const [plansEditMode, setPlansEditMode] = useState(true);
 
 
@@ -75,6 +75,14 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
     const [subReviewSearch, setSubReviewSearch] = useState("");
     const [selectedPatientPlan, setSelectedPatientPlan] = useState<GlobalProfile | null>(null);
     const [newPlanType, setNewPlanType] = useState("");
+
+    // Create User States
+    const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState(false);
+    const [newUserEmail, setNewUserEmail] = useState("");
+    const [newUserPassword, setNewUserPassword] = useState("");
+    const [newUserFullName, setNewUserFullName] = useState("");
+    const [newUserRole, setNewUserRole] = useState<"staff" | "administrador">("staff");
+    const [isCreatingUser, setIsCreatingUser] = useState(false);
 
 
     // Enhanced Calendar States
@@ -385,6 +393,45 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
         }
     };
 
+    const handleCreateUser = async () => {
+        if (!newUserEmail || !newUserPassword || !newUserFullName) {
+            toast({ title: "Error", description: "Completa todos los campos", variant: "destructive" });
+            return;
+        }
+
+        setIsCreatingUser(true);
+        try {
+            const response = await fetch("/api/admin/create-user", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: newUserEmail,
+                    password: newUserPassword,
+                    fullName: newUserFullName,
+                    role: newUserRole
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Error al crear usuario");
+            }
+
+            toast({ title: "Usuario Creado", description: "El usuario ha sido registrado exitosamente.", variant: "success" });
+            setIsCreateUserDialogOpen(false);
+            // Reset fields
+            setNewUserEmail("");
+            setNewUserPassword("");
+            setNewUserFullName("");
+            loadData(true);
+        } catch (error: any) {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        } finally {
+            setIsCreatingUser(false);
+        }
+    };
+
 
     const nutritionists = profiles.filter(p => p.role === "nutricionista");
     const patients = profiles.filter(p => p.role === "paciente");
@@ -442,6 +489,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                 { id: "assignments", label: "Asignaciones", icon: Link2 },
                                 { id: "subscriptions", label: "Planes Pacientes", icon: DatabaseZap },
                                 { id: "calendar", label: "Agenda Global", icon: Calendar },
+                                ...(currentAdminRole === "administrador" ? [{ id: "users_management", label: "Usuarios", icon: ShieldPlus }] : []),
                             ].map(tab => (
                                 <button
                                     key={tab.id}
@@ -1427,6 +1475,159 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                 </Dialog>
                             </div>
                         )}
+                        {activeTab === "users_management" && (
+                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                    <div className="space-y-1">
+                                        <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">Sistema de Gestión de Usuarios</h2>
+                                        <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">Administra el acceso del personal y directivos.</p>
+                                    </div>
+                                    <Button
+                                        onClick={() => setIsCreateUserDialogOpen(true)}
+                                        className="bg-nutri-brand hover:bg-white text-nutri-base font-black px-8 py-6 rounded-2xl transition-all shadow-xl shadow-nutri-brand/20 uppercase tracking-widest text-xs"
+                                    >
+                                        <ShieldPlus className="h-4 w-4 mr-2" /> Nuevo Usuario Administrativo
+                                    </Button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {/* List of Staff/Admins */}
+                                    {profiles.filter(p => p.role === "staff" || p.role === "administrador").sort((a, b) => a.role === 'administrador' ? -1 : 1).map(user => (
+                                        <Card key={user.id} className="nutri-panel border-none group hover:scale-[1.02] transition-transform overflow-hidden">
+                                            <div className="p-6 space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <Avatar className="h-14 w-14 border-2 border-white/10 shadow-2xl">
+                                                            <AvatarFallback className="bg-white/5 text-white font-black text-lg">
+                                                                {user.name?.[0] || 'U'}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <h3 className="font-black text-white text-lg tracking-tight uppercase italic">{user.name}</h3>
+                                                            <Badge className={cn(
+                                                                "p-0 bg-transparent font-black uppercase text-[9px] tracking-widest border-none",
+                                                                user.role === 'administrador' ? "text-red-400" : "text-nutri-brand"
+                                                            )}>
+                                                                {user.role}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-white/5 p-2 rounded-xl group-hover:bg-nutri-brand group-hover:text-nutri-base transition-colors">
+                                                        {user.role === 'administrador' ? <Shield className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-3 pt-4 border-t border-white/5">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email</span>
+                                                        <span className="text-xs text-white font-bold">{user.email || 'N/A'}</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Estado de Cuenta</span>
+                                                        <Badge className="bg-green-500/10 text-green-400 font-black text-[8px] uppercase border-none px-2 h-5 flex items-center gap-1">
+                                                            <div className="h-1 w-1 bg-green-400 rounded-full animate-pulse" /> Activo
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex gap-2 pt-2">
+                                                    <Button variant="outline" className="flex-1 rounded-xl h-10 text-[10px] font-black uppercase border-white/5 bg-white/5 text-slate-400 hover:text-white" disabled>
+                                                        Logs
+                                                    </Button>
+                                                    <Button variant="outline" className="flex-1 rounded-xl h-10 text-[10px] font-black uppercase border-white/5 bg-white/5 text-slate-400 hover:text-red-400 hover:border-red-400/20"
+                                                        onClick={() => handleDeleteProfile(user.id, user.name)}>
+                                                        Eliminar
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    ))}
+                                </div>
+
+                                {/* Dialog for Creating User */}
+                                <Dialog open={isCreateUserDialogOpen} onOpenChange={setIsCreateUserDialogOpen}>
+                                    <DialogContent className="rounded-[2.5rem] max-w-md bg-nutri-base border-white/10 text-white p-0 overflow-hidden font-tech">
+                                        <div className="p-8 space-y-6">
+                                            <div className="space-y-2">
+                                                <h3 className="text-2xl font-black italic uppercase tracking-tighter flex items-center gap-3">
+                                                    <div className="h-2 w-8 bg-nutri-brand" />
+                                                    Nuevo Acceso
+                                                </h3>
+                                                <p className="text-slate-500 font-bold uppercase tracking-widest text-[9px]">Registra personal con privilegios administrativos.</p>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre Completo</label>
+                                                    <Input
+                                                        className="h-12 bg-white/5 border-white/10 rounded-xl font-bold placeholder:text-slate-700"
+                                                        placeholder="Ej: Staff Nutrition"
+                                                        value={newUserFullName}
+                                                        onChange={(e) => setNewUserFullName(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo Electrónico</label>
+                                                    <Input
+                                                        className="h-12 bg-white/5 border-white/10 rounded-xl font-bold placeholder:text-slate-700"
+                                                        placeholder="admin@nuysa.com"
+                                                        value={newUserEmail}
+                                                        onChange={(e) => setNewUserEmail(e.target.value)}
+                                                        type="email"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contraseña Temporal</label>
+                                                    <Input
+                                                        className="h-12 bg-white/5 border-white/10 rounded-xl font-bold placeholder:text-slate-700"
+                                                        type="password"
+                                                        placeholder="Mínimo 6 caracteres"
+                                                        value={newUserPassword}
+                                                        onChange={(e) => setNewUserPassword(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Rol Designado</label>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setNewUserRole("staff")}
+                                                            className={cn(
+                                                                "p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2",
+                                                                newUserRole === 'staff' ? "border-nutri-brand bg-nutri-brand/10 text-white" : "border-white/5 bg-white/5 text-slate-500 hover:border-white/10"
+                                                            )}
+                                                        >
+                                                            <Users className="h-5 w-5" />
+                                                            <span className="text-[10px] font-black uppercase">Staff</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setNewUserRole("administrador")}
+                                                            className={cn(
+                                                                "p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2",
+                                                                newUserRole === 'administrador' ? "border-red-500/50 bg-red-500/10 text-white" : "border-white/5 bg-white/5 text-slate-500 hover:border-white/10"
+                                                            )}
+                                                        >
+                                                            <Shield className="h-5 w-5" />
+                                                            <span className="text-[10px] font-black uppercase">Admin Root</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <Button
+                                                className="w-full h-14 bg-white text-nutri-base hover:bg-nutri-brand hover:text-white font-black uppercase tracking-widest text-xs rounded-2xl transition-all shadow-2xl"
+                                                onClick={handleCreateUser}
+                                                disabled={isCreatingUser}
+                                            >
+                                                {isCreatingUser ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirmar Registros"}
+                                            </Button>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                        )}
+
                         {activeTab === "settings" && currentAdminRole === 'administrador' && (
                             <VariablesConfig />
                         )}

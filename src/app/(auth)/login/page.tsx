@@ -56,93 +56,95 @@ export default function LoginPage() {
     };
 
     return (
-        <>
-            <Card className="border-none shadow-none bg-transparent">
-                <CardHeader className="space-y-1 px-0">
-                    <CardTitle className="text-2xl font-bold">Bienvenido de vuelta</CardTitle>
-                    <CardDescription className="text-base">
-                        Ingresa tus credenciales para acceder a tu cuenta
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="px-0">
-                    <form onSubmit={handleLogin} className="space-y-4">
-                        {error && (
-                            <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm border border-destructive/20">
-                                {error}
-                            </div>
-                        )}
-
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Correo electrónico</Label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    placeholder="tu@email.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="pl-10 h-11"
-                                    autoComplete="username email"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="password">Contraseña</Label>
-                                <Link href="#" className="text-sm text-primary hover:text-primary/80 font-medium">
-                                    ¿Olvidaste tu contraseña?
-                                </Link>
-                            </div>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    id="password"
-                                    name="password"
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="pl-10 pr-10 h-11"
-                                    autoComplete="current-password"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                                >
-                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </button>
-                            </div>
-                        </div>
-
-                        <Button type="submit" className="w-full h-11 text-base font-semibold" disabled={loading}>
-                            {loading ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Ingresando...
-                                </>
-                            ) : (
-                                "Iniciar Sesión"
-                            )}
-                        </Button>
-                    </form>
-
-                </CardContent>
-            </Card>
-
-            <div className="mt-8 pt-6 border-t border-slate-200">
-                <div className="text-center text-sm text-muted-foreground">
-                    ¿No tienes cuenta?{" "}
-                    <Link href="/register" className="text-primary hover:text-primary/80 font-semibold">
-                        Regístrate gratis
-                    </Link>
-                </div>
+        <div className="space-y-8">
+            <div className="space-y-2">
+                <h2 className="text-3xl font-black text-white tracking-tight uppercase italic flex items-center gap-3">
+                    <div className="h-2 w-8 bg-nutri-brand" />
+                    Ingresar
+                </h2>
+                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">
+                    Accede a tu cuenta clínica personalizada
+                </p>
             </div>
-        </>
+
+            <form onSubmit={handleLogin} className="space-y-6">
+                {error && (
+                    <div className="p-4 rounded-2xl bg-red-500/10 text-red-400 text-xs font-bold border border-red-500/20 animate-in fade-in slide-in-from-top-2">
+                        {error}
+                    </div>
+                )}
+
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="email" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</Label>
+                        <div className="relative group">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-nutri-brand transition-colors" />
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="tu@email.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="pl-12 h-14 bg-white/5 border-white/10 rounded-2xl text-white font-bold placeholder:text-slate-600 focus:ring-nutri-brand/20 focus:border-nutri-brand transition-all shadow-inner"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between ml-1">
+                            <Label htmlFor="password" exports-ignore className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contraseña</Label>
+                            <Link href="#" className="text-[10px] text-slate-500 hover:text-nutri-brand font-black uppercase tracking-widest transition-colors">
+                                ¿Olvidaste?
+                            </Link>
+                        </div>
+                        <div className="relative group">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-nutri-brand transition-colors" />
+                            <Input
+                                id="password"
+                                type={showPassword ? "text" : "password"}
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="pl-12 pr-12 h-14 bg-white/5 border-white/10 rounded-2xl text-white font-bold placeholder:text-slate-600 focus:ring-nutri-brand/20 focus:border-nutri-brand transition-all shadow-inner"
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                            >
+                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <Button
+                    type="submit"
+                    className="w-full h-14 bg-nutri-brand hover:bg-white text-nutri-base font-tech font-black text-sm uppercase tracking-widest rounded-2xl transition-all shadow-[0_10px_30px_rgba(255,122,0,0.2)] hover:scale-[1.02] active:scale-[0.98]"
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <>
+                            <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                            Verificando...
+                        </>
+                    ) : (
+                        "Iniciar Sesión"
+                    )}
+                </Button>
+            </form>
+
+            <div className="text-center pt-6 relative">
+                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">
+                    ¿Nuevo en NuySa? {" "}
+                    <Link href="/register" className="text-white hover:text-nutri-brand font-black transition-colors ml-1">
+                        Crea tu perfil
+                    </Link>
+                </p>
+            </div>
+        </div>
     );
 }
