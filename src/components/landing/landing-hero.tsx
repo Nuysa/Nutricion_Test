@@ -157,7 +157,7 @@ export function LandingHero() {
                             {isEditable && (
                                 <EditableLink
                                     label="Video Hero"
-                                    href={content.videoUrl}
+                                    url={content.videoUrl}
                                     onSave={(val: string) => handleSave('videoUrl', val)}
                                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4 scale-150"
                                 />
