@@ -141,7 +141,7 @@ export function LandingFooter() {
                                     />
                                     <EditableLink
                                         label="Link WhatsApp"
-                                        href={content.ctaWhatsapp}
+                                        url={content.ctaWhatsapp}
                                         onSave={(val: string) => handleSave('ctaWhatsapp', val)}
                                         className="bg-white/20 hover:bg-white/40 mt-1"
                                     />
@@ -169,7 +169,7 @@ export function LandingFooter() {
                                     />
                                     <EditableLink
                                         label="Link Logo Footer"
-                                        href={content.logoHref || "/"}
+                                        url={content.logoHref || "/"}
                                         onSave={(val: string) => handleSave('logoHref', val)}
                                         className="static mt-0"
                                     />
@@ -280,7 +280,7 @@ export function LandingFooter() {
                                                 />
                                                 <EditableLink
                                                     label={`URL ${social.label}`}
-                                                    href={social.url}
+                                                    url={social.url}
                                                     onSave={(val: string) => handleUpdateSocial(social.id, { url: val })}
                                                     className="opacity-100 scale-90 mt-0"
                                                 />

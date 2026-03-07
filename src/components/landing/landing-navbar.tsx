@@ -88,8 +88,8 @@ export function LandingNavbar() {
                                         />
                                         <EditableLink
                                             label="Link Logo"
-                                            href={content.logoHref || "/"}
-                                            onSave={(val) => handleSave('logoHref', val)}
+                                            url={content.logoHref || "/"}
+                                            onSave={(val: string) => handleSave('logoHref', val)}
                                             className="static mt-0"
                                         />
                                     </div>
