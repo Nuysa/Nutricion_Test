@@ -167,7 +167,7 @@ export function LandingHero() {
 
                         {/* Cartel Proteína */}
                         <div className={cn(
-                            "cartel-base pos-proteina bg-nutri-panel border border-white/10 p-5 rounded-xl w-[200px] sm:w-[260px] shadow-2xl relative group/card hidden sm:block",
+                            "cartel-base pos-proteina bg-nutri-panel border border-white/10 p-5 rounded-xl w-[200px] sm:w-[260px] shadow-2xl relative group/card",
                             activeCartel === "proteina" && "cartel-active"
                         )}>
                             <div className="flex items-center gap-2 pb-2 mb-2">
@@ -191,7 +191,7 @@ export function LandingHero() {
 
                         {/* Cartel Carbohidrato */}
                         <div className={cn(
-                            "cartel-base pos-carbo bg-nutri-panel border border-white/10 p-5 rounded-xl w-[200px] sm:w-[260px] shadow-2xl hidden sm:block",
+                            "cartel-base pos-carbo bg-nutri-panel border border-white/10 p-5 rounded-xl w-[200px] sm:w-[260px] shadow-2xl",
                             activeCartel === "carbo" && "cartel-active"
                         )}>
                             <div className="flex items-center gap-2 pb-2 mb-2">
@@ -215,7 +215,7 @@ export function LandingHero() {
 
                         {/* Cartel Lípido */}
                         <div className={cn(
-                            "cartel-base pos-lipido bg-nutri-panel border border-white/10 p-5 rounded-xl w-[200px] sm:w-[260px] shadow-2xl hidden sm:block",
+                            "cartel-base pos-lipido bg-nutri-panel border border-white/10 p-5 rounded-xl w-[200px] sm:w-[260px] shadow-2xl",
                             activeCartel === "lipido" && "cartel-active"
                         )}>
                             <div className="flex items-center gap-2 pb-2 mb-2">

@@ -318,17 +318,21 @@
   .pos-proteina,
   .pos-carbo,
   .pos-lipido {
-    bottom: -5%;
+    bottom: -15%;
     left: 50%;
-    transform: translate(-50%, 20px) scale(0.95);
-    width: 90%;
-    max-width: 320px;
+    transform: translate(-50%, 30px) scale(0.9);
+    width: 95%;
+    max-width: 300px;
+    background: #151F32;
+    border: 1px solid rgba(255, 122, 0, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
   }
 
   .cartel-active {
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
     pointer-events: auto;
+    z-index: 50;
   }
 }
 
