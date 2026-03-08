@@ -34,7 +34,7 @@ export async function updateSession(request: NextRequest) {
     const pathname = originalPathname.replace(/\/+/g, '/');
 
     // Public paths that don't require authentication
-    const publicPaths = ["/login", "/register", "/", "/pending-approval"];
+    const publicPaths = ["/login", "/register", "/", "/pending-approval", "/manifest.json", "/sw.js"];
     const isPublicPath = publicPaths.some(
         (p) => pathname === p || pathname.startsWith("/api/auth")
     );
