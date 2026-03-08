@@ -16,8 +16,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 {/* Left: Branding panel (Premium) */}
                 <div className="w-full lg:w-1/2 space-y-8 text-center lg:text-left">
                     <Link href="/" className="inline-flex items-center gap-3 sm:gap-4 hover:opacity-80 transition-all group">
-                        <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-[1.5rem] sm:rounded-[2rem] bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center p-3 sm:p-4 shadow-2xl group-hover:scale-110 transition-transform">
-                            <img src="/logo Nuysa.png" alt="NuySa Logo" className="h-full w-full object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />
+                        <div className="h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <img src="/logo Nuysa.png" alt="NuySa Logo" className="h-full w-full object-contain" />
                         </div>
                         <div className="text-left">
                             <span className="text-2xl sm:text-4xl font-black text-white tracking-widest uppercase leading-none">NuySa</span>

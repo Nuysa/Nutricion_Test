@@ -86,7 +86,7 @@ export function LandingNavbar() {
                         <div className="flex-shrink-0 flex items-center gap-2">
                             <div className="relative group overflow-visible">
                                 <Link href={content.logoHref || "/"} className="cursor-pointer hover:opacity-80 transition-opacity">
-                                    <img src={content.logoUrl} alt="Logo NuySa" className="h-10 md:h-12 w-auto object-contain bg-white rounded-lg p-1 drop-shadow-[0_0_10px_rgba(255,122,0,0.3)]" />
+                                    <img src={content.logoUrl} alt="Logo NuySa" className="h-10 md:h-12 w-auto object-contain" />
                                 </Link>
                                 {isEditable && (
                                     <div className="absolute -top-2 -right-2 flex flex-col gap-1">
@@ -207,7 +207,7 @@ export function LandingNavbar() {
                         {/* Header of the Card */}
                         <div className="flex justify-between items-center p-6 border-b border-white/5 bg-[#0B1120]/50">
                             <div className="flex items-center gap-2">
-                                <img src={content.logoUrl} alt="Logo" className="h-6 w-auto bg-white rounded-md p-1" />
+                                <img src={content.logoUrl} alt="Logo" className="h-6 w-auto" />
                                 <span className="font-tech font-bold text-base text-white">Menú <span className="text-nutri-brand">NuySa</span></span>
                             </div>
                             <button

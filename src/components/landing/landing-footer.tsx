@@ -156,7 +156,7 @@ export function LandingFooter() {
                     <div>
                         <div className="relative group/footer-logo inline-block">
                             <Link href={content.logoHref || "/"} className="flex items-center gap-3 mb-6 hover:opacity-80 transition-opacity">
-                                <img src={content.logoUrl} alt="Logo NuySa" className="h-10 md:h-12 w-auto object-contain bg-white rounded-lg p-1 drop-shadow-[0_0_10px_rgba(255,122,0,0.3)]" />
+                                <img src={content.logoUrl} alt="Logo NuySa" className="h-10 md:h-12 w-auto object-contain" />
                                 <span className="font-tech font-bold text-2xl tracking-tight text-white">Nuy<span className="text-nutri-brand">Sa</span></span>
                             </Link>
                             {isEditable && (

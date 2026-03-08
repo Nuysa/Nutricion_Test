@@ -165,8 +165,8 @@ export function Sidebar({ currentUserId: propUserId }: { currentUserId?: string 
     const sidebarContent = (
         <div className="flex flex-col h-full bg-nutri-panel">
             <Link href="/" className="px-6 py-8 flex items-center gap-3 hover:opacity-80 transition-opacity border-b border-white/5">
-                <div className="h-10 w-10 rounded-xl bg-nutri-brand flex items-center justify-center shadow-[0_0_20px_rgba(255,122,0,0.3)] p-1.5">
-                    <img src="/logo Nuysa.png" alt="NuySa Logo" className="h-full w-full object-contain brightness-0 invert" />
+                <div className="h-10 w-10 flex items-center justify-center">
+                    <img src="/logo Nuysa.png" alt="NuySa Logo" className="h-full w-full object-contain" />
                 </div>
                 <span className="text-2xl font-black font-tech text-white tracking-tighter">Nuy<span className="text-nutri-brand">Sa</span></span>
             </Link>
