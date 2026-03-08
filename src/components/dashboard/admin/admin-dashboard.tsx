@@ -536,76 +536,101 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                         </div>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="space-y-3">
-                                            {profiles.filter(p => (p.name || '').toLowerCase().includes(searchTerm.toLowerCase())).map(profile => (
-                                                <div key={profile.id} className="flex items-center justify-between p-4 rounded-3xl border border-slate-50 hover:bg-slate-50/50 transition-colors group">
-                                                    <div className="flex items-center gap-4">
-                                                        <Avatar className="h-12 w-12 border-2 border-white shadow-md">
-                                                            <AvatarFallback className="bg-nutrition-50 text-nutrition-600 font-black">
-                                                                {(profile.name || "?").split(" ").map(n => n[0]).join("")}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <h4 className="font-black text-slate-800 leading-none">{profile.name}</h4>
-                                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{profile.role}</p>
+                                        <div className="space-y-8">
+                                            {[
+                                                { title: "Administradores", role: "administrador", icon: Shield },
+                                                { title: "Staff", role: "staff", icon: ShieldPlus },
+                                                { title: "Nutricionistas", role: "nutricionista", icon: Stethoscope },
+                                                { title: "Pacientes", role: "paciente", icon: User }
+                                            ].map((group) => {
+                                                const groupProfiles = profiles.filter(p =>
+                                                    p.role === group.role &&
+                                                    (p.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+                                                );
+
+                                                if (groupProfiles.length === 0) return null;
+
+                                                return (
+                                                    <div key={group.role} className="space-y-4">
+                                                        <div className="flex items-center gap-3 px-2">
+                                                            <div className="h-8 w-8 rounded-xl bg-nutrition-500/10 flex items-center justify-center">
+                                                                <group.icon className="h-4 w-4 text-nutrition-500" />
                                                             </div>
-                                                            <div className="flex items-center gap-1.5 mt-1.5">
-                                                                <Mail className="h-3 w-3 text-slate-400" />
-                                                                <p className="text-xs font-medium text-slate-500">
-                                                                    {(currentAdminRole === 'administrador' || profile.role !== 'administrador')
-                                                                        ? (profile.email || "Sin correo")
-                                                                        : "• • • • • • • • • •"}
-                                                                </p>
-                                                                {profile.role === 'paciente' && (
-                                                                    <Badge className={cn(
-                                                                        "ml-2 text-[8px] font-black uppercase border-none px-1.5 h-4",
-                                                                        profile.planType === 'plan flexible' ? "bg-purple-100 text-purple-600" :
-                                                                            profile.planType === 'plan menu semanal' ? "bg-blue-100 text-blue-600" :
-                                                                                "bg-slate-100 text-slate-500"
-                                                                    )}>
-                                                                        {profile.planType || 'Sin Plan'}
-                                                                    </Badge>
-                                                                )}
-                                                                {currentAdminRole === 'staff' && profile.role === 'administrador' && (
-                                                                    <Shield className="h-3 w-3 text-amber-500 ml-1" />
-                                                                )}
-                                                            </div>
+                                                            <h3 className="font-black text-sm uppercase tracking-widest text-slate-400">
+                                                                {group.title} <span className="ml-2 text-nutrition-500/50">({groupProfiles.length})</span>
+                                                            </h3>
+                                                        </div>
+
+                                                        <div className="space-y-3">
+                                                            {groupProfiles.map(profile => (
+                                                                <div key={profile.id} className="flex items-center justify-between p-4 rounded-3xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all group">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <Avatar className="h-12 w-12 border-2 border-white/10 shadow-md">
+                                                                            <AvatarFallback className="bg-nutrition-500 text-white font-black">
+                                                                                {(profile.name || "?").split(" ").map(n => n[0]).join("")}
+                                                                            </AvatarFallback>
+                                                                        </Avatar>
+                                                                        <div>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <h4 className="font-black text-white leading-none">{profile.name}</h4>
+                                                                                <Badge variant="outline" className={cn(
+                                                                                    "h-4 text-[8px] font-black uppercase border-none px-1.5",
+                                                                                    (profile as any).status === "Activo" ? "bg-green-500/10 text-green-500" : "bg-amber-500/10 text-amber-500"
+                                                                                )}>
+                                                                                    {(profile as any).status || "Pendiente"}
+                                                                                </Badge>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-1.5 mt-1.5">
+                                                                                <Mail className="h-3 w-3 text-slate-500" />
+                                                                                <p className="text-xs font-medium text-slate-400">
+                                                                                    {(currentAdminRole === 'administrador' || profile.role !== 'administrador')
+                                                                                        ? (profile.email || "Sin correo")
+                                                                                        : "• • • • • • • • • •"}
+                                                                                </p>
+                                                                                {profile.role === 'paciente' && (
+                                                                                    <Badge className={cn(
+                                                                                        "ml-2 text-[8px] font-black uppercase border-none px-1.5 h-4",
+                                                                                        profile.planType === 'plan flexible' ? "bg-purple-500/10 text-purple-400" :
+                                                                                            profile.planType === 'plan menu semanal' ? "bg-blue-500/10 text-blue-400" :
+                                                                                                "bg-slate-500/10 text-slate-500"
+                                                                                    )}>
+                                                                                        {profile.planType || 'Sin Plan'}
+                                                                                    </Badge>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-9 w-9 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                                                            onClick={() => handleDeleteProfile(profile.id, profile.name)}
+                                                                        >
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-9 w-9 rounded-xl text-slate-500 hover:text-nutrition-500 hover:bg-nutrition-500/10 transition-all"
+                                                                            onClick={() => {
+                                                                                if (profile.role === 'paciente') {
+                                                                                    setSelectedPatientPlan(profile);
+                                                                                    setNewPlanType(profile.planType || "sin plan");
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <Settings className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <Badge variant="outline" className={cn(
-                                                            "rounded-xl border-none font-black text-[10px] uppercase",
-                                                            (profile as any).status === "Activo" ? "bg-green-50 text-green-600" : "bg-amber-50 text-amber-600"
-                                                        )}>
-                                                            {(profile as any).status || "Pendiente"}
-                                                        </Badge>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 hover:bg-red-50"
-                                                            onClick={() => handleDeleteProfile(profile.id, profile.name)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                                            onClick={() => {
-                                                                if (profile.role === 'paciente') {
-                                                                    setSelectedPatientPlan(profile);
-                                                                    setNewPlanType(profile.planType || "sin plan");
-                                                                }
-                                                            }}
-                                                        >
-                                                            <Settings className="h-4 w-4 text-slate-400" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                             {profiles.length === 0 && (
-                                                <p className="text-center py-10 text-slate-400 font-bold">No se encontraron perfiles en la base de datos.</p>
+                                                <p className="text-center py-20 text-slate-500 font-bold italic">No se encontraron perfiles en la base de datos.</p>
                                             )}
                                         </div>
                                     </CardContent>
