@@ -13,7 +13,8 @@ import {
     Bell, UserCheck as UserCheckIcon, Clock, Settings, ArrowRight,
     Plus, Trash2, DatabaseZap as DbIcon, Mail, Edit3, Save, Loader2,
     BarChart3, TrendingUp, Target, DollarSign, Activity,
-    Shield, ShieldPlus, User, FileText, ChevronRight, Play, Layers, Filter, LayoutGrid, LayoutList, LayoutTemplate, Stethoscope
+    Shield, ShieldPlus, User, FileText, ChevronRight, Play, Layers, Filter, LayoutGrid, LayoutList, LayoutTemplate, Stethoscope,
+    ChevronDown, ChevronUp
 } from "lucide-react";
 import { VariablesConfig } from "@/components/dashboard/admin/variables-config";
 import { TableEditor } from "@/components/dashboard/admin/table-editor";
@@ -83,6 +84,12 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
     const [newUserFullName, setNewUserFullName] = useState("");
     const [newUserRole, setNewUserRole] = useState<"staff" | "administrador">("staff");
     const [isCreatingUser, setIsCreatingUser] = useState(false);
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+        administrador: true,
+        staff: true,
+        nutricionista: true,
+        paciente: true
+    });
 
 
     // Enhanced Calendar States
@@ -536,7 +543,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                         </div>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="space-y-8">
+                                        <div className="space-y-4">
                                             {[
                                                 { title: "Administradores", role: "administrador", icon: Shield },
                                                 { title: "Staff", role: "staff", icon: ShieldPlus },
@@ -550,82 +557,96 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
 
                                                 if (groupProfiles.length === 0) return null;
 
+                                                const isExpanded = expandedGroups[group.role];
+
                                                 return (
                                                     <div key={group.role} className="space-y-4">
-                                                        <div className="flex items-center gap-3 px-2">
-                                                            <div className="h-8 w-8 rounded-xl bg-nutrition-500/10 flex items-center justify-center">
-                                                                <group.icon className="h-4 w-4 text-nutrition-500" />
+                                                        <button
+                                                            onClick={() => setExpandedGroups(prev => ({ ...prev, [group.role]: !prev[group.role] }))}
+                                                            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all group/header"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="h-8 w-8 rounded-xl bg-nutrition-500/10 flex items-center justify-center">
+                                                                    <group.icon className="h-4 w-4 text-nutrition-500" />
+                                                                </div>
+                                                                <h3 className="font-black text-xs uppercase tracking-widest text-white">
+                                                                    {group.title} <span className="ml-2 text-nutrition-500/50">({groupProfiles.length})</span>
+                                                                </h3>
                                                             </div>
-                                                            <h3 className="font-black text-sm uppercase tracking-widest text-slate-400">
-                                                                {group.title} <span className="ml-2 text-nutrition-500/50">({groupProfiles.length})</span>
-                                                            </h3>
-                                                        </div>
+                                                            {isExpanded ? (
+                                                                <ChevronUp className="h-4 w-4 text-slate-500 group-hover/header:text-white transition-colors" />
+                                                            ) : (
+                                                                <ChevronDown className="h-4 w-4 text-slate-500 group-hover/header:text-white transition-colors" />
+                                                            )}
+                                                        </button>
 
-                                                        <div className="space-y-3">
-                                                            {groupProfiles.map(profile => (
-                                                                <div key={profile.id} className="flex items-center justify-between p-4 rounded-3xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all group">
-                                                                    <div className="flex items-center gap-4">
-                                                                        <Avatar className="h-12 w-12 border-2 border-white/10 shadow-md">
-                                                                            <AvatarFallback className="bg-nutrition-500 text-white font-black">
-                                                                                {(profile.name || "?").split(" ").map(n => n[0]).join("")}
-                                                                            </AvatarFallback>
-                                                                        </Avatar>
-                                                                        <div>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <h4 className="font-black text-white leading-none">{profile.name}</h4>
-                                                                                <Badge variant="outline" className={cn(
-                                                                                    "h-4 text-[8px] font-black uppercase border-none px-1.5",
-                                                                                    (profile as any).status === "Activo" ? "bg-green-500/10 text-green-500" : "bg-amber-500/10 text-amber-500"
-                                                                                )}>
-                                                                                    {(profile as any).status || "Pendiente"}
-                                                                                </Badge>
-                                                                            </div>
-                                                                            <div className="flex items-center gap-1.5 mt-1.5">
-                                                                                <Mail className="h-3 w-3 text-slate-500" />
-                                                                                <p className="text-xs font-medium text-slate-400">
-                                                                                    {(currentAdminRole === 'administrador' || profile.role !== 'administrador')
-                                                                                        ? (profile.email || "Sin correo")
-                                                                                        : "• • • • • • • • • •"}
-                                                                                </p>
-                                                                                {profile.role === 'paciente' && (
-                                                                                    <Badge className={cn(
-                                                                                        "ml-2 text-[8px] font-black uppercase border-none px-1.5 h-4",
-                                                                                        profile.planType === 'plan flexible' ? "bg-purple-500/10 text-purple-400" :
-                                                                                            profile.planType === 'plan menu semanal' ? "bg-blue-500/10 text-blue-400" :
-                                                                                                "bg-slate-500/10 text-slate-500"
+                                                        {isExpanded && (
+                                                            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                                {groupProfiles.map(profile => (
+                                                                    <div key={profile.id} className="flex items-center justify-between p-4 rounded-3xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all group">
+                                                                        <div className="flex items-center gap-4">
+                                                                            <Avatar className="h-12 w-12 border-2 border-white/10 shadow-md">
+                                                                                <AvatarFallback className="bg-nutrition-500 text-white font-black">
+                                                                                    {(profile.name || "?").split(" ").map(n => n[0]).join("")}
+                                                                                </AvatarFallback>
+                                                                            </Avatar>
+                                                                            <div>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <h4 className="font-black text-white leading-none">{profile.name}</h4>
+                                                                                    <Badge variant="outline" className={cn(
+                                                                                        "h-4 text-[8px] font-black uppercase border-none px-1.5",
+                                                                                        (profile as any).status === "Activo" ? "bg-green-500/10 text-green-500" : "bg-amber-500/10 text-amber-500"
                                                                                     )}>
-                                                                                        {profile.planType || 'Sin Plan'}
+                                                                                        {(profile as any).status || "Pendiente"}
                                                                                     </Badge>
-                                                                                )}
+                                                                                </div>
+                                                                                <div className="flex items-center gap-1.5 mt-1.5">
+                                                                                    <Mail className="h-3 w-3 text-slate-500" />
+                                                                                    <p className="text-xs font-medium text-slate-400">
+                                                                                        {(currentAdminRole === 'administrador' || profile.role !== 'administrador')
+                                                                                            ? (profile.email || "Sin correo")
+                                                                                            : "• • • • • • • • • •"}
+                                                                                    </p>
+                                                                                    {profile.role === 'paciente' && (
+                                                                                        <Badge className={cn(
+                                                                                            "ml-2 text-[8px] font-black uppercase border-none px-1.5 h-4",
+                                                                                            profile.planType === 'plan flexible' ? "bg-purple-500/10 text-purple-400" :
+                                                                                                profile.planType === 'plan menu semanal' ? "bg-blue-500/10 text-blue-400" :
+                                                                                                    "bg-slate-500/10 text-slate-500"
+                                                                                        )}>
+                                                                                            {profile.planType || 'Sin Plan'}
+                                                                                        </Badge>
+                                                                                    )}
+                                                                                </div>
                                                                             </div>
                                                                         </div>
+                                                                        <div className="flex items-center gap-1">
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                className="h-9 w-9 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                                                                onClick={() => handleDeleteProfile(profile.id, profile.name)}
+                                                                            >
+                                                                                <Trash2 className="h-4 w-4" />
+                                                                            </Button>
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                className="h-9 w-9 rounded-xl text-slate-500 hover:text-nutrition-500 hover:bg-nutrition-500/10 transition-all"
+                                                                                onClick={() => {
+                                                                                    if (profile.role === 'paciente') {
+                                                                                        setSelectedPatientPlan(profile);
+                                                                                        setNewPlanType(profile.planType || "sin plan");
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                <Settings className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="flex items-center gap-1">
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="icon"
-                                                                            className="h-9 w-9 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                                                                            onClick={() => handleDeleteProfile(profile.id, profile.name)}
-                                                                        >
-                                                                            <Trash2 className="h-4 w-4" />
-                                                                        </Button>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="icon"
-                                                                            className="h-9 w-9 rounded-xl text-slate-500 hover:text-nutrition-500 hover:bg-nutrition-500/10 transition-all"
-                                                                            onClick={() => {
-                                                                                if (profile.role === 'paciente') {
-                                                                                    setSelectedPatientPlan(profile);
-                                                                                    setNewPlanType(profile.planType || "sin plan");
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            <Settings className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 );
                                             })}
