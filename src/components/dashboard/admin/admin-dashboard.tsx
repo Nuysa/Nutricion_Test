@@ -13,7 +13,7 @@ import {
     Bell, UserCheck as UserCheckIcon, Clock, Settings, ArrowRight,
     Plus, Trash2, DatabaseZap as DbIcon, Mail, Edit3, Save, Loader2,
     BarChart3, TrendingUp, Target, DollarSign, Activity,
-    Shield, ShieldPlus, User, FileText, ChevronRight, Play, Layers, Filter, LayoutGrid, LayoutList, LayoutTemplate
+    Shield, ShieldPlus, User, FileText, ChevronRight, Play, Layers, Filter, LayoutGrid, LayoutList, LayoutTemplate, Stethoscope
 } from "lucide-react";
 import { VariablesConfig } from "@/components/dashboard/admin/variables-config";
 import { TableEditor } from "@/components/dashboard/admin/table-editor";
