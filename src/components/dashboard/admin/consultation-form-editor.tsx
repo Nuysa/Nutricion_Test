@@ -142,7 +142,7 @@ export function ConsultationFormEditor() {
 
     const renderFieldItem = (field: EditableField) => (
         <div key={field.id} className="group relative bg-white border border-slate-200 shadow-sm rounded-lg p-3 flex flex-col gap-2 transition-all hover:border-slate-300">
-            <div className="flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity absolute -top-3 right-2 bg-white rounded-full shadow-sm border border-slate-100 px-1">
+            <div className="flex justify-between items-center transition-opacity absolute -top-3 right-2 bg-white rounded-full shadow-sm border border-slate-100 px-1">
                 <button onClick={() => removeField(field.id)} className="p-1.5 text-red-400 hover:text-red-500 rounded-full hover:bg-red-50">
                     <Trash2 className="h-3 w-3" />
                 </button>

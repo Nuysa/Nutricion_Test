@@ -265,7 +265,7 @@ export function RecipeTemplates() {
                     <div className="grid grid-cols-1 gap-6">
                         {templates.map(tpl => (
                             <Card key={tpl.id} className="bg-[#151F32]/60 border-white/5 rounded-[2rem] p-8 hover:bg-[#151F32] transition-all group relative">
-                                <button className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors opacity-0 group-hover:opacity-100">
+                                <button className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors">
                                     <Edit3 className="h-5 w-5" />
                                 </button>
 

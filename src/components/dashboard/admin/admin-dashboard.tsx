@@ -1763,10 +1763,17 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
 
                                         <button
                                             onClick={() => {
+                                                // Disparamos el evento para que PlansSection guarde en Supabase
+                                                window.dispatchEvent(new CustomEvent('publish-landing-plans'));
+
                                                 const btn = document.getElementById('save-feedback');
                                                 if (btn) {
-                                                    btn.innerText = "¡Sincronizado! ✓";
-                                                    setTimeout(() => btn.innerText = "Publicar Cambios", 2000);
+                                                    const originalText = btn.innerText;
+                                                    btn.innerText = "Publicando...";
+                                                    // El componente PlansSection mostrará su propio toast al terminar
+                                                    setTimeout(() => {
+                                                        if (btn) btn.innerText = originalText;
+                                                    }, 2000);
                                                 }
                                             }}
                                             id="save-feedback"

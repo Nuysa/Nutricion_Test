@@ -444,7 +444,7 @@ export function FoodDatabase() {
                                                 </div>
                                             </div>
 
-                                            <button className="absolute top-4 right-4 text-slate-600 hover:text-white transition-colors opacity-0 group-hover/card:opacity-100">
+                                            <button className="absolute top-4 right-4 text-slate-600 hover:text-white transition-colors">
                                                 <MoreVertical className="h-4 w-4" />
                                             </button>
                                         </div>

@@ -195,7 +195,7 @@ export function EditConsultationModal({
                 <div className="px-12 py-10 border-t border-white/5 flex justify-between items-center relative z-10 bg-white/[0.01]">
                     <button
                         onClick={onDelete}
-                        className="text-red-500/50 hover:text-red-400 hover:bg-red-500/5 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 border border-transparent hover:border-red-500/20"
+                        className="text-red-500 hover:text-white hover:bg-red-500 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3 border border-transparent hover:border-red-500/20"
                     >
                         <Trash2 className="h-4 w-4" /> Eliminar Registro
                     </button>

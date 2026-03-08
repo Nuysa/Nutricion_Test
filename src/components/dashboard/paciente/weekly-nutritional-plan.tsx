@@ -804,7 +804,7 @@ export function WeeklyNutritionalPlan() {
                                     {weekOffset !== 0 && (
                                         <button
                                             onClick={() => setWeekOffset(0)}
-                                            className="absolute -top-3 right-0 bg-orange-500 text-white text-[8px] font-black px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="absolute -top-3 right-0 bg-orange-500 text-white text-[8px] font-black px-2 py-1 rounded-full transition-opacity"
                                         >
                                             HOY
                                         </button>

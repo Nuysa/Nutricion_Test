@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import { useVisualEditor } from "@/components/dashboard/admin/visual-editor-context";
 import { EditableText } from "@/components/dashboard/admin/editable-text";
 import { EditableImage } from "@/components/dashboard/admin/editable-image";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function LandingAbout() {
     const [content, setContent] = useState({
@@ -20,6 +22,7 @@ export function LandingAbout() {
         profileUrl: "/delia.jpg"
     });
 
+    const [isBioExpanded, setIsBioExpanded] = useState(false);
     const { isEditable } = useVisualEditor();
 
     const handleSave = async (field: string, newValue: string) => {
@@ -124,7 +127,7 @@ export function LandingAbout() {
                                             return word + ' '
                                         })}
                                     </h3>
-                                    <p style={{ marginBottom: "6px" }} className="text-base text-slate-300 font-sans leading-relaxed mb-8 whitespace-pre-line">
+                                    <p style={{ marginBottom: "6px" }} className="text-base text-slate-300 font-sans leading-relaxed mb-8 whitespace-pre-line text-justify">
                                         {content.text1}
                                     </p>
                                     <br />
@@ -137,39 +140,57 @@ export function LandingAbout() {
                                             return word + ' '
                                         })}
                                     </h3>
-                                    <p style={{ marginBottom: "6px" }} className="text-base text-slate-300 font-sans leading-relaxed mb-8 whitespace-pre-line">
+                                    <p style={{ marginBottom: "6px" }} className="text-base text-slate-300 font-sans leading-relaxed mb-4 whitespace-pre-line text-justify">
                                         {content.text2}
                                     </p>
+
+                                    {/* Mobile Toggle Button */}
+                                    {!isEditable && (
+                                        <div className="lg:hidden mb-6">
+                                            <button
+                                                onClick={() => setIsBioExpanded(!isBioExpanded)}
+                                                className="flex items-center gap-2 text-nutri-brand font-bold uppercase tracking-wider text-sm hover:opacity-80 transition-opacity"
+                                            >
+                                                {isBioExpanded ? (
+                                                    <>Ver menos <ChevronUp className="h-4 w-4" /></>
+                                                ) : (
+                                                    <>Ver más <ChevronDown className="h-4 w-4" /></>
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    <div className={cn(
+                                        "space-y-6 transition-all duration-500 overflow-hidden",
+                                        !isBioExpanded && !isEditable ? "max-h-0 lg:max-h-none opacity-0 lg:opacity-100" : "max-h-[2000px] opacity-100"
+                                    )}>
+                                        <p className="text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line text-justify">
+                                            {content.extraText1}
+                                        </p>
+                                        <p className="text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line text-justify">
+                                            <strong>¿Qué me inspiró a estudiar nutrición? </strong>
+                                            <br />{content.extraText2}
+                                        </p>
+                                    </div>
                                 </>
                             )}
-                            <br />
-                            {isEditable ? (
-                                <EditableText
-                                    label="Texto Inspiración 1"
-                                    value={content.extraText1}
-                                    onSave={(val) => handleSave('extraText1', val)}
-                                    className="text-base text-slate-300 font-sans leading-relaxed mb-8"
-                                    multiline
-                                />
-                            ) : (
-                                <p className="text-base text-slate-300 font-sans leading-relaxed mb-8">
-                                    {content.extraText1}
-                                </p>
-                            )}
-                            <br />
-                            {isEditable ? (
-                                <EditableText
-                                    label="Texto Inspiración 2"
-                                    value={content.extraText2}
-                                    onSave={(val) => handleSave('extraText2', val)}
-                                    className="text-base text-slate-300 font-sans leading-relaxed mb-8"
-                                    multiline
-                                />
-                            ) : (
-                                <p className="text-base text-slate-300 font-sans leading-relaxed mb-8">
-                                    <strong>¿Qué me inspiró a estudiar nutrición? </strong>
-                                    <br />{content.extraText2}
-                                </p>
+                            {isEditable && (
+                                <div className="mt-8 space-y-6">
+                                    <EditableText
+                                        label="Texto Inspiración 1"
+                                        value={content.extraText1}
+                                        onSave={(val) => handleSave('extraText1', val)}
+                                        className="text-base text-slate-300 font-sans leading-relaxed mb-8 text-justify"
+                                        multiline
+                                    />
+                                    <EditableText
+                                        label="Texto Inspiración 2"
+                                        value={content.extraText2}
+                                        onSave={(val) => handleSave('extraText2', val)}
+                                        className="text-base text-slate-300 font-sans leading-relaxed mb-8 text-justify"
+                                        multiline
+                                    />
+                                </div>
                             )}
                         </div>
 

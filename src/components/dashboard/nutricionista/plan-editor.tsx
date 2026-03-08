@@ -1121,7 +1121,7 @@ export function PlanEditor() {
                                                                                             e.stopPropagation();
                                                                                             removeFoodFromMeal(config.id, item.id);
                                                                                         }}
-                                                                                        className="h-8 w-8 rounded-lg hover:bg-red-500/10 text-slate-700 hover:text-red-500 transition-all opacity-40 hover:opacity-100"
+                                                                                        className="h-8 w-8 rounded-lg hover:bg-red-500/10 text-slate-700 hover:text-red-500 transition-all opacity-100"
                                                                                     >
                                                                                         <X className="h-4 w-4" />
                                                                                     </Button>

@@ -66,7 +66,7 @@ export function EditableText({ value, onSave, label, className, multiline, child
                             e.stopPropagation();
                             setIsEditing(true);
                         }}
-                        className="opacity-0 group-hover/item:opacity-100 transition-opacity p-1.5 bg-nutri-brand text-nutri-base rounded-full shadow-lg hover:scale-110 cursor-pointer relative z-[60]"
+                        className="opacity-100 p-1.5 bg-nutri-brand text-nutri-base rounded-full shadow-lg hover:scale-110 cursor-pointer relative z-[60]"
                         title={`Editar ${label || "texto"}`}
                     >
                         <Pencil className="h-3 w-3" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Check, Zap, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -22,12 +22,16 @@ import { useToast } from "@/hooks/use-toast";
 export interface PropiedadesPlan {
     id: string;
     nombre: string;
-    precioMensual: number;
+    precioVirtual: number;
+    precioPresencial: number;
+    descVirtual?: string;
+    descPresencial?: string;
     beneficiosVirtuales: string[];
     beneficiosPresenciales: string[];
     linkVirtual: string;
     linkPresencial: string;
     esRecomendado?: boolean;
+    buttonText?: string;
 }
 
 // Data Hardcodeada migrada del HTML original de NuySa
@@ -35,7 +39,8 @@ export const planesFlexible: PropiedadesPlan[] = [
     {
         id: "mensual",
         nombre: "PLAN MENSUAL",
-        precioMensual: 149,
+        precioVirtual: 149,
+        precioPresencial: 149,
         beneficiosVirtuales: [
             "2 planes personalizados",
             "Guía de intercambio de alimentos.",
@@ -56,7 +61,8 @@ export const planesFlexible: PropiedadesPlan[] = [
     {
         id: "bimestral",
         nombre: "PLAN BIMESTRAL",
-        precioMensual: 259,
+        precioVirtual: 259,
+        precioPresencial: 259,
         esRecomendado: true,
         beneficiosVirtuales: [
             "4 planes personalizados",
@@ -81,7 +87,8 @@ export const planesFlexible: PropiedadesPlan[] = [
     {
         id: "trimestral",
         nombre: "PLAN TRIMESTRAL",
-        precioMensual: 400,
+        precioVirtual: 400,
+        precioPresencial: 400,
         beneficiosVirtuales: [
             "6 planes personalizados",
             "Guía de intercambio de alimentos.",
@@ -108,7 +115,8 @@ export const planesMenu: PropiedadesPlan[] = [
     {
         id: "mensual-menu",
         nombre: "PLAN MENSUAL",
-        precioMensual: 180,
+        precioVirtual: 180,
+        precioPresencial: 180,
         beneficiosVirtuales: [
             "2 planes personalizados",
             "Plan personalizado con 7 menús completos.",
@@ -134,7 +142,8 @@ export const planesMenu: PropiedadesPlan[] = [
     {
         id: "bimestral-menu",
         nombre: "PLAN BIMESTRAL",
-        precioMensual: 300,
+        precioVirtual: 300,
+        precioPresencial: 300,
         esRecomendado: true,
         beneficiosVirtuales: [
             "4 planes personalizados",
@@ -161,7 +170,8 @@ export const planesMenu: PropiedadesPlan[] = [
     {
         id: "trimestral-menu",
         nombre: "PLAN TRIMESTRAL",
-        precioMensual: 449,
+        precioVirtual: 449,
+        precioPresencial: 449,
         beneficiosVirtuales: [
             "6 planes personalizados",
             "Plan personalizado con 7 menús completos.",
@@ -192,6 +202,7 @@ export interface PlansSectionProps {
     currentPlanId?: string;
     isEditable?: boolean;
 }
+
 export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, isEditable }: PlansSectionProps) {
     const { toast } = useToast();
     const [tipoServicio, setTipoServicio] = useState<string>("flexible");
@@ -199,6 +210,8 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
     const [loadingPlans, setLoadingPlans] = useState(true);
     const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
     const [isDeletingService, setIsDeletingService] = useState(false);
+    const [isPublishing, setIsPublishing] = useState(false);
+
     const [content, setContent] = useState({
         title: "Nuestros Planes",
         description: "Invierte en Salud, selecciona el plan que mejor se adapte a tus necesidades y comienza a transformar tu bienestar hoy mismo.",
@@ -219,24 +232,88 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
 
     const services = content.services || [];
 
+    // Carga inicial
     useEffect(() => {
-        const fetchPlans = async () => {
+        const fetchInitialData = async () => {
             const supabase = createClient();
-            const { data, error } = await supabase.from('landing_plans').select('*');
-            if (data && !error) {
-                setDbPlans(data);
-            }
-            setLoadingPlans(false);
+            try {
+                const { data: plans, error: pError } = await supabase.from('landing_plans').select('*');
+                if (plans && !pError) setDbPlans(plans);
 
-            const { data: contentData } = await supabase.from('landing_content').select('content').eq('section', 'plans').single();
-            if (contentData?.content) {
-                setContent(prev => ({ ...prev, ...contentData.content }));
+                const { data: cData, error: cError } = await supabase.from('landing_content').select('content').eq('section', 'plans').maybeSingle();
+                if (cData?.content && !cError) {
+                    setContent(prev => ({ ...prev, ...cData.content }));
+                }
+            } catch (err) {
+                console.error("Error fetching landing data:", err);
+            } finally {
+                setLoadingPlans(false);
             }
         };
-        fetchPlans();
+        fetchInitialData();
     }, []);
 
+    // Escuchador para publicar cambios desde el dashboard
+    useEffect(() => {
+        const handlePublishEvent = async () => {
+            if (mode !== "admin_cms") return;
+            await handlePublishAll();
+        };
+
+        window.addEventListener('publish-landing-plans', handlePublishEvent);
+        return () => window.removeEventListener('publish-landing-plans', handlePublishEvent);
+    }, [dbPlans, content, mode]);
+
+    const handlePublishAll = async () => {
+        setIsPublishing(true);
+        const supabase = createClient();
+        try {
+            // 1. Guardar Contenido General (Sección planes)
+            const { error: cError } = await supabase
+                .from('landing_content')
+                .upsert({ section: 'plans', content }, { onConflict: 'section' });
+            if (cError) throw cError;
+
+            // 2. Guardar Planes (Varios registros)
+            // Filtramos planes que puedan haber sido editados pero no tienen ID UUID (fallbacks)
+            // En este modelo simplificado, dbPlans contiene tanto los del servidor como los locales
+            for (const plan of dbPlans) {
+                // Si el ID es uno de los fallbacks (no UUID), creamos uno nuevo o lo ignoramos si no ha cambiado?
+                // Mejor: en handleUpdatePlan nos aseguramos de que si es fallback, se le asigne un UUID si se quiere guardar
+                // Pero por ahora, upsert funciona si el ID es el mismo
+                const { error: pError } = await supabase
+                    .from('landing_plans')
+                    .upsert({
+                        ...plan
+                    });
+                if (pError) throw pError;
+            }
+
+            toast({
+                title: "Cambios Publicados",
+                description: "La landing page ha sido actualizada con éxito.",
+                variant: "success"
+            });
+        } catch (error: any) {
+            console.error("Error publishing:", error);
+            toast({
+                title: "Error al Publicar",
+                description: error.message || "No se pudo sincronizar con la base de datos.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsPublishing(false);
+        }
+    };
+
     const handleSaveContent = async (updatedContent: any) => {
+        // En modo admin_cms, solo actualizamos el estado local
+        if (mode === "admin_cms") {
+            setContent(updatedContent);
+            return;
+        }
+
+        // Si no estamos en modo CMS (poco probable aquí), guardamos directo
         const supabase = createClient();
         const { error } = await supabase
             .from('landing_content')
@@ -249,40 +326,84 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
         }
     };
 
-    const fetchPlans = async () => {
-        const supabase = createClient();
-        const { data, error } = await supabase.from('landing_plans').select('*');
-        if (data && !error) {
-            setDbPlans(data);
-        }
-        setLoadingPlans(false);
-    };
-
     const handleUpdatePlan = async (id: string, updates: any) => {
+        // Buscamos si el plan ya existe en dbPlans
+        const planExists = dbPlans.find(p => p.id === id);
+
+        if (mode === "admin_cms") {
+            if (planExists) {
+                setDbPlans(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+            } else {
+                // Es un plan fallback que está siendo editado. 
+                // Lo convertimos en un objeto de DB para el estado local.
+                const fallback = planesActuales.find(p => p.id === id);
+                if (fallback) {
+                    const newDbPlan = {
+                        id: crypto.randomUUID(), // Generamos un ID real para la DB
+                        type: tipoServicio,
+                        interval: fallback.nombre.replace('PLAN ', '').toLowerCase(),
+                        price: fallback.precioVirtual,
+                        presential_price: fallback.precioPresencial,
+                        virtual_features: fallback.beneficiosVirtuales,
+                        presential_features: fallback.beneficiosPresenciales,
+                        virtual_description: fallback.descVirtual,
+                        presential_description: fallback.descPresencial,
+                        is_recommended: fallback.esRecomendado,
+                        virtual_link: fallback.linkVirtual,
+                        presential_link: fallback.linkPresencial,
+                        ...updates
+                    };
+                    setDbPlans(prev => [...prev, newDbPlan]);
+                }
+            }
+            return;
+        }
+
+        // Guardado inmediato (comportamiento original fuera de admin_cms)
         const supabase = createClient();
         const { error } = await supabase.from('landing_plans').update(updates).eq('id', id);
         if (error) throw error;
-        fetchPlans();
+
+        // Refrescar localmente
+        const { data } = await supabase.from('landing_plans').select('*');
+        if (data) setDbPlans(data);
     };
 
     const handleAddPlan = async () => {
-        const supabase = createClient();
-        const { error } = await supabase.from('landing_plans').insert({
+        const newPlan = {
+            id: crypto.randomUUID(),
             type: tipoServicio,
             interval: 'Nuevo',
             price: 0,
             virtual_features: ['Primer beneficio'],
             presential_features: ['Primer beneficio presencial']
-        });
+        };
+
+        if (mode === "admin_cms") {
+            setDbPlans(prev => [...prev, newPlan]);
+            return;
+        }
+
+        const supabase = createClient();
+        const { error } = await supabase.from('landing_plans').insert(newPlan);
         if (error) throw error;
-        fetchPlans();
+
+        const { data } = await supabase.from('landing_plans').select('*');
+        if (data) setDbPlans(data);
     };
 
     const handleDeletePlan = async (id: string) => {
+        if (mode === "admin_cms") {
+            setDbPlans(prev => prev.filter(p => p.id !== id));
+            return;
+        }
+
         const supabase = createClient();
         const { error } = await supabase.from('landing_plans').delete().eq('id', id);
         if (error) throw error;
-        fetchPlans();
+
+        const { data } = await supabase.from('landing_plans').select('*');
+        if (data) setDbPlans(data);
     };
 
     const handleAddService = () => {
@@ -299,16 +420,12 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
     };
 
     const confirmDeleteService = async () => {
-        console.log("Iniciando confirmDeleteService con ID:", serviceToDelete);
         if (!serviceToDelete) return;
 
         setIsDeletingService(true);
         try {
             const currentServices = content.services || [];
-            console.log("Servicios actuales:", currentServices);
-
             const newServices = currentServices.filter((s: any) => s.id !== serviceToDelete);
-            console.log("Nuevos servicios:", newServices);
 
             await handleSaveContent({ ...content, services: newServices });
 
@@ -318,18 +435,9 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
             }
 
             setServiceToDelete(null);
-
-            toast({
-                title: "Servicio eliminado",
-                description: "El tipo de servicio ha sido eliminado correctamente.",
-            });
+            toast({ title: "Servicio eliminado" });
         } catch (error: any) {
-            console.error("Error al eliminar servicio:", error);
-            toast({
-                title: "Error al eliminar",
-                description: error.message || "No se pudo eliminar el servicio.",
-                variant: "destructive",
-            });
+            toast({ title: "Error al eliminar", description: error.message, variant: "destructive" });
         } finally {
             setIsDeletingService(false);
         }
@@ -343,35 +451,77 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
     // Estado local para modalidades individuales
     const [modalidades, setModalidades] = useState<Record<string, "virtual" | "presencial">>({});
 
-    // Estado individual para cada tarjeta: "virtual" o "presencial"
     const toggleModalidad = (id: string, mod: "virtual" | "presencial") => {
         setModalidades(prev => ({ ...prev, [id]: mod }));
     };
 
     const fallbackPlans = tipoServicio === "flexible" ? planesFlexible : planesMenu;
 
-    // Use DB Plans if available, otherwise use hardcoded arrays mapping them to PropiedadesPlan
-    const planesActuales: PropiedadesPlan[] = dbPlans.length > 0 ?
-        dbPlans.filter(p => p.type === tipoServicio)
-            .sort((a, b) => a.price - b.price)
-            .map(p => ({
+    // Listado de planes finales a mostrar
+    const planesActuales: PropiedadesPlan[] = useMemo(() => {
+        const standardIntervals = ['mensual', 'bimestral', 'trimestral'];
+        const list: PropiedadesPlan[] = [];
+
+        // 1. Identificar planes de la DB para el servicio actual
+        const dbPlansOfType = dbPlans.filter(p => p.type === tipoServicio);
+
+        // 2. Para cada intervalo estándar, buscamos en DB o usamos fallback
+        standardIntervals.forEach(interval => {
+            const dbPlan = dbPlansOfType.find(p => p.interval === interval);
+            if (dbPlan) {
+                list.push({
+                    id: dbPlan.id,
+                    nombre: `PLAN ${dbPlan.interval.toUpperCase()}`,
+                    precioVirtual: dbPlan.price,
+                    precioPresencial: dbPlan.presential_price || dbPlan.price,
+                    descVirtual: dbPlan.virtual_description,
+                    descPresencial: dbPlan.presential_description,
+                    beneficiosVirtuales: dbPlan.virtual_features || [],
+                    beneficiosPresenciales: dbPlan.presential_features || [],
+                    esRecomendado: dbPlan.is_recommended,
+                    linkVirtual: dbPlan.virtual_link || dbPlan.custom_link_virtual || "",
+                    linkPresencial: dbPlan.presencial_link || dbPlan.custom_link_presencial || "",
+                    buttonText: dbPlan.button_text
+                });
+            } else {
+                // Si no hay en DB, buscamos en fallback hardcodeado
+                const fallback = fallbackPlans.find(f =>
+                    f.id === interval ||
+                    f.id === `${interval}-menu` ||
+                    f.nombre.toLowerCase().includes(interval)
+                );
+                if (fallback) list.push(fallback);
+            }
+        });
+
+        // 3. Añadir planes "Extra" o con intervalos no estándar que estén en DB
+        const extraDbPlans = dbPlansOfType.filter(p => !standardIntervals.includes(p.interval));
+        extraDbPlans.forEach(p => {
+            list.push({
                 id: p.id,
                 nombre: `PLAN ${p.interval.toUpperCase()}`,
-                precioMensual: p.price,
-                beneficiosVirtuales: p.virtual_features,
-                beneficiosPresenciales: p.presential_features,
+                precioVirtual: p.price,
+                precioPresencial: p.presential_price || p.price,
+                descVirtual: p.virtual_description,
+                descPresencial: p.presential_description,
+                beneficiosVirtuales: p.virtual_features || [],
+                beneficiosPresenciales: p.presential_features || [],
                 esRecomendado: p.is_recommended,
-                linkVirtual: p.custom_link_virtual || `https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20${tipoServicio},%20plan%20${p.interval},%20de%20manera%20virtual.%20`,
-                linkPresencial: p.custom_link_presencial || `https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20${tipoServicio},%20plan%20${p.interval},%20de%20manera%20presencial.%20`,
+                linkVirtual: p.virtual_link || p.custom_link_virtual || "",
+                linkPresencial: p.presencial_link || p.custom_link_presencial || "",
                 buttonText: p.button_text
-            })) : fallbackPlans;
+            });
+        });
+
+        return list;
+    }, [dbPlans, tipoServicio, fallbackPlans]);
 
     const handleAction = (plan: PropiedadesPlan, modalidad: "virtual" | "presencial") => {
         if (mode === "dashboard" && onPlanSelect) {
             onPlanSelect({
                 id: plan.id,
                 name: `${plan.nombre} (${tipoServicio === "flexible" ? "Flexible" : "Menú"} - ${modalidad})`,
-                price: plan.precioMensual.toString()
+                price: (modalidad === "virtual" ? plan.precioVirtual : plan.precioPresencial).toString()
             });
         }
     };
@@ -422,7 +572,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                     {btn.label}
                                 </button>
                                 {isEditable && (
-                                    <div className="absolute -top-1 -right-1 z-30 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                    <div className="absolute -top-1 -right-1 z-30 transition-opacity flex gap-1">
                                         <EditableText
                                             label={`Editar Etiqueta ${btn.id}`}
                                             value={btn.label || ''}
@@ -521,7 +671,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                     )}>
                                                     {btn.label}
                                                     {isEditable && (
-                                                        <span className="absolute -top-2 -right-2 opacity-0 group-hover/tog:opacity-100">
+                                                        <span className="absolute -top-2 -right-2">
                                                             <EditableText
                                                                 label={`Editar label ${btn.id}`}
                                                                 value={btn.label}
@@ -570,14 +720,17 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                             <h4 className="text-xl font-tech font-bold text-white mb-2">{plan.nombre}</h4>
                                         )}
 
-                                        <div className="flex items-baseline gap-2 mb-6">
+                                        <div className="flex items-baseline gap-2 mb-2">
                                             {isEditable ? (
                                                 <div className="flex items-baseline gap-1">
                                                     <span className="text-nutri-brand font-extrabold text-xl">S/</span>
                                                     <EditableText
-                                                        label="Precio"
-                                                        value={plan.precioMensual.toString()}
-                                                        onSave={(val) => handleUpdatePlan(plan.id, { price: parseFloat(val) })}
+                                                        label={`Precio ${mod}`}
+                                                        value={(mod === "virtual" ? plan.precioVirtual : plan.precioPresencial).toString()}
+                                                        onSave={(val) => {
+                                                            const field = mod === "virtual" ? 'price' : 'presential_price';
+                                                            return handleUpdatePlan(plan.id, { [field]: parseFloat(val) });
+                                                        }}
                                                         className={cn(
                                                             "font-extrabold text-nutri-brand transition-all duration-300 block",
                                                             isRecommended ? "text-4xl" : "text-3xl"
@@ -589,8 +742,30 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                     "font-extrabold text-nutri-brand transition-all duration-300",
                                                     isRecommended ? "text-4xl" : "text-3xl"
                                                 )}>
-                                                    S/ {plan.precioMensual}
+                                                    S/ {mod === "virtual" ? plan.precioVirtual : plan.precioPresencial}
                                                 </span>
+                                            )}
+                                        </div>
+
+                                        <div className="mb-6">
+                                            {isEditable ? (
+                                                <EditableText
+                                                    label={`Descripción ${mod}`}
+                                                    value={(mod === "virtual" ? plan.descVirtual : plan.descPresencial) || ""}
+                                                    onSave={(val) => {
+                                                        const field = mod === "virtual" ? 'virtual_description' : 'presential_description';
+                                                        return handleUpdatePlan(plan.id, { [field]: val });
+                                                    }}
+                                                    multiline
+                                                >
+                                                    <p className="text-slate-400 text-xs italic hover:text-white cursor-pointer min-h-[1em]">
+                                                        {(mod === "virtual" ? plan.descVirtual : plan.descPresencial) || "Añadir descripción corta..."}
+                                                    </p>
+                                                </EditableText>
+                                            ) : (
+                                                <p className="text-slate-400 text-xs italic text-justify">
+                                                    {mod === "virtual" ? plan.descVirtual : plan.descPresencial}
+                                                </p>
                                             )}
                                         </div>
 
@@ -599,9 +774,9 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                 <div className="absolute -top-6 -right-2 z-20">
                                                     <button
                                                         onClick={() => {
-                                                            const currentFeatures = mod === "virtual" ? plan.beneficiosVirtuales : plan.beneficiosPresenciales;
+                                                            const currentFeatures = (mod === "virtual" ? plan.beneficiosVirtuales : plan.beneficiosPresenciales) || [];
                                                             const field = mod === "virtual" ? 'virtual_features' : 'presential_features';
-                                                            const newFeatures = Array.isArray(currentFeatures) ? [...currentFeatures, "Nuevo Beneficio"] : ["Nuevo Beneficio"];
+                                                            const newFeatures = [...currentFeatures, "Nuevo Beneficio"];
                                                             handleUpdatePlan(plan.id, { [field]: newFeatures });
                                                         }}
                                                         className="p-1 bg-nutri-brand text-nutri-base rounded-md hover:scale-110 transition-transform shadow-lg"
@@ -611,7 +786,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                     </button>
                                                 </div>
                                             )}
-                                            {(mod === "virtual" ? plan.beneficiosVirtuales : plan.beneficiosPresenciales).map((beneficio, i) => (
+                                            {((mod === "virtual" ? plan.beneficiosVirtuales : plan.beneficiosPresenciales) || []).map((beneficio, i) => (
                                                 <li key={i} className="flex items-start gap-3 group/benefit">
                                                     <Check className={cn("text-nutri-brand flex-shrink-0 h-4 w-4", i === 0 ? "mt-1.5" : "mt-1")} />
                                                     {isEditable ? (
@@ -620,7 +795,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                                 label={`Beneficio ${i + 1}`}
                                                                 value={beneficio}
                                                                 onSave={(val) => {
-                                                                    const currentFeatures = mod === "virtual" ? plan.beneficiosVirtuales : plan.beneficiosPresenciales;
+                                                                    const currentFeatures = (mod === "virtual" ? plan.beneficiosVirtuales : plan.beneficiosPresenciales) || [];
                                                                     const field = mod === "virtual" ? 'virtual_features' : 'presential_features';
                                                                     const newFeatures = [...currentFeatures];
                                                                     newFeatures[i] = val;
@@ -637,19 +812,19 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                             />
                                                             <button
                                                                 onClick={() => {
-                                                                    const currentFeatures = mod === "virtual" ? plan.beneficiosVirtuales : plan.beneficiosPresenciales;
+                                                                    const currentFeatures = (mod === "virtual" ? plan.beneficiosVirtuales : plan.beneficiosPresenciales) || [];
                                                                     const field = mod === "virtual" ? 'virtual_features' : 'presential_features';
                                                                     const newFeatures = currentFeatures.filter((_, idx) => idx !== i);
                                                                     handleUpdatePlan(plan.id, { [field]: newFeatures });
                                                                 }}
-                                                                className="opacity-0 group-hover/benefit:opacity-100 p-1 text-red-500 hover:bg-red-500/10 rounded transition-all"
+                                                                className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-all"
                                                             >
                                                                 <Trash2 className="h-3 w-3" />
                                                             </button>
                                                         </div>
                                                     ) : (
                                                         <span className={cn(
-                                                            "font-sans",
+                                                            "font-sans text-justify",
                                                             i === 0
                                                                 ? "text-white text-lg font-bold"
                                                                 : isRecommended

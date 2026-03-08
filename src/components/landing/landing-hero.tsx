@@ -127,7 +127,7 @@ export function LandingHero() {
                                 multiline
                             />
                         ) : (
-                            <p className="text-sm sm:text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line">
+                            <p className="text-sm sm:text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line text-justify">
                                 {content.text.replace(/\\n/g, '\n')}
                             </p>
                         )}
@@ -183,7 +183,7 @@ export function LandingHero() {
                                     multiline
                                 />
                             ) : (
-                                <p className="text-xs text-slate-300 font-sans leading-relaxed">
+                                <p className="text-xs text-slate-300 font-sans leading-relaxed text-justify">
                                     <strong className="text-white">Función:</strong> {content.cartelProteina}
                                 </p>
                             )}
@@ -207,7 +207,7 @@ export function LandingHero() {
                                     multiline
                                 />
                             ) : (
-                                <p className="text-xs text-slate-300 font-sans leading-relaxed">
+                                <p className="text-xs text-slate-300 font-sans leading-relaxed text-justify">
                                     <strong className="text-white">Función:</strong> {content.cartelCarbo}
                                 </p>
                             )}
@@ -231,7 +231,7 @@ export function LandingHero() {
                                     multiline
                                 />
                             ) : (
-                                <p className="text-xs text-slate-300 font-sans leading-relaxed">
+                                <p className="text-xs text-slate-300 font-sans leading-relaxed text-justify">
                                     <strong className="text-white">Función:</strong> {content.cartelLipido}
                                 </p>
                             )}

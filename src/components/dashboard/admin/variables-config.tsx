@@ -296,7 +296,7 @@ function SortableToken({ token, onRemove }: { token: Token, onRemove: (id: strin
             </span>
             <button
                 onClick={(e) => { e.stopPropagation(); onRemove(token.id); }}
-                className="hover:bg-red-500 hover:text-white text-slate-300 rounded-full p-1.5 transition-all opacity-0 group-hover:opacity-100 -mr-1"
+                className="hover:bg-red-500 hover:text-white text-slate-300 rounded-full p-1.5 transition-all -mr-1"
             >
                 <X className="h-3 w-3" />
             </button>
@@ -1015,7 +1015,7 @@ export function VariablesConfig() {
                                                 )}
 
                                                 {/* Controles Ocultos que se revelan con group-hover */}
-                                                <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
+                                                <div className="flex items-center gap-1 transition-opacity">
                                                     {!v.isSystem && (
                                                         <div className="flex flex-col">
                                                             <button

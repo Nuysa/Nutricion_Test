@@ -112,7 +112,7 @@ export function LandingServices() {
                             ) : (
                                 <>
                                     <h4 className="text-2xl font-tech font-bold text-white mb-4">{service.title}</h4>
-                                    <p className="text-slate-400 font-sans text-sm leading-relaxed">{service.description}</p>
+                                    <p className="text-slate-400 font-sans text-sm leading-relaxed text-justify">{service.description}</p>
                                 </>
                             )}
                         </div>

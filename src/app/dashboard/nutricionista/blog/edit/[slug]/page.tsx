@@ -295,7 +295,7 @@ export default function EditPostPage({ params }: { params: { slug: string } }) {
                     <div className="space-y-6">
                         {blocks.map((block) => (
                             <div key={block.id} className="group relative flex gap-4">
-                                <div className="absolute -left-12 top-0 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center gap-1">
+                                <div className="absolute -left-12 top-0 bottom-0 transition-opacity flex flex-col justify-center gap-1">
                                     <Button variant="ghost" size="icon" onClick={() => removeBlock(block.id)} className="h-8 w-8 rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></Button>
                                 </div>
 
