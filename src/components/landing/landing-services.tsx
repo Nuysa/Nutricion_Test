@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useVisualEditor } from "@/components/dashboard/admin/visual-editor-context";
 import { EditableText } from "@/components/dashboard/admin/editable-text";
 import { EditableImage } from "@/components/dashboard/admin/editable-image";
+import { cn } from "@/lib/utils";
 
 export function LandingServices() {
     const { isEditable } = useVisualEditor();
@@ -61,6 +62,14 @@ export function LandingServices() {
         return handleSave({ ...content, services: newServices });
     };
 
+    const [expandedServices, setExpandedServices] = useState<number[]>([]);
+
+    const toggleExpand = (id: number) => {
+        setExpandedServices(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
     return (
         <section id="servicios" className="scroll-mt-32 py-24 relative z-10 border-y border-white/5">
             <div className="max-w-screen-2xl mx-auto px-6 lg:px-8">
@@ -77,46 +86,73 @@ export function LandingServices() {
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {content.services.map((service) => (
-                        <div key={service.id} className="bg-nutri-panel border border-white/5 rounded-3xl p-8 hover:-translate-y-2 hover:border-nutri-brand/50 transition-all duration-300 group relative">
-                            <div className="w-full h-81 bg-nutri-base border border-nutri-brand/30 rounded-xl flex items-center justify-center text-2xl mb-6 shadow-lg overflow-hidden relative">
-                                <img src={service.image} alt={service.title} className="w-full h-full object-cover opacity-80" />
-                                {isEditable && (
-                                    <EditableImage
-                                        label={`Imagen ${service.title}`}
-                                        src={service.image}
-                                        onSave={(val) => updateService(service.id, 'image', val)}
-                                        className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4"
-                                    />
-                                )}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+                    {content.services.map((service) => {
+                        const isExpanded = expandedServices.includes(service.id);
+                        const isLongText = service.description.length > 120;
+
+                        return (
+                            <div key={service.id} className="bg-nutri-panel border border-white/5 rounded-3xl p-8 hover:-translate-y-2 hover:border-nutri-brand/50 transition-all duration-300 group relative flex flex-col">
+                                <div className="w-full h-81 bg-nutri-base border border-nutri-brand/30 rounded-xl flex items-center justify-center text-2xl mb-6 shadow-lg overflow-hidden relative shrink-0">
+                                    <img src={service.image} alt={service.title} className="w-full h-full object-cover opacity-80" />
+                                    {isEditable && (
+                                        <EditableImage
+                                            label={`Imagen ${service.title}`}
+                                            src={service.image}
+                                            onSave={(val) => updateService(service.id, 'image', val)}
+                                            className="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4"
+                                        />
+                                    )}
+                                </div>
+
+
+                                <div className="flex flex-col flex-grow">
+                                    {isEditable ? (
+                                        <>
+                                            <EditableText
+                                                label="Título Servicio"
+                                                value={service.title}
+                                                onSave={(val) => updateService(service.id, 'title', val)}
+                                                className="text-2xl font-tech font-bold text-white mb-4 block"
+                                            />
+                                            <EditableText
+                                                label="Descripción Servicio"
+                                                value={service.description}
+                                                onSave={(val) => updateService(service.id, 'description', val)}
+                                                className="text-slate-400 font-sans text-sm leading-relaxed block text-pretty-justify"
+                                                multiline
+                                            />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <h4 className="text-2xl font-tech font-bold text-white mb-4">{service.title}</h4>
+                                            <div className="relative">
+                                                <p className={cn(
+                                                    "text-slate-400 font-sans text-sm leading-relaxed text-pretty-justify transition-all duration-300",
+                                                    !isExpanded && isLongText ? "line-clamp-3" : ""
+                                                )}>
+                                                    {service.description}
+                                                </p>
+
+                                                {isLongText && (
+                                                    <button
+                                                        onClick={() => toggleExpand(service.id)}
+                                                        className="mt-3 text-nutri-brand font-tech font-bold text-xs uppercase tracking-widest hover:text-white transition-colors flex items-center gap-1 group/btn"
+                                                    >
+                                                        {isExpanded ? (
+                                                            <>Ver menos <span className="text-[10px] group-hover/btn:-translate-y-0.5 transition-transform">▲</span></>
+                                                        ) : (
+                                                            <>Ver más <span className="text-[10px] group-hover/btn:translate-y-0.5 transition-transform">▼</span></>
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
-
-
-                            {isEditable ? (
-                                <>
-                                    <EditableText
-                                        label="Título Servicio"
-                                        value={service.title}
-                                        onSave={(val) => updateService(service.id, 'title', val)}
-                                        className="text-2xl font-tech font-bold text-white mb-4 block"
-                                    />
-                                    <EditableText
-                                        label="Descripción Servicio"
-                                        value={service.description}
-                                        onSave={(val) => updateService(service.id, 'description', val)}
-                                        className="text-slate-400 font-sans text-sm leading-relaxed block"
-                                        multiline
-                                    />
-                                </>
-                            ) : (
-                                <>
-                                    <h4 className="text-2xl font-tech font-bold text-white mb-4">{service.title}</h4>
-                                    <p className="text-slate-400 font-sans text-sm leading-relaxed text-pretty-justify">{service.description}</p>
-                                </>
-                            )}
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         </section>
