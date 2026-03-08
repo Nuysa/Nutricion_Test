@@ -12,7 +12,7 @@ import {
     Link as LinkIcon, Search, Check, X, UserPlus,
     Bell, UserCheck as UserCheckIcon, Clock, Settings, ArrowRight,
     Plus, Trash2, DatabaseZap as DbIcon, Mail, Edit3, Save, Loader2,
-    BarChart3, TrendingUp, Target, DollarSign, Activity,
+    BarChart3, TrendingUp, Target, DollarSign, Activity, AlertTriangle,
     Shield, ShieldPlus, User, FileText, ChevronRight, Play, Layers, Filter, LayoutGrid, LayoutList, LayoutTemplate, Stethoscope,
     ChevronDown, ChevronUp
 } from "lucide-react";
@@ -84,6 +84,9 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
     const [newUserFullName, setNewUserFullName] = useState("");
     const [newUserRole, setNewUserRole] = useState<"staff" | "administrador">("staff");
     const [isCreatingUser, setIsCreatingUser] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [profileToDelete, setProfileToDelete] = useState<{ id: string, name: string } | null>(null);
+    const [isDeletingProfile, setIsDeletingProfile] = useState(false);
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
         administrador: true,
         staff: true,
@@ -379,24 +382,33 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
         });
     };
 
-    const handleDeleteProfile = async (id: string, name: string) => {
+    const handleDeleteProfile = (id: string, name: string) => {
+        setProfileToDelete({ id, name });
+        setIsDeleteDialogOpen(true);
+    };
 
-        if (confirm(`¿Estás seguro de eliminar a ${name} de Supabase? Esta acción no se puede deshacer.`)) {
-            try {
-                await MessagingService.deleteProfile(id);
-                toast({
-                    title: "Perfil Eliminado",
-                    description: "El usuario ha sido removido de la base de datos.",
-                    variant: "success"
-                });
-                loadData();
-            } catch (error: any) {
-                toast({
-                    title: "Error al Eliminar",
-                    description: "Verifica los permisos RLS en Supabase. Error: " + (error.message || "Desconocido"),
-                    variant: "destructive"
-                });
-            }
+    const handleConfirmDelete = async () => {
+        if (!profileToDelete) return;
+
+        setIsDeletingProfile(true);
+        try {
+            await MessagingService.deleteProfile(profileToDelete.id);
+            toast({
+                title: "Perfil Eliminado",
+                description: `El usuario ${profileToDelete.name} ha sido removido exitosamente.`,
+                variant: "success"
+            });
+            setIsDeleteDialogOpen(false);
+            setProfileToDelete(null);
+            loadData(true);
+        } catch (error: any) {
+            toast({
+                title: "Error al Eliminar",
+                description: error.message || "No se pudo eliminar el usuario.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsDeletingProfile(false);
         }
     };
 
@@ -656,6 +668,44 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                         </div>
                                     </CardContent>
                                 </Card>
+
+                                {/* Delete Confirmation Dialog */}
+                                <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                                    <DialogContent className="rounded-[2.5rem] max-w-sm border-white/5 bg-nutri-base/95 backdrop-blur-2xl p-8">
+                                        <div className="flex flex-col items-center text-center space-y-6">
+                                            <div className="h-20 w-20 rounded-[2rem] bg-red-500/10 flex items-center justify-center p-4 border border-red-500/20">
+                                                <AlertTriangle className="h-10 w-10 text-red-500 animate-pulse" />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <DialogTitle className="text-2xl font-black text-white uppercase italic tracking-tight">Confirmar Eliminación</DialogTitle>
+                                                <DialogDescription className="text-slate-400 font-medium">
+                                                    ¿Estás seguro de que deseas eliminar permanentemente a <span className="text-white font-bold">{profileToDelete?.name}</span>? Esta acción no se puede deshacer.
+                                                </DialogDescription>
+                                            </div>
+
+                                            <div className="flex flex-col w-full gap-3 pt-4">
+                                                <Button
+                                                    variant="destructive"
+                                                    className="h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                                    onClick={handleConfirmDelete}
+                                                    disabled={isDeletingProfile}
+                                                >
+                                                    {isDeletingProfile ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                                                    Eliminar Usuario
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] text-slate-500 hover:text-white hover:bg-white/5 transition-all"
+                                                    onClick={() => setIsDeleteDialogOpen(false)}
+                                                    disabled={isDeletingProfile}
+                                                >
+                                                    Cancelar
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
 
                                 {/* Plan Type Dialog */}
                                 <Dialog open={!!selectedPatientPlan} onOpenChange={(open) => !open && setSelectedPatientPlan(null)}>
