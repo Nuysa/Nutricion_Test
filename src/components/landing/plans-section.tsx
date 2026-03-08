@@ -763,7 +763,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                     </p>
                                                 </EditableText>
                                             ) : (
-                                                <p className="text-slate-400 text-xs italic text-justify">
+                                                <p className="text-slate-400 text-xs italic text-pretty-justify">
                                                     {mod === "virtual" ? plan.descVirtual : plan.descPresencial}
                                                 </p>
                                             )}
@@ -824,7 +824,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                         </div>
                                                     ) : (
                                                         <span className={cn(
-                                                            "font-sans text-justify",
+                                                            "font-sans text-pretty-justify",
                                                             i === 0
                                                                 ? "text-white text-lg font-bold"
                                                                 : isRecommended

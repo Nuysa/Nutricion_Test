@@ -98,7 +98,7 @@ export function LandingTestimonials() {
                                     multiline
                                 />
                             ) : (
-                                <p className="text-slate-300 text-sm leading-relaxed text-justify">
+                                <p className="text-slate-300 text-sm leading-relaxed text-pretty-justify">
                                     {testimonial.text}
                                 </p>
                             )}

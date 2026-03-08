@@ -344,3 +344,13 @@
 .fade-list {
   transition: opacity 0.25s ease-in-out;
 }
+
+/* Optimized Justified Text */
+.text-pretty-justify {
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  overflow-wrap: break-word;
+}

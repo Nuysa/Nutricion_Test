@@ -120,7 +120,7 @@ export function LandingFooter() {
                         ) : (
                             <>
                                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-tech font-bold text-white mb-2 sm:mb-3 tracking-tight">{content.ctaTitle}</h3>
-                                <p className="text-slate-400 max-w-xl leading-relaxed text-sm sm:text-base text-justify">{content.ctaDesc}</p>
+                                <p className="text-slate-400 max-w-xl leading-relaxed text-sm sm:text-base text-pretty-justify">{content.ctaDesc}</p>
                             </>
                         )}
                     </div>
@@ -186,7 +186,7 @@ export function LandingFooter() {
                                 multiline
                             />
                         ) : (
-                            <p className="leading-relaxed text-slate-500 max-w-sm text-justify">{content.brandDesc}</p>
+                            <p className="leading-relaxed text-slate-500 max-w-sm text-pretty-justify">{content.brandDesc}</p>
                         )}
                     </div>
 

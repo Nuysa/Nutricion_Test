@@ -127,7 +127,7 @@ export function LandingAbout() {
                                             return word + ' '
                                         })}
                                     </h3>
-                                    <p style={{ marginBottom: "6px" }} className="text-base text-slate-300 font-sans leading-relaxed mb-8 whitespace-pre-line text-justify">
+                                    <p style={{ marginBottom: "6px" }} className="text-base text-slate-300 font-sans leading-relaxed mb-8 whitespace-pre-line text-pretty-justify">
                                         {content.text1}
                                     </p>
                                     <br />
@@ -140,7 +140,7 @@ export function LandingAbout() {
                                             return word + ' '
                                         })}
                                     </h3>
-                                    <p style={{ marginBottom: "6px" }} className="text-base text-slate-300 font-sans leading-relaxed mb-4 whitespace-pre-line text-justify">
+                                    <p style={{ marginBottom: "6px" }} className="text-base text-slate-300 font-sans leading-relaxed mb-4 whitespace-pre-line text-pretty-justify">
                                         {content.text2}
                                     </p>
 
@@ -164,10 +164,10 @@ export function LandingAbout() {
                                         "space-y-6 transition-all duration-500 overflow-hidden",
                                         !isBioExpanded && !isEditable ? "max-h-0 lg:max-h-none opacity-0 lg:opacity-100" : "max-h-[2000px] opacity-100"
                                     )}>
-                                        <p className="text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line text-justify">
+                                        <p className="text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line text-pretty-justify">
                                             {content.extraText1}
                                         </p>
-                                        <p className="text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line text-justify">
+                                        <p className="text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line text-pretty-justify">
                                             <strong>¿Qué me inspiró a estudiar nutrición? </strong>
                                             <br />{content.extraText2}
                                         </p>
@@ -180,14 +180,14 @@ export function LandingAbout() {
                                         label="Texto Inspiración 1"
                                         value={content.extraText1}
                                         onSave={(val) => handleSave('extraText1', val)}
-                                        className="text-base text-slate-300 font-sans leading-relaxed mb-8 text-justify"
+                                        className="text-base text-slate-300 font-sans leading-relaxed mb-8 text-pretty-justify"
                                         multiline
                                     />
                                     <EditableText
                                         label="Texto Inspiración 2"
                                         value={content.extraText2}
                                         onSave={(val) => handleSave('extraText2', val)}
-                                        className="text-base text-slate-300 font-sans leading-relaxed mb-8 text-justify"
+                                        className="text-base text-slate-300 font-sans leading-relaxed mb-8 text-pretty-justify"
                                         multiline
                                     />
                                 </div>

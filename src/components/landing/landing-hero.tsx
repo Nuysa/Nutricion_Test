@@ -127,7 +127,7 @@ export function LandingHero() {
                                 multiline
                             />
                         ) : (
-                            <p className="text-sm sm:text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line text-justify">
+                            <p className="text-sm sm:text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line text-pretty-justify">
                                 {content.text.replace(/\\n/g, '\n')}
                             </p>
                         )}
@@ -183,7 +183,7 @@ export function LandingHero() {
                                     multiline
                                 />
                             ) : (
-                                <p className="text-xs text-slate-300 font-sans leading-relaxed text-justify">
+                                <p className="text-xs text-slate-300 font-sans leading-relaxed text-pretty-justify">
                                     <strong className="text-white">Función:</strong> {content.cartelProteina}
                                 </p>
                             )}
@@ -207,7 +207,7 @@ export function LandingHero() {
                                     multiline
                                 />
                             ) : (
-                                <p className="text-xs text-slate-300 font-sans leading-relaxed text-justify">
+                                <p className="text-xs text-slate-300 font-sans leading-relaxed text-pretty-justify">
                                     <strong className="text-white">Función:</strong> {content.cartelCarbo}
                                 </p>
                             )}
@@ -231,7 +231,7 @@ export function LandingHero() {
                                     multiline
                                 />
                             ) : (
-                                <p className="text-xs text-slate-300 font-sans leading-relaxed text-justify">
+                                <p className="text-xs text-slate-300 font-sans leading-relaxed text-pretty-justify">
                                     <strong className="text-white">Función:</strong> {content.cartelLipido}
                                 </p>
                             )}
