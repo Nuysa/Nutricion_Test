@@ -16,7 +16,7 @@ serve(async (req) => {
         }
 
         // 3. Construir el mensaje
-        const message = `¡Hola Julio! 🚀 Nuevo registro en NuySa Nutrición. Email del usuario: ${newUserEmail}`
+        const message = `¡Hola NuySa! 🚀 Nuevo registro en NuySa Nutrición. Email del usuario: ${newUserEmail}`
         const encodedMessage = encodeURIComponent(message)
 
         // 4. URL de CallMeBot
