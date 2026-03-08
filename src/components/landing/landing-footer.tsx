@@ -99,7 +99,7 @@ export function LandingFooter() {
             <div className="max-w-screen-2xl mx-auto px-6 lg:px-8 relative z-10">
 
                 {/* CTA WhatsApp Box */}
-                <div className="bg-gradient-to-r from-nutri-panel to-nutri-base border border-white/10 rounded-[2rem] p-10 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 mb-16 shadow-2xl">
+                <div className="bg-gradient-to-r from-nutri-panel to-nutri-base border border-white/10 rounded-[2rem] p-6 sm:p-10 md:p-14 flex flex-col md:flex-row justify-between items-center gap-6 md:gap-10 mb-16 shadow-2xl">
                     <div>
                         {isEditable ? (
                             <>
@@ -107,7 +107,7 @@ export function LandingFooter() {
                                     label="Título CTA"
                                     value={content.ctaTitle}
                                     onSave={(val) => handleSave('ctaTitle', val)}
-                                    className="text-3xl md:text-4xl font-tech font-bold text-white mb-3 tracking-tight"
+                                    className="text-2xl sm:text-3xl md:text-4xl font-tech font-bold text-white mb-2 sm:mb-3 tracking-tight"
                                 />
                                 <EditableText
                                     label="Descripción CTA"
@@ -119,8 +119,8 @@ export function LandingFooter() {
                             </>
                         ) : (
                             <>
-                                <h3 className="text-3xl md:text-4xl font-tech font-bold text-white mb-3 tracking-tight">{content.ctaTitle}</h3>
-                                <p className="text-slate-400 max-w-xl leading-relaxed">{content.ctaDesc}</p>
+                                <h3 className="text-2xl sm:text-3xl md:text-4xl font-tech font-bold text-white mb-2 sm:mb-3 tracking-tight">{content.ctaTitle}</h3>
+                                <p className="text-slate-400 max-w-xl leading-relaxed text-sm sm:text-base">{content.ctaDesc}</p>
                             </>
                         )}
                     </div>
@@ -129,9 +129,9 @@ export function LandingFooter() {
                             href={content.ctaWhatsapp}
                             target="_blank"
                             rel="noreferrer"
-                            className="bg-nutri-brand text-nutri-base px-8 py-4 rounded-full font-tech font-bold text-lg flex items-center gap-3 transition-transform transform hover:scale-105 shrink-0 shadow-[0_0_20px_rgba(255,122,0,0.3)]"
+                            className="bg-nutri-brand text-nutri-base px-6 sm:px-8 py-3.5 sm:py-4 rounded-full font-tech font-bold text-base sm:text-lg flex items-center gap-3 transition-transform transform hover:scale-105 shrink-0 shadow-[0_0_20px_rgba(255,122,0,0.3)]"
                         >
-                            <Phone className="h-6 w-6" />
+                            <Phone className="h-5 w-5 sm:h-6 sm:w-6" />
                             {isEditable ? (
                                 <div className="flex flex-col items-center">
                                     <EditableText

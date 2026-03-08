@@ -106,8 +106,8 @@ export function LandingHero() {
                                 <div className="text-[10px] text-slate-500 font-bold italic">* La última palabra siempre será naranja automáticamente.</div>
                             </div>
                         ) : (
-                            <h1 className="text-5xl lg:text-7xl font-tech font-extrabold text-white leading-tight mb-8 tracking-tighter whitespace-pre-line">
-                                {content.title.split(' ').map((word, idx, arr) => {
+                            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-tech font-extrabold text-white leading-tight mb-6 sm:mb-8 tracking-tighter whitespace-pre-line">
+                                {content.title.replace(/\\n/g, '\n').split(' ').map((word, idx, arr) => {
                                     if (idx === arr.length - 1 || (idx === arr.length - 2 && arr[arr.length - 1] === '')) {
                                         return <span key={idx} className="text-nutri-brand">{word} </span>
                                     }
@@ -123,12 +123,12 @@ export function LandingHero() {
                                 label="Descripción"
                                 value={content.text}
                                 onSave={(val) => handleSave('text', val)}
-                                className="text-base text-slate-300 font-sans leading-relaxed"
+                                className="text-sm sm:text-base text-slate-300 font-sans leading-relaxed"
                                 multiline
                             />
                         ) : (
-                            <p className="text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line">
-                                {content.text}
+                            <p className="text-sm sm:text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line">
+                                {content.text.replace(/\\n/g, '\n')}
                             </p>
                         )}
                     </div>
@@ -167,7 +167,7 @@ export function LandingHero() {
 
                         {/* Cartel Proteína */}
                         <div className={cn(
-                            "cartel-base pos-proteina bg-nutri-panel border border-white/10 p-5 rounded-xl w-[260px] shadow-2xl relative group/card",
+                            "cartel-base pos-proteina bg-nutri-panel border border-white/10 p-5 rounded-xl w-[200px] sm:w-[260px] shadow-2xl relative group/card hidden sm:block",
                             activeCartel === "proteina" && "cartel-active"
                         )}>
                             <div className="flex items-center gap-2 pb-2 mb-2">
@@ -191,7 +191,7 @@ export function LandingHero() {
 
                         {/* Cartel Carbohidrato */}
                         <div className={cn(
-                            "cartel-base pos-carbo bg-nutri-panel border border-white/10 p-5 rounded-xl w-[260px] shadow-2xl",
+                            "cartel-base pos-carbo bg-nutri-panel border border-white/10 p-5 rounded-xl w-[200px] sm:w-[260px] shadow-2xl hidden sm:block",
                             activeCartel === "carbo" && "cartel-active"
                         )}>
                             <div className="flex items-center gap-2 pb-2 mb-2">
@@ -215,7 +215,7 @@ export function LandingHero() {
 
                         {/* Cartel Lípido */}
                         <div className={cn(
-                            "cartel-base pos-lipido bg-nutri-panel border border-white/10 p-5 rounded-xl w-[260px] shadow-2xl",
+                            "cartel-base pos-lipido bg-nutri-panel border border-white/10 p-5 rounded-xl w-[200px] sm:w-[260px] shadow-2xl hidden sm:block",
                             activeCartel === "lipido" && "cartel-active"
                         )}>
                             <div className="flex items-center gap-2 pb-2 mb-2">

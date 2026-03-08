@@ -15,18 +15,18 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
                 {/* Left: Branding panel (Premium) */}
                 <div className="w-full lg:w-1/2 space-y-8 text-center lg:text-left">
-                    <Link href="/" className="inline-flex items-center gap-4 hover:opacity-80 transition-all group">
-                        <div className="h-20 w-20 rounded-[2rem] bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center p-4 shadow-2xl group-hover:scale-110 transition-transform">
+                    <Link href="/" className="inline-flex items-center gap-3 sm:gap-4 hover:opacity-80 transition-all group">
+                        <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-[1.5rem] sm:rounded-[2rem] bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center p-3 sm:p-4 shadow-2xl group-hover:scale-110 transition-transform">
                             <img src="/logo Nuysa.png" alt="NuySa Logo" className="h-full w-full object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]" />
                         </div>
-                        <div>
-                            <span className="text-4xl font-black text-white tracking-widest uppercase">NuySa</span>
-                            <div className="h-1 w-full bg-gradient-to-r from-nutri-brand to-transparent rounded-full mt-1" />
+                        <div className="text-left">
+                            <span className="text-2xl sm:text-4xl font-black text-white tracking-widest uppercase leading-none">NuySa</span>
+                            <div className="h-1 w-full bg-gradient-to-r from-nutri-brand to-transparent rounded-full mt-1 sm:mt-2" />
                         </div>
                     </Link>
 
-                    <div className="space-y-6">
-                        <h1 className="text-5xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase italic">
+                    <div className="space-y-4 sm:space-y-6">
+                        <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase italic">
                             Tu Biología <br />
                             <span className="text-nutri-brand drop-shadow-[0_0_30px_rgba(255,122,0,0.3)]">Optimizada.</span>
                         </h1>
@@ -35,15 +35,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 pt-8">
+                    <div className="grid grid-cols-3 gap-3 sm:gap-6 pt-4 sm:pt-8 max-w-sm mx-auto lg:mx-0">
                         {[
                             { label: "Pacientes", val: "5K+" },
                             { label: "Resultados", val: "100%" },
                             { label: "Precisión", val: "Gold" },
                         ].map((stat, i) => (
-                            <div key={i} className="bg-white/5 backdrop-blur-md border border-white/5 p-4 rounded-2xl">
-                                <div className="text-2xl font-black text-white italic">{stat.val}</div>
-                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{stat.label}</div>
+                            <div key={i} className="bg-white/5 backdrop-blur-md border border-white/5 p-3 sm:p-4 rounded-xl sm:rounded-2xl">
+                                <div className="text-lg sm:text-2xl font-black text-white italic">{stat.val}</div>
+                                <div className="text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest">{stat.label}</div>
                             </div>
                         ))}
                     </div>

@@ -390,7 +390,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                 className="text-4xl lg:text-5xl font-tech font-bold text-white mb-4 block"
                             />
                         ) : (
-                            <h3 className="text-4xl lg:text-5xl font-tech font-black text-white leading-tight mb-4">{content.title}</h3>
+                            <h3 className="text-3xl lg:text-5xl font-tech font-black text-white leading-tight">{content.title}</h3>
                         )}
                         {isEditable ? (
                             <EditableText
@@ -414,7 +414,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                 <button
                                     onClick={() => setTipoServicio(btn.id)}
                                     className={cn(
-                                        "px-6 md:px-8 py-3 rounded-full font-tech font-bold text-sm transition-all duration-300 whitespace-nowrap",
+                                        "px-3 md:px-8 py-2 md:py-3 rounded-full font-tech font-bold text-xs md:text-sm transition-all duration-300 whitespace-nowrap",
                                         tipoServicio === btn.id
                                             ? "bg-nutri-brand text-nutri-base shadow-[0_0_15px_rgba(255,122,0,0.4)]"
                                             : "text-slate-400 hover:text-white"
@@ -487,14 +487,14 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
 
                             return (
                                 <div key={plan.id} className={cn(
-                                    "rounded-3xl p-8 md:p-10 flex flex-col justify-between transition-all duration-300 shadow-xl relative", // removed overflow-hidden for badge visibility
+                                    "rounded-3xl p-5 sm:p-8 md:p-10 flex flex-col justify-between transition-all duration-300 shadow-xl relative", // removed overflow-hidden for badge visibility
                                     isRecommended
-                                        ? "bg-nutri-panel border-2 border-nutri-brand transform md:-translate-y-4 shadow-[0_0_40px_rgba(255,122,0,0.2)]"
+                                        ? "bg-nutri-panel border-2 border-nutri-brand transform md:-translate-y-4 shadow-[0_0_40px_rgba(255,122,0,0.2)] mt-4 md:mt-0"
                                         : "bg-nutri-panel/80 backdrop-blur-2xl border border-white/10 hover:border-nutri-brand/50 transform hover:-translate-y-2"
                                 )}>
                                     {isRecommended && (
                                         <>
-                                            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-nutri-brand text-nutri-base border border-nutri-brand text-[10px] font-tech font-bold px-4 py-1.5 rounded-full uppercase tracking-[0.2em] z-[60] shadow-lg">
+                                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-nutri-brand text-nutri-base border border-nutri-brand text-[9px] font-tech font-bold px-3 py-1 rounded-full uppercase tracking-[0.2em] z-[60] shadow-lg">
                                                 Recomendado
                                             </div>
                                             <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
@@ -514,7 +514,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                     key={btn.id}
                                                     onClick={() => toggleModalidad(plan.id, btn.id as any)}
                                                     className={cn(
-                                                        "px-4 py-1.5 text-[11px] uppercase tracking-widest font-tech font-bold rounded-full transition-all duration-300 relative group/tog",
+                                                        "px-3 py-1 text-[10px] uppercase tracking-widest font-tech font-bold rounded-full transition-all duration-300 relative group/tog",
                                                         mod === btn.id
                                                             ? "bg-nutri-brand text-nutri-base"
                                                             : "text-slate-400 hover:text-white"
@@ -564,37 +564,37 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                 label="Intervalo (Mensual/Bimestral...)"
                                                 value={plan.nombre.replace('PLAN ', '')}
                                                 onSave={(val) => handleUpdatePlan(plan.id, { interval: val })}
-                                                className="text-2xl font-tech font-bold text-white mb-2 block"
+                                                className="text-xl font-tech font-bold text-white mb-2 block"
                                             />
                                         ) : (
-                                            <h4 className="text-2xl font-tech font-bold text-white mb-2">{plan.nombre}</h4>
+                                            <h4 className="text-xl font-tech font-bold text-white mb-2">{plan.nombre}</h4>
                                         )}
 
                                         <div className="flex items-baseline gap-2 mb-6">
                                             {isEditable ? (
                                                 <div className="flex items-baseline gap-1">
-                                                    <span className="text-nutri-brand font-extrabold text-2xl">S/</span>
+                                                    <span className="text-nutri-brand font-extrabold text-xl">S/</span>
                                                     <EditableText
                                                         label="Precio"
                                                         value={plan.precioMensual.toString()}
                                                         onSave={(val) => handleUpdatePlan(plan.id, { price: parseFloat(val) })}
                                                         className={cn(
                                                             "font-extrabold text-nutri-brand transition-all duration-300 block",
-                                                            isRecommended ? "text-5xl" : "text-4xl"
+                                                            isRecommended ? "text-4xl" : "text-3xl"
                                                         )}
                                                     />
                                                 </div>
                                             ) : (
                                                 <span className={cn(
                                                     "font-extrabold text-nutri-brand transition-all duration-300",
-                                                    isRecommended ? "text-5xl" : "text-4xl"
+                                                    isRecommended ? "text-4xl" : "text-3xl"
                                                 )}>
                                                     S/ {plan.precioMensual}
                                                 </span>
                                             )}
                                         </div>
 
-                                        <ul className="space-y-4 mb-8 fade-list relative">
+                                        <ul className="space-y-3 mb-8 fade-list relative">
                                             {isEditable && (
                                                 <div className="absolute -top-6 -right-2 z-20">
                                                     <button
@@ -629,7 +629,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                                 className={cn(
                                                                     "font-sans flex-1",
                                                                     i === 0
-                                                                        ? "text-white text-xl font-bold"
+                                                                        ? "text-white text-lg font-bold"
                                                                         : isRecommended
                                                                             ? "text-slate-200 font-medium text-sm"
                                                                             : "text-slate-300 text-sm"
@@ -651,7 +651,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                         <span className={cn(
                                                             "font-sans",
                                                             i === 0
-                                                                ? "text-white text-xl font-bold"
+                                                                ? "text-white text-lg font-bold"
                                                                 : isRecommended
                                                                     ? "text-slate-200 font-medium text-sm"
                                                                     : "text-slate-300 text-sm"
@@ -670,7 +670,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                                 href={mod === "virtual" ? plan.linkVirtual : plan.linkPresencial}
                                                 target="_blank" rel="noreferrer"
                                                 className={cn(
-                                                    "block w-full py-4 px-6 text-center rounded-xl font-tech font-extrabold transition-colors",
+                                                    "block w-full py-3 px-5 text-center rounded-xl font-tech font-extrabold transition-colors text-sm",
                                                     isRecommended
                                                         ? "bg-nutri-brand text-nutri-base hover:bg-white shadow-[0_0_15px_rgba(255,122,0,0.3)]"
                                                         : "bg-transparent border border-nutri-brand text-nutri-brand hover:bg-nutri-brand hover:text-nutri-base"
@@ -682,7 +682,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                             <button
                                                 onClick={() => handleAction(plan, mod)}
                                                 className={cn(
-                                                    "block w-full py-4 px-6 text-center rounded-xl font-tech font-extrabold transition-colors",
+                                                    "block w-full py-3 px-5 text-center rounded-xl font-tech font-extrabold transition-colors text-sm",
                                                     isRecommended
                                                         ? "bg-nutri-brand text-nutri-base hover:bg-white shadow-[0_0_15px_rgba(255,122,0,0.3)]"
                                                         : "bg-transparent border border-nutri-brand text-nutri-brand hover:bg-nutri-brand hover:text-nutri-base"

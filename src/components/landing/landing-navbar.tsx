@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { User } from "lucide-react";
+import { User, Menu, X, Home, Info, Briefcase, CreditCard, MessageSquare, PhoneCall } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -12,6 +12,16 @@ import { EditableLink } from "@/components/dashboard/admin/editable-link";
 
 export function LandingNavbar() {
     const { isEditable } = useVisualEditor();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    // Prevent body scroll when menu is open
+    useEffect(() => {
+        if (isMenuOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "unset";
+        }
+    }, [isMenuOpen]);
     const [content, setContent] = useState({
         welcomeText: "¡Bienvenido(a) a NUYSA!",
         brandMain: "Nuy",
@@ -102,17 +112,17 @@ export function LandingNavbar() {
                                             label="Marca Base"
                                             value={content.brandMain}
                                             onSave={(val) => handleSave('brandMain', val)}
-                                            className="font-tech font-bold text-xl md:text-3xl tracking-tight text-white"
+                                            className="font-tech font-bold text-lg md:text-3xl tracking-tight text-white"
                                         />
                                         <EditableText
                                             label="Marca Resaltado"
                                             value={content.brandHighlight}
                                             onSave={(val) => handleSave('brandHighlight', val)}
-                                            className="font-tech font-bold text-xl md:text-3xl tracking-tight text-nutri-brand ml-1"
+                                            className="font-tech font-bold text-lg md:text-3xl tracking-tight text-nutri-brand ml-1"
                                         />
                                     </>
                                 ) : (
-                                    <Link href="/" className="font-tech font-bold text-xl md:text-3xl tracking-tight text-white">
+                                    <Link href="/" className="font-tech font-bold text-lg md:text-3xl tracking-tight text-white">
                                         {content.brandMain}<span className="text-nutri-brand">{content.brandHighlight}</span>
                                     </Link>
                                 )}
@@ -143,24 +153,120 @@ export function LandingNavbar() {
                             ))}
                         </div>
 
+                        <div className="flex xl:hidden items-center mr-2">
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="p-2 text-white hover:bg-white/5 rounded-xl transition-all"
+                            >
+                                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                            </button>
+                        </div>
+
                         <div className="flex-shrink-0 flex items-center">
                             {isEditable ? (
-                                <div className="flex items-center gap-2 bg-nutri-panel border border-white/10 px-4 md:px-6 py-2 rounded-full relative group/login-btn">
-                                    <User className="h-4 w-4 text-nutri-brand/70" />
+                                <div className="flex items-center gap-2 bg-nutri-panel border border-white/10 px-3 md:px-6 py-2 rounded-full relative group/login-btn">
+                                    <User className="h-3.5 w-3.5 md:h-4 w-4 text-nutri-brand/70" />
                                     <EditableText
                                         label="Botón Login"
                                         value={content.loginText}
                                         onSave={(val) => handleSave('loginText', val)}
-                                        className="font-tech font-bold tracking-wider text-[10px] md:text-xs text-white"
+                                        className="font-tech font-bold tracking-wider text-[9px] md:text-xs text-white"
                                     />
                                 </div>
                             ) : (
-                                <Link href="/login" className="flex items-center gap-2 font-tech font-bold tracking-wider text-xs bg-nutri-panel border border-white/10 text-white px-6 py-2.5 rounded-full hover:bg-nutri-brand hover:text-nutri-base hover:border-nutri-brand transition-all whitespace-nowrap">
-                                    <User className="h-4 w-4" /> {content.loginText}
+                                <Link href="/login" className="flex items-center gap-2 font-tech font-bold tracking-wider text-[10px] md:text-xs bg-nutri-panel border border-white/10 text-white px-4 md:px-6 py-2 md:py-2.5 rounded-full hover:bg-nutri-brand hover:text-nutri-base hover:border-nutri-brand transition-all whitespace-nowrap">
+                                    <User className="h-4 w-4" />
+                                    <span className="hidden sm:inline">{content.loginText}</span>
+                                    <span className="inline sm:hidden">Ingresar</span>
                                 </Link>
                             )}
                         </div>
 
+                    </div>
+                </div>
+
+                {/* Mobile Menu Overlay */}
+                <div className={cn(
+                    "fixed inset-0 z-[100] transition-all duration-300",
+                    isMenuOpen ? "visible" : "invisible"
+                )}>
+                    {/* Dark Backdrop Overlay */}
+                    <div
+                        className={cn(
+                            "absolute inset-0 bg-black/60 transition-opacity duration-300",
+                            isMenuOpen ? "opacity-100" : "opacity-0"
+                        )}
+                        onClick={() => setIsMenuOpen(false)}
+                    />
+
+                    {/* Single Main Card - Positioned EXACTLY below Welcome Bar (40px / top-10) */}
+                    <div className={cn(
+                        "absolute top-10 right-2 w-full max-w-[280px] bg-[#151F32] border border-white/10 rounded-[1.5rem] shadow-2xl transition-all duration-300 overflow-hidden origin-top-right z-[110]",
+                        isMenuOpen ? "scale-100 opacity-100 translate-y-0" : "scale-90 opacity-0 -translate-y-4 translate-x-4"
+                    )}>
+                        {/* Header of the Card */}
+                        <div className="flex justify-between items-center p-6 border-b border-white/5 bg-[#0B1120]/50">
+                            <div className="flex items-center gap-2">
+                                <img src={content.logoUrl} alt="Logo" className="h-6 w-auto bg-white rounded-md p-1" />
+                                <span className="font-tech font-bold text-base text-white">Menú <span className="text-nutri-brand">NuySa</span></span>
+                            </div>
+                            <button
+                                onClick={() => setIsMenuOpen(false)}
+                                className="p-2 text-white bg-white/5 rounded-full hover:bg-white/10"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        {/* Navigation List - In a single block */}
+                        <div className="p-2">
+                            <nav className="flex flex-col">
+                                {[
+                                    { id: 'menuHome', href: '#inicio', label: content.menuHome || "Inicio", icon: Home },
+                                    { id: 'menuAbout', href: '#nosotros', label: content.menuAbout || "Nosotros", icon: Info },
+                                    { id: 'menuServices', href: '#servicios', label: content.menuServices || "Servicios", icon: Briefcase },
+                                    { id: 'menuPlans', href: '#planes', label: content.menuPlans || "Planes", icon: CreditCard },
+                                    { id: 'menuTestimonials', href: '#testimonios', label: content.menuTestimonials || "Testimonios", icon: MessageSquare },
+                                    { id: 'menuContact', href: '#contacto', label: content.menuContact || "Contacto", icon: PhoneCall },
+                                ].map((item, idx, arr) => {
+                                    const Icon = item.icon;
+                                    const isLast = idx === arr.length - 1;
+                                    return (
+                                        <div key={item.id} className="w-full">
+                                            {isEditable ? (
+                                                <div className={cn(
+                                                    "flex items-center gap-4 py-4 px-6 border-white/5",
+                                                    !isLast && "border-b"
+                                                )}>
+                                                    <Icon className="h-5 w-5 text-nutri-brand shrink-0" />
+                                                    <EditableText
+                                                        label={item.id}
+                                                        value={item.label}
+                                                        onSave={(val) => handleSave(item.id, val)}
+                                                        className="text-sm font-tech font-bold uppercase tracking-widest text-white flex-1"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <a
+                                                    href={item.href}
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                    className={cn(
+                                                        "flex items-center gap-4 py-5 px-6 transition-all text-white active:bg-nutri-brand/20 group border-white/5",
+                                                        !isLast && "border-b"
+                                                    )}
+                                                >
+                                                    <Icon className="h-5 w-5 text-nutri-brand group-active:scale-110 transition-transform shrink-0" />
+                                                    <span className="text-sm font-tech font-bold uppercase tracking-widest font-black">{item.label}</span>
+                                                </a>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </nav>
+                        </div>
+
+                        {/* Footer decorative bar */}
+                        <div className="h-2 bg-gradient-to-r from-nutri-brand to-nutri-mint" />
                     </div>
                 </div>
             </nav>
