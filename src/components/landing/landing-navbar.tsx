@@ -9,6 +9,7 @@ import { useVisualEditor } from "@/components/dashboard/admin/visual-editor-cont
 import { EditableText } from "@/components/dashboard/admin/editable-text";
 import { EditableImage } from "@/components/dashboard/admin/editable-image";
 import { EditableLink } from "@/components/dashboard/admin/editable-link";
+import { EditableColor } from "@/components/dashboard/admin/editable-color";
 
 export function LandingNavbar() {
     const { isEditable } = useVisualEditor();
@@ -66,13 +67,22 @@ export function LandingNavbar() {
 
     return (
         <>
-            <div className={cn(
-                "w-full h-10 z-[60] flex items-center justify-center font-tech font-black text-xs md:text-sm tracking-[0.2em] uppercase shadow-[0_0_15px_rgba(163,230,53,0.3)] overflow-hidden",
-                content.welcomeBg || "bg-gradient-to-r from-nutri-brand to-nutri-mint",
-                content.welcomeTextColor || "text-nutri-base",
-                isEditable ? "absolute top-0" : "fixed top-0"
-            )}>
-                <div className="flex items-center gap-4">
+            <div
+                className={cn(
+                    "w-full h-10 z-[60] flex items-center justify-center font-tech font-black text-xs md:text-sm tracking-[0.2em] uppercase shadow-[0_0_15px_rgba(163,230,53,0.3)] overflow-hidden",
+                    isEditable ? "absolute top-0" : "fixed top-0"
+                )}
+                style={{
+                    backgroundColor: content.welcomeBg.startsWith('#') ? content.welcomeBg : undefined,
+                    backgroundImage: (!content.welcomeBg.startsWith('#') && content.welcomeBg.includes('gradient')) ? undefined : 'none',
+                    color: content.welcomeTextColor.startsWith('#') ? content.welcomeTextColor : undefined
+                }}
+            >
+                <div className={cn(
+                    "flex items-center gap-4 h-full w-full justify-center",
+                    (!content.welcomeBg.startsWith('#') && content.welcomeBg.includes('bg-')) ? content.welcomeBg : '',
+                    (!content.welcomeTextColor.startsWith('#') && content.welcomeTextColor.includes('text-')) ? content.welcomeTextColor : ''
+                )}>
                     {isEditable ? (
                         <>
                             <EditableText
@@ -81,24 +91,24 @@ export function LandingNavbar() {
                                 onSave={(val) => handleSave('welcomeText', val)}
                             />
                             <div className="flex gap-2 ml-4">
-                                <EditableText
-                                    label="Clase de Fondo (ej: bg-red-500 o bg-[#ff0000])"
-                                    value={content.welcomeBg || ""}
+                                <EditableColor
+                                    label="Fondo Banner"
+                                    value={content.welcomeBg || "#FF7A00"}
                                     onSave={(val) => handleSave('welcomeBg', val)}
                                 >
-                                    <div className="p-1 bg-white/20 rounded-md hover:bg-white/40 transition-all text-[8px] flex items-center gap-1">
+                                    <div className="p-1 px-2 border border-white/20 bg-white/10 rounded-md hover:bg-white/40 transition-all text-[8px] flex items-center gap-1">
                                         🎨 FONDO
                                     </div>
-                                </EditableText>
-                                <EditableText
-                                    label="Clase de Texto (ej: text-white o text-[#000000])"
-                                    value={content.welcomeTextColor || ""}
+                                </EditableColor>
+                                <EditableColor
+                                    label="Color de Texto"
+                                    value={content.welcomeTextColor || "#FFFFFF"}
                                     onSave={(val) => handleSave('welcomeTextColor', val)}
                                 >
-                                    <div className="p-1 bg-white/20 rounded-md hover:bg-white/40 transition-all text-[8px] flex items-center gap-1">
+                                    <div className="p-1 px-2 border border-white/20 bg-white/10 rounded-md hover:bg-white/40 transition-all text-[8px] flex items-center gap-1">
                                         A COLOR
                                     </div>
-                                </EditableText>
+                                </EditableColor>
                             </div>
                         </>
                     ) : content.welcomeText}
