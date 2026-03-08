@@ -348,9 +348,23 @@
 /* Optimized Justified Text */
 .text-pretty-justify {
   text-align: justify;
+  text-justify: inter-word;
   hyphens: auto;
   -webkit-hyphens: auto;
   -moz-hyphens: auto;
   -ms-hyphens: auto;
   overflow-wrap: break-word;
+  word-wrap: break-word;
+  text-wrap: pretty;
+  /* Prevents gaps and orphans */
+  word-spacing: -0.05em;
+  /* Helps tighten the lines */
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .text-pretty-justify {
+    hyphenate-limit-chars: 6 3 3;
+    /* More aggressive hyphenation for narrow columns */
+    word-spacing: -0.02em;
+  }
 }
