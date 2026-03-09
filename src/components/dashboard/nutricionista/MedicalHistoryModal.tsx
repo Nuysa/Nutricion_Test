@@ -104,7 +104,7 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-5xl rounded-[3rem] p-0 border-white/10 shadow-2xl bg-[#0B1120] text-white overflow-hidden max-h-[90vh] flex flex-col [&>button:last-child]:z-[100] [&>button:last-child]:right-10 [&>button:last-child]:top-10 [&>button:last-child]:h-12 [&>button:last-child]:w-12 [&>button:last-child]:rounded-2xl [&>button:last-child]:bg-white/5 [&>button:last-child]:border-white/10 [&>button:last-child]:hover:bg-white/10 [&>button:last-child]:transition-all">
+            <DialogContent className="max-w-5xl rounded-[3rem] p-0 border-white/10 shadow-2xl bg-[#0B1120] text-white overflow-hidden max-h-[90vh] flex flex-col [&>button:last-child]:z-[100] [&>button:last-child]:right-10 [&>button:last-child]:top-10 [&>button:last-child]:h-12 [&>button:last-child]:w-12 [&>button:last-child]:rounded-2xl [&>button:last-child]:bg-white/5 [&>button:last-child]:border-white/10 [&>button:last-child]:hover:bg-white/10 [&>button:last-child]:transition-all [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center [&>button:last-child]:p-0 [&>button:last-child>svg]:h-6 [&>button:last-child>svg]:w-6 [&>button:last-child>svg]:text-slate-400 [&>button:last-child:hover>svg]:text-white">
                 <div className="absolute top-0 right-10 w-64 h-64 bg-nutri-brand/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
 
                 <DialogHeader className="p-10 lg:p-12 border-b border-white/5 relative">
