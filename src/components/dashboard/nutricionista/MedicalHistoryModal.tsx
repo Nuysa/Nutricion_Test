@@ -104,10 +104,10 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-5xl rounded-[3rem] p-0 border-white/10 shadow-2xl bg-[#0B1120] text-white overflow-hidden max-h-[90vh] flex flex-col">
+            <DialogContent className="max-w-5xl rounded-[3rem] p-0 border-white/10 shadow-2xl bg-[#0B1120] text-white overflow-hidden max-h-[90vh] flex flex-col [&>button:last-child]:z-[100] [&>button:last-child]:right-8 [&>button:last-child]:top-8 [&>button:last-child]:h-12 [&>button:last-child]:w-12 [&>button:last-child]:rounded-2xl [&>button:last-child]:bg-white/5 [&>button:last-child]:border-white/10 [&>button:last-child]:hover:bg-white/10 [&>button:last-child]:transition-all">
                 <div className="absolute top-0 right-10 w-64 h-64 bg-nutri-brand/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
 
-                <DialogHeader className="p-10 lg:p-12 border-b border-white/5 relative z-[60]">
+                <DialogHeader className="p-10 lg:p-12 border-b border-white/5 relative">
                     <div className="flex justify-between items-start">
                         <div>
                             <DialogTitle className="text-4xl font-black tracking-tighter uppercase italic mb-2">
@@ -149,7 +149,7 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                     </div>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto p-10 lg:p-12 space-y-16 custom-scrollbar relative z-10">
+                <div className="flex-1 overflow-y-auto p-10 lg:p-12 space-y-16 custom-scrollbar relative">
                     {loading ? (
                         <div className="py-20 text-center font-black animate-pulse text-slate-500 uppercase tracking-widest text-sm">
                             Cargando expediente clínico...
@@ -335,7 +335,7 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                     )}
                 </div>
 
-                <div className="p-10 border-t border-white/5 bg-white/[0.02] relative z-10 flex justify-end">
+                <div className="p-10 border-t border-white/5 bg-white/[0.02] relative flex justify-end">
                     <DialogClose asChild>
                         <button className="px-10 h-14 rounded-2xl font-black uppercase tracking-widest bg-white/5 text-slate-400 hover:text-white transition-all border border-white/10">
                             Cerrar Documento
