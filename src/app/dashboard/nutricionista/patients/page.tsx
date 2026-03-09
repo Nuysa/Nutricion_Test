@@ -12,13 +12,15 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
+import { usePresence } from "@/components/providers/presence-provider";
 
 const supabase = createClient();
 
 export default function PatientsPage() {
     const { toast } = useToast();
+    const { isOnline } = usePresence();
     const [searchTerm, setSearchTerm] = useState("");
-    const [filterStatus, setFilterStatus] = useState("all");
+    const [filterSubscription, setFilterSubscription] = useState("all");
     const [patients, setPatients] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -170,7 +172,19 @@ export default function PatientsPage() {
 
     const filteredPatients = patients.filter((p) => {
         const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesFilter = filterStatus === "all" || p.status?.toLowerCase() === filterStatus.toLowerCase();
+
+        let matchesFilter = true;
+        if (filterSubscription !== "all") {
+            const sub = (p.subscription || "").toLowerCase();
+            if (filterSubscription === "sin plan") {
+                matchesFilter = sub === "no plan" || sub === "" || sub.includes("sin plan");
+            } else if (filterSubscription === "flexible") {
+                matchesFilter = sub.includes("flexible");
+            } else if (filterSubscription === "menu") {
+                matchesFilter = sub.includes("menú") || sub.includes("menu") || sub.includes("semanal");
+            }
+        }
+
         return matchesSearch && matchesFilter;
     });
 
@@ -206,14 +220,14 @@ export default function PatientsPage() {
                                 />
                             </div>
                             <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
+                                value={filterSubscription}
+                                onChange={(e) => setFilterSubscription(e.target.value)}
                                 className="h-12 px-6 rounded-[1rem] border border-white/5 bg-white/5 text-xs font-black uppercase tracking-widest text-slate-400 focus:ring-2 focus:ring-nutrition-500/20 focus:border-nutrition-500/50 transition-all outline-none appearance-none cursor-pointer hover:bg-white/10"
                             >
-                                <option value="all" className="bg-slate-900 text-white">Todos los estados</option>
-                                <option value="activo" className="bg-slate-900 text-white">Activos</option>
-                                <option value="pausado" className="bg-slate-900 text-white">Pausados</option>
-                                <option value="inactivo" className="bg-slate-900 text-white">Inactivos</option>
+                                <option value="all" className="bg-slate-900 text-white">Todas las suscripciones</option>
+                                <option value="sin plan" className="bg-slate-900 text-white">Sin plan</option>
+                                <option value="flexible" className="bg-slate-900 text-white">Plan flexible</option>
+                                <option value="menu" className="bg-slate-900 text-white">Plan con menú semanal</option>
                             </select>
                         </div>
                     </div>
@@ -253,12 +267,17 @@ export default function PatientsPage() {
                                         </td>
                                         <td className="py-6 px-4">
                                             <div className="flex items-center gap-2">
-                                                <div className={cn(
-                                                    "h-2 w-2 rounded-full shadow-[0_0_8px]",
-                                                    patient.status === "Activo" ? "bg-green-500 shadow-green-500/50" :
-                                                        patient.status === "Pausado" ? "bg-amber-500 shadow-amber-500/50" : "bg-slate-500 shadow-slate-500/50"
-                                                )} />
-                                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{patient.status}</span>
+                                                {isOnline(patient.profileId) ? (
+                                                    <>
+                                                        <div className="h-2 w-2 rounded-full shadow-[0_0_8px] bg-green-500 shadow-green-500/50 animate-pulse" />
+                                                        <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">Activo</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <div className="h-2 w-2 rounded-full shadow-[0_0_8px] bg-slate-500 shadow-slate-500/50" />
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Desconectado</span>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="py-6 px-4">
