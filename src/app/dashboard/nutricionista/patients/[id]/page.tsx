@@ -267,7 +267,7 @@ export default function PatientDetailPage() {
                 date_of_birth: pData.date_of_birth || "",
                 height_cm: pData.height_cm != null ? pData.height_cm.toString() : "",
                 initial_weight: pData.current_weight != null ? pData.current_weight.toString() : "",
-                gender: pData.gender || "otro"
+                gender: (pData.gender || "otro").toLowerCase()
             });
 
         } catch (err: any) {
@@ -636,45 +636,99 @@ export default function PatientDetailPage() {
 
             {/* Modal Ficha Biográfica */}
             <Dialog open={showBioDialog} onOpenChange={setShowBioDialog}>
-                <DialogContent className="rounded-[2.5rem] p-8 max-w-md border-none shadow-2xl">
-                    <DialogHeader>
-                        <div className="flex justify-between items-start">
-                            <DialogTitle className="text-2xl font-black tracking-tight">Ficha Biográfica</DialogTitle>
-                            {canEditMasterFields && <Badge className="bg-orange-100 text-orange-700 border-none px-3 py-1 text-[9px] uppercase font-black"><ShieldCheck className="h-3 w-3 mr-1" /> Privilegiado</Badge>}
-                        </div>
-                        <DialogDescription className="text-xs font-medium text-slate-400">Datos estructurales para el motor de cálculos.</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-6 py-4">
-                        <div className="grid gap-2">
-                            <Label className="text-[10px] font-black uppercase text-slate-400">Nacimiento {!canEditMasterFields && "*"}</Label>
-                            <Input type="date" value={bioValues.date_of_birth} disabled={!canEditMasterFields && !!patient?.rawBday} onChange={e => setBioValues({ ...bioValues, date_of_birth: e.target.value })} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="grid gap-2">
-                                <Label className="text-[10px] font-black uppercase text-slate-400">Talla (cm)</Label>
-                                <Input type="text" placeholder="175" value={bioValues.height_cm} onChange={e => setBioValues({ ...bioValues, height_cm: e.target.value })} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
+                <DialogContent className="rounded-[3rem] p-0 max-w-md border-white/10 shadow-2xl bg-[#151F32] text-white overflow-hidden">
+                    <div className="absolute top-0 right-10 w-32 h-32 bg-nutri-brand/10 blur-[60px] rounded-full" />
+
+                    <div className="p-8 lg:p-10 space-y-8 relative z-10">
+                        <DialogHeader>
+                            <div className="flex justify-between items-start">
+                                <DialogTitle className="text-3xl font-black tracking-tighter uppercase italic">
+                                    Ficha <span className="text-nutri-brand">Biográfica</span>
+                                </DialogTitle>
+                                {canEditMasterFields && (
+                                    <Badge className="bg-nutri-brand/20 text-nutri-brand border-none px-3 py-1 text-[9px] uppercase font-black tracking-widest">
+                                        <ShieldCheck className="h-3 w-3 mr-1" /> Staff
+                                    </Badge>
+                                )}
                             </div>
+                            <DialogDescription className="text-xs font-medium text-slate-400 italic">
+                                Datos estructurales para el motor de cálculos.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-6">
                             <div className="grid gap-2">
-                                <Label className="text-[10px] font-black uppercase text-slate-400">Peso Base (kg) {!canEditMasterFields && "*"}</Label>
-                                <Input type="text" placeholder="70.5" value={bioValues.initial_weight} disabled={!canEditMasterFields && patient?.rawWeight != null} onChange={e => setBioValues({ ...bioValues, initial_weight: e.target.value })} className="h-12 rounded-2xl bg-slate-50 border-none font-bold" />
+                                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Fecha de Nacimiento</Label>
+                                <Input
+                                    type="date"
+                                    value={bioValues.date_of_birth}
+                                    disabled={!canEditMasterFields && !!patient?.rawBday}
+                                    onChange={e => setBioValues({ ...bioValues, date_of_birth: e.target.value })}
+                                    className="h-14 rounded-2xl bg-white/5 border-white/10 text-white font-bold px-6 focus:ring-nutri-brand/50"
+                                />
+                                {!canEditMasterFields && !!patient?.rawBday && <p className="text-[9px] text-slate-500 italic">Dato bloqueado (Sincronizado)</p>}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Talla (cm)</Label>
+                                    <Input
+                                        type="text"
+                                        placeholder="175"
+                                        value={bioValues.height_cm}
+                                        onChange={e => setBioValues({ ...bioValues, height_cm: e.target.value })}
+                                        className="h-14 rounded-2xl bg-white/5 border-white/10 text-white font-bold px-6"
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Peso Base (kg)</Label>
+                                    <Input
+                                        type="text"
+                                        placeholder="70.5"
+                                        value={bioValues.initial_weight}
+                                        disabled={!canEditMasterFields && (patient?.rawWeight != null && patient?.rawWeight > 0)}
+                                        onChange={e => setBioValues({ ...bioValues, initial_weight: e.target.value })}
+                                        className="h-14 rounded-2xl bg-white/5 border-white/10 text-white font-bold px-6"
+                                    />
+                                    {!canEditMasterFields && (patient?.rawWeight != null && patient?.rawWeight > 0) && <p className="text-[9px] text-slate-500 italic">Dato bloqueado</p>}
+                                </div>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Género</Label>
+                                <Select
+                                    value={bioValues.gender}
+                                    onValueChange={v => setBioValues({ ...bioValues, gender: v })}
+                                    disabled={!canEditMasterFields && (patient?.gender !== 'otro' && patient?.gender !== null)}
+                                >
+                                    <SelectTrigger className="h-14 rounded-2xl bg-white/5 border-white/10 text-white font-bold px-6">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-2xl border-white/10 bg-[#151F32] text-white shadow-2xl">
+                                        <SelectItem value="masculino" className="font-bold focus:bg-nutri-brand/10 focus:text-white">Masculino</SelectItem>
+                                        <SelectItem value="femenino" className="font-bold focus:bg-nutri-brand/10 focus:text-white">Femenino</SelectItem>
+                                        <SelectItem value="otro" className="font-bold focus:bg-nutri-brand/10 focus:text-white">Otro / No especificado</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
-                        <div className="grid gap-2">
-                            <Label className="text-[10px] font-black uppercase text-slate-400">Género {!canEditMasterFields && "*"}</Label>
-                            <Select value={bioValues.gender} onValueChange={v => setBioValues({ ...bioValues, gender: v })} disabled={!canEditMasterFields && patient?.gender !== 'otro'}>
-                                <SelectTrigger className="h-12 rounded-2xl bg-slate-50 border-none font-bold"><SelectValue /></SelectTrigger>
-                                <SelectContent className="rounded-2xl border-none shadow-xl">
-                                    <SelectItem value="masculino" className="font-bold">Masculino</SelectItem>
-                                    <SelectItem value="femenino" className="font-bold">Femenino</SelectItem>
-                                    <SelectItem value="otro" className="font-bold">Otro (No binario)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+
+                        <DialogFooter className="gap-3 pt-6 border-t border-white/5">
+                            <Button
+                                variant="ghost"
+                                className="h-14 rounded-2xl flex-1 font-black uppercase tracking-widest text-slate-500 hover:text-white hover:bg-white/5"
+                                onClick={() => setShowBioDialog(false)}
+                            >
+                                Descartar
+                            </Button>
+                            <Button
+                                className="h-14 bg-nutri-brand text-white font-black px-8 rounded-2xl flex-1 shadow-lg shadow-nutri-brand/20 hover:scale-105 transition-all uppercase tracking-widest"
+                                onClick={handleSaveBio}
+                            >
+                                Aplicar Cambios
+                            </Button>
+                        </DialogFooter>
                     </div>
-                    <DialogFooter className="gap-3 mt-4">
-                        <Button variant="ghost" className="rounded-2xl flex-1 font-bold text-slate-400" onClick={() => setShowBioDialog(false)}>Descartar</Button>
-                        <Button className="bg-slate-900 text-white font-black px-8 rounded-2xl flex-1 shadow-lg hover:scale-105 transition-transform" onClick={handleSaveBio}>Aplicar Cambios</Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
             {/* Modal Editar Consulta */}
