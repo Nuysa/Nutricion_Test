@@ -260,26 +260,7 @@ export default function SubscriptionPage() {
                                 : "Actualmente te encuentras en una zona de acceso limitado. Para desbloquear el potencial completo de tu nutrición inteligente, activa uno de nuestros planes recomendados."}
                         </p>
 
-                        <div className="flex flex-wrap gap-12 pt-6">
-                            <div className="space-y-3">
-                                <span className="text-[10px] font-black uppercase text-slate-600 tracking-[0.3em] block">Siguiente Ciclo</span>
-                                <div className="flex items-center gap-4 text-white font-tech font-black text-lg">
-                                    <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5">
-                                        <Calendar className="h-5 w-5 text-nutrition-500" />
-                                    </div>
-                                    15 MAR 2026
-                                </div>
-                            </div>
-                            <div className="space-y-3">
-                                <span className="text-[10px] font-black uppercase text-slate-600 tracking-[0.3em] block">Canal Activo</span>
-                                <div className="flex items-center gap-4 text-white font-tech font-black text-lg">
-                                    <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5">
-                                        <CreditCard className="h-5 w-5 text-nutrition-500" />
-                                    </div>
-                                    VISA •••• 4242
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
 
                     <div className="w-full lg:w-80 space-y-8 bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-10 backdrop-blur-xl">
