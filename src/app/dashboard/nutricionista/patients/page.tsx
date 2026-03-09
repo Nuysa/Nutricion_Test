@@ -311,19 +311,44 @@ export default function PatientsPage() {
             </Card>
 
             <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Agendar Cita</DialogTitle>
-                        <DialogDescription>Programar cita para {selectedPatient?.name}</DialogDescription>
+                <DialogContent className="rounded-[2.5rem] border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-2xl p-10 max-w-md">
+                    <DialogHeader className="space-y-3">
+                        <DialogTitle className="text-2xl font-black text-white uppercase tracking-tight">Agendar Cita</DialogTitle>
+                        <DialogDescription className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] opacity-60">
+                            Programar cita para <span className="text-nutrition-500">{selectedPatient?.name}</span>
+                        </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4 space-y-4">
-                        <Input type="date" value={scheduleValues.date} onChange={(e) => setScheduleValues({ ...scheduleValues, date: e.target.value })} />
-                        <select className="w-full text-sm border p-2 rounded-md" value={scheduleValues.time} onChange={(e) => setScheduleValues({ ...scheduleValues, time: e.target.value })}>
-                            {timeSlots.map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
+                    <div className="py-6 space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Fecha de Consulta</label>
+                            <Input
+                                type="date"
+                                value={scheduleValues.date}
+                                className="h-14 rounded-2xl border-white/10 bg-white/5 text-white text-sm font-black focus:ring-nutrition-500/50 transition-all"
+                                onChange={(e) => setScheduleValues({ ...scheduleValues, date: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Hora de Consulta</label>
+                            <div className="relative">
+                                <select
+                                    className="h-14 w-full px-4 rounded-2xl border border-white/10 bg-white/5 text-sm font-black text-white focus:ring-2 focus:ring-nutrition-500/20 focus:border-nutrition-500/50 outline-none appearance-none cursor-pointer transition-all hover:bg-white/10"
+                                    value={scheduleValues.time}
+                                    onChange={(e) => setScheduleValues({ ...scheduleValues, time: e.target.value })}
+                                >
+                                    {timeSlots.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
+                                </select>
+                                <Clock className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+                            </div>
+                        </div>
                     </div>
-                    <DialogFooter>
-                        <Button onClick={handleSaveSchedule}>Guardar Cita</Button>
+                    <DialogFooter className="pt-2">
+                        <Button
+                            onClick={handleSaveSchedule}
+                            className="w-full h-14 rounded-2xl bg-nutrition-600 hover:bg-nutrition-700 text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-lg shadow-nutrition-600/20 transition-all active:scale-[0.98]"
+                        >
+                            Confirmar Cita
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
