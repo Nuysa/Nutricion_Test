@@ -263,13 +263,28 @@ export function MedicalHistoryForm() {
                 disliked_fats: Array.isArray(values.disliked_fats) ? values.disliked_fats.join(', ') : values.disliked_fats,
             };
 
-            const { error } = await supabase
+            // Update medical history
+            const medicalHistoryPromise = supabase
                 .from('patient_medical_histories')
                 .upsert(dbData, { onConflict: 'patient_id' });
 
-            if (error) throw error;
+            // Update basic patient data in 'patients' table
+            const patientDataPromise = supabase
+                .from('patients')
+                .update({
+                    height_cm: values.height_cm,
+                    current_weight: values.weight_kg === "" ? null : values.weight_kg,
+                    gender: values.gender,
+                    date_of_birth: values.birth_date
+                })
+                .eq('id', patientId);
 
-            toast({ title: "¡Éxito!", description: "Tu historia clínica ha sido guardada correctamente.", variant: "success" });
+            const [historyRes, patientRes] = await Promise.all([medicalHistoryPromise, patientDataPromise]);
+
+            if (historyRes.error) throw historyRes.error;
+            if (patientRes.error) throw patientRes.error;
+
+            toast({ title: "¡Éxito!", description: "Tu historia clínica y datos de perfil han sido actualizados.", variant: "success" });
             setHasHistory(true);
             setIsEditMode(false);
             setStep(1); // Reset to step 1 for future edits
