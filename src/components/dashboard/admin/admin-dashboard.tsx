@@ -874,80 +874,96 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                         )}
 
                         {activeTab === "assignments" && (
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                <Card className="rounded-[2.5rem] border-slate-100 shadow-xl overflow-hidden">
-                                    <CardHeader className="bg-slate-50/50">
-                                        <CardTitle className="font-black text-xl">Asignar Especialista</CardTitle>
-                                        <CardDescription className="font-medium">Vincula un paciente con su nutricionista asignado.</CardDescription>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <Card className="rounded-[2.5rem] border-white/10 bg-white/[0.03] backdrop-blur-md shadow-2xl overflow-hidden">
+                                    <CardHeader className="border-b border-white/5">
+                                        <CardTitle className="font-black text-xl text-white uppercase tracking-tight">Asignar Especialista</CardTitle>
+                                        <CardDescription className="font-bold text-slate-400 text-xs uppercase tracking-widest opacity-60">Vincula un paciente con su nutricionista asignado.</CardDescription>
                                     </CardHeader>
                                     <CardContent className="p-0">
-                                        <div className="p-6 space-y-6">
+                                        <div className="p-10 space-y-8">
                                             <div className="space-y-4">
                                                 <div className="flex items-center justify-between">
-                                                    <p className="text-sm font-black text-slate-800">1. Selecciona Paciente</p>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">1. Selecciona Paciente</p>
                                                     <div className="relative w-40">
-                                                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
                                                         <Input
                                                             placeholder="Filtrar..."
-                                                            className="pl-7 h-7 text-[10px] rounded-lg"
+                                                            className="pl-9 h-9 text-[10px] rounded-xl border-white/5 bg-white/5 text-white placeholder:text-slate-600 focus:ring-nutrition-500/50"
                                                             value={assignPSearch}
                                                             onChange={(e) => setAssignPSearch(e.target.value)}
                                                         />
                                                     </div>
                                                 </div>
-                                                <ScrollArea className="h-48 border rounded-2xl p-2 bg-slate-50/30">
-                                                    {filteredPatientsForAssign.map(p => (
-                                                        <button
-                                                            key={p.id}
-                                                            onClick={() => setSelectedPatientId(p.id)}
-                                                            className={cn(
-                                                                "w-full text-left p-3 rounded-xl flex items-center justify-between group transition-all",
-                                                                selectedPatientId === p.id ? "bg-nutrition-50 ring-1 ring-nutrition-200" : "hover:bg-white"
-                                                            )}
-                                                        >
-                                                            <span className="text-sm font-bold text-slate-700">{p.name}</span>
-                                                            <Badge className={assignments[p.id]?.length > 0 ? "bg-green-100 text-green-600" : "bg-slate-100 text-slate-400"}>
-                                                                {assignments[p.id]?.length > 0 ? "Asignado" : "Pendiente"}
-                                                            </Badge>
-                                                        </button>
-                                                    ))}
+                                                <ScrollArea className="h-56 border-white/5 rounded-[1.5rem] p-2 bg-white/[0.02]">
+                                                    <div className="space-y-1">
+                                                        {filteredPatientsForAssign.map(p => (
+                                                            <button
+                                                                key={p.id}
+                                                                onClick={() => setSelectedPatientId(p.id)}
+                                                                className={cn(
+                                                                    "w-full text-left p-4 rounded-xl flex items-center justify-between group transition-all",
+                                                                    selectedPatientId === p.id ? "bg-nutrition-500 text-white shadow-lg shadow-nutrition-500/20" : "hover:bg-white/5"
+                                                                )}
+                                                            >
+                                                                <span className={cn("text-xs font-black uppercase tracking-widest", selectedPatientId === p.id ? "text-white" : "text-slate-300")}>{p.name}</span>
+                                                                <Badge variant="outline" className={cn(
+                                                                    "text-[8px] font-black uppercase border-none px-2 py-0.5",
+                                                                    assignments[p.id]?.length > 0
+                                                                        ? (selectedPatientId === p.id ? "bg-white/20 text-white" : "bg-green-500/10 text-green-500")
+                                                                        : (selectedPatientId === p.id ? "bg-white/10 text-white/50" : "bg-slate-500/10 text-slate-500")
+                                                                )}>
+                                                                    {assignments[p.id]?.length > 0 ? "Asignado" : "Pendiente"}
+                                                                </Badge>
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                 </ScrollArea>
                                             </div>
 
                                             <div className="space-y-4">
                                                 <div className="flex items-center justify-between">
-                                                    <p className="text-sm font-black text-slate-800">2. Selecciona Nutricionista</p>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">2. Selecciona Nutricionista</p>
                                                     <div className="relative w-40">
-                                                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
                                                         <Input
                                                             placeholder="Filtrar..."
-                                                            className="pl-7 h-7 text-[10px] rounded-lg"
+                                                            className="pl-9 h-9 text-[10px] rounded-xl border-white/5 bg-white/5 text-white placeholder:text-slate-600 focus:ring-nutrition-500/50"
                                                             value={assignNSearch}
                                                             onChange={(e) => setAssignNSearch(e.target.value)}
                                                         />
                                                     </div>
                                                 </div>
-                                                <ScrollArea className="h-48 border rounded-2xl p-2 bg-slate-50/30">
-                                                    {activeNutris.map(n => (
-                                                        <button
-                                                            key={n.id}
-                                                            onClick={() => setSelectedNutriId(n.id)}
-                                                            className={cn(
-                                                                "w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all",
-                                                                selectedNutriId === n.id ? "bg-nutrition-50 ring-1 ring-nutrition-200" : "hover:bg-white"
-                                                            )}
-                                                        >
-                                                            <Avatar className="h-6 w-6"><AvatarFallback className="text-[10px]">{n.name[0]}</AvatarFallback></Avatar>
-                                                            <span className="text-sm font-bold text-slate-700">{n.name}</span>
-                                                        </button>
-                                                    ))}
+                                                <ScrollArea className="h-56 border-white/5 rounded-[1.5rem] p-2 bg-white/[0.02]">
+                                                    <div className="space-y-1">
+                                                        {activeNutris.map(n => (
+                                                            <button
+                                                                key={n.id}
+                                                                onClick={() => setSelectedNutriId(n.id)}
+                                                                className={cn(
+                                                                    "w-full text-left p-4 rounded-xl flex items-center gap-4 transition-all group",
+                                                                    selectedNutriId === n.id ? "bg-nutrition-500 text-white shadow-lg shadow-nutrition-500/20" : "hover:bg-white/5"
+                                                                )}
+                                                            >
+                                                                <Avatar className="h-8 w-8 border-2 border-white/10">
+                                                                    <AvatarFallback className={cn(
+                                                                        "text-[10px] font-black",
+                                                                        selectedNutriId === n.id ? "bg-white/20 text-white" : "bg-nutrition-500 text-white"
+                                                                    )}>
+                                                                        {n.name[0]}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <span className={cn("text-xs font-black uppercase tracking-widest", selectedNutriId === n.id ? "text-white" : "text-slate-300")}>{n.name}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                 </ScrollArea>
                                             </div>
 
                                             <Button
                                                 onClick={handleAssign}
                                                 disabled={!selectedPatientId || !selectedNutriId}
-                                                className="w-full rounded-2xl bg-slate-900 text-white font-black h-12"
+                                                className="w-full rounded-2xl bg-nutrition-600 hover:bg-nutrition-700 text-white font-black h-14 uppercase tracking-[0.2em] text-[11px] disabled:opacity-20 transition-all shadow-lg shadow-nutrition-600/20"
                                             >
                                                 Confirmar Asignación
                                             </Button>
@@ -955,34 +971,43 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                     </CardContent>
                                 </Card>
 
-                                <Card className="rounded-[2.5rem] border-slate-100 shadow-xl overflow-hidden flex flex-col">
-                                    <CardHeader className="bg-slate-50/50">
+                                <Card className="rounded-[2.5rem] border-white/10 bg-white/[0.03] backdrop-blur-md shadow-2xl overflow-hidden flex flex-col">
+                                    <CardHeader className="border-b border-white/5">
                                         <div className="flex items-center justify-between">
-                                            <CardTitle className="font-black text-xl">Estado de Asignaciones</CardTitle>
-                                            <Badge className="bg-slate-100 text-slate-500 border-none font-bold">{Object.keys(assignments).length}</Badge>
+                                            <CardTitle className="font-black text-xl text-white uppercase tracking-tight">Estado de Asignaciones</CardTitle>
+                                            <Badge className="bg-white/5 text-slate-400 border-white/5 font-black uppercase text-[10px] px-3 py-1 rounded-lg">
+                                                {Object.keys(assignments).length} Total
+                                            </Badge>
                                         </div>
                                     </CardHeader>
-                                    <CardContent className="flex-1 p-6 overflow-hidden">
-                                        <ScrollArea className="h-[500px] pr-4">
-                                            <div className="space-y-3">
+                                    <CardContent className="flex-1 p-10 overflow-hidden">
+                                        <ScrollArea className="h-[600px] pr-4">
+                                            <div className="space-y-4">
                                                 {Object.entries(assignments).flatMap(([pid, nids]) => {
-                                                    // Search in the full profiles array to avoid role-filtering issues
                                                     const p = profiles.find(x => x.id === pid);
                                                     if (!p) return [];
                                                     return nids.map(nid => {
                                                         const n = profiles.find(x => x.id === nid);
                                                         if (!n) return null;
                                                         return (
-                                                            <div key={`${pid}-${nid}`} className="p-4 rounded-3xl border border-slate-100 flex items-center justify-between bg-white hover:border-nutrition-200 transition-colors">
-                                                                <div className="flex items-center gap-3">
-                                                                    <p className="text-sm font-black text-slate-700">{p.name}</p>
-                                                                    <ArrowRight className="h-4 w-4 text-slate-300" />
-                                                                    <p className="text-sm font-bold text-nutrition-600">{n.name}</p>
+                                                            <div key={`${pid}-${nid}`} className="p-6 rounded-[2rem] border border-white/5 flex items-center justify-between bg-white/[0.02] hover:bg-white/[0.05] hover:border-nutrition-500/20 transition-all group">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="space-y-1">
+                                                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Paciente</p>
+                                                                        <p className="text-sm font-black text-white">{p.name}</p>
+                                                                    </div>
+                                                                    <div className="h-8 w-8 rounded-full bg-nutrition-500/10 flex items-center justify-center mx-2">
+                                                                        <ArrowRight className="h-4 w-4 text-nutrition-500" />
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Especialista</p>
+                                                                        <p className="text-sm font-black text-nutrition-400">{n.name}</p>
+                                                                    </div>
                                                                 </div>
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="icon"
-                                                                    className="h-8 w-8 rounded-full text-slate-300 hover:text-red-500"
+                                                                    className="h-10 w-10 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
                                                                     onClick={() => handleUnassign(pid, nid)}
                                                                 >
                                                                     <X className="h-4 w-4" />
