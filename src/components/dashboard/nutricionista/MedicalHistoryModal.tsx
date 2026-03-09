@@ -71,11 +71,6 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                                 Perfil clínico y nutricional de <span className="text-white font-bold uppercase">{patientName}</span>
                             </DialogDescription>
                         </div>
-                        <DialogClose asChild>
-                            <button className="h-12 w-12 flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/5 rounded-2xl transition-all border border-transparent hover:border-white/5">
-                                <X className="h-6 w-6" />
-                            </button>
-                        </DialogClose>
                     </div>
                 </DialogHeader>
 
