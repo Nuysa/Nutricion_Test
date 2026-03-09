@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { VariablesService, DashboardColumn, ClinicalVariable } from "@/lib/variables-service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -639,7 +639,7 @@ export default function PatientDetailPage() {
                 <DialogContent className="rounded-[3rem] p-0 max-w-md border-white/10 shadow-2xl bg-[#151F32] text-white overflow-hidden">
                     <div className="absolute top-0 right-10 w-32 h-32 bg-nutri-brand/10 blur-[60px] rounded-full" />
 
-                    <div className="p-8 lg:p-10 space-y-8 relative z-10">
+                    <div className="p-8 lg:p-10 space-y-8">
                         <DialogHeader>
                             <div className="flex justify-between items-start">
                                 <DialogTitle className="text-3xl font-black tracking-tighter uppercase italic">
