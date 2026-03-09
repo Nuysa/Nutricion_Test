@@ -101,7 +101,7 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                     <SummaryItem label="Género" value={historyData.gender} />
                                     <SummaryItem label="DNI" value={historyData.dni} />
-                                    <SummaryItem label="Educación" value={historyData.education_level} />
+                                    <SummaryItem label="Nivel Educativo" value={historyData.education_level} />
                                     <SummaryItem label="Ubicación" value={`${historyData.district || ''}, ${historyData.region || ''}`} />
                                     <SummaryItem label="Ocupación" value={`${historyData.occupation || ''} (${historyData.job_details || ''})`} />
                                 </div>
@@ -127,7 +127,7 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <SummaryItem label="Condiciones Médicas" value={formatList(historyData.health_conditions)} />
                                     <SummaryItem label="Antecedentes Familiares" value={formatList(historyData.family_history)} />
-                                    <SummaryItem label="Medicamentos" value={historyData.takes_medication === 'yes' ? historyData.medication_details : 'No'} />
+                                    <SummaryItem label="Medicamentos" value={historyData.takes_medication === 'yes' ? historyData.medication_details : 'No consume'} />
                                     <SummaryItem label="Análisis Recientes" value={getYesNo(historyData.recent_lab_tests)} />
                                 </div>
                             </section>
@@ -138,24 +138,24 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                                     <span className="w-8 h-[1px] bg-nutri-brand/30" /> 04 // ACTIVIDAD Y HÁBITOS
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <SummaryItem label="Actividad" value={historyData.activity_level} />
-                                    <SummaryItem label="Ejercicio" value={getYesNo(historyData.does_exercise)} />
+                                    <SummaryItem label="Nivel de Actividad" value={historyData.activity_level} />
+                                    <SummaryItem label="Realiza Ejercicio" value={getYesNo(historyData.does_exercise)} />
                                     <SummaryItem label="Sueño" value={`${historyData.sleep_hours || '-'}h (Calidad: ${historyData.sleep_quality || '-'})`} />
-                                    <SummaryItem label="Agua" value={historyData.water_intake} />
-                                    <SummaryItem label="Apetito" value={historyData.appetite_level} />
+                                    <SummaryItem label="Consumo de Agua" value={historyData.water_intake} />
+                                    <SummaryItem label="Nivel de Apetito" value={historyData.appetite_level} />
                                 </div>
                             </section>
 
                             {/* 05: Alimentación */}
                             <section className="space-y-8">
                                 <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
-                                    <span className="w-8 h-[1px] bg-nutri-brand/30" /> 05 // ALIMENTACIÓN
+                                    <span className="w-8 h-[1px] bg-nutri-brand/30" /> 05 // ALIMENTACIÓN Y PREFERENCIAS
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    <SummaryItem label="Cooks" value={historyData.cooks_for_self} />
-                                    <SummaryItem label="Dairy" value={historyData.dairy_consumption} />
-                                    <SummaryItem label="Suplements" value={historyData.supplements_consumption} />
-                                    <SummaryItem label="Aversiones" value={formatList(historyData.disliked_meats)} className="col-span-full" />
+                                    <SummaryItem label="Quién cocina" value={historyData.cooks_for_self} />
+                                    <SummaryItem label="Lácteos" value={historyData.dairy_consumption} />
+                                    <SummaryItem label="Suplementación" value={historyData.supplements_consumption} />
+                                    <SummaryItem label="Aversiones y Alergias" value={formatList(historyData.disliked_meats)} className="col-span-full" />
                                 </div>
                             </section>
                         </div>
