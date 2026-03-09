@@ -39,6 +39,7 @@ interface NavItem {
 
 const patientNav: NavItem[] = [
     { label: "Dashboard", href: "/dashboard/paciente", icon: LayoutDashboard },
+    { label: "Historia Clínica", href: "/dashboard/paciente/medical-history", icon: Shield },
     { label: "Calendario", href: "/dashboard/paciente/calendar", icon: Calendar },
     { label: "Plan Nutricional", href: "/dashboard/paciente/meal-plan", icon: Salad as any },
     { label: "Mensajes", href: "/dashboard/paciente/messages", icon: MessageSquare },

@@ -60,12 +60,49 @@ export function Topbar({ userName: initialUserName = "Usuario", userAvatar: init
         const stored = localStorage.getItem(notifKey);
         const unreadMsgCount = parseInt(localStorage.getItem("nutrigo_total_unread") || "0");
 
+        const checkMedicalHistory = async (existingNotifs: Notification[]) => {
+            const supabase = createClient();
+
+            // Get patient profile
+            const { data: profile } = await supabase.from('profiles').select('id, role').eq('user_id', currentUserId).single();
+            if (profile?.role !== 'paciente') return existingNotifs;
+
+            const { data: patient } = await supabase.from('patients').select('id').eq('profile_id', profile.id).single();
+            if (!patient) return existingNotifs;
+
+            const { data: history, error } = await supabase.from('patient_medical_histories').select('id').eq('patient_id', patient.id).maybeSingle();
+
+            if (!history && !error) {
+                const historyNotifId = "sys-history-pending";
+                if (!existingNotifs.some(n => n.id === historyNotifId)) {
+                    const newNotif: Notification = {
+                        id: historyNotifId,
+                        type: 'system',
+                        title: "¡Acción Requerida!",
+                        description: "Por favor, completa tu Historia Clínica para poder brindarte un mejor servicio.",
+                        time: "Ahora",
+                        unread: true
+                    };
+                    return [newNotif, ...existingNotifs];
+                }
+            }
+            return existingNotifs;
+        };
+
         if (stored) {
             const parsed = JSON.parse(stored);
             setNotifications(parsed);
             setUnreadNotifCount(parsed.filter((n: Notification) => n.unread).length);
+
+            // Check for missing history even if stored
+            checkMedicalHistory(parsed).then(updated => {
+                if (updated.length !== parsed.length) {
+                    setNotifications(updated);
+                    setUnreadNotifCount(updated.filter(n => n.unread).length);
+                    localStorage.setItem(notifKey, JSON.stringify(updated));
+                }
+            });
         } else {
-            // Realistic default notifications
             const defaults: Notification[] = [
                 {
                     id: "sys-01",
@@ -77,7 +114,6 @@ export function Topbar({ userName: initialUserName = "Usuario", userAvatar: init
                 }
             ];
 
-            // If there are real messages unread, add a real notification for them
             if (unreadMsgCount > 0) {
                 defaults.unshift({
                     id: "msg-init",
@@ -92,6 +128,12 @@ export function Topbar({ userName: initialUserName = "Usuario", userAvatar: init
             setNotifications(defaults);
             setUnreadNotifCount(defaults.filter(n => n.unread).length);
             localStorage.setItem(notifKey, JSON.stringify(defaults));
+
+            checkMedicalHistory(defaults).then(updated => {
+                setNotifications(updated);
+                setUnreadNotifCount(updated.filter(n => n.unread).length);
+                localStorage.setItem(notifKey, JSON.stringify(updated));
+            });
         }
     }, [currentUserId]);
 
