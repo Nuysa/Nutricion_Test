@@ -278,7 +278,8 @@ export default function PatientsPage() {
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => handleOpenSchedule(patient)}
-                                                    className="h-10 gap-2 text-slate-400 hover:text-white hover:bg-white/10 font-black bg-white/5 rounded-xl px-4 border border-white/5 transition-all uppercase tracking-widest text-[10px]"
+                                                    disabled={patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan")}
+                                                    className="h-10 gap-2 text-slate-400 hover:text-white hover:bg-white/10 font-black bg-white/5 rounded-xl px-4 border border-white/5 transition-all uppercase tracking-widest text-[10px] disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-white/5 disabled:hover:text-slate-400"
                                                 >
                                                     <CalendarIcon className="h-3.5 w-3.5" />
                                                     Citar
