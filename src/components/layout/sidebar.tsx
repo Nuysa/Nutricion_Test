@@ -204,17 +204,17 @@ export function Sidebar({ currentUserId: propUserId }: { currentUserId?: string 
                         </Link>
                     );
                 })}
-            </nav>
 
-            <div className="p-4 border-t border-white/5 bg-nutri-base/50">
-                <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-tech font-bold text-slate-500 hover:bg-red-500/10 hover:text-red-500 transition-all w-full"
-                >
-                    <LogOut className="h-5 w-5" />
-                    <span>Cerrar Sesión</span>
-                </button>
-            </div>
+                <div className="pt-4 mt-4 border-t border-white/5">
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-tech font-bold text-slate-500 hover:bg-red-500/10 hover:text-red-500 transition-all w-full border-l-4 border-transparent"
+                    >
+                        <LogOut className="h-5 w-5" />
+                        <span>Cerrar Sesión</span>
+                    </button>
+                </div>
+            </nav>
         </div>
     );
 
