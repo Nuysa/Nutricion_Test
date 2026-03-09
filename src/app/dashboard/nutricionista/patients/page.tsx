@@ -53,6 +53,7 @@ export default function PatientsPage() {
                 .from("patients")
                 .select(`
                     id, 
+                    plan_type,
                     goal_weight, 
                     current_weight,
                     profile:profiles!profile_id(id, full_name, role, status, avatar_url, created_at)
@@ -69,6 +70,7 @@ export default function PatientsPage() {
                         id: p.id,
                         name: profileData.full_name || "Paciente",
                         status: profileData.status || "Activo",
+                        subscription: p.plan_type || "No Plan",
                         progress: 0,
                         lastVisit: "Por programar",
                         nextVisit: "Sin programar",
@@ -221,9 +223,10 @@ export default function PatientsPage() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-white/5 bg-white/[0.02]">
-                                    <th className="text-left py-6 px-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Paciente</th>
+                                    <th className="text-left py-6 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Paciente</th>
                                     <th className="text-left py-6 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Fecha Inicio</th>
                                     <th className="text-left py-6 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Estado</th>
+                                    <th className="text-left py-6 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Suscripción</th>
                                     <th className="text-left py-6 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Siguiente Visita</th>
                                     <th className="py-6 px-10"></th>
                                 </tr>
@@ -258,6 +261,11 @@ export default function PatientsPage() {
                                                 )} />
                                                 <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{patient.status}</span>
                                             </div>
+                                        </td>
+                                        <td className="py-6 px-4">
+                                            <Badge variant="outline" className="text-[10px] font-black text-nutrition-400 border-nutrition-500/20 bg-nutrition-500/5 px-3 py-1 rounded-lg uppercase">
+                                                {patient.subscription}
+                                            </Badge>
                                         </td>
                                         <td className="py-6 px-4">
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
