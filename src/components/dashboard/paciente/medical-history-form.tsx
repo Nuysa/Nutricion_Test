@@ -131,6 +131,9 @@ export function MedicalHistoryForm() {
     const { toast } = useToast();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [hasHistory, setHasHistory] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
     const [patientId, setPatientId] = useState<string | null>(null);
     const totalSteps = 10;
 
@@ -155,21 +158,54 @@ export function MedicalHistoryForm() {
 
     useEffect(() => {
         const fetchUserData = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
 
-            const { data: profile } = await supabase.from('profiles').select('id, full_name, email').eq('user_id', user.id).single();
-            if (profile) {
-                form.setValue('full_name', profile.full_name);
-                form.setValue('email', profile.email || "");
+                const { data: profile } = await supabase.from('profiles').select('id, full_name, email').eq('user_id', user.id).single();
+                if (profile) {
+                    form.setValue('full_name', profile.full_name);
+                    form.setValue('email', profile.email || "");
 
-                const { data: patient } = await supabase.from('patients').select('id, height_cm, current_weight, date_of_birth').eq('profile_id', profile.id).single();
-                if (patient) {
-                    setPatientId(patient.id);
-                    if (patient.height_cm) form.setValue('height_cm', Number(patient.height_cm));
-                    if (patient.current_weight) form.setValue('weight_kg', Number(patient.current_weight));
-                    if (patient.date_of_birth) form.setValue('birth_date', patient.date_of_birth);
+                    const { data: patient } = await supabase.from('patients').select('id, height_cm, current_weight, date_of_birth').eq('profile_id', profile.id).single();
+                    if (patient) {
+                        setPatientId(patient.id);
+                        if (patient.height_cm) form.setValue('height_cm', Number(patient.height_cm));
+                        if (patient.current_weight) form.setValue('weight_kg', Number(patient.current_weight));
+                        if (patient.date_of_birth) form.setValue('birth_date', patient.date_of_birth);
+
+                        // Check for existing medical history
+                        const { data: history } = await supabase.from('patient_medical_histories').select('*').eq('patient_id', patient.id).single();
+                        if (history) {
+                            setHasHistory(true);
+                            // Pre-fill form with existing data
+                            Object.keys(history).forEach(key => {
+                                if (key in medicalHistorySchema.shape) {
+                                    const value = history[key];
+                                    if (['health_conditions', 'family_history', 'exercise_types', 'exercise_days', 'appetite_peak_time', 'available_instruments', 'supplement_types', 'previous_unhealthy_habits', 'disliked_cereals', 'disliked_tubers', 'disliked_legumes', 'disliked_meats', 'disliked_fats'].includes(key)) {
+                                        if (typeof value === 'string' && value) {
+                                            form.setValue(key as any, value.split(', ').filter(Boolean));
+                                        } else {
+                                            form.setValue(key as any, value || []);
+                                        }
+                                    } else if (['previous_nutrition_service', 'takes_medication', 'recent_lab_tests', 'does_exercise', 'likes_cooking', 'supplements_consumption'].includes(key)) {
+                                        // If stored as boolean, convert to 'yes'/'no' for the form radio groups
+                                        // or if already 'yes_pro' etc it handles it
+                                        if (value === true) form.setValue(key as any, 'yes');
+                                        else if (value === false) form.setValue(key as any, 'no');
+                                        else form.setValue(key as any, value ?? "");
+                                    } else {
+                                        form.setValue(key as any, value ?? "");
+                                    }
+                                }
+                            });
+                        }
+                    }
                 }
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+            } finally {
+                setInitialLoading(false);
             }
         };
         fetchUserData();
@@ -209,13 +245,14 @@ export function MedicalHistoryForm() {
                 // Numeric transformations: convert empty strings to null for nullable columns
                 weight_kg: values.weight_kg === "" ? null : values.weight_kg,
                 waist_cm: values.waist_cm === "" ? null : values.waist_cm,
-                // Boolean transformations
-                previous_nutrition_service: values.previous_nutrition_service?.startsWith('yes'),
+                // Boolean transformations: explicitly transform to boolean or null to avoid "" errors
+                previous_nutrition_service: values.previous_nutrition_service ? values.previous_nutrition_service.startsWith('yes') : null,
                 takes_medication: values.takes_medication === 'yes',
                 recent_lab_tests: values.recent_lab_tests === 'yes',
                 does_exercise: values.does_exercise === 'yes',
                 likes_cooking: values.likes_cooking === 'yes',
                 supplements_consumption: values.supplements_consumption === 'yes',
+                has_calorie_tracker: values.has_calorie_tracker === 'yes',
                 // Array to string transformations for columns defined as text in DB
                 disliked_cereals: Array.isArray(values.disliked_cereals) ? values.disliked_cereals.join(', ') : values.disliked_cereals,
                 disliked_tubers: Array.isArray(values.disliked_tubers) ? values.disliked_tubers.join(', ') : values.disliked_tubers,
@@ -229,7 +266,9 @@ export function MedicalHistoryForm() {
             if (error) throw error;
 
             toast({ title: "¡Éxito!", description: "Tu historia clínica ha sido guardada correctamente.", variant: "success" });
-            window.location.href = "/dashboard/paciente";
+            setHasHistory(true);
+            setIsEditMode(false);
+            setStep(1); // Reset to step 1 for future edits
         } catch (error: any) {
             console.error("Error saving medical history:", error);
             toast({ title: "Error", description: error.message || "Ocurrió un error al guardar.", variant: "destructive" });
@@ -254,6 +293,21 @@ export function MedicalHistoryForm() {
 
     const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
+    if (initialLoading) {
+        return (
+            <Card className="rounded-[3rem] shadow-2xl border-white/5 bg-[#151F32] overflow-hidden">
+                <CardContent className="p-20 flex flex-col items-center justify-center space-y-4">
+                    <Sparkles className="h-12 w-12 text-nutri-brand animate-pulse" />
+                    <p className="text-white font-tech tracking-widest uppercase animate-pulse">Cargando Historia...</p>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    if (hasHistory && !isEditMode) {
+        return <MedicalHistorySummary values={form.getValues()} onEdit={() => setIsEditMode(true)} />;
+    }
+
     return (
         <Card className="rounded-[3rem] shadow-2xl border-white/5 bg-[#151F32] overflow-hidden">
             <CardHeader className="p-8 lg:p-12 border-b border-white/5 relative">
@@ -261,12 +315,17 @@ export function MedicalHistoryForm() {
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="text-3xl lg:text-4xl font-black text-white tracking-tighter uppercase mb-2">
-                            Completa tu <span className="text-nutri-brand">Historia Clínica</span>
+                            {hasHistory ? "Editar tu" : "Completa tu"} <span className="text-nutri-brand">Historia Clínica</span>
                         </CardTitle>
                         <CardDescription className="text-slate-400 font-medium italic">
                             Paso {step} de {totalSteps}: {getStepTitle(step)}
                         </CardDescription>
                     </div>
+                    {hasHistory && (
+                        <Button variant="ghost" onClick={() => setIsEditMode(false)} className="text-slate-500 hover:text-white uppercase font-black tracking-widest text-xs">
+                            Cancelar Edición
+                        </Button>
+                    )}
                 </div>
             </CardHeader>
             <CardContent className="p-8 lg:p-12">
@@ -309,7 +368,7 @@ export function MedicalHistoryForm() {
                                     disabled={loading}
                                     className="px-12 h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all"
                                 >
-                                    {loading ? "Guardando..." : "Guardar Historia Clínica"} <Save className="ml-2 h-5 w-5" />
+                                    {loading ? "Guardando..." : "Guardar Cambios"} <Save className="ml-2 h-5 w-5" />
                                 </Button>
                             )}
                         </div>
@@ -317,6 +376,74 @@ export function MedicalHistoryForm() {
                 </Form>
             </CardContent>
         </Card>
+    );
+}
+
+function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => void }) {
+    return (
+        <Card className="rounded-[3rem] shadow-2xl border-white/5 bg-[#151F32] overflow-hidden">
+            <CardHeader className="p-8 lg:p-12 border-b border-white/5 relative">
+                <div className="absolute top-0 right-10 w-40 h-full bg-nutri-brand/10 blur-[60px] rounded-full" />
+                <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle className="text-3xl lg:text-4xl font-black text-white tracking-tighter uppercase mb-2">
+                            Tu <span className="text-nutri-brand">Historia Clínica</span>
+                        </CardTitle>
+                        <CardDescription className="text-slate-400 font-medium italic">
+                            Resumen de la información registrada.
+                        </CardDescription>
+                    </div>
+                    <Button
+                        onClick={onEdit}
+                        className="h-12 px-8 rounded-xl font-black uppercase tracking-widest bg-nutri-brand text-white hover:scale-105 transition-all"
+                    >
+                        Editar Historia <Sparkles className="ml-2 h-4 w-4" />
+                    </Button>
+                </div>
+            </CardHeader>
+            <CardContent className="p-8 lg:p-12 space-y-12">
+                <section className="space-y-6">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black">01 // DATOS PERSONALES</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <SummaryItem label="Nombre" value={values.full_name} />
+                        <SummaryItem label="DNI" value={values.dni} />
+                        <SummaryItem label="Edad" value={`${values.age} años`} />
+                        <SummaryItem label="Ubicación" value={`${values.district}, ${values.region}`} />
+                        <SummaryItem label="Ocupación" value={values.occupation} />
+                    </div>
+                </section>
+
+                <section className="space-y-6">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black">02 // OBJETIVOS Y SALUD</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <SummaryItem label="Objetivo" value={values.nutritional_goal} />
+                        <SummaryItem label="Mediciones" value={`${values.weight_kg || 'N/A'} kg / ${values.height_cm} cm / ${values.waist_cm || 'N/A'} cm`} />
+                        <SummaryItem label="Condiciones" value={values.health_conditions?.join(', ') || 'Ninguna'} />
+                        <SummaryItem label="Medicamentos" value={values.takes_medication === 'yes' ? `Sí (${values.medication_details})` : 'No'} />
+                    </div>
+                </section>
+
+                <section className="space-y-6">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black">03 // ESTILO DE VIDA</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <SummaryItem label="Actividad" value={values.activity_level} />
+                        <SummaryItem label="Ejercicio" value={values.does_exercise === 'yes' ? `${values.exercise_types?.join(', ')}` : 'No realiza'} />
+                        <SummaryItem label="Agua" value={values.water_intake} />
+                        <SummaryItem label="Sueño" value={`${values.sleep_hours}, Calidad: ${values.sleep_quality}`} />
+                        <SummaryItem label="Orina (Color)" value={`Índice ${values.urine_color_index}`} />
+                    </div>
+                </section>
+            </CardContent>
+        </Card>
+    );
+}
+
+function SummaryItem({ label, value }: { label: string, value: string }) {
+    return (
+        <div className="space-y-1">
+            <p className="text-[10px] uppercase font-black tracking-widest text-slate-500">{label}</p>
+            <p className="text-white font-medium">{value || 'No registrado'}</p>
+        </div>
     );
 }
 
