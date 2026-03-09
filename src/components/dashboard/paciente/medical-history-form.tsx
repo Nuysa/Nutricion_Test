@@ -358,23 +358,35 @@ export function MedicalHistoryForm() {
                                 <ChevronLeft className="mr-2 h-5 w-5" /> Anterior
                             </Button>
 
-                            {step < totalSteps ? (
-                                <Button
-                                    type="button"
-                                    onClick={nextStep}
-                                    className="px-10 h-14 rounded-2xl font-black uppercase tracking-widest bg-nutri-brand text-white shadow-lg shadow-nutri-brand/20 hover:scale-105 transition-all"
-                                >
-                                    Siguiente <ChevronRight className="ml-2 h-5 w-5" />
-                                </Button>
-                            ) : (
-                                <Button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="px-12 h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all"
-                                >
-                                    {loading ? "Guardando..." : "Guardar Cambios"} <Save className="ml-2 h-5 w-5" />
-                                </Button>
-                            )}
+                            <div className="flex items-center gap-4">
+                                {isEditMode && step < totalSteps && (
+                                    <Button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="px-8 h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all text-sm"
+                                    >
+                                        {loading ? "Guardando..." : "Guardar Cambios"} <Save className="ml-2 h-4 w-4" />
+                                    </Button>
+                                )}
+
+                                {step < totalSteps ? (
+                                    <Button
+                                        type="button"
+                                        onClick={nextStep}
+                                        className="px-10 h-14 rounded-2xl font-black uppercase tracking-widest bg-nutri-brand text-white shadow-lg shadow-nutri-brand/20 hover:scale-105 transition-all"
+                                    >
+                                        Siguiente <ChevronRight className="ml-2 h-5 w-5" />
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="px-12 h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all"
+                                    >
+                                        {loading ? "Guardando..." : "Guardar Cambios"} <Save className="ml-2 h-5 w-5" />
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </form>
                 </Form>
