@@ -116,11 +116,18 @@ export default function PatientDetailPage() {
 
             const { data: pData, error: pError } = await supabase
                 .from("patients")
-                .select("id, height_cm, current_weight, date_of_birth, gender, profile:profiles!profile_id(full_name, status)")
+                .select("id, height_cm, current_weight, date_of_birth, gender, plan_type, profile:profiles!profile_id(full_name, status)")
                 .eq("id", patientId)
                 .single();
 
             if (pError) throw pError;
+
+            // Fetch Medical History for quick view
+            const { data: mHistory } = await supabase
+                .from("patient_medical_histories")
+                .select("nutritional_goal, health_conditions")
+                .eq("patient_id", patientId)
+                .single();
 
             const { data: hData, error: hError } = await supabase
                 .from("weight_records")
@@ -152,7 +159,10 @@ export default function PatientDetailPage() {
                 rawWeight: pData.current_weight != null ? parseFloat(pData.current_weight) : null,
                 rawHeight: pData.height_cm != null ? parseFloat(pData.height_cm) : null,
                 rawBday: pData.date_of_birth,
-                status: (pData.profile as any)?.status || "Activo"
+                status: (pData.profile as any)?.status || "Activo",
+                subscription: pData.plan_type || "No Plan",
+                nutritionalGoal: mHistory?.nutritional_goal || "Sin registrar",
+                medicalConditions: mHistory?.health_conditions || "Ninguna"
             };
 
             setPatient(mappedPatient);
@@ -427,6 +437,9 @@ export default function PatientDetailPage() {
                             <Badge className={cn("rounded-lg text-[10px] font-black uppercase tracking-tighter shadow-sm", patient.status === 'Activo' ? "bg-emerald-500/20 text-emerald-400 border-none" : "bg-slate-500/20 text-slate-400 border-none")}>
                                 {patient.status}
                             </Badge>
+                            <Badge className="rounded-lg text-[10px] font-black uppercase tracking-tighter shadow-sm bg-nutrition-500/20 text-nutrition-500 border-none">
+                                {patient.subscription}
+                            </Badge>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-6 mt-3">
@@ -452,6 +465,16 @@ export default function PatientDetailPage() {
                                     </Button>
                                 </div>
                             </div>
+                            <div className="flex flex-col max-w-[150px]">
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Objetivo Nutricional</span>
+                                <span className="text-sm font-bold text-white truncate" title={patient.nutritionalGoal}>{patient.nutritionalGoal}</span>
+                            </div>
+                            <div className="flex flex-col max-w-[200px]">
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Condiciones Médicas</span>
+                                <span className="text-sm font-bold text-white truncate" title={Array.isArray(patient.medicalConditions) ? patient.medicalConditions.join(', ') : patient.medicalConditions}>
+                                    {Array.isArray(patient.medicalConditions) ? (patient.medicalConditions.length > 0 ? patient.medicalConditions.join(', ') : 'Ninguna') : patient.medicalConditions}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -460,17 +483,20 @@ export default function PatientDetailPage() {
                     <Button variant="outline" className="rounded-xl font-black text-xs h-12 border-white/10 bg-white/5 text-white hover:bg-white/10 shadow-lg" onClick={() => setShowBioDialog(true)}>
                         <Edit2 className="h-4 w-4 mr-2 text-nutri-brand" /> Editar Ficha
                     </Button>
-                    <Button className="rounded-xl bg-nutri-brand font-black text-xs text-white shadow-xl h-12 px-6 hover:scale-105 transition-all shadow-nutri-brand/20 uppercase tracking-widest" onClick={() => {
-                        setIsAddingMode(true);
-                        setEditingId("new");
-                        setEditValues({
-                            date: new Date().toISOString().split('T')[0],
-                            weight: patient.rawWeight || "",
-                            findings: "",
-                            recommendations: ""
-                        });
-                        setExtraData({});
-                    }}>
+                    <Button
+                        disabled={patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan")}
+                        className="rounded-xl bg-nutri-brand font-black text-xs text-white shadow-xl h-12 px-6 hover:scale-105 transition-all shadow-nutri-brand/20 uppercase tracking-widest disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        onClick={() => {
+                            setIsAddingMode(true);
+                            setEditingId("new");
+                            setEditValues({
+                                date: new Date().toISOString().split('T')[0],
+                                weight: patient.rawWeight || "",
+                                findings: "",
+                                recommendations: ""
+                            });
+                            setExtraData({});
+                        }}>
                         <Plus className="h-4 w-4 mr-2" /> Nueva Consulta
                     </Button>
                 </div>
