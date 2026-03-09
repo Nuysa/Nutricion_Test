@@ -442,7 +442,7 @@ export default function PatientDetailPage() {
                             </Badge>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-6 mt-3">
+                        <div className="flex flex-wrap items-center gap-x-10 gap-y-4 mt-3">
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Edad</span>
                                 <span className="text-sm font-bold text-white">{patient.age != null ? `${patient.age} años` : "—"}</span>
@@ -453,28 +453,26 @@ export default function PatientDetailPage() {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Género</span>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-bold text-white capitalize">{patient.gender}</span>
-                                    <Button
-                                        onClick={() => setShowHistoryDialog(true)}
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-7 px-3 rounded-lg border-nutri-brand/30 bg-nutri-brand/10 text-[9px] font-black uppercase text-nutri-brand hover:bg-nutri-brand hover:text-white transition-all tracking-widest"
-                                    >
-                                        <ClipboardList className="h-3 w-3 mr-1" /> Ver Historia Clínica
-                                    </Button>
-                                </div>
+                                <span className="text-sm font-bold text-white capitalize">{patient.gender}</span>
                             </div>
-                            <div className="flex flex-col max-w-[150px]">
+                            <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Objetivo Nutricional</span>
-                                <span className="text-sm font-bold text-white truncate" title={patient.nutritionalGoal}>{patient.nutritionalGoal}</span>
+                                <span className="text-sm font-bold text-white">{patient.nutritionalGoal}</span>
                             </div>
-                            <div className="flex flex-col max-w-[200px]">
+                            <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Condiciones Médicas</span>
-                                <span className="text-sm font-bold text-white truncate" title={Array.isArray(patient.medicalConditions) ? patient.medicalConditions.join(', ') : patient.medicalConditions}>
+                                <span className="text-sm font-bold text-white">
                                     {Array.isArray(patient.medicalConditions) ? (patient.medicalConditions.length > 0 ? patient.medicalConditions.join(', ') : 'Ninguna') : patient.medicalConditions}
                                 </span>
                             </div>
+                            <Button
+                                onClick={() => setShowHistoryDialog(true)}
+                                variant="outline"
+                                size="sm"
+                                className="h-9 px-4 rounded-xl border-nutri-brand/30 bg-nutri-brand/10 text-[10px] font-black uppercase text-nutri-brand hover:bg-nutri-brand hover:text-white transition-all tracking-widest shadow-lg shadow-nutri-brand/5"
+                            >
+                                <ClipboardList className="h-3.5 w-3.5 mr-2" /> Ver Historia Clínica
+                            </Button>
                         </div>
                     </div>
                 </div>
