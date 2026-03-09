@@ -645,21 +645,11 @@ export default function PatientDetailPage() {
                                 <DialogTitle className="text-3xl font-black tracking-tighter uppercase italic">
                                     Ficha <span className="text-nutri-brand">Biográfica</span>
                                 </DialogTitle>
-                                <div className="flex items-center gap-3">
-                                    {canEditMasterFields && (
-                                        <Badge className="bg-nutri-brand/20 text-nutri-brand border-none px-3 py-1 text-[9px] uppercase font-black tracking-widest">
-                                            <ShieldCheck className="h-3 w-3 mr-1" /> Staff
-                                        </Badge>
-                                    )}
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => setShowBioDialog(false)}
-                                        className="h-9 w-9 rounded-xl text-slate-500 hover:text-white hover:bg-white/10"
-                                    >
-                                        <X className="h-5 w-5" />
-                                    </Button>
-                                </div>
+                                {canEditMasterFields && (
+                                    <Badge className="bg-nutri-brand/20 text-nutri-brand border-none px-3 py-1 text-[9px] uppercase font-black tracking-widest">
+                                        <ShieldCheck className="h-3 w-3 mr-1" /> Staff
+                                    </Badge>
+                                )}
                             </div>
                             <DialogDescription className="text-xs font-medium text-slate-400 italic">
                                 Datos estructurales para el motor de cálculos.
