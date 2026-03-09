@@ -34,6 +34,7 @@ const medicalHistorySchema = z.object({
     email: z.string().email("Email inválido"),
     age: z.coerce.number().min(1, "Edad requerida"),
     birth_date: z.string().min(1, "Fecha de nacimiento requerida"),
+    gender: z.string().min(1, "Género requerido"),
     instagram: z.string().optional(),
     education_level: z.string().min(1, "Grado de instrucción requerido"),
     region: z.string().min(1, "Región/Estado requerido"),
@@ -153,6 +154,7 @@ export function MedicalHistoryForm() {
             available_instruments: [],
             supplement_types: [],
             previous_unhealthy_habits: [],
+            gender: "",
         } as any,
     });
 
@@ -281,7 +283,7 @@ export function MedicalHistoryForm() {
 
     const nextStep = async () => {
         const fields: (keyof MedicalHistoryFormValues)[] = [];
-        if (step === 1) fields.push('full_name', 'dni', 'email', 'age', 'birth_date', 'education_level', 'region', 'district', 'occupation', 'job_details');
+        if (step === 1) fields.push('full_name', 'dni', 'email', 'gender', 'age', 'birth_date', 'education_level', 'region', 'district', 'occupation', 'job_details');
         if (step === 2) fields.push('nutritional_goal', 'previous_nutrition_service');
         if (step === 3) fields.push('weight_kg', 'height_cm', 'waist_cm');
         if (step === 4) fields.push('takes_medication', 'recent_lab_tests');
@@ -425,6 +427,7 @@ function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => 
                         <SummaryItem label="Nombre" value={values.full_name} />
                         <SummaryItem label="DNI" value={values.dni} />
                         <SummaryItem label="Email" value={values.email} />
+                        <SummaryItem label="Género" value={values.gender} />
                         <SummaryItem label="Edad" value={`${values.age} años`} />
                         <SummaryItem label="Nacimiento" value={values.birth_date} />
                         <SummaryItem label="Educación" value={values.education_level} />
@@ -553,6 +556,17 @@ function PersonalData({ form }: { form: any }) {
             )} />
             <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem><FormLabel>Correo Electrónico</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+            )} />
+            <FormField control={form.control} name="gender" render={({ field }) => (
+                <FormItem><FormLabel>Género</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                        <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                        <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                            <SelectItem value="Masculino">Masculino</SelectItem>
+                            <SelectItem value="Femenino">Femenino</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage /></FormItem>
             )} />
             <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="age" render={({ field }) => (
