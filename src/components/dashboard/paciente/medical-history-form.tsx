@@ -261,7 +261,9 @@ export function MedicalHistoryForm() {
                 disliked_fats: Array.isArray(values.disliked_fats) ? values.disliked_fats.join(', ') : values.disliked_fats,
             };
 
-            const { error } = await supabase.from('patient_medical_histories').upsert(dbData);
+            const { error } = await supabase
+                .from('patient_medical_histories')
+                .upsert(dbData, { onConflict: 'patient_id' });
 
             if (error) throw error;
 
@@ -380,6 +382,18 @@ export function MedicalHistoryForm() {
 }
 
 function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => void }) {
+    const formatList = (val: any) => {
+        if (!val) return 'Ninguno';
+        if (Array.isArray(val)) return val.length > 0 ? val.join(', ') : 'Ninguno';
+        return val;
+    };
+
+    const getYesNo = (val: string | boolean) => {
+        if (val === 'yes' || val === true) return 'Sí';
+        if (val === 'no' || val === false) return 'No';
+        return val || 'No registrado';
+    };
+
     return (
         <Card className="rounded-[3rem] shadow-2xl border-white/5 bg-[#151F32] overflow-hidden">
             <CardHeader className="p-8 lg:p-12 border-b border-white/5 relative">
@@ -390,7 +404,7 @@ function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => 
                             Tu <span className="text-nutri-brand">Historia Clínica</span>
                         </CardTitle>
                         <CardDescription className="text-slate-400 font-medium italic">
-                            Resumen de la información registrada.
+                            Resumen completo de tu perfil nutricional.
                         </CardDescription>
                     </div>
                     <Button
@@ -401,36 +415,101 @@ function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => 
                     </Button>
                 </div>
             </CardHeader>
-            <CardContent className="p-8 lg:p-12 space-y-12">
-                <section className="space-y-6">
-                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black">01 // DATOS PERSONALES</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <CardContent className="p-8 lg:p-12 space-y-16">
+                {/* 01: Datos Personales */}
+                <section className="space-y-8">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 01 // DATOS PERSONALES
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
                         <SummaryItem label="Nombre" value={values.full_name} />
                         <SummaryItem label="DNI" value={values.dni} />
+                        <SummaryItem label="Email" value={values.email} />
                         <SummaryItem label="Edad" value={`${values.age} años`} />
+                        <SummaryItem label="Nacimiento" value={values.birth_date} />
+                        <SummaryItem label="Educación" value={values.education_level} />
                         <SummaryItem label="Ubicación" value={`${values.district}, ${values.region}`} />
-                        <SummaryItem label="Ocupación" value={values.occupation} />
+                        <SummaryItem label="Ocupación" value={`${values.occupation} (${values.job_details})`} />
                     </div>
                 </section>
 
-                <section className="space-y-6">
-                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black">02 // OBJETIVOS Y SALUD</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <SummaryItem label="Objetivo" value={values.nutritional_goal} />
-                        <SummaryItem label="Mediciones" value={`${values.weight_kg || 'N/A'} kg / ${values.height_cm} cm / ${values.waist_cm || 'N/A'} cm`} />
-                        <SummaryItem label="Condiciones" value={values.health_conditions?.join(', ') || 'Ninguna'} />
-                        <SummaryItem label="Medicamentos" value={values.takes_medication === 'yes' ? `Sí (${values.medication_details})` : 'No'} />
+                {/* 02: Objetivos y Mediciones */}
+                <section className="space-y-8">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 02 // OBJETIVOS Y MEDICIONES
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        <SummaryItem label="Objetivo Nutricional" value={values.nutritional_goal} className="lg:col-span-2" />
+                        <SummaryItem label="Peso Inicial" value={values.weight_kg ? `${values.weight_kg} kg` : 'N/A'} />
+                        <SummaryItem label="Talla" value={`${values.height_cm} cm`} />
+                        <SummaryItem label="Cintura" value={values.waist_cm ? `${values.waist_cm} cm` : 'N/A'} />
+                        <SummaryItem label="Exp. Previa" value={values.previous_nutrition_service === 'never' ? 'Nunca' : `Sí (${values.time_following_plan || 'Tiempos no espec.'})`} />
                     </div>
                 </section>
 
-                <section className="space-y-6">
-                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black">03 // ESTILO DE VIDA</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <SummaryItem label="Actividad" value={values.activity_level} />
-                        <SummaryItem label="Ejercicio" value={values.does_exercise === 'yes' ? `${values.exercise_types?.join(', ')}` : 'No realiza'} />
+                {/* 03: Salud */}
+                <section className="space-y-8">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 03 // ESTADO DE SALUD
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <SummaryItem label="Condiciones Médicas" value={formatList(values.health_conditions)} />
+                        <SummaryItem label="Antecedentes Familiares" value={formatList(values.family_history)} />
+                        <SummaryItem label="Medicamentos" value={values.takes_medication === 'yes' ? `${values.medication_details} (Frec: ${values.medication_frequency})` : 'No'} />
+                        <SummaryItem label="Análisis Recientes" value={getYesNo(values.recent_lab_tests)} />
+                    </div>
+                </section>
+
+                {/* 04: Actividad y Hábitos */}
+                <section className="space-y-8">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 04 // ACTIVIDAD Y HÁBITOS
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <SummaryItem label="Nivel de Actividad" value={values.activity_level} />
+                        <SummaryItem label="Ejercicio" value={values.does_exercise === 'yes' ? `${formatList(values.exercise_types)}` : 'No realiza'} />
+                        <SummaryItem label="Días de Ejercicio" value={formatList(values.exercise_days)} />
                         <SummaryItem label="Agua" value={values.water_intake} />
-                        <SummaryItem label="Sueño" value={`${values.sleep_hours}, Calidad: ${values.sleep_quality}`} />
-                        <SummaryItem label="Orina (Color)" value={`Índice ${values.urine_color_index}`} />
+                        <SummaryItem label="Sueño" value={`${values.sleep_hours} (Calidad: ${values.sleep_quality})`} />
+                        <SummaryItem label="Deposiciones" value={`${values.bowel_movements} (Frec: ${values.bowel_frequency})`} />
+                        <SummaryItem label="Orina" value={`${values.urine_status} (Color Ind: ${values.urine_color_index})`} />
+                        <SummaryItem label="Apetito" value={`${values.appetite_level} (Pico: ${formatList(values.appetite_peak_time)})`} />
+                    </div>
+                </section>
+
+                {/* 05: Alimentación y Aversiones */}
+                <section className="space-y-8">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 05 // ALIMENTACIÓN Y AVERSIONES
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <SummaryItem label="Prepara Comida" value={values.cooks_for_self} />
+                        <SummaryItem label="Le gusta cocinar" value={getYesNo(values.likes_cooking)} />
+                        <SummaryItem label="Lácteos" value={values.dairy_consumption} />
+                        <SummaryItem label="Suplementos" value={values.supplements_consumption === 'yes' ? formatList(values.supplement_types) : 'No'} />
+                        <SummaryItem label="Cereales que no agradan" value={formatList(values.disliked_cereals)} />
+                        <SummaryItem label="Tubérculos que no agradan" value={formatList(values.disliked_tubers)} />
+                        <SummaryItem label="Menestras que no agradan" value={formatList(values.disliked_legumes)} />
+                        <SummaryItem label="Carnes que no agradan" value={formatList(values.disliked_meats)} />
+                        <SummaryItem label="Grasas que no agradan" value={formatList(values.disliked_fats)} />
+                    </div>
+                </section>
+
+                {/* 06: Estilo de Vida y Horarios */}
+                <section className="space-y-8">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 06 // ESTILO DE VIDA Y HORARIOS
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <SummaryItem label="Despertar" value={values.wake_up_time} />
+                        <SummaryItem label="Dormir" value={values.sleep_time} />
+                        <SummaryItem label="Desayuno" value={values.breakfast_time ? `${values.breakfast_time}: ${values.breakfast_details}` : 'N/A'} />
+                        <SummaryItem label="Almuerzo" value={values.lunch_time ? `${values.lunch_time}: ${values.lunch_details}` : 'N/A'} />
+                        <SummaryItem label="Cena" value={values.dinner_time ? `${values.dinner_time}: ${values.dinner_details}` : 'N/A'} />
+                        <SummaryItem label="Snacks" value={values.snack_details || 'N/A'} />
+                        <SummaryItem label="Prep. Pref." value={values.prep_preference} />
+                        <SummaryItem label="Sabor Pref." value={values.taste_preference} />
+                        <SummaryItem label="Hábitos a mejorar" value={formatList(values.previous_unhealthy_habits)} className="col-span-full" />
                     </div>
                 </section>
             </CardContent>
@@ -438,11 +517,11 @@ function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => 
     );
 }
 
-function SummaryItem({ label, value }: { label: string, value: string }) {
+function SummaryItem({ label, value, className }: { label: string, value: string, className?: string }) {
     return (
-        <div className="space-y-1">
-            <p className="text-[10px] uppercase font-black tracking-widest text-slate-500">{label}</p>
-            <p className="text-white font-medium">{value || 'No registrado'}</p>
+        <div className={cn("space-y-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5", className)}>
+            <p className="text-[10px] uppercase font-black tracking-tighter text-slate-500">{label}</p>
+            <p className="text-white font-medium text-sm leading-relaxed">{value || 'No registrado'}</p>
         </div>
     );
 }
