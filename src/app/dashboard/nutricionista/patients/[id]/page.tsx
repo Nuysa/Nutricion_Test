@@ -645,11 +645,21 @@ export default function PatientDetailPage() {
                                 <DialogTitle className="text-3xl font-black tracking-tighter uppercase italic">
                                     Ficha <span className="text-nutri-brand">Biográfica</span>
                                 </DialogTitle>
-                                {canEditMasterFields && (
-                                    <Badge className="bg-nutri-brand/20 text-nutri-brand border-none px-3 py-1 text-[9px] uppercase font-black tracking-widest">
-                                        <ShieldCheck className="h-3 w-3 mr-1" /> Staff
-                                    </Badge>
-                                )}
+                                <div className="flex items-center gap-3">
+                                    {canEditMasterFields && (
+                                        <Badge className="bg-nutri-brand/20 text-nutri-brand border-none px-3 py-1 text-[9px] uppercase font-black tracking-widest">
+                                            <ShieldCheck className="h-3 w-3 mr-1" /> Staff
+                                        </Badge>
+                                    )}
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setShowBioDialog(false)}
+                                        className="h-9 w-9 rounded-xl text-slate-500 hover:text-white hover:bg-white/10"
+                                    >
+                                        <X className="h-5 w-5" />
+                                    </Button>
+                                </div>
                             </div>
                             <DialogDescription className="text-xs font-medium text-slate-400 italic">
                                 Datos estructurales para el motor de cálculos.
@@ -662,11 +672,9 @@ export default function PatientDetailPage() {
                                 <Input
                                     type="date"
                                     value={bioValues.date_of_birth}
-                                    disabled={!canEditMasterFields && !!patient?.rawBday}
                                     onChange={e => setBioValues({ ...bioValues, date_of_birth: e.target.value })}
                                     className="h-14 rounded-2xl bg-white/5 border-white/10 text-white font-bold px-6 focus:ring-nutri-brand/50"
                                 />
-                                {!canEditMasterFields && !!patient?.rawBday && <p className="text-[9px] text-slate-500 italic">Dato bloqueado (Sincronizado)</p>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -686,11 +694,9 @@ export default function PatientDetailPage() {
                                         type="text"
                                         placeholder="70.5"
                                         value={bioValues.initial_weight}
-                                        disabled={!canEditMasterFields && (patient?.rawWeight != null && patient?.rawWeight > 0)}
                                         onChange={e => setBioValues({ ...bioValues, initial_weight: e.target.value })}
                                         className="h-14 rounded-2xl bg-white/5 border-white/10 text-white font-bold px-6"
                                     />
-                                    {!canEditMasterFields && (patient?.rawWeight != null && patient?.rawWeight > 0) && <p className="text-[9px] text-slate-500 italic">Dato bloqueado</p>}
                                 </div>
                             </div>
 
@@ -699,7 +705,6 @@ export default function PatientDetailPage() {
                                 <Select
                                     value={bioValues.gender}
                                     onValueChange={v => setBioValues({ ...bioValues, gender: v })}
-                                    disabled={!canEditMasterFields && (patient?.gender !== 'otro' && patient?.gender !== null)}
                                 >
                                     <SelectTrigger className="h-14 rounded-2xl bg-white/5 border-white/10 text-white font-bold px-6">
                                         <SelectValue />
