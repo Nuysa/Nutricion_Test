@@ -429,26 +429,26 @@ export default function PatientDetailPage() {
 
                         <div className="flex flex-wrap items-center gap-6 mt-3">
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Edad</span>
-                                <span className="text-sm font-bold text-slate-700">{patient.age != null ? `${patient.age} años` : "—"}</span>
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Edad</span>
+                                <span className="text-sm font-bold text-white">{patient.age != null ? `${patient.age} años` : "—"}</span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Talla</span>
-                                <span className="text-sm font-bold text-slate-700">{patient.rawHeight != null ? `${patient.rawHeight} cm` : "—"}</span>
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Talla</span>
+                                <span className="text-sm font-bold text-white">{patient.rawHeight != null ? `${patient.rawHeight} cm` : "—"}</span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Género</span>
-                                <span className="text-sm font-bold text-slate-700 capitalize">{patient.gender}</span>
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Género</span>
+                                <span className="text-sm font-bold text-white capitalize">{patient.gender}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="flex gap-3">
-                    <Button variant="outline" className="rounded-xl font-black text-xs h-12 border-slate-200" onClick={() => setShowBioDialog(true)}>
-                        <Edit2 className="h-4 w-4 mr-2 text-slate-400" /> Editar Ficha
+                    <Button variant="outline" className="rounded-xl font-black text-xs h-12 border-white/10 bg-white/5 text-white hover:bg-white/10 shadow-lg" onClick={() => setShowBioDialog(true)}>
+                        <Edit2 className="h-4 w-4 mr-2 text-nutri-brand" /> Editar Ficha
                     </Button>
-                    <Button className="rounded-xl bg-slate-900 font-black text-xs text-white shadow-xl h-12 px-6 hover:scale-105 transition-transform" onClick={() => {
+                    <Button className="rounded-xl bg-nutri-brand font-black text-xs text-white shadow-xl h-12 px-6 hover:scale-105 transition-all shadow-nutri-brand/20 uppercase tracking-widest" onClick={() => {
                         setIsAddingMode(true);
                         setEditingId("new");
                         setEditValues({
@@ -466,43 +466,46 @@ export default function PatientDetailPage() {
 
             {/* Métricas Destacadas */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className={cn("border-0 text-white shadow-xl overflow-hidden relative", parseFloat(stats.imc) < 25 ? "bg-nutrition-600" : "bg-orange-600")}>
+                <Card className={cn("border-0 text-white shadow-2xl overflow-hidden relative rounded-[2rem]", parseFloat(stats.imc) < 25 ? "bg-gradient-to-br from-nutri-brand to-emerald-600" : "bg-gradient-to-br from-orange-500 to-red-600")}>
                     <div className="absolute top-0 right-0 p-4 opacity-10">
                         <Calculator className="h-20 w-20" />
                     </div>
-                    <CardContent className="p-6 relative z-10">
+                    <CardContent className="p-7 relative z-10">
                         <div className="text-[10px] font-black uppercase opacity-70 mb-2 tracking-widest">IMC Actual</div>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-4xl font-black tracking-tighter">{stats.imc}</span>
-                            <Badge variant="secondary" className="bg-white/20 text-white text-[10px] border-0 font-black uppercase">{getIMCCategory(stats.imc)}</Badge>
+                            <span className="text-5xl font-black tracking-tighter">{stats.imc}</span>
+                            <Badge variant="secondary" className="bg-white/20 text-white text-[9px] border-0 font-black uppercase px-2">{getIMCCategory(stats.imc)}</Badge>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-white shadow-xl border-none">
-                    <CardContent className="p-6">
-                        <div className="text-[10px] font-black uppercase text-nutrition-600 mb-2 tracking-widest">Peso</div>
+                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-[2rem] overflow-hidden relative group">
+                    <div className="absolute top-0 right-10 w-20 h-20 bg-nutri-brand/5 blur-3xl group-hover:bg-nutri-brand/10 transition-all opacity-0 group-hover:opacity-100" />
+                    <CardContent className="p-7">
+                        <div className="text-[10px] font-black uppercase text-nutri-brand mb-2 tracking-widest">Peso</div>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-3xl font-black text-slate-800 tracking-tighter">{stats.weight}</span>
+                            <span className="text-4xl font-black text-white tracking-tighter">{stats.weight}</span>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-white shadow-xl border-none">
-                    <CardContent className="p-6">
+                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-[2rem] overflow-hidden relative group">
+                    <div className="absolute top-0 right-10 w-20 h-20 bg-orange-500/5 blur-3xl group-hover:bg-orange-500/10 transition-all opacity-0 group-hover:opacity-100" />
+                    <CardContent className="p-7">
                         <div className="text-[10px] font-black uppercase text-orange-500 mb-2 tracking-widest">% Grasa</div>
-                        <span className="text-3xl font-black text-slate-800 tracking-tighter">{stats.fat}</span>
+                        <span className="text-4xl font-black text-white tracking-tighter">{stats.fat}</span>
                     </CardContent>
                 </Card>
-                <Card className="bg-white shadow-xl border-none">
-                    <CardContent className="p-6">
+                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-[2rem] overflow-hidden relative group">
+                    <div className="absolute top-0 right-10 w-20 h-20 bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-all opacity-0 group-hover:opacity-100" />
+                    <CardContent className="p-7">
                         <div className="text-[10px] font-black uppercase text-indigo-500 mb-2 tracking-widest">Cintura</div>
-                        <span className="text-3xl font-black text-slate-800 tracking-tighter">{stats.waist}</span>
+                        <span className="text-4xl font-black text-white tracking-tighter">{stats.waist}</span>
                     </CardContent>
                 </Card>
             </div>
 
             <Tabs defaultValue="historial">
-                <TabsList className="bg-slate-100/50 p-1 rounded-2xl mb-4 border border-slate-100">
-                    <TabsTrigger value="historial" className="font-black text-[10px] uppercase px-4 py-2 flex items-center gap-2 rounded-xl">
+                <TabsList className="bg-white/5 p-1.5 rounded-2xl mb-6 border border-white/5 inline-flex backdrop-blur-md">
+                    <TabsTrigger value="historial" className="font-black text-[10px] uppercase px-6 py-2.5 flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:text-slate-900 text-slate-400 tracking-widest transition-all">
                         <ClipboardList className="h-4 w-4" /> Historial de Consultas
                     </TabsTrigger>
                 </TabsList>
@@ -523,27 +526,27 @@ export default function PatientDetailPage() {
                             clinicalVariables={clinicalVariables}
                         />
                     )}
-                    <Card className="rounded-[2.5rem] shadow-xl border-none overflow-hidden bg-white">
+                    <Card className="rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/5 overflow-hidden bg-[#1A253A]/60 backdrop-blur-xl">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
-                                <thead className="bg-slate-50/50 text-[10px] font-black uppercase text-slate-400 border-b border-slate-100">
+                                <thead className="bg-white/5 text-[10px] font-black uppercase text-slate-500 border-b border-white/5">
                                     <tr>
-                                        <th className="px-8 py-6 tracking-widest text-center w-12">Nº</th>
+                                        <th className="px-8 py-7 tracking-widest text-center w-12 text-[#8F9BB3]">Nº</th>
                                         {layout.slice(0, 4).map((col, idx) => (
-                                            <th key={idx} className="px-8 py-6 tracking-widest text-center">
+                                            <th key={idx} className="px-8 py-7 tracking-widest text-center text-[#8F9BB3]">
                                                 {col.header}
                                             </th>
                                         ))}
-                                        <th className="px-8 py-6 tracking-widest text-right">ESTADO</th>
-                                        <th className="px-8 py-6 text-right w-16">ACCIONES</th>
+                                        <th className="px-8 py-7 tracking-widest text-right text-[#8F9BB3]">ESTADO</th>
+                                        <th className="px-8 py-7 text-right w-16 text-[#8F9BB3]">ACCIONES</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-50">
+                                <tbody className="divide-y divide-white/5">
                                     {records.map((r, rIdx) => {
                                         if (isAddingMode && editingId === r.id) return null;
                                         return (
-                                            <tr key={r.id} className="group hover:bg-slate-50/50 transition-all">
-                                                <td className="px-8 py-6 text-center text-slate-400 font-black text-sm">
+                                            <tr key={r.id} className="group hover:bg-white/5 transition-all">
+                                                <td className="px-8 py-7 text-center text-slate-600 font-bold text-sm">
                                                     {records.length - rIdx}
                                                 </td>
                                                 {layout.slice(0, 4).map((col, idx) => {
@@ -552,7 +555,8 @@ export default function PatientDetailPage() {
                                                     let color = null;
 
                                                     if (col.fixed_variable === 'date') {
-                                                        val = new Date(r.date + 'T12:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                                                        const dateObj = new Date(r.date + 'T12:00:00');
+                                                        val = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).toUpperCase();
                                                     } else if (targetVar) {
                                                         val = r[`col_${targetVar.id}`] !== undefined ? r[`col_${targetVar.id}`] : "—";
                                                         color = r[`color_${targetVar.id}`];
@@ -575,11 +579,11 @@ export default function PatientDetailPage() {
                                                     }
 
                                                     return (
-                                                        <td key={idx} className="px-8 py-6 text-sm text-center">
+                                                        <td key={idx} className="px-8 py-7 text-sm text-center">
                                                             <div className="flex items-center justify-center gap-1">
                                                                 <span className={cn(
                                                                     "font-black tracking-tight",
-                                                                    col.fixed_variable === 'date' ? "text-slate-400 uppercase text-[10px]" : "text-lg text-slate-700",
+                                                                    col.fixed_variable === 'date' ? "text-[#8F9BB3] text-[10px] tracking-widest italic" : "text-xl text-white",
                                                                     (!color || color.startsWith('#')) ? undefined : color.replace('bg-', 'text-')
                                                                 )} style={{ color: color?.startsWith('#') ? color : undefined }}>
                                                                     {val}
@@ -590,7 +594,7 @@ export default function PatientDetailPage() {
                                                         </td>
                                                     );
                                                 })}
-                                                <td className="px-8 py-6 text-right font-medium text-[11px] uppercase tracking-wider">
+                                                <td className="px-8 py-7 text-right font-medium text-[11px] uppercase tracking-wider">
                                                     {(() => {
                                                         const requiredExtraKeys = [
                                                             'BRAZO_RELAJADO', 'BRAZO_FLEXIONADO', 'ANTEBRAZO_MAXIMO', 'TORAX',
@@ -603,19 +607,19 @@ export default function PatientDetailPage() {
                                                         const isComplete = checkWeight && checkExtra;
 
                                                         return isComplete ? (
-                                                            <span className="text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 shadow-sm flex items-center justify-end gap-1 w-max ml-auto">
-                                                                <Check className="h-3 w-3" /> Registro completado
+                                                            <span className="text-emerald-400 bg-emerald-400/10 px-4 py-2 rounded-xl border border-emerald-400/20 shadow-sm flex items-center justify-end gap-2 w-max ml-auto text-[9px] font-black tracking-widest italic">
+                                                                <Check className="h-3 w-3" /> COMPLETADO
                                                             </span>
                                                         ) : (
-                                                            <span className="text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 shadow-sm flex items-center justify-end w-max ml-auto">
-                                                                Registro incompleto
+                                                            <span className="text-orange-400 bg-orange-400/10 px-4 py-2 rounded-xl border border-orange-400/20 shadow-sm flex items-center justify-end w-max ml-auto text-[9px] font-black tracking-widest italic">
+                                                                INCOMPLETO
                                                             </span>
                                                         );
                                                     })()}
                                                 </td>
-                                                <td className="px-8 py-6">
-                                                    <div className="flex justify-end transition-opacity">
-                                                        <Button size="icon" variant="ghost" className="h-9 w-9 text-slate-400 rounded-xl bg-slate-100 hover:bg-slate-200" onClick={() => {
+                                                <td className="px-8 py-7">
+                                                    <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <Button size="icon" variant="ghost" className="h-10 w-10 text-white rounded-xl bg-white/5 hover:bg-white/10 hover:text-nutri-brand transition-all border border-white/5" onClick={() => {
                                                             setEditingId(r.id);
                                                             setIsAddingMode(false);
                                                             setEditValues(r);
