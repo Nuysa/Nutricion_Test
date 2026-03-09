@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { useFormulaEngine } from "@/hooks/useFormulaEngine";
 import { NewConsultationForm } from "@/components/dashboard/nutricionista/NewConsultationForm";
 import { EditConsultationModal } from "@/components/dashboard/nutricionista/EditConsultationModal";
+import { MedicalHistoryModal } from "@/components/dashboard/nutricionista/MedicalHistoryModal";
 
 export default function PatientDetailPage() {
     const params = useParams();
@@ -41,6 +42,7 @@ export default function PatientDetailPage() {
     const [clinicalVariables, setClinicalVariables] = useState<ClinicalVariable[]>([]);
 
     const [showBioDialog, setShowBioDialog] = useState(false);
+    const [showHistoryDialog, setShowHistoryDialog] = useState(false);
     const [bioValues, setBioValues] = useState({
         date_of_birth: "",
         height_cm: "",
@@ -416,13 +418,13 @@ export default function PatientDetailPage() {
             {/* Cabecera */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-xl hover:bg-white shadow-sm border border-slate-100">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-xl hover:bg-white/10 text-white shadow-sm border border-white/10 bg-white/5">
                         <ChevronLeft className="h-5 w-5" />
                     </Button>
                     <div>
                         <div className="flex items-center gap-3">
-                            <h1 className="text-3xl font-black text-slate-800 tracking-tight">{patient.name}</h1>
-                            <Badge className={cn("rounded-lg text-[10px] font-black uppercase tracking-tighter", patient.status === 'Activo' ? "bg-green-100 text-green-700" : "bg-slate-100")}>
+                            <h1 className="text-3xl font-black text-white tracking-tight">{patient.name}</h1>
+                            <Badge className={cn("rounded-lg text-[10px] font-black uppercase tracking-tighter shadow-sm", patient.status === 'Activo' ? "bg-emerald-500/20 text-emerald-400 border-none" : "bg-slate-500/20 text-slate-400 border-none")}>
                                 {patient.status}
                             </Badge>
                         </div>
@@ -438,7 +440,17 @@ export default function PatientDetailPage() {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Género</span>
-                                <span className="text-sm font-bold text-white capitalize">{patient.gender}</span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm font-bold text-white capitalize">{patient.gender}</span>
+                                    <Button
+                                        onClick={() => setShowHistoryDialog(true)}
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 px-3 rounded-lg border-nutri-brand/30 bg-nutri-brand/10 text-[9px] font-black uppercase text-nutri-brand hover:bg-nutri-brand hover:text-white transition-all tracking-widest"
+                                    >
+                                        <ClipboardList className="h-3 w-3 mr-1" /> Ver Historia Clínica
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -504,8 +516,11 @@ export default function PatientDetailPage() {
             </div>
 
             <Tabs defaultValue="historial">
-                <TabsList className="bg-white/5 p-1.5 rounded-2xl mb-6 border border-white/5 inline-flex backdrop-blur-md">
-                    <TabsTrigger value="historial" className="font-black text-[10px] uppercase px-6 py-2.5 flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:text-slate-900 text-slate-400 tracking-widest transition-all">
+                <TabsList className="bg-[#1A253A]/80 p-1.5 rounded-2xl mb-8 border border-white/5 inline-flex backdrop-blur-xl shadow-2xl">
+                    <TabsTrigger
+                        value="historial"
+                        className="font-black text-[10px] uppercase px-8 py-3 flex items-center gap-2 rounded-xl data-[state=active]:bg-nutri-brand data-[state=active]:text-white text-slate-400 tracking-widest transition-all duration-300 data-[state=active]:shadow-[0_0_20px_rgba(255,102,0,0.3)] border border-transparent data-[state=active]:border-white/10"
+                    >
                         <ClipboardList className="h-4 w-4" /> Historial de Consultas
                     </TabsTrigger>
                 </TabsList>
@@ -637,6 +652,13 @@ export default function PatientDetailPage() {
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            <MedicalHistoryModal
+                isOpen={showHistoryDialog}
+                onClose={() => setShowHistoryDialog(false)}
+                patientId={patientId}
+                patientName={patient.name}
+            />
 
             {/* Modal Ficha Biográfica */}
             <Dialog open={showBioDialog} onOpenChange={setShowBioDialog}>
