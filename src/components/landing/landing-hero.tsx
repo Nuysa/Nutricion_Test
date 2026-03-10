@@ -16,7 +16,7 @@ export function LandingHero() {
     const [content, setContent] = useState({
         subtitle: "VE A TU PROPIO RITMO",
         title: "Listo para iniciar \ntu cambio?",
-        text: "Recetas fáciles y deliciosas. \n«Reto 30 días» en un mes, nuevos hábitos se quedarán contigo. \nHidratación y bienestar total.",
+        text: "Recetas fáciles y deliciosas.\nObtén tu plan nutricional personalizado y un acompañamiento cercano durante todo tu proceso.\nNuevos hábitos se quedarán contigo.\nTu cambio empieza con una buena alimentación.",
         stat1_val: "Planes",
         stat1_label: "A tu medida",
         stat2_val: "100%",
@@ -123,7 +123,23 @@ export function LandingHero() {
                         )}
                     </div>
 
-                    <div className="mt-12 grid grid-cols-3 gap-4 w-full">
+                    <div className="mt-10 mb-2 border-l-2 border-dashed border-nutri-brand pl-6 py-2">
+                        {isEditable ? (
+                            <EditableText
+                                label="Texto adicional"
+                                value={content.text}
+                                onSave={(val) => handleSave('text', val)}
+                                className="text-slate-400 text-sm sm:text-base font-bold leading-relaxed"
+                                multiline
+                            />
+                        ) : (
+                            <p className="text-slate-400 text-sm sm:text-base font-bold leading-relaxed whitespace-pre-line text-pretty">
+                                {content.text}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="mt-8 grid grid-cols-3 gap-4 w-full">
                         {[
                             { id: 1, val: content.stat1_val, label: content.stat1_label, fieldV: 'stat1_val', fieldL: 'stat1_label' },
                             { id: 2, val: content.stat2_val, label: content.stat2_label, fieldV: 'stat2_val', fieldL: 'stat2_label' },

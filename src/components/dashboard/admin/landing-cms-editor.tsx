@@ -171,6 +171,14 @@ export function LandingCMSEditor() {
                                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setHeroContent({ ...heroContent, title: e.target.value })}
                                 />
                             </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase text-slate-400">Texto Secundario (Viñetas/Listado)</label>
+                                <textarea
+                                    className="w-full h-32 p-3 rounded-xl border border-slate-200 text-sm font-medium outline-none"
+                                    value={heroContent.text}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setHeroContent({ ...heroContent, text: e.target.value })}
+                                />
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4">
                                 {[
                                     { id: 1, v: 'stat1_val', l: 'stat1_label', label: 'Estadística 1' },
