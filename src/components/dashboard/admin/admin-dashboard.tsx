@@ -21,6 +21,7 @@ import { TableEditor } from "@/components/dashboard/admin/table-editor";
 import { VisualLandingEditor } from "@/components/dashboard/admin/visual-landing-editor";
 import { FoodDatabase } from "@/components/dashboard/admin/food-database";
 import { AuthCMSEditor } from "@/components/dashboard/admin/auth-cms-editor";
+import { VisualAuthEditor } from "@/components/dashboard/admin/visual-auth-editor";
 import { MessagingService, GlobalProfile } from "@/lib/messaging-service";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -525,7 +526,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
             activeTab === "landing_cms" ? "space-y-0 pb-0 -m-4 lg:-m-6" : "space-y-8 pb-10"
         )}>
             {/* Header */}
-            {activeTab !== "landing_cms" && activeTab !== "plans_management" && (
+            {activeTab !== "landing_cms" && activeTab !== "plans_management" && activeTab !== "auth_cms" && (
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-4xl font-black text-white tracking-tight uppercase">
@@ -550,12 +551,12 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
             ) : (
                 <div className={cn(
                     "grid grid-cols-1 gap-6 lg:gap-8 items-start",
-                    (activeTab !== "settings" && activeTab !== "visualization" && activeTab !== "landing_cms" && activeTab !== "plans_management" && activeTab !== "food_database") ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1"
+                    (activeTab !== "settings" && activeTab !== "visualization" && activeTab !== "landing_cms" && activeTab !== "auth_cms" && activeTab !== "plans_management" && activeTab !== "food_database") ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1"
                 )}>
                     {/* Panel Lateral Interno */}
-                    {activeTab !== "settings" && activeTab !== "visualization" && activeTab !== "landing_cms" && activeTab !== "plans_management" && activeTab !== "food_database" && (
+                    {activeTab !== "settings" && activeTab !== "visualization" && activeTab !== "landing_cms" && activeTab !== "auth_cms" && activeTab !== "plans_management" && activeTab !== "food_database" && (
                         <div className="flex lg:flex-col gap-2 bg-white/[0.03] p-2 lg:p-4 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 sticky top-20 lg:top-24 overflow-x-auto lg:overflow-x-visible no-scrollbar z-20 backdrop-blur-md">
-                            <p className="hidden lg:block px-5 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Administración</p>
+                            {/* Administración label removed as per user request */}
                             {[
                                 { id: "overview", label: "Resumen", fullLabel: "Resumen General", icon: Users },
                                 { id: "verification", label: "Verif.", fullLabel: "Verificaciones", icon: UserCheck, badge: pendingNutris.length },
@@ -2024,7 +2025,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                             <VisualLandingEditor />
                         )}
                         {activeTab === "auth_cms" && currentAdminRole === 'administrador' && (
-                            <AuthCMSEditor />
+                            <VisualAuthEditor />
                         )}
                         {activeTab === "plans_management" && currentAdminRole === 'administrador' && (
                             <div className="-m-4 lg:-m-6 bg-nutri-base overflow-hidden relative">

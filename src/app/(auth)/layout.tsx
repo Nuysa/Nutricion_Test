@@ -10,6 +10,12 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         .eq("section", "auth")
         .single();
 
+    const { data: themeData } = await supabase
+        .from("landing_content")
+        .select("content")
+        .eq("section", "theme")
+        .single();
+
     const content = contentData?.content || {
         title: "Nutrición",
         title_highlight: "Optimizada.",
@@ -23,8 +29,22 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         footer_text: "© 2026 NuySa Clinical Nutrition • Todos los derechos reservados"
     };
 
+    const theme = themeData?.content || {
+        brand: '#FF7A00',
+        base: '#0B1120',
+        panel: '#151F32'
+    };
+
     return (
         <div className="min-h-screen bg-nutri-base flex items-center justify-center relative overflow-hidden font-tech text-white">
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                :root {
+                    --nutri-brand: ${theme.brand} !important;
+                    --nutri-base: ${theme.base} !important;
+                    --nutri-panel: ${theme.panel} !important;
+                }
+            ` }} />
             {/* Background elements to match the "premium" feel */}
             <div className="absolute inset-0 organic-grid opacity-20 pointer-events-none" />
 
