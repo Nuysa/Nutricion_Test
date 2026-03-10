@@ -221,6 +221,7 @@ export function ConsultationFormEditor() {
                         </DialogTrigger>
                         <DialogContent className="max-w-[70rem] p-0 border-none bg-transparent shadow-none overflow-visible">
                             <NewConsultationForm
+                                patientId="preview-id"
                                 date={dummyDate}
                                 setDate={setDummyDate}
                                 editValues={dummyEditValues}
