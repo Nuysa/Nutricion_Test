@@ -17,6 +17,12 @@ export function LandingHero() {
         subtitle: "VE A TU PROPIO RITMO",
         title: "Listo para iniciar \ntu cambio?",
         text: "Recetas fáciles y deliciosas. \n«Reto 30 días» en un mes, nuevos hábitos se quedarán contigo. \nHidratación y bienestar total.",
+        stat1_val: "Planes",
+        stat1_label: "A tu medida",
+        stat2_val: "100%",
+        stat2_label: "Resultados",
+        stat3_val: "Gold",
+        stat3_label: "Precisión",
         cartelProteina: "Construyen y reparan músculos. Esenciales para el sistema inmunológico.",
         cartelCarbo: "Principal fuente de energía. Abastecen el cerebro y los músculos.",
         cartelLipido: "Reserva de alta densidad. Protegen órganos vitales y absorben vitaminas.",
@@ -117,20 +123,34 @@ export function LandingHero() {
                         )}
                     </div>
 
-                    <div className="mt-8 w-full p-6 dashed-border-custom bg-nutri-panel/5 backdrop-blur-sm rounded-3xl">
-                        {isEditable ? (
-                            <EditableText
-                                label="Descripción"
-                                value={content.text}
-                                onSave={(val) => handleSave('text', val)}
-                                className="text-sm sm:text-base text-slate-300 font-sans leading-relaxed"
-                                multiline
-                            />
-                        ) : (
-                            <p className="text-sm sm:text-base text-slate-300 font-sans leading-relaxed whitespace-pre-line text-pretty-justify">
-                                {content.text.replace(/\\n/g, '\n')}
-                            </p>
-                        )}
+                    <div className="mt-12 grid grid-cols-3 gap-4 w-full">
+                        {[
+                            { id: 1, val: content.stat1_val, label: content.stat1_label, fieldV: 'stat1_val', fieldL: 'stat1_label' },
+                            { id: 2, val: content.stat2_val, label: content.stat2_label, fieldV: 'stat2_val', fieldL: 'stat2_label' },
+                            { id: 3, val: content.stat3_val, label: content.stat3_label, fieldV: 'stat3_val', fieldL: 'stat3_label' }
+                        ].map((stat) => (
+                            <div key={stat.id} className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl flex flex-col items-center text-center group hover:border-nutri-brand/40 transition-all">
+                                {isEditable ? (
+                                    <div className="space-y-1 w-full flex flex-col items-center">
+                                        <EditableText
+                                            value={stat.val as string}
+                                            onSave={(val) => handleSave(stat.fieldV, val)}
+                                            className="text-lg sm:text-2xl font-tech font-extrabold text-white italic"
+                                        />
+                                        <EditableText
+                                            value={stat.label as string}
+                                            onSave={(val) => handleSave(stat.fieldL, val)}
+                                            className="text-[8px] sm:text-[10px] font-tech font-bold text-slate-500 uppercase tracking-widest"
+                                        />
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="text-lg sm:text-2xl font-tech font-extrabold text-white italic">{stat.val}</div>
+                                        <div className="text-[8px] sm:text-[10px] font-tech font-bold text-slate-500 uppercase tracking-widest">{stat.label}</div>
+                                    </>
+                                )}
+                            </div>
+                        ))}
                     </div>
                 </div>
 

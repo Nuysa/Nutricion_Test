@@ -29,7 +29,17 @@ export function LandingCMSEditor() {
     const [plans, setPlans] = useState<LandingPlan[]>([]);
 
     // Contenido general (Hero / About)
-    const [heroContent, setHeroContent] = useState({ title: "", subtitle: "", text: "" });
+    const [heroContent, setHeroContent] = useState({
+        title: "",
+        subtitle: "",
+        text: "",
+        stat1_val: "Planes",
+        stat1_label: "A tu medida",
+        stat2_val: "100%",
+        stat2_label: "Resultados",
+        stat3_val: "Gold",
+        stat3_label: "Precisión"
+    });
     const [aboutContent, setAboutContent] = useState({ title1: "", text1: "", title2: "", text2: "" });
 
     useEffect(() => {
@@ -161,13 +171,32 @@ export function LandingCMSEditor() {
                                     onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setHeroContent({ ...heroContent, title: e.target.value })}
                                 />
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black uppercase text-slate-400">Texto Introductorio</label>
-                                <textarea
-                                    className="w-full h-24 p-3 rounded-xl border border-slate-200 text-sm font-medium outline-none disabled:opacity-50"
-                                    value={heroContent.text}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setHeroContent({ ...heroContent, text: e.target.value })}
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4">
+                                {[
+                                    { id: 1, v: 'stat1_val', l: 'stat1_label', label: 'Estadística 1' },
+                                    { id: 2, v: 'stat2_val', l: 'stat2_label', label: 'Estadística 2' },
+                                    { id: 3, v: 'stat3_val', l: 'stat3_label', label: 'Estadística 3' }
+                                ].map((stat) => (
+                                    <div key={stat.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                                        <p className="text-[10px] font-black uppercase text-slate-400">{stat.label}</p>
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-bold uppercase text-slate-500">Valor</label>
+                                            <Input
+                                                className="font-black text-lg border-slate-200 bg-white"
+                                                value={(heroContent as any)[stat.v] || ""}
+                                                onChange={(e) => setHeroContent({ ...heroContent, [stat.v]: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-bold uppercase text-slate-500">Etiqueta</label>
+                                            <Input
+                                                className="font-bold border-slate-200 bg-white"
+                                                value={(heroContent as any)[stat.l] || ""}
+                                                onChange={(e) => setHeroContent({ ...heroContent, [stat.l]: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                             <Button
                                 onClick={() => handleSaveContent("hero", heroContent)}
