@@ -95,8 +95,8 @@ export function TrackingDashboard() {
                 }
             }
 
-            const h = parseFloat(patientData.height_cm?.toString() || "0");
-            const idealWeight = h > 0 ? (22 * (h / 100) * (h / 100)).toFixed(1) : "--";
+            const patientHeight = parseFloat(patientData.height_cm?.toString() || "0");
+            const idealWeight = patientHeight > 0 ? (22 * (patientHeight / 100) * (patientHeight / 100)).toFixed(1) : "--";
 
             if (records && records.length > 0) {
                 // Procesar cada fila dinámicamente
@@ -108,18 +108,21 @@ export function TrackingDashboard() {
                         nutritionist: patientData.nutritionist?.full_name || "Asignado"
                     };
 
-                    const inputs: Record<string, number> = {
+                    const inputs: Record<string, any> = {
                         ...(m.extra_data || {}),
-                        "PESO": m.weight || 0,
-                        "TALLA": h,
-                        "TALLA_CM": h,
-                        "EDAD": age,
-                        "CINTURA": m.waist_circumference_cm || 0,
-                        "GRASA": m.body_fat_percentage || 0,
                         "PESO_BASE": patientData.current_weight != null ? Number(patientData.current_weight) : 0,
-                        "GENERO_V": patientData.gender === 'masculino' || patientData.gender === 'M' ? 1 : (patientData.gender === 'femenino' || patientData.gender === 'F' ? 2 : 0),
-                        "IMC": m.weight > 0 && h > 0 ? Number((m.weight / ((h / 100) * (h / 100))).toFixed(1)) : 0
+                        "TALLA_BASE": patientHeight || 0,
+                        "EDAD": age,
+                        "GENERO_V": patientData.gender === 'masculino' || patientData.gender === 'M' ? 1 : (patientData.gender === 'femenino' || patientData.gender === 'F' ? 2 : 0)
                     };
+
+                    // Priorizar campos nativos si tienen valor, si no mantener lo que venga de extra_data
+                    inputs["PESO"] = m.weight || inputs["PESO"] || 0;
+                    inputs["TALLA"] = patientHeight || inputs["TALLA"] || inputs["TALLA_CM"] || 0;
+                    inputs["TALLA_CM"] = inputs["TALLA"];
+                    inputs["CINTURA"] = m.waist_circumference_cm || inputs["CINTURA"] || 0;
+                    inputs["GRASA"] = m.body_fat_percentage || inputs["GRASA"] || 0;
+                    inputs["IMC"] = (inputs["PESO"] > 0 && inputs["TALLA"] > 0) ? Number((inputs["PESO"] / ((inputs["TALLA"] / 100) * (inputs["TALLA"] / 100))).toFixed(1)) : 0;
 
                     for (let pass = 0; pass < 3; pass++) {
                         vars.forEach(v => {
@@ -190,14 +193,14 @@ export function TrackingDashboard() {
                                 "weight": r._rawSource.weight,
                                 "body_fat": r._rawSource.body_fat_percentage,
                                 "waist": r._rawSource.waist_circumference_cm,
-                                "bmi": (r._rawSource.weight > 0 && h > 0) ? (r._rawSource.weight / ((h / 100) * (h / 100))).toFixed(1) : "0",
+                                "bmi": (r._rawSource.weight > 0 && patientHeight > 0) ? (r._rawSource.weight / ((patientHeight / 100) * (patientHeight / 100))).toFixed(1) : "0",
                                 "index": r.num,
                                 "date": r.date
                             };
                             val = fixedMapping[col.fixed_variable] !== undefined ? fixedMapping[col.fixed_variable] : "—";
                             if (col.fixed_variable === 'bmi') {
-                                currentRawVal = r._rawSource.weight ? (parseFloat(r._rawSource.weight) / ((h / 100) * (h / 100))) : undefined;
-                                if (prevRecord && prevRecord._rawSource.weight) prevRawVal = (parseFloat(prevRecord._rawSource.weight) / ((h / 100) * (h / 100)));
+                                currentRawVal = r._rawSource.weight ? (parseFloat(r._rawSource.weight) / ((patientHeight / 100) * (patientHeight / 100))) : undefined;
+                                if (prevRecord && prevRecord._rawSource.weight) prevRawVal = (parseFloat(prevRecord._rawSource.weight) / ((patientHeight / 100) * (patientHeight / 100)));
                             } else if (col.fixed_variable === 'weight') {
                                 currentRawVal = parseFloat(r._rawSource.weight);
                                 if (prevRecord) prevRawVal = parseFloat(prevRecord._rawSource.weight);
@@ -226,16 +229,16 @@ export function TrackingDashboard() {
 
                 setMeasurements(formatted);
 
-                const latestWeight = records[0].weight || patientData.current_weight || 0;
-                const h = parseFloat(patientData.height_cm?.toString() || "0");
-
                 // Buscar Peso Ideal en la última medición
                 let pesoIdealActual = formatted[0]?._computedInputs?.['PESO_IDEAL'] || idealWeight;
                 if (typeof pesoIdealActual === 'number') pesoIdealActual = pesoIdealActual.toFixed(1);
 
-                const targetWeight = h > 0 ? Math.max(latestWeight - 2, parseFloat(String(pesoIdealActual || "0"))).toFixed(1) : "--";
+                const latestWeight = formatted[0]?._computedInputs?.['PESO'] || patientData.current_weight || 0;
+                const currentPatientHeight = parseFloat(formatted[0]?._computedInputs?.['TALLA'] || patientData.height_cm?.toString() || "0");
 
-                const oldestWeight = records[records.length - 1].weight || patientData.current_weight || latestWeight;
+                const targetWeight = currentPatientHeight > 0 ? Math.max(latestWeight - 2, parseFloat(String(pesoIdealActual || "0"))).toFixed(1) : "--";
+
+                const oldestWeight = formatted[formatted.length - 1]?._computedInputs?.['PESO'] || patientData.current_weight || latestWeight;
                 const totalLost = (oldestWeight - latestWeight).toFixed(1);
 
                 // Determinar si la última medición está completa basada en las columnas del layout
@@ -277,7 +280,7 @@ export function TrackingDashboard() {
 
                 const imcData = reversedMeasurements.map(m => {
                     const w = parseFloat(m._rawSource?.weight) || 0;
-                    return w > 0 && h > 0 ? parseFloat((w / ((h / 100) * (h / 100))).toFixed(1)) : 0;
+                    return w > 0 && patientHeight > 0 ? parseFloat((w / ((patientHeight / 100) * (patientHeight / 100))).toFixed(1)) : 0;
                 });
 
                 const grasaPctData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['GRASA_CORPORAL']) || 0);
@@ -291,9 +294,10 @@ export function TrackingDashboard() {
 
                 const etiquetasDiagnosticoGrasa = reversedMeasurements.map(m => {
                     if (varDiagGrasa) {
-                        const val = m[`col_${varDiagGrasa.id}`];
+                        const calc = calculate(varDiagGrasa, { gender: patientData.gender, age, inputs: m._computedInputs });
+                        const val = (calc.range?.label || (calc.result && calc.result.toString())) || "—";
                         if (val && typeof val === 'string' && val.includes('-')) return val.split('-');
-                        return val || "—";
+                        return val;
                     }
                     return "—";
                 });
@@ -309,9 +313,10 @@ export function TrackingDashboard() {
 
                 const etiquetasDiagnosticoMusculo = reversedMeasurements.map(m => {
                     if (varDiagMusculo) {
-                        const val = m[`col_${varDiagMusculo.id}`];
+                        const calc = calculate(varDiagMusculo, { gender: patientData.gender, age, inputs: m._computedInputs });
+                        const val = (calc.range?.label || (calc.result && calc.result.toString())) || "—";
                         if (val && typeof val === 'string' && val.includes('-')) return val.split('-');
-                        return val || "—";
+                        return val;
                     }
                     return "—";
                 });
@@ -320,11 +325,42 @@ export function TrackingDashboard() {
 
                 const etiquetasDiagnosticoCintura = reversedMeasurements.map(m => {
                     if (varDiagCintura) {
-                        const val = m[`col_${varDiagCintura.id}`];
+                        const calc = calculate(varDiagCintura, { gender: patientData.gender, age, inputs: m._computedInputs });
+                        const val = (calc.range?.label || (calc.result && calc.result.toString())) || "—";
                         if (val && typeof val === 'string' && val.includes('-')) return val.split('-');
-                        return val || "—";
+                        return val;
                     }
                     return "—";
+                });
+
+                // Nuevas Medidas
+                const brazoRelajadoData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['BRAZO_RELAJADO']) || 0);
+                const brazoFlexionadoData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['BRAZO_FLEXIONADO']) || 0);
+                const antebrazoData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['ANTEBRAZO_MAXIMO']) || 0);
+                const toraxData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['TORAX']) || 0);
+                const cinturaMinData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CINTURA_MINIMA']) || 0);
+                const cinturaMaxData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CINTURA_MAXIMA']) || 0);
+                const caderaMaxData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CADERA_MAXIMA']) || 0);
+                const musloMaxData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['MUSLO_MAXIMO']) || 0);
+                const musloMedialData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['MUSLO_MEDIAL']) || 0);
+                const pantorrillaPerimData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_PANTORRILLA_PERIMETRO']) || parseFloat(m._computedInputs?.['PANTORRILLA']) || 0);
+
+                const tricepsData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_TRICEPS']) || 0);
+                const subescapularData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_SUBESCAPULAR']) || 0);
+                const abdominalData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_ABDOMINAL']) || 0);
+                const musloMedialFoldData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_MUSLO_MEDIAL']) || 0);
+                const pantorrillaFoldData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_PANTORRILLA']) || 0);
+                const crestaIliacaData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CRESTA_ILIACA']) || parseFloat(m._computedInputs?.['P_SUPRAESPINAL']) || 0);
+                const bicepsData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['BICEPS']) || 0);
+                const sumaPlieguesData = reversedMeasurements.map(m => {
+                    const val = parseFloat(m._computedInputs?.['SUMA_PLIEGUES']);
+                    if (val > 0) return val;
+                    const isak6 = ['P_TRICEPS', 'P_SUBESCAPULAR', 'P_SUPRAESPINAL', 'P_ABDOMINAL', 'P_MUSLO_MEDIAL', 'P_PANTORRILLA'];
+                    let sum = isak6.reduce((acc, code) => acc + (parseFloat(m._computedInputs?.[code]) || 0), 0);
+                    if ((parseFloat(m._computedInputs?.['P_SUPRAESPINAL']) || 0) === 0) {
+                        sum += (parseFloat(m._computedInputs?.['CRESTA_ILIACA']) || 0);
+                    }
+                    return parseFloat(sum.toFixed(1));
                 });
 
                 setChartProps({
@@ -340,7 +376,25 @@ export function TrackingDashboard() {
                     etiquetasDiagnosticoMusculo,
                     diffMusculoData,
                     cinturaCmData,
-                    etiquetasDiagnosticoCintura
+                    etiquetasDiagnosticoCintura,
+                    brazoRelajadoData,
+                    brazoFlexionadoData,
+                    antebrazoData,
+                    toraxData,
+                    cinturaMinData,
+                    cinturaMaxData,
+                    caderaMaxData,
+                    musloMaxData,
+                    musloMedialData,
+                    pantorrillaPerimData,
+                    tricepsData,
+                    subescapularData,
+                    abdominalData,
+                    musloMedialFoldData,
+                    pantorrillaFoldData,
+                    crestaIliacaData,
+                    bicepsData,
+                    sumaPlieguesData
                 });
 
                 // 4. Cargar Seguimiento Fotográfico (desde mediciones en histories y records)
@@ -392,15 +446,15 @@ export function TrackingDashboard() {
                 // Intentar calcular peso ideal con la formula de la variable si existe
                 let calculatedIdeal = idealWeight;
                 const pesoIdealVar = vars.find(v => v.code === "PESO_IDEAL");
-                if (pesoIdealVar && h > 0) {
-                    const inputs = { "PESO": currentWeightNum, "TALLA": h, "TALLA_CM": h, "EDAD": age };
+                if (pesoIdealVar && patientHeight > 0) {
+                    const inputs = { "PESO": currentWeightNum, "TALLA": patientHeight, "TALLA_CM": patientHeight, "EDAD": age };
                     const calc = calculate(pesoIdealVar, { gender: patientData.gender, age, inputs });
                     if (calc && calc.result > 0) {
                         calculatedIdeal = calc.result.toFixed(1);
                     }
                 }
 
-                const targetW = h > 0 ? (currentWeightNum > 0 ? Math.max(currentWeightNum - 2, parseFloat(String(calculatedIdeal))).toFixed(1) : "--") : "--";
+                const targetW = patientHeight > 0 ? (currentWeightNum > 0 ? Math.max(currentWeightNum - 2, parseFloat(String(calculatedIdeal))).toFixed(1) : "--") : "--";
 
                 setStats({
                     totalLost: "0.0",
@@ -414,7 +468,8 @@ export function TrackingDashboard() {
             console.error("Tracking Dashboard fetch error:", err);
             setStats({
                 totalLost: "0.0",
-                goalWeight: 0,
+                goalWeight: "0",
+                targetWeight: "--",
                 specialistsCount: 0,
                 reportStatus: "ERROR: " + err?.message
             });

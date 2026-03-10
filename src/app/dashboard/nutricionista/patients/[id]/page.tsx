@@ -23,6 +23,8 @@ import { useFormulaEngine } from "@/hooks/useFormulaEngine";
 import { NewConsultationForm } from "@/components/dashboard/nutricionista/NewConsultationForm";
 import { EditConsultationModal } from "@/components/dashboard/nutricionista/EditConsultationModal";
 import { MedicalHistoryModal } from "@/components/dashboard/nutricionista/MedicalHistoryModal";
+import { PatientHistoryCharts } from "@/components/dashboard/paciente/PatientHistoryCharts";
+import { History } from "lucide-react";
 
 export default function PatientDetailPage() {
     const params = useParams();
@@ -53,6 +55,7 @@ export default function PatientDetailPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [isAddingMode, setIsAddingMode] = useState(false);
     const [editValues, setEditValues] = useState<any>({});
+    const [showChartsDialog, setShowChartsDialog] = useState(false);
     const [extraData, setExtraData] = useState<Record<string, any>>({});
 
     const getIMCCategory = (val: string) => {
@@ -172,16 +175,19 @@ export default function PatientDetailPage() {
                 const rowData = { ...r };
                 const inputs: Record<string, any> = {
                     ...(r.extra_data || {}),
-                    "PESO": r.weight || 0,
-                    "TALLA": pData.height_cm || 0,
-                    "TALLA_CM": pData.height_cm || 0,
-                    "EDAD": age,
-                    "CINTURA": r.waist_circumference_cm || 0,
-                    "GRASA": r.body_fat_percentage || 0,
                     "PESO_BASE": pData.current_weight != null ? Number(pData.current_weight) : 0,
-                    "GENERO_V": pData.gender === 'masculino' || pData.gender === 'M' ? 1 : (pData.gender === 'femenino' || pData.gender === 'F' ? 2 : 0),
-                    "IMC": (r.weight > 0 && pData.height_cm > 0) ? Number((r.weight / ((pData.height_cm / 100) * (pData.height_cm / 100))).toFixed(1)) : 0
+                    "TALLA_BASE": pData.height_cm || 0,
+                    "EDAD": age,
+                    "GENERO_V": pData.gender === 'masculino' || pData.gender === 'M' ? 1 : (pData.gender === 'femenino' || pData.gender === 'F' ? 2 : 0)
                 };
+
+                // Priorizar campos nativos si tienen valor, si no mantener lo que venga de extra_data
+                inputs["PESO"] = r.weight || inputs["PESO"] || 0;
+                inputs["TALLA"] = pData.height_cm || inputs["TALLA"] || inputs["TALLA_CM"] || 0;
+                inputs["TALLA_CM"] = inputs["TALLA"];
+                inputs["CINTURA"] = r.waist_circumference_cm || inputs["CINTURA"] || 0;
+                inputs["GRASA"] = r.body_fat_percentage || inputs["GRASA"] || 0;
+                inputs["IMC"] = (inputs["PESO"] > 0 && inputs["TALLA"] > 0) ? Number((inputs["PESO"] / ((inputs["TALLA"] / 100) * (inputs["TALLA"] / 100))).toFixed(1)) : 0;
 
                 for (let pass = 0; pass < 3; pass++) {
                     vars.forEach(v => {
@@ -402,8 +408,8 @@ export default function PatientDetailPage() {
 
     const stats = useMemo(() => {
         const latest = records[0];
-        const h = patient?.rawHeight || null;
-        const w = latest?.weight || patient?.rawWeight || null;
+        const h = latest?._computedInputs?.['TALLA'] || patient?.rawHeight || null;
+        const w = latest?._computedInputs?.['PESO'] || latest?.weight || patient?.rawWeight || null;
 
         let imc = "—";
         if (h && w) imc = (w / ((h / 100) * (h / 100))).toFixed(1);
@@ -411,12 +417,130 @@ export default function PatientDetailPage() {
         return {
             weight: w != null ? `${w} kg` : "—",
             height: h != null ? `${h} cm` : "—",
-            fat: latest?.body_fat_percentage != null ? `${latest.body_fat_percentage}%` : "—",
-            waist: latest?.waist_circumference_cm != null ? `${latest.waist_circumference_cm} cm` : "—",
+            fat: (latest?._computedInputs?.['GRASA'] || latest?._computedInputs?.['GRASA_CORPORAL'] || latest?.body_fat_percentage) ? `${latest?._computedInputs?.['GRASA'] || latest?._computedInputs?.['GRASA_CORPORAL'] || latest?.body_fat_percentage}%` : "—",
+            waist: (latest?._computedInputs?.['CINTURA'] || latest?._computedInputs?.['CINTURA_MINIMA'] || latest?.waist_circumference_cm) ? `${latest?._computedInputs?.['CINTURA'] || latest?._computedInputs?.['CINTURA_MINIMA'] || latest?.waist_circumference_cm} cm` : "—",
             imc,
             lastVisit: latest ? new Date(latest.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : "Sin mediciones"
         };
     }, [records, patient]);
+
+    const chartProps = useMemo(() => {
+        if (!records || records.length === 0) return null;
+
+        const reversedMeasurements = [...records].reverse();
+        const patientHeight = patient?.rawHeight || 100;
+
+        const varDiagGrasa = clinicalVariables.find((v: any) => (v.name?.toUpperCase().includes('SUMA DE PLIEGUES') || v.code?.toUpperCase().includes('SUMA_PLIEGUES')) && (v.has_ranges || v.hasRanges));
+        const varDiagMusculo = clinicalVariables.find((v: any) => v.name?.toUpperCase().includes('MUSCULO LEE') && (v.has_ranges || v.hasRanges));
+        const varDiagCintura = clinicalVariables.find((v: any) => v.name?.toUpperCase().includes('CINTURA') && (v.has_ranges || v.hasRanges));
+
+        const fechasHistorial = reversedMeasurements.map(r => {
+            const dateObj = new Date(r.date + 'T12:00:00');
+            return dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).toUpperCase();
+        });
+
+        const pesoData = reversedMeasurements.map(m => parseFloat(m.weight) || 0);
+
+        const imcData = reversedMeasurements.map(m => {
+            const w = parseFloat(m.weight) || 0;
+            return w > 0 && patientHeight > 0 ? parseFloat((w / ((patientHeight / 100) * (patientHeight / 100))).toFixed(1)) : 0;
+        });
+
+        const grasaPctData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['GRASA_CORPORAL']) || 0);
+        const grasaKgData = reversedMeasurements.map((m, i) => {
+            const w = parseFloat(m.weight) || 0;
+            const pct = grasaPctData[i];
+            return parseFloat((w * (pct / 100)).toFixed(2));
+        });
+
+        const diffGrasaData = grasaKgData.map((val, i, arr) => i === 0 ? 0 : parseFloat((val - arr[i - 1]).toFixed(2)));
+
+        const etiquetasDiagnosticoGrasa = reversedMeasurements.map(m => {
+            if (varDiagGrasa) {
+                const calc = calculate(varDiagGrasa, { gender: patient?.gender, age: patient?.age, inputs: m._computedInputs });
+                const val = (calc.range?.label || (calc.result && calc.result.toString())) || "—";
+                if (val && typeof val === 'string' && val.includes('-')) return val.split('-');
+                return val;
+            }
+            return "—";
+        });
+
+        const musculoPctData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['MASA_MUSCULAR_LEE']) || 0);
+        const musculoKgData = reversedMeasurements.map((m, i) => {
+            const w = parseFloat(m.weight) || 0;
+            const pct = musculoPctData[i];
+            return parseFloat((w * (pct / 100)).toFixed(2));
+        });
+
+        const diffMusculoData = musculoKgData.map((val, i, arr) => i === 0 ? 0 : parseFloat((val - arr[i - 1]).toFixed(2)));
+
+        const etiquetasDiagnosticoMusculo = reversedMeasurements.map(m => {
+            if (varDiagMusculo) {
+                const calc = calculate(varDiagMusculo, { gender: patient?.gender, age: patient?.age, inputs: m._computedInputs });
+                const val = (calc.range?.label || (calc.result && calc.result.toString())) || "—";
+                if (val && typeof val === 'string' && val.includes('-')) return val.split('-');
+                return val;
+            }
+            return "—";
+        });
+
+        const cinturaCmData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CINTURA_MINIMA']) || parseFloat(m.waist_circumference_cm) || parseFloat(m._computedInputs?.['CINTURA']) || 0);
+
+        const etiquetasDiagnosticoCintura = reversedMeasurements.map(m => {
+            if (varDiagCintura) {
+                const calc = calculate(varDiagCintura, { gender: patient?.gender, age: patient?.age, inputs: m._computedInputs });
+                const val = (calc.range?.label || (calc.result && calc.result.toString())) || "—";
+                if (val && typeof val === 'string' && val.includes('-')) return val.split('-');
+                return val;
+            }
+            return "—";
+        });
+
+        return {
+            fechasHistorial,
+            pesoData,
+            imcData,
+            grasaPctData,
+            grasaKgData,
+            etiquetasDiagnosticoGrasa,
+            diffGrasaData,
+            musculoPctData,
+            musculoKgData,
+            etiquetasDiagnosticoMusculo,
+            diffMusculoData,
+            cinturaCmData,
+            etiquetasDiagnosticoCintura,
+            brazoRelajadoData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['BRAZO_RELAJADO']) || 0),
+            brazoFlexionadoData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['BRAZO_FLEXIONADO']) || 0),
+            antebrazoData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['ANTEBRAZO_MAXIMO']) || 0),
+            toraxData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['TORAX']) || 0),
+            cinturaMinData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CINTURA_MINIMA']) || 0),
+            cinturaMaxData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CINTURA_MAXIMA']) || 0),
+            caderaMaxData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CADERA_MAXIMA']) || 0),
+            musloMaxData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['MUSLO_MAXIMO']) || 0),
+            musloMedialData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['MUSLO_MEDIAL']) || 0),
+            pantorrillaPerimData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_PANTORRILLA_PERIMETRO']) || parseFloat(m._computedInputs?.['PANTORRILLA']) || 0),
+            tricepsData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_TRICEPS']) || 0),
+            subescapularData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_SUBESCAPULAR']) || 0),
+            abdominalData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_ABDOMINAL']) || 0),
+            musloMedialFoldData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_MUSLO_MEDIAL']) || 0),
+            pantorrillaFoldData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_PANTORRILLA']) || 0),
+            crestaIliacaData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CRESTA_ILIACA']) || parseFloat(m._computedInputs?.['P_SUPRAESPINAL']) || 0),
+            bicepsData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['BICEPS']) || 0),
+            sumaPlieguesData: reversedMeasurements.map(m => {
+                const val = parseFloat(m._computedInputs?.['SUMA_PLIEGUES']);
+                if (val > 0) return val;
+                // Fallback manual sum of ISAK 6 folds
+                const isak6 = ['P_TRICEPS', 'P_SUBESCAPULAR', 'P_SUPRAESPINAL', 'P_ABDOMINAL', 'P_MUSLO_MEDIAL', 'P_PANTORRILLA'];
+                let sum = isak6.reduce((acc, code) => acc + (parseFloat(m._computedInputs?.[code]) || 0), 0);
+                // Si supraespinal es 0, intentar con Cresta Iliaca como alternativo para el 6to pliegue
+                if ((parseFloat(m._computedInputs?.['P_SUPRAESPINAL']) || 0) === 0) {
+                    sum += (parseFloat(m._computedInputs?.['CRESTA_ILIACA']) || 0);
+                }
+                return parseFloat(sum.toFixed(1));
+            })
+        };
+    }, [records, patient, clinicalVariables]);
 
     if (loading && !patient) return <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest">Sincronizando...</div>;
     if (!patient) return <div className="p-20 text-center text-red-500 font-bold">Error: Paciente no encontrado</div>;
@@ -541,12 +665,21 @@ export default function PatientDetailPage() {
 
             <Tabs defaultValue="historial">
                 <TabsList className="bg-[#1A253A]/80 p-1.5 rounded-2xl mb-8 border border-white/5 inline-flex backdrop-blur-xl shadow-2xl">
-                    <TabsTrigger
-                        value="historial"
-                        className="font-black text-[10px] uppercase px-8 py-3 flex items-center gap-2 rounded-xl data-[state=active]:bg-nutri-brand data-[state=active]:text-white text-slate-400 tracking-widest transition-all duration-300 data-[state=active]:shadow-[0_0_20px_rgba(255,102,0,0.3)] border border-transparent data-[state=active]:border-white/10"
-                    >
-                        <ClipboardList className="h-4 w-4" /> Historial de Consultas
-                    </TabsTrigger>
+                    <div className="flex items-center gap-4">
+                        <TabsTrigger
+                            value="historial"
+                            className="font-black text-[10px] uppercase px-8 py-3 flex items-center gap-2 rounded-xl data-[state=active]:bg-nutri-brand data-[state=active]:text-white text-slate-400 tracking-widest transition-all duration-300 data-[state=active]:shadow-[0_0_20px_rgba(255,102,0,0.3)] border border-transparent data-[state=active]:border-white/10"
+                        >
+                            <ClipboardList className="h-4 w-4" /> Historial de Consultas
+                        </TabsTrigger>
+                        <Button
+                            onClick={() => setShowChartsDialog(true)}
+                            variant="ghost"
+                            className="h-10 px-4 rounded-xl border border-white/5 bg-white/5 text-[10px] font-black uppercase text-slate-400 hover:text-nutri-brand transition-all tracking-widest"
+                        >
+                            <History className="h-3.5 w-3.5 mr-2" /> Ver Registro
+                        </Button>
+                    </div>
                 </TabsList>
                 <TabsContent value="historial">
                     {isAddingMode && editingId === "new" && (
@@ -774,6 +907,42 @@ export default function PatientDetailPage() {
                                 Aplicar Cambios
                             </Button>
                         </DialogFooter>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal Registro de Mediciones (Gráficos) */}
+            <Dialog open={showChartsDialog} onOpenChange={setShowChartsDialog}>
+                <DialogContent className="max-w-[90vw] w-[1200px] h-[85vh] p-0 rounded-[3rem] border-white/10 shadow-2xl bg-[#0B1120] overflow-hidden flex flex-col">
+                    <DialogHeader className="p-8 pb-4 border-b border-white/5 shrink-0 relative">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <DialogTitle className="text-2xl font-black text-white tracking-tight uppercase flex items-center gap-3">
+                                    <TrendingUp className="h-6 w-6 text-nutri-brand" /> Registro de <span className="text-nutri-brand">Mediciones</span>
+                                </DialogTitle>
+                                <DialogDescription className="text-xs font-medium text-slate-500 italic">
+                                    Evolución histórica detallada del paciente {patient.name}.
+                                </DialogDescription>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setShowChartsDialog(false)}
+                                className="rounded-xl hover:bg-white/10 text-slate-500 hover:text-white"
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+                        {chartProps ? (
+                            <PatientHistoryCharts {...chartProps} />
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-600 gap-4">
+                                <History className="h-12 w-12 opacity-20" />
+                                <span className="text-xs font-black uppercase tracking-widest opacity-40">Sin datos de mediciones</span>
+                            </div>
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>

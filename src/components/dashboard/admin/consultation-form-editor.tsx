@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, Edit2, Loader2, Plus, Save, Trash2, GripVertical, AlertCircle, Apple, Stethoscope, Ruler, User } from "lucide-react";
+import { Check, Edit2, Loader2, Plus, Save, Trash2, GripVertical, AlertCircle, Apple, Stethoscope, Ruler, User, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -141,17 +141,17 @@ export function ConsultationFormEditor() {
     };
 
     const renderFieldItem = (field: EditableField) => (
-        <div key={field.id} className="group relative bg-white border border-slate-200 shadow-sm rounded-lg p-3 flex flex-col gap-2 transition-all hover:border-slate-300">
-            <div className="flex justify-between items-center transition-opacity absolute -top-3 right-2 bg-white rounded-full shadow-sm border border-slate-100 px-1">
-                <button onClick={() => removeField(field.id)} className="p-1.5 text-red-400 hover:text-red-500 rounded-full hover:bg-red-50">
-                    <Trash2 className="h-3 w-3" />
+        <div key={field.id} className="group relative bg-white/[0.03] border border-white/5 shadow-2xl rounded-2xl p-4 flex flex-col gap-3 transition-all hover:border-white/20 hover:bg-white/[0.05]">
+            <div className="flex justify-between items-center transition-opacity absolute -top-3 right-3 bg-[#151F32] rounded-full shadow-2xl border border-white/10 px-2 py-0.5">
+                <button onClick={() => removeField(field.id)} className="p-1 text-red-400/50 hover:text-red-400 transition-colors">
+                    <Trash2 className="h-3.5 w-3.5" />
                 </button>
             </div>
 
-            <div className="flex items-center gap-2">
-                <GripVertical className="h-4 w-4 text-slate-300 cursor-move shrink-0" />
+            <div className="flex items-center gap-3">
+                <GripVertical className="h-5 w-5 text-slate-700 cursor-move shrink-0" />
                 {field.isEditing ? (
-                    <div className="flex items-center gap-1 w-full bg-slate-50 p-1 rounded-md animate-in fade-in zoom-in-95">
+                    <div className="flex items-center gap-2 w-full bg-black/20 p-1.5 rounded-xl animate-in fade-in zoom-in-95 border border-white/5">
                         <select
                             value={field.variable_id || field.header}
                             autoFocus
@@ -164,31 +164,31 @@ export function ConsultationFormEditor() {
                                     updateFieldVar(field.id, val, null);
                                 }
                             }}
-                            className="flex-1 min-w-0 h-8 px-2 text-xs font-bold bg-white border border-slate-200 rounded outline-none text-slate-700"
+                            className="flex-1 min-w-0 h-9 px-3 text-xs font-black bg-[#151F32] border border-white/10 rounded-lg outline-none text-white appearance-none"
                         >
-                            <option value={field.header} disabled>{field.header} (Selecciona)</option>
+                            <option value={field.header} disabled>{field.header.toUpperCase()}</option>
                             {variables.map((v) => (
-                                <option key={v.id} value={v.id}>{v.name}</option>
+                                <option key={v.id} value={v.id} className="bg-[#151F32]">{v.name.toUpperCase()}</option>
                             ))}
                         </select>
-                        <button onClick={() => toggleEdit(field.id)} className="p-1.5 bg-green-500 text-white rounded hover:bg-green-600 transition-colors shrink-0">
-                            <Check className="h-3 w-3" />
+                        <button onClick={() => toggleEdit(field.id)} className="p-2 bg-nutrition-500 text-white rounded-lg hover:bg-nutrition-600 transition-all shadow-lg shadow-nutrition-500/20 shrink-0">
+                            <Check className="h-4 w-4" />
                         </button>
                     </div>
                 ) : (
                     <div className="flex-1 flex justify-between items-center min-w-0">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate" title={field.header}>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] truncate pr-2" title={field.header}>
                             {field.header}
                         </span>
-                        <button onClick={() => toggleEdit(field.id)} className="p-1.5 text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-all shrink-0">
-                            <Edit2 className="h-3 w-3" />
+                        <button onClick={() => toggleEdit(field.id)} className="p-2 text-slate-600 hover:text-nutrition-400 hover:bg-white/5 rounded-xl transition-all shrink-0">
+                            <Edit2 className="h-3.5 w-3.5" />
                         </button>
                     </div>
                 )}
             </div>
             {!field.isEditing && (
-                <div className="h-8 mt-1 w-full bg-slate-50 border border-slate-100 rounded-md px-2 flex items-center shadow-inner pointer-events-none opacity-60">
-                    <span className="text-slate-300 text-xs font-medium">0.0</span>
+                <div className="h-10 w-full bg-black/20 border border-white/5 rounded-xl px-4 flex items-center shadow-inner pointer-events-none opacity-40">
+                    <span className="text-slate-700 text-xs font-black">---</span>
                 </div>
             )}
         </div>
@@ -198,28 +198,32 @@ export function ConsultationFormEditor() {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center p-20 text-slate-400">
-                <Loader2 className="h-10 w-10 animate-spin mb-4 text-green-500" />
-                <p className="text-xs font-bold uppercase tracking-widest">Cargando Formulario...</p>
+            <div className="flex flex-col items-center justify-center p-20 space-y-4">
+                <Loader2 className="h-12 w-12 animate-spin text-nutrition-500" />
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Arquitectando Formulario...</p>
             </div>
         );
     }
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 space-y-4 max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h3 className="text-lg font-black text-slate-800">Constructor Visual de Consultas</h3>
-                    <p className="text-sm text-slate-500">Agrega o remueve los campos a solicitar al especialista en cada nueva cita.</p>
+        <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 space-y-10 p-8">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 border-b border-white/5 pb-10">
+                <div className="space-y-4 max-w-2xl">
+                    <div className="flex items-center gap-4">
+                        <div className="h-2 w-12 bg-nutrition-500 rounded-full" />
+                        <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Gestor de Consultas</h3>
+                    </div>
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-widest leading-relaxed px-16">Estructura la experiencia clínica definiendo qué variables capturarás en cada sesión presencial.</p>
                 </div>
-                <div className="flex items-center gap-4">
+
+                <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline" className="border-green-200 text-green-700 bg-white hover:bg-green-50 font-bold h-10 px-6 rounded-xl shadow-sm transition-all focus:ring-0 hover:scale-105 active:scale-95">
-                                Previsualizar Formulario
+                            <Button variant="outline" className="flex-1 lg:flex-none border-white/10 text-slate-400 bg-white/5 hover:bg-white/10 hover:text-white font-black h-12 px-8 rounded-2xl transition-all uppercase text-[10px] tracking-widest">
+                                <Stethoscope className="mr-3 h-4 w-4" /> Previsualización Profesional
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-[70rem] p-0 border-none bg-transparent shadow-none overflow-visible">
+                        <DialogContent className="max-w-[75rem] p-0 border-none bg-transparent shadow-none overflow-visible">
                             <NewConsultationForm
                                 patientId="preview-id"
                                 date={dummyDate}
@@ -237,84 +241,99 @@ export function ConsultationFormEditor() {
                             />
                         </DialogContent>
                     </Dialog>
-                    <Button onClick={handleSave} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white font-bold h-10 px-6 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+
+                    <Button onClick={handleSave} disabled={saving} className="flex-1 lg:flex-none bg-nutrition-500 hover:bg-nutrition-600 text-white font-black h-12 px-10 rounded-2xl shadow-2xl shadow-nutrition-500/20 active:scale-95 transition-all flex items-center justify-center gap-3 uppercase text-[10px] tracking-widest">
                         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                        Guardar Layout
+                        Sincronizar Protocolo
                     </Button>
                 </div>
             </div>
 
-            <div className="bg-[#F0FDF4] border-2 border-green-200 rounded-[2rem] p-8 relative overflow-hidden shadow-xl">
-                <div className="absolute top-0 left-0 bg-green-500 text-white text-[10px] font-black uppercase tracking-widest px-6 py-1.5 rounded-br-2xl shadow-sm">
-                    Previsualización del Formulario (Vista Nutricionista)
-                </div>
+            <div className="bg-white/[0.02] border border-white/5 rounded-[3.5rem] p-10 relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-nutrition-500/5 blur-[120px] -mr-48 -mt-48" />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mt-6">
-                    {/* Base fields */}
-                    <div className="col-span-1 flex flex-col gap-4">
-                        <div className="flex justify-between items-center mb-2 px-2 bg-green-50/50 p-2 rounded-lg border border-green-100">
-                            <h4 className="text-[11px] font-black text-green-800 uppercase tracking-wider">Métricas Principales</h4>
-                            <button onClick={() => addField('base')} className="text-[10px] font-black text-white bg-green-500 px-2 py-1 rounded shadow-sm hover:bg-green-600 transition-colors flex items-center gap-1">
-                                <Plus className="h-3 w-3" /> Añadir
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 relative z-10">
+                    {/* Metrics Principales */}
+                    <div className="flex flex-col gap-6 bg-black/20 p-6 rounded-[2.5rem] border border-white/5">
+                        <div className="flex justify-between items-center px-2">
+                            <h4 className="text-[10px] font-black text-nutrition-500 uppercase tracking-[0.2em] flex items-center gap-3">
+                                <div className="h-1.5 w-6 bg-nutrition-500 rounded-full" />
+                                CORE METRICS
+                            </h4>
+                            <button onClick={() => addField('base')} className="p-2 text-white bg-white/5 rounded-xl hover:bg-white/10 hover:text-nutrition-400 transition-all border border-white/5">
+                                <Plus className="h-4 w-4" />
                             </button>
                         </div>
-                        {filterFields('base').length === 0 && <p className="text-xs text-slate-400 italic text-center py-4">Vacío</p>}
-                        <div className="flex flex-col gap-3">
+                        {filterFields('base').length === 0 && <div className="text-center py-12 border-2 border-dashed border-white/5 rounded-3xl opacity-20"><User className="h-8 w-8 mx-auto" /></div>}
+                        <div className="space-y-4">
                             {filterFields('base').map(f => renderFieldItem(f))}
                         </div>
                     </div>
 
                     {/* Perimeters */}
-                    <div className="col-span-1 bg-white p-5 rounded-2xl border border-green-100 shadow-sm relative">
-                        <div className="flex justify-between items-center mb-6">
-                            <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                <span className="bg-blue-100 p-1.5 rounded-lg text-blue-500"><Ruler className="h-4 w-4" /></span>
-                                Perímetros (cm)
+                    <div className="flex flex-col gap-6 bg-black/20 p-6 rounded-[2.5rem] border border-white/5">
+                        <div className="flex justify-between items-center px-2">
+                            <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                                <div className="h-1.5 w-6 bg-blue-400 rounded-full" />
+                                PERÍMETROS
                             </h4>
-                            <button onClick={() => addField('perimeters')} className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
-                                <Plus className="h-3 w-3" /> Añadir
+                            <button onClick={() => addField('perimeters')} className="p-2 text-white bg-white/5 rounded-xl hover:bg-white/10 hover:text-blue-400 transition-all border border-white/5">
+                                <Plus className="h-4 w-4" />
                             </button>
                         </div>
-                        {filterFields('perimeters').length === 0 && <p className="text-xs text-slate-400 italic text-center py-4">No hay variables asignadas</p>}
-                        <div className="grid grid-cols-2 gap-3">
+                        {filterFields('perimeters').length === 0 && <div className="text-center py-12 border-2 border-dashed border-white/5 rounded-3xl opacity-20"><Ruler className="h-8 w-8 mx-auto" /></div>}
+                        <div className="grid grid-cols-1 gap-4">
                             {filterFields('perimeters').map(f => renderFieldItem(f))}
                         </div>
                     </div>
 
                     {/* Folds */}
-                    <div className="col-span-1 bg-white p-5 rounded-2xl border border-green-100 shadow-sm relative">
-                        <div className="flex justify-between items-center mb-6">
-                            <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                <span className="bg-purple-100 p-1.5 rounded-lg text-purple-500"><User className="h-4 w-4" /></span>
-                                Pliegues (mm)
+                    <div className="flex flex-col gap-6 bg-black/20 p-6 rounded-[2.5rem] border border-white/5">
+                        <div className="flex justify-between items-center px-2">
+                            <h4 className="text-[10px] font-black text-pink-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                                <div className="h-1.5 w-6 bg-pink-400 rounded-full" />
+                                PLIEGUES
                             </h4>
-                            <button onClick={() => addField('folds')} className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-purple-50 text-purple-600 px-3 py-1.5 rounded-lg hover:bg-purple-100 transition-colors">
-                                <Plus className="h-3 w-3" /> Añadir
+                            <button onClick={() => addField('folds')} className="p-2 text-white bg-white/5 rounded-xl hover:bg-white/10 hover:text-pink-400 transition-all border border-white/5">
+                                <Plus className="h-4 w-4" />
                             </button>
                         </div>
-                        {filterFields('folds').length === 0 && <p className="text-xs text-slate-400 italic text-center py-4">No hay variables asignadas</p>}
-                        <div className="grid grid-cols-2 gap-3">
+                        {filterFields('folds').length === 0 && <div className="text-center py-12 border-2 border-dashed border-white/5 rounded-3xl opacity-20"><Activity className="h-8 w-8 mx-auto" /></div>}
+                        <div className="grid grid-cols-1 gap-4">
                             {filterFields('folds').map(f => renderFieldItem(f))}
                         </div>
                     </div>
 
                     {/* Clinic/Recommendations */}
-                    <div className="col-span-1 flex flex-col gap-6">
-                        <div className="flex flex-col gap-3">
-                            <div className="flex justify-between items-center px-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                <h4 className="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-2"><Stethoscope className="h-3 w-3 text-slate-400" /> Hallazgos</h4>
-                                <button onClick={() => addField('findings')} className="text-[10px] font-black text-slate-600 bg-white border border-slate-200 px-2 py-1 rounded hover:bg-slate-100 shadow-sm flex items-center gap-1"><Plus className="h-3 w-3" /> Añadir</button>
+                    <div className="flex flex-col gap-8">
+                        <div className="flex flex-col gap-4 bg-black/20 p-6 rounded-[2.5rem] border border-white/5">
+                            <div className="flex justify-between items-center px-2">
+                                <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                                    <div className="h-1.5 w-6 bg-emerald-400 rounded-full" />
+                                    HALLAZGOS
+                                </h4>
+                                <button onClick={() => addField('findings')} className="p-2 text-white bg-white/5 rounded-xl hover:bg-white/10 hover:text-emerald-400 transition-all border border-white/5">
+                                    <Plus className="h-4 w-4" />
+                                </button>
                             </div>
-                            {filterFields('findings').length === 0 && <p className="text-xs text-slate-400 italic text-center py-2">Vacío</p>}
-                            {filterFields('findings').map(f => renderFieldItem(f))}
+                            <div className="space-y-4">
+                                {filterFields('findings').map(f => renderFieldItem(f))}
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-3">
-                            <div className="flex justify-between items-center px-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                <h4 className="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-2"><Apple className="h-3 w-3 text-slate-400" /> Recomendaciones</h4>
-                                <button onClick={() => addField('recommendations')} className="text-[10px] font-black text-slate-600 bg-white border border-slate-200 px-2 py-1 rounded hover:bg-slate-100 shadow-sm flex items-center gap-1"><Plus className="h-3 w-3" /> Añadir</button>
+
+                        <div className="flex flex-col gap-4 bg-black/20 p-6 rounded-[2.5rem] border border-white/5">
+                            <div className="flex justify-between items-center px-2">
+                                <h4 className="text-[10px] font-black text-amber-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                                    <div className="h-1.5 w-6 bg-amber-400 rounded-full" />
+                                    CONSEJOS
+                                </h4>
+                                <button onClick={() => addField('recommendations')} className="p-2 text-white bg-white/5 rounded-xl hover:bg-white/10 hover:text-amber-400 transition-all border border-white/5">
+                                    <Plus className="h-4 w-4" />
+                                </button>
                             </div>
-                            {filterFields('recommendations').length === 0 && <p className="text-xs text-slate-400 italic text-center py-2">Vacío</p>}
-                            {filterFields('recommendations').map(f => renderFieldItem(f))}
+                            <div className="space-y-4">
+                                {filterFields('recommendations').map(f => renderFieldItem(f))}
+                            </div>
                         </div>
                     </div>
                 </div>

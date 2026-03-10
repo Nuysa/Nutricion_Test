@@ -6,12 +6,14 @@ import { useToast } from "@/hooks/use-toast";
 import {
     Plus, Trash2, Edit2, Check, Save, Loader2, ArrowLeft, ArrowRight,
     Scale, Droplet, BicepsFlexed, Ruler, Heart, Activity, Flame, Zap,
-    Dumbbell, Apple, Carrot, Timer, ActivitySquare, TrendingUp, BarChart2, PieChart, Target, Award
+    Dumbbell, Apple, Carrot, Timer, ActivitySquare, TrendingUp, BarChart2, PieChart, Target, Award,
+    ChevronDown
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { PatientHistoryCharts } from "../paciente/PatientHistoryCharts";
 
 const AVAILABLE_ICONS: Record<string, any> = {
@@ -144,12 +146,14 @@ export function PatientWidgetEditor() {
     const addTab = () => {
         setTabs([...tabs, {
             id: 't_' + Math.random().toString(36).substr(2, 6),
-            name: 'Nueva Etiqueta',
+            name: 'Nueva Categoría',
             icon: 'Activity',
             btnColor: '#3b82f6',
             cardBgColor: '#ffffff',
             lineColor: '#64748b',
-            metrics: []
+            metrics: [
+                { id: 'm_date_' + Math.random().toString(36).substr(2, 6), label: 'Fecha', variable_id: 'SYSTEM_DATE', isSystem: true }
+            ]
         }]);
     };
 
@@ -185,7 +189,12 @@ export function PatientWidgetEditor() {
         setTabs(t);
     };
 
-    if (loading) return <div className="p-10 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto" /></div>;
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center p-20 space-y-4">
+            <Loader2 className="animate-spin h-10 w-10 text-nutrition-500" />
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Cargando Entorno de Configuración...</p>
+        </div>
+    );
 
     const dummyProps = {
         fechasHistorial: ['10 Ene', '15 Feb', '04 Mar'],
@@ -198,120 +207,183 @@ export function PatientWidgetEditor() {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center mb-4">
-                <Button variant="outline" onClick={addTab} className="rounded-xl border-dashed border-2 bg-slate-50"><Plus className="mr-2 h-4 w-4" /> Añadir Pestaña</Button>
-                <div className="flex gap-4">
+        <div className="space-y-8 p-8 bg-[#151F32]/50">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 border-b border-white/5 pb-8">
+                <Button
+                    variant="outline"
+                    onClick={addTab}
+                    className="rounded-2xl border-dashed border-2 border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-nutrition-500 transition-all font-black text-xs uppercase tracking-widest h-12 px-8"
+                >
+                    <Plus className="mr-3 h-4 w-4 text-nutrition-500" /> Añadir Nueva Categoría
+                </Button>
+
+                <div className="flex items-center gap-4 w-full md:w-auto">
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline" className="rounded-xl border-slate-200">Previsualizar Widget</Button>
+                            <Button variant="outline" className="flex-1 md:flex-none h-12 rounded-2xl border-white/10 bg-white/5 text-slate-400 hover:text-white hover:border-white/20 transition-all font-black text-xs uppercase tracking-widest px-8">
+                                <Activity className="mr-3 h-4 w-4" /> Previsualizar Widget
+                            </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-4xl p-0 border-none bg-transparent shadow-none overflow-visible">
                             <PatientHistoryCharts {...dummyProps} />
                         </DialogContent>
                     </Dialog>
-                    <Button onClick={handleSave} disabled={saving} className="bg-slate-900 text-white rounded-xl">
-                        {saving ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
-                        Guardar Widget
+
+                    <Button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex-1 md:flex-none h-12 rounded-2xl bg-nutrition-500 hover:bg-nutrition-600 text-white font-black text-xs uppercase tracking-widest px-10 shadow-lg shadow-nutrition-500/20 transition-all"
+                    >
+                        {saving ? <Loader2 className="animate-spin mr-3 h-4 w-4" /> : <Save className="mr-3 h-4 w-4" />}
+                        Sincronizar Widget
                     </Button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-8">
+            <div className="grid grid-cols-1 gap-10">
                 {tabs.map((tab, tIdx) => (
-                    <Card key={tab.id} className="rounded-[2rem] border-2 border-slate-100 shadow-sm overflow-hidden">
-                        <div className="bg-slate-50 p-6 flex flex-col md:flex-row gap-6">
-                            <div className="w-full md:w-1/3 space-y-4">
-                                <div>
-                                    <label className="text-xs font-black text-slate-400">Nombre de la Pestaña</label>
-                                    <Input value={tab.name} onChange={e => updateTab(tIdx, { name: e.target.value })} className="font-bold bg-white" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-400">Icono</label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {Object.entries(AVAILABLE_ICONS).map(([iconName, IconComponent]) => (
-                                            <button
-                                                key={iconName}
-                                                onClick={() => updateTab(tIdx, { icon: iconName })}
-                                                title={iconName}
-                                                className={`p-2.5 rounded-xl transition-all border ${tab.icon === iconName ? 'bg-nutrition-600 text-white shadow-md border-transparent' : 'bg-white text-slate-500 hover:bg-slate-100 border-slate-200'}`}
-                                            >
-                                                <IconComponent className="h-5 w-5" />
-                                            </button>
-                                        ))}
+                    <Card key={tab.id} className="rounded-[2.5rem] border border-white/5 bg-white/[0.02] shadow-2xl overflow-hidden group hover:border-white/10 transition-all">
+                        <div className="flex flex-col lg:flex-row">
+                            {/* Left: Settings Panel */}
+                            <div className="w-full lg:w-[40%] p-8 bg-white/[0.02] border-r border-white/5 space-y-8">
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Etiqueta de Navegación</label>
+                                        <Input
+                                            value={tab.name}
+                                            onChange={e => updateTab(tIdx, { name: e.target.value })}
+                                            className="h-12 rounded-xl bg-white/5 border-white/5 font-black text-white focus:border-nutrition-500 transition-all px-5"
+                                        />
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-6">
-                                    <div className="flex-1">
-                                        <label className="text-xs font-black text-slate-400">Color Ícono/Botón</label>
-                                        <div className="flex gap-3 items-center mt-1">
-                                            <div className="relative">
-                                                <input type="color" className="h-10 w-10 cursor-pointer rounded-full opacity-0 absolute inset-0" value={tab.btnColor} onChange={e => updateTab(tIdx, { btnColor: e.target.value })} />
-                                                <div className="h-10 w-10 rounded-full border-2 border-slate-200 pointer-events-none shadow-sm" style={{ backgroundColor: tab.btnColor }}></div>
-                                            </div>
-                                            <span className="text-[10px] font-black text-slate-500 uppercase">{tab.btnColor}</span>
+
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Iconografía del Sistema</label>
+                                        <div className="grid grid-cols-6 sm:grid-cols-9 lg:grid-cols-6 gap-2 p-4 bg-black/20 rounded-2xl border border-white/5">
+                                            {Object.entries(AVAILABLE_ICONS).map(([iconName, IconComponent]) => (
+                                                <button
+                                                    key={iconName}
+                                                    onClick={() => updateTab(tIdx, { icon: iconName })}
+                                                    title={iconName}
+                                                    className={cn(
+                                                        "p-3 rounded-xl transition-all flex items-center justify-center",
+                                                        tab.icon === iconName
+                                                            ? "bg-nutrition-500 text-white shadow-xl shadow-nutrition-500/20 scale-110"
+                                                            : "text-slate-600 hover:text-white hover:bg-white/5"
+                                                    )}
+                                                >
+                                                    <IconComponent className="h-5 w-5" />
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
-                                    <div className="flex-1">
-                                        <label className="text-xs font-black text-slate-400">Fondo Tarjeta</label>
-                                        <div className="flex gap-3 items-center mt-1">
-                                            <div className="relative">
-                                                <input type="color" className="h-10 w-10 cursor-pointer rounded-full opacity-0 absolute inset-0" value={tab.cardBgColor} onChange={e => updateTab(tIdx, { cardBgColor: e.target.value })} />
-                                                <div className="h-10 w-10 rounded-full border-2 border-slate-200 pointer-events-none shadow-sm" style={{ backgroundColor: tab.cardBgColor }}></div>
+
+                                    <div className="grid grid-cols-3 gap-6">
+                                        <div className="space-y-3 text-center">
+                                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Accento</label>
+                                            <div className="relative inline-block group/color">
+                                                <input type="color" className="h-12 w-12 cursor-pointer rounded-2xl opacity-0 absolute inset-0 z-10" value={tab.btnColor} onChange={e => updateTab(tIdx, { btnColor: e.target.value })} />
+                                                <div className="h-12 w-12 rounded-2xl border-4 border-white/10 shadow-xl group-hover/color:scale-110 transition-transform" style={{ backgroundColor: tab.btnColor }}></div>
                                             </div>
-                                            <span className="text-[10px] font-black text-slate-500 uppercase">{tab.cardBgColor}</span>
                                         </div>
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="text-xs font-black text-slate-400">Color Línea Curva</label>
-                                        <div className="flex gap-3 items-center mt-1">
-                                            <div className="relative">
-                                                <input type="color" className="h-10 w-10 cursor-pointer rounded-full opacity-0 absolute inset-0" value={tab.lineColor} onChange={e => updateTab(tIdx, { lineColor: e.target.value })} />
-                                                <div className="h-10 w-10 rounded-full border-2 border-slate-200 pointer-events-none shadow-sm" style={{ backgroundColor: tab.lineColor }}></div>
+                                        <div className="space-y-3 text-center">
+                                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Fondo</label>
+                                            <div className="relative inline-block group/color">
+                                                <input type="color" className="h-12 w-12 cursor-pointer rounded-2xl opacity-0 absolute inset-0 z-10" value={tab.cardBgColor} onChange={e => updateTab(tIdx, { cardBgColor: e.target.value })} />
+                                                <div className="h-12 w-12 rounded-2xl border-4 border-white/10 shadow-xl group-hover/color:scale-110 transition-transform" style={{ backgroundColor: tab.cardBgColor }}></div>
                                             </div>
-                                            <span className="text-[10px] font-black text-slate-500 uppercase">{tab.lineColor}</span>
+                                        </div>
+                                        <div className="space-y-3 text-center">
+                                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Línea</label>
+                                            <div className="relative inline-block group/color">
+                                                <input type="color" className="h-12 w-12 cursor-pointer rounded-2xl opacity-0 absolute inset-0 z-10" value={tab.lineColor} onChange={e => updateTab(tIdx, { lineColor: e.target.value })} />
+                                                <div className="h-12 w-12 rounded-2xl border-4 border-white/10 shadow-xl group-hover/color:scale-110 transition-transform" style={{ backgroundColor: tab.lineColor }}></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <Button variant="destructive" size="sm" onClick={() => removeTab(tIdx)} className="w-full mt-4"><Trash2 className="h-4 w-4 mr-2" /> Eliminar Pestaña</Button>
+
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeTab(tIdx)}
+                                    className="w-full h-12 rounded-xl text-red-400/50 hover:text-red-400 hover:bg-red-400/10 transition-all font-black text-[10px] uppercase tracking-widest"
+                                >
+                                    <Trash2 className="h-4 w-4 mr-3" /> Eliminar Categoría
+                                </Button>
                             </div>
 
-                            <div className="w-full md:w-2/3 bg-white p-6 rounded-2xl shadow-inner border border-slate-100">
+                            {/* Right: Metrics Panel */}
+                            <div className="w-full lg:w-[60%] p-8 space-y-6">
                                 <div className="flex justify-between items-center mb-4">
-                                    <h4 className="font-black text-slate-700">Métricas Vinculadas (Tarjetas)</h4>
-                                    <Button size="sm" variant="outline" onClick={() => addMetric(tIdx)} className="rounded-xl"><Plus className="mr-2 h-3 w-3" /> Añadir Métrica</Button>
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-2 w-8 bg-nutrition-500" />
+                                        <h4 className="font-black text-white uppercase italic tracking-tighter">Métricas Vinculadas</h4>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => addMetric(tIdx)}
+                                        className="h-10 rounded-xl border-white/10 bg-white/5 text-slate-400 hover:text-white font-black text-[10px] uppercase tracking-widest px-5"
+                                    >
+                                        <Plus className="mr-2 h-3.5 w-3.5" /> Añadir Tarjeta
+                                    </Button>
                                 </div>
 
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                     {tab.metrics.map((metric, mIdx) => (
-                                        <div key={metric.id} className={`flex gap-3 items-center p-3 rounded-xl border ${metric.isSystem ? 'bg-slate-100 border-slate-200 opacity-80' : 'bg-slate-50'}`}>
-                                            <div className="flex-1">
+                                        <div
+                                            key={metric.id}
+                                            className={cn(
+                                                "flex flex-col sm:flex-row gap-4 items-center p-5 rounded-[1.5rem] border transition-all",
+                                                metric.isSystem
+                                                    ? "bg-white/[0.01] border-white/5 opacity-60"
+                                                    : "bg-white/[0.04] border-white/5 hover:border-white/10 shadow-xl"
+                                            )}
+                                        >
+                                            <div className="flex-1 w-full">
+                                                <label className="text-[8px] font-black text-slate-600 uppercase tracking-widest block mb-1.5 ml-1">Título Visual</label>
                                                 <Input
-                                                    placeholder="Título (ej. Grasa %)"
+                                                    placeholder="Ej. Grasa %"
                                                     value={metric.label}
                                                     onChange={e => updateMetric(tIdx, mIdx, { label: e.target.value })}
-                                                    className="text-sm font-bold h-8 bg-white"
+                                                    className="h-10 text-sm font-black bg-black/20 border-white/5 text-white placeholder:text-slate-800 rounded-xl focus:border-nutrition-500"
                                                     disabled={metric.isSystem && metric.variable_id === 'SYSTEM_DATE'}
                                                 />
                                             </div>
-                                            <div className="flex-1">
-                                                <select
-                                                    disabled={metric.isSystem}
-                                                    value={metric.variable_id}
-                                                    onChange={e => updateMetric(tIdx, mIdx, { variable_id: e.target.value })}
-                                                    className="w-full p-2 h-8 text-xs font-bold rounded-lg border bg-white text-slate-700 disabled:opacity-50"
-                                                >
-                                                    {metric.isSystem && <option value={metric.variable_id}>[Variable de Sistema]</option>}
-                                                    {!metric.isSystem && <option value="">Selecciona Variable</option>}
-                                                    {variables.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                                                </select>
+                                            <div className="flex-1 w-full">
+                                                <label className="text-[8px] font-black text-slate-600 uppercase tracking-widest block mb-1.5 ml-1">Origen de Datos</label>
+                                                <div className="relative group/select">
+                                                    <select
+                                                        disabled={metric.variable_id === 'SYSTEM_DATE'}
+                                                        value={metric.variable_id}
+                                                        onChange={e => updateMetric(tIdx, mIdx, { variable_id: e.target.value, isSystem: false })}
+                                                        className="w-full h-10 appearance-none bg-black/20 border border-white/5 rounded-xl px-4 text-[11px] font-black text-white focus:border-nutrition-500 outline-none transition-all disabled:opacity-50"
+                                                    >
+                                                        {metric.variable_id === 'SYSTEM_DATE' && <option value="SYSTEM_DATE">[VARIABLE DE SISTEMA]</option>}
+                                                        {metric.variable_id !== 'SYSTEM_DATE' && <option value="">SELECCIONAR VARIABLE...</option>}
+                                                        {variables.map(v => <option key={v.id} value={v.id} className="bg-[#151F32]">{v.name.toUpperCase()}</option>)}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-700 pointer-events-none group-hover/select:text-white transition-colors" />
+                                                </div>
                                             </div>
-                                            {!metric.isSystem && (
-                                                <Button variant="ghost" size="icon" onClick={() => removeMetric(tIdx, mIdx)} className="text-red-400 pointer"><Trash2 className="h-4 w-4" /></Button>
+                                            {metric.variable_id !== 'SYSTEM_DATE' && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => removeMetric(tIdx, mIdx)}
+                                                    className="text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-xl mt-4 sm:mt-0"
+                                                >
+                                                    <Trash2 className="h-4.5 w-4.5" />
+                                                </Button>
                                             )}
                                         </div>
                                     ))}
-                                    {tab.metrics.length === 0 && <p className="text-xs text-slate-400 text-center py-4">No hay variables vinculadas en esta pestaña.</p>}
+                                    {tab.metrics.length === 0 && (
+                                        <div className="text-center py-10 border-2 border-dashed border-white/5 rounded-[2rem] bg-white/[0.01]">
+                                            <ActivitySquare className="h-10 w-10 text-slate-800 mx-auto mb-4 opacity-20" />
+                                            <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">No hay tarjetas configuradas en este bloque.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

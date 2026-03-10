@@ -169,30 +169,32 @@ export function TableEditor() {
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
             {/* Header / Selector */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all hover:border-slate-200">
-                <div className="space-y-1.5">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-nutrition-600 flex items-center justify-center shadow-lg shadow-nutrition-600/20">
-                            <History className="h-5 w-5 text-white" />
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white/[0.03] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl transition-all hover:border-white/10 overflow-hidden relative group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-nutrition-600/5 blur-3xl -mr-32 -mt-32 group-hover:bg-nutrition-600/10 transition-colors" />
+
+                <div className="space-y-1.5 relative z-10">
+                    <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-[1.25rem] bg-nutrition-600 flex items-center justify-center shadow-xl shadow-nutrition-600/20 group-hover:scale-110 transition-transform">
+                            <History className="h-6 w-6 text-white" />
                         </div>
-                        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Estructura de Tablas</h2>
+                        <h2 className="text-3xl font-black text-white tracking-tight uppercase italic italic">Estructura de Tablas</h2>
                     </div>
-                    <p className="text-sm font-medium text-slate-500 italic ml-13">Personaliza los títulos de las columnas para cada perfil.</p>
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-widest ml-16">Personaliza los títulos de las columnas para cada perfil.</p>
                 </div>
 
-                <div className="flex flex-col lg:flex-row items-center gap-4">
-                    <div className="flex flex-col gap-1.5 min-w-[280px]">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Seleccionar Perfil</p>
-                        <div className="relative group">
+                <div className="flex flex-col lg:flex-row items-center gap-6 relative z-10">
+                    <div className="flex flex-col gap-2 min-w-[280px]">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Seleccionar Perfil de Usuario</p>
+                        <div className="relative group/select">
                             <select
                                 value={currentRole}
                                 onChange={(e) => setCurrentRole(e.target.value as any)}
-                                className="w-full h-12 appearance-none rounded-2xl border-2 border-slate-100 bg-slate-50 px-5 text-sm font-black text-slate-800 outline-none transition-all focus:border-nutrition-600 focus:bg-white cursor-pointer"
+                                className="w-full h-14 appearance-none rounded-2xl border-2 border-white/5 bg-white/5 px-6 text-sm font-black text-white outline-none transition-all focus:border-nutrition-500 focus:bg-white/10 cursor-pointer shadow-inner"
                             >
-                                <option value="nutricionista">Vista Nutricionista</option>
-                                <option value="paciente">Vista Paciente</option>
+                                <option value="nutricionista" className="bg-[#151F32]">VISTA NUTRICIONISTA (FORMULARIO)</option>
+                                <option value="paciente" className="bg-[#151F32]">VISTA PACIENTE (WIDGETS)</option>
                             </select>
-                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                            <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 pointer-events-none group-hover/select:text-nutrition-400 transition-colors" />
                         </div>
                     </div>
 
@@ -200,21 +202,23 @@ export function TableEditor() {
                         <Button
                             onClick={handleSave}
                             disabled={saving}
-                            className="bg-slate-900 hover:bg-slate-800 text-white font-black rounded-2xl px-10 h-12 shadow-xl active:scale-95 transition-all group"
+                            className="bg-nutrition-600 hover:bg-nutrition-700 text-white font-black rounded-2xl px-12 h-14 shadow-2xl shadow-nutrition-600/20 active:scale-95 transition-all group/btn flex items-center justify-center gap-3 uppercase tracking-widest text-xs"
                         >
-                            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-3" /> : <Save className="h-4 w-4 mr-3 group-hover:rotate-12 transition-transform" />}
-                            Guardar Cambios
+                            {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5 group-hover:rotate-12 transition-transform" />}
+                            Publicar Cambios
                         </Button>
                     )}
                 </div>
             </div>
 
             {/* Content Switcher */}
-            {currentRole === 'paciente' ? (
-                <PatientWidgetEditor />
-            ) : (
-                <ConsultationFormEditor />
-            )}
+            <div className="bg-white/[0.01] rounded-[3rem] p-1 border border-white/5 overflow-hidden">
+                {currentRole === 'paciente' ? (
+                    <PatientWidgetEditor />
+                ) : (
+                    <ConsultationFormEditor />
+                )}
+            </div>
         </div>
     );
 }

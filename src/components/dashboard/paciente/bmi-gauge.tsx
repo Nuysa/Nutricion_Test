@@ -75,7 +75,9 @@ export function BMIGauge() {
                 .order("date", { ascending: false })
                 .order("created_at", { ascending: false });
 
-            const h = parseFloat(pData.height_cm?.toString() || "0");
+            const latestRecord = wData && wData.length > 0 ? wData[0] : null;
+            const h = parseFloat(latestRecord?.extra_data?.['TALLA'] || latestRecord?.extra_data?.['TALLA_CM'] || pData.height_cm?.toString() || "0");
+
             let weightValue = 0;
             let imcValue = 0;
             let startWeightValue = parseFloat(pData.current_weight?.toString() || "0");
