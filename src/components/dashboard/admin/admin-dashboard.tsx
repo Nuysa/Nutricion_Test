@@ -20,6 +20,7 @@ import { VariablesConfig } from "@/components/dashboard/admin/variables-config";
 import { TableEditor } from "@/components/dashboard/admin/table-editor";
 import { VisualLandingEditor } from "@/components/dashboard/admin/visual-landing-editor";
 import { FoodDatabase } from "@/components/dashboard/admin/food-database";
+import { AuthCMSEditor } from "@/components/dashboard/admin/auth-cms-editor";
 import { MessagingService, GlobalProfile } from "@/lib/messaging-service";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -38,7 +39,7 @@ import {
 
 export function AdminStaffDashboardContent({ initialTab = "overview" }: { initialTab?: any }) {
     const { toast } = useToast();
-    const [activeTab, setActiveTab] = useState<"overview" | "verification" | "assignments" | "plan_assignments" | "subscriptions" | "metrics" | "calendar" | "settings" | "visualization" | "landing_cms" | "plans_management" | "food_database" | "users_management">(initialTab);
+    const [activeTab, setActiveTab] = useState<"overview" | "verification" | "assignments" | "plan_assignments" | "subscriptions" | "metrics" | "calendar" | "settings" | "visualization" | "landing_cms" | "auth_cms" | "plans_management" | "food_database" | "users_management">(initialTab);
     const [plansEditMode, setPlansEditMode] = useState(true);
 
     const [profiles, setProfiles] = useState<GlobalProfile[]>([]);
@@ -2021,6 +2022,9 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                         )}
                         {activeTab === "landing_cms" && currentAdminRole === 'administrador' && (
                             <VisualLandingEditor />
+                        )}
+                        {activeTab === "auth_cms" && currentAdminRole === 'administrador' && (
+                            <AuthCMSEditor />
                         )}
                         {activeTab === "plans_management" && currentAdminRole === 'administrador' && (
                             <div className="-m-4 lg:-m-6 bg-nutri-base overflow-hidden relative">

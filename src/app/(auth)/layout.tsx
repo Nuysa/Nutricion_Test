@@ -1,9 +1,30 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/lib/supabase/server";
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default async function AuthLayout({ children }: { children: React.ReactNode }) {
+    const supabase = await createClient();
+    const { data: contentData } = await supabase
+        .from("landing_content")
+        .select("content")
+        .eq("section", "auth")
+        .single();
+
+    const content = contentData?.content || {
+        title: "Nutrición",
+        title_highlight: "Optimizada.",
+        description: "Sincroniza tus metas con nutrición clínica de precisión y seguimiento en tiempo real.",
+        stat1_val: "Planes",
+        stat1_label: "A tu medida",
+        stat2_val: "100%",
+        stat2_label: "Resultados",
+        stat3_val: "Gold",
+        stat3_label: "Precisión",
+        footer_text: "© 2026 NuySa Clinical Nutrition • Todos los derechos reservados"
+    };
+
     return (
-        <div className="min-h-screen bg-nutri-base flex items-center justify-center relative overflow-hidden font-tech">
+        <div className="min-h-screen bg-nutri-base flex items-center justify-center relative overflow-hidden font-tech text-white">
             {/* Background elements to match the "premium" feel */}
             <div className="absolute inset-0 organic-grid opacity-20 pointer-events-none" />
 
@@ -27,19 +48,19 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
                     <div className="space-y-4 sm:space-y-6">
                         <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase italic">
-                            Nutrición <br />
-                            <span className="text-nutri-brand drop-shadow-[0_0_30px_rgba(255,122,0,0.3)]">Optimizada.</span>
+                            {content.title} <br />
+                            <span className="text-nutri-brand drop-shadow-[0_0_30px_rgba(255,122,0,0.3)]">{content.title_highlight}</span>
                         </h1>
                         <p className="text-slate-400 text-lg lg:text-xl font-bold leading-relaxed max-w-lg mx-auto lg:mx-0">
-                            Sincroniza tus metas con nutrición clínica de precisión y seguimiento en tiempo real.
+                            {content.description}
                         </p>
                     </div>
 
                     <div className="grid grid-cols-3 gap-3 sm:gap-6 pt-4 sm:pt-8 max-w-sm mx-auto lg:mx-0">
                         {[
-                            { label: "A tu medida", val: "Planes" },
-                            { label: "Resultados", val: "100%" },
-                            { label: "Precisión", val: "Gold" },
+                            { label: content.stat1_label, val: content.stat1_val },
+                            { label: content.stat2_label, val: content.stat2_val },
+                            { label: content.stat3_label, val: content.stat3_val },
                         ].map((stat, i) => (
                             <div key={i} className="bg-white/5 backdrop-blur-md border border-white/5 p-3 sm:p-4 rounded-xl sm:rounded-2xl">
                                 <div className="text-lg sm:text-2xl font-black text-white italic">{stat.val}</div>
@@ -66,7 +87,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                     </div>
 
                     <p className="mt-8 text-center text-slate-500 text-xs font-bold uppercase tracking-[0.2em]">
-                        &copy; 2026 NuySa Clinical Nutrition • Todos los derechos reservados
+                        {content.footer_text}
                     </p>
                 </div>
             </div>
