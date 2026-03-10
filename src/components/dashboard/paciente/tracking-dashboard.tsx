@@ -387,10 +387,25 @@ export function TrackingDashboard() {
 
                 // Verificar si tiene datos básicos
                 const hasBasicData = Boolean(patientData?.height_cm && patientData?.current_weight && patientData?.date_of_birth);
+                const currentWeightNum = parseFloat(patientData.current_weight?.toString() || "0");
+
+                // Intentar calcular peso ideal con la formula de la variable si existe
+                let calculatedIdeal = idealWeight;
+                const pesoIdealVar = vars.find(v => v.code === "PESO_IDEAL");
+                if (pesoIdealVar && h > 0) {
+                    const inputs = { "PESO": currentWeightNum, "TALLA": h, "TALLA_CM": h, "EDAD": age };
+                    const calc = calculate(pesoIdealVar, { gender: patientData.gender, age, inputs });
+                    if (calc && calc.result > 0) {
+                        calculatedIdeal = calc.result.toFixed(1);
+                    }
+                }
+
+                const targetW = h > 0 ? (currentWeightNum > 0 ? Math.max(currentWeightNum - 2, parseFloat(String(calculatedIdeal))).toFixed(1) : "--") : "--";
 
                 setStats({
                     totalLost: "0.0",
-                    goalWeight: idealWeight,
+                    goalWeight: calculatedIdeal,
+                    targetWeight: targetW,
                     specialistsCount: patientData.nutritionist_id ? 1 : 0,
                     reportStatus: hasBasicData ? "Evaluación Inicial" : "Pendiente Datos Básicos"
                 });
