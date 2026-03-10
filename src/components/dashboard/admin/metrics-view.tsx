@@ -23,9 +23,9 @@ export function MetricsView() {
                     MessagingService.getAllSubscriptions(),
                     MessagingService.getAllAppointments()
                 ]);
-                setProfiles(fetchedProfiles);
-                setSubscriptions(fetchedSubs);
-                setAllAppointments(fetchedAppointments);
+                setProfiles(fetchedProfiles || []);
+                setSubscriptions(fetchedSubs || []);
+                setAllAppointments(fetchedAppointments || []);
             } catch (error) {
                 console.error("Error loading metrics data:", error);
             } finally {
