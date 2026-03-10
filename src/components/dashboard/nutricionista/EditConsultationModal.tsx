@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { X, Check, Ruler, User, Stethoscope, Apple, Edit, Trash2, Save, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardColumn, ClinicalVariable } from "@/lib/variables-service";
+import { PhotoUploadGroup } from "./PhotoUploadGroup";
 
 interface EditConsultationModalProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ interface EditConsultationModalProps {
     onSave: () => void;
     onDelete: () => void;
     patientHeight: number;
+    patientId: string;
     patientName: string;
     recordNumber: number;
     layout: DashboardColumn[];
@@ -23,7 +25,7 @@ interface EditConsultationModalProps {
 
 export function EditConsultationModal({
     isOpen, onClose, date, setDate, editValues, setEditValues,
-    extraData, setExtraData, onSave, onDelete, patientHeight, patientName, recordNumber, layout, clinicalVariables
+    extraData, setExtraData, onSave, onDelete, patientId, patientHeight, patientName, recordNumber, layout, clinicalVariables
 }: EditConsultationModalProps) {
 
     // Prevent body scroll when open
@@ -188,6 +190,9 @@ export function EditConsultationModal({
                                 );
                             })}
                         </div>
+
+                        {/* Registro Fotográfico */}
+                        <PhotoUploadGroup patientId={patientId} extraData={extraData} setExtraData={setExtraData} />
                     </div>
                 </div>
 

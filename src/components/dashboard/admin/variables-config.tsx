@@ -283,10 +283,10 @@ function SortableToken({ token, onRemove }: { token: Token, onRemove: (id: strin
 
     return (
         <div ref={setNodeRef} style={style} className={cn(
-            "group flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 shadow-sm transition-all bg-white relative",
-            token.type === 'input' ? "border-blue-200 bg-blue-50/50 text-blue-800" :
-                token.type === 'operator' ? "border-slate-300 bg-slate-100 text-slate-800 scale-105" :
-                    "border-purple-200 bg-purple-50/50 text-purple-800"
+            "group flex items-center gap-2 px-4 py-2.5 rounded-2xl border shadow-sm transition-all relative",
+            token.type === 'input' ? "border-blue-500/30 bg-blue-500/10 text-blue-300" :
+                token.type === 'operator' ? "border-slate-400/30 bg-slate-400/10 text-white scale-105" :
+                    "border-purple-500/30 bg-purple-500/10 text-purple-300"
         )}>
             <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing opacity-30 hover:opacity-100 p-1">
                 <GripVertical className="h-3.5 w-3.5" />
@@ -296,7 +296,7 @@ function SortableToken({ token, onRemove }: { token: Token, onRemove: (id: strin
             </span>
             <button
                 onClick={(e) => { e.stopPropagation(); onRemove(token.id); }}
-                className="hover:bg-red-500 hover:text-white text-slate-300 rounded-full p-1.5 transition-all -mr-1"
+                className="hover:bg-red-500/20 hover:text-red-400 text-slate-500 rounded-full p-1.5 transition-all -mr-1"
             >
                 <X className="h-3 w-3" />
             </button>
@@ -699,11 +699,11 @@ export function VariablesConfig() {
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                        <Layers className="h-8 w-8 text-nutrition-600" />
+                    <h2 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                        <Layers className="h-8 w-8 text-nutrition-500" />
                         Variables y Algoritmos
                     </h2>
-                    <p className="text-slate-500 font-medium italic">Sección avanzada de reglas nutricionales.</p>
+                    <p className="text-slate-400 font-bold italic">Sección avanzada de reglas nutricionales.</p>
                 </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
@@ -711,79 +711,79 @@ export function VariablesConfig() {
                 <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-6">
                     <Dialog open={isNewVarOpen} onOpenChange={setIsNewVarOpen}>
                         <DialogTrigger asChild>
-                            <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black rounded-[1.5rem] h-14 shadow-xl flex items-center justify-center gap-3">
+                            <Button className="w-full bg-nutrition-500 hover:bg-nutrition-600 text-white font-black rounded-[1.5rem] h-14 shadow-xl shadow-nutrition-500/20 flex items-center justify-center gap-3 active:scale-95 transition-all">
                                 <Plus className="h-5 w-5" /> Agregar Variable
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px] rounded-[2rem]">
+                        <DialogContent className="sm:max-w-[425px] rounded-[2.5rem] bg-[#0A0F1C] border-white/10 shadow-2xl">
                             <DialogHeader>
-                                <DialogTitle className="text-xl font-black">Configurar Variable</DialogTitle>
-                                <DialogDescription>Defina las propiedades de la nueva métrica clínica.</DialogDescription>
+                                <DialogTitle className="text-xl font-black text-white">Configurar Variable</DialogTitle>
+                                <DialogDescription className="text-slate-400 font-bold">Defina las propiedades de la nueva métrica clínica.</DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-6 py-4">
                                 <div className="space-y-2">
-                                    <p className="text-[10px] font-black uppercase text-slate-400">Nombre de la Variable</p>
-                                    <Input value={newVarData.name} onChange={e => setNewVarData({ ...newVarData, name: e.target.value })} placeholder="Ej: Masa Muscular" className="rounded-xl font-bold" />
+                                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Nombre de la Variable</p>
+                                    <Input value={newVarData.name} onChange={e => setNewVarData({ ...newVarData, name: e.target.value })} placeholder="Ej: Masa Muscular" className="rounded-xl font-bold bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:bg-white/10 transition-colors" />
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-[10px] font-black uppercase text-slate-400">Tipo de Dato</p>
+                                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Tipo de Dato</p>
                                     <select
                                         value={newVarData.dataType}
                                         onChange={e => setNewVarData({ ...newVarData, dataType: e.target.value as any })}
-                                        className="w-full h-10 rounded-xl border border-slate-200 px-3 text-sm font-bold outline-none"
+                                        className="w-full h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-nutrition-500/20"
                                     >
-                                        <option value="number">Número</option>
-                                        <option value="text">Texto</option>
-                                        <option value="date">Fecha</option>
-                                        <option value="boolean">Booleano</option>
+                                        <option value="number" className="bg-slate-900">Número</option>
+                                        <option value="text" className="bg-slate-900">Texto</option>
+                                        <option value="date" className="bg-slate-900">Fecha</option>
+                                        <option value="boolean" className="bg-slate-900">Booleano</option>
                                     </select>
                                 </div>
                                 {newVarData.dataType === 'number' && (
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-black uppercase text-slate-400">Unidad de Medida</p>
+                                        <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Unidad de Medida</p>
                                         <select
                                             value={newVarData.unit || ""}
                                             onChange={e => setNewVarData({ ...newVarData, unit: e.target.value })}
-                                            className="w-full h-10 rounded-xl border border-slate-200 px-3 text-sm font-bold outline-none bg-white"
+                                            className="w-full h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm font-bold text-white outline-none focus:ring-2 focus:ring-nutrition-500/20"
                                         >
-                                            <option value="">Ninguna</option>
-                                            <option value="kg">kg (Kilogramos)</option>
-                                            <option value="g">g (Gramos)</option>
-                                            <option value="cm">cm (Centímetros)</option>
-                                            <option value="m">m (Metros)</option>
-                                            <option value="%">% (Porcentaje)</option>
-                                            <option value="kcal">kcal (Kilocalorías)</option>
-                                            <option value="mm">mm (Milímetros)</option>
+                                            <option value="" className="bg-slate-900">Ninguna</option>
+                                            <option value="kg" className="bg-slate-900">kg (Kilogramos)</option>
+                                            <option value="g" className="bg-slate-900">g (Gramos)</option>
+                                            <option value="cm" className="bg-slate-900">cm (Centímetros)</option>
+                                            <option value="m" className="bg-slate-900">m (Metros)</option>
+                                            <option value="%" className="bg-slate-900">% (Porcentaje)</option>
+                                            <option value="kcal" className="bg-slate-900">kcal (Kilocalorías)</option>
+                                            <option value="mm" className="bg-slate-900">mm (Milímetros)</option>
                                         </select>
                                     </div>
                                 )}
                                 <div className="grid grid-cols-2 gap-4 pt-2">
-                                    <label className="flex items-center gap-2 cursor-pointer">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
                                         <input
                                             type="radio"
                                             name="variableSourceCreation"
                                             checked={newVarData.isManual}
                                             onChange={() => setNewVarData({ ...newVarData, isManual: true, isCalculated: false })}
-                                            className="h-4 w-4 rounded border-slate-300 text-nutrition-600 appearance-none custom-radio"
+                                            className="appearance-none absolute opacity-0"
                                         />
-                                        <div className={cn("w-4 h-4 rounded-full border flex items-center justify-center pointer-events-none", newVarData.isManual ? "border-nutrition-600 border-4 bg-white" : "border-slate-300 bg-white")} />
-                                        <span className="text-[11px] font-black text-slate-600 uppercase">Dato Manual</span>
+                                        <div className={cn("w-4 h-4 rounded-full border flex flex-shrink-0 items-center justify-center pointer-events-none transition-colors", newVarData.isManual ? "border-nutrition-500 border-[5px] bg-white ring-4 ring-nutrition-500/20" : "border-white/20 bg-white/5 group-hover:bg-white/10")} />
+                                        <span className={cn("text-[11px] font-black uppercase transition-colors", newVarData.isManual ? "text-nutrition-500" : "text-slate-500")}>Dato Manual</span>
                                     </label>
-                                    <label className="flex items-center gap-2 cursor-pointer">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
                                         <input
                                             type="radio"
                                             name="variableSourceCreation"
                                             checked={newVarData.isCalculated}
                                             onChange={() => setNewVarData({ ...newVarData, isCalculated: true, isManual: false })}
-                                            className="h-4 w-4 rounded border-slate-300 text-nutrition-600 appearance-none hidden"
+                                            className="appearance-none absolute opacity-0"
                                         />
-                                        <div className={cn("w-4 h-4 rounded-full border flex items-center justify-center pointer-events-none", newVarData.isCalculated ? "border-nutrition-600 border-4 bg-white" : "border-slate-300 bg-white")} />
-                                        <span className="text-[11px] font-black text-slate-600 uppercase">Calculado</span>
+                                        <div className={cn("w-4 h-4 rounded-full border flex flex-shrink-0 items-center justify-center pointer-events-none transition-colors", newVarData.isCalculated ? "border-nutrition-500 border-[5px] bg-white ring-4 ring-nutrition-500/20" : "border-white/20 bg-white/5 group-hover:bg-white/10")} />
+                                        <span className={cn("text-[11px] font-black uppercase transition-colors", newVarData.isCalculated ? "text-nutrition-500" : "text-slate-500")}>Calculado</span>
                                     </label>
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button onClick={handleCreateVariable} className="w-full bg-nutrition-600 hover:bg-nutrition-700 text-white font-black rounded-xl h-12">Crear Variable Clínica</Button>
+                                <Button onClick={handleCreateVariable} className="w-full bg-nutrition-500 hover:bg-nutrition-600 text-white font-black rounded-xl h-12 shadow-lg shadow-nutrition-500/20 transition-all active:scale-95 border-none">Crear Variable Clínica</Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -791,17 +791,17 @@ export function VariablesConfig() {
                     {/* CARD MAPPER SECTION: Moved to a Button + Dialog */}
                     <Dialog open={isDashboardPreviewOpen} onOpenChange={setIsDashboardPreviewOpen}>
                         <DialogTrigger asChild>
-                            <Button className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-black rounded-[1.5rem] h-14 shadow-sm flex items-center justify-center gap-3">
-                                <LayoutTemplate className="h-5 w-5 text-nutrition-600" /> Configurar Dashboard Paciente
+                            <Button className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black rounded-[1.5rem] h-14 shadow-sm flex items-center justify-center gap-3 backdrop-blur-md transition-all active:scale-[0.98]">
+                                <LayoutTemplate className="h-5 w-5 text-nutrition-500" /> Configurar Dashboard Paciente
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-[7xl] w-[95vw] h-[95vh] p-0 overflow-hidden flex flex-col bg-slate-100 border-none rounded-[2rem] shadow-2xl">
-                            <DialogHeader className="px-8 py-5 bg-white border-b border-slate-200 flex flex-row items-center justify-between shrink-0">
+                        <DialogContent className="max-w-[7xl] w-[95vw] h-[95vh] p-0 overflow-hidden flex flex-col bg-[#0A0F1C] border-white/10 rounded-[3rem] shadow-2xl">
+                            <DialogHeader className="px-8 py-5 bg-white/5 border-b border-white/10 flex flex-row items-center justify-between shrink-0 backdrop-blur-xl">
                                 <div>
-                                    <DialogTitle className="text-xl font-black flex items-center gap-3 text-slate-800">
-                                        <LayoutTemplate className="h-6 w-6 text-nutrition-600" /> Editor del Dashboard de Pacientes
+                                    <DialogTitle className="text-xl font-black flex items-center gap-3 text-white">
+                                        <LayoutTemplate className="h-6 w-6 text-nutrition-500" /> Editor del Dashboard de Pacientes
                                     </DialogTitle>
-                                    <DialogDescription className="text-slate-500 mt-1 font-medium">
+                                    <DialogDescription className="text-slate-400 mt-1 font-bold">
                                         Modifique los elementos visibles del dashboard del paciente. (Solo las "Cards de Resumen" son editables en esta fase).
                                     </DialogDescription>
                                 </div>
@@ -809,7 +809,7 @@ export function VariablesConfig() {
                                     <Button
                                         onClick={() => setIsDashboardPreviewOpen(false)}
                                         variant="outline"
-                                        className="h-11 px-6 font-black rounded-xl border-slate-300 text-slate-700 hover:bg-slate-100 transition-all active:scale-95"
+                                        className="h-11 px-6 font-black rounded-xl border-white/10 text-slate-300 hover:bg-white/10 transition-all active:scale-95 bg-transparent"
                                     >
                                         Cerrar
                                     </Button>
@@ -833,7 +833,7 @@ export function VariablesConfig() {
                                             }
                                         }}
                                         disabled={isSaving}
-                                        className="bg-slate-900 hover:bg-slate-800 text-white font-black rounded-xl h-11 px-6 shadow-md transition-all active:scale-95"
+                                        className="bg-nutrition-500 hover:bg-nutrition-600 text-white font-black rounded-xl h-11 px-6 shadow-xl shadow-nutrition-500/20 transition-all active:scale-95 border-none"
                                     >
                                         {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                                         Guardar Cambios
@@ -841,7 +841,7 @@ export function VariablesConfig() {
                                 </div>
                             </DialogHeader>
 
-                            <ScrollArea className="flex-1 p-8 bg-slate-100/50">
+                            <ScrollArea className="flex-1 p-8 bg-black/20">
                                 {/* SIMULATED DASHBOARD FULL LAYOUT */}
                                 <div className="max-w-6xl mx-auto space-y-10">
                                     {/* SECTION 1: CARDS (Editable) */}
@@ -890,11 +890,11 @@ export function VariablesConfig() {
                                                 }
 
                                                 return (
-                                                    <div key={slot.id} className="bg-white rounded-[2.5rem] border-2 border-dashed border-slate-300 shadow-sm overflow-hidden flex flex-col group transition-all hover:border-nutrition-400 hover:shadow-lg relative h-48">
+                                                    <div key={slot.id} className="bg-white/5 rounded-[2.5rem] border-2 border-dashed border-white/10 shadow-sm overflow-hidden flex flex-col group transition-all hover:border-nutrition-500/50 hover:bg-white/10 relative h-48 backdrop-blur-md">
                                                         <div className="p-6 flex flex-col justify-between h-full relative z-10">
                                                             <div>
                                                                 <div className="flex items-center justify-between mb-4">
-                                                                    <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shadow-sm", slot.color.replace('text-', 'bg-').replace('600', '100'), slot.color)}>
+                                                                    <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shadow-lg shadow-black/20", slot.color.replace('text-', 'bg-').replace('600', '500/20'), slot.color)}>
                                                                         <Ico className="h-5 w-5" />
                                                                     </div>
                                                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none text-right flex-1 ml-4 truncate">
@@ -902,26 +902,27 @@ export function VariablesConfig() {
                                                                     </p>
                                                                 </div>
                                                                 <div className="flex items-baseline gap-1">
-                                                                    <span className="text-3xl font-black tracking-tight text-slate-800">
+                                                                    <span className="text-3xl font-black tracking-tight text-white">
                                                                         {dummyVal}
                                                                     </span>
-                                                                    <span className="text-[10px] text-slate-400 font-black uppercase">{dummyUnit}</span>
+                                                                    <span className="text-[10px] text-slate-500 font-black uppercase">{dummyUnit}</span>
                                                                 </div>
                                                             </div>
 
                                                             {/* Dropdown overlay */}
-                                                            <div className="absolute top-0 left-0 w-full h-full bg-slate-900/5 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 rounded-[2.5rem]">
+                                                            <div className="absolute inset-0 bg-black/40 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all flex flex-col justify-center p-6 rounded-[2.5rem] z-20 border border-nutrition-500/30">
+                                                                <p className="text-[10px] font-black text-nutrition-400 uppercase tracking-widest mb-2 text-center">Cambiar Variable</p>
                                                                 <select
                                                                     value={slot.variable_id || ""}
                                                                     onChange={e => {
                                                                         const val = e.target.value || null;
                                                                         setCardSlots(prev => prev.map(s => s.id === slot.id ? { ...s, variable_id: val } : s));
                                                                     }}
-                                                                    className="w-full h-11 rounded-xl border-none px-3 text-xs font-black uppercase text-slate-700 bg-white shadow-xl outline-none cursor-pointer focus:ring-4 focus:ring-nutrition-500/20"
+                                                                    className="w-full h-11 rounded-xl border border-white/10 px-3 text-xs font-black uppercase text-white bg-slate-900 shadow-2xl outline-none cursor-pointer focus:ring-4 focus:ring-nutrition-500/20 transition-all"
                                                                 >
-                                                                    <option value="">(Seleccione Variable)</option>
+                                                                    <option value="" className="bg-slate-900">(Seleccione Variable)</option>
                                                                     {variables.map(v => (
-                                                                        <option key={v.id} value={v.id}>{v.name}</option>
+                                                                        <option key={v.id} value={v.id} className="bg-slate-900">{v.name}</option>
                                                                     ))}
                                                                 </select>
                                                             </div>
@@ -931,11 +932,11 @@ export function VariablesConfig() {
                                             })}
 
                                             {/* Loyalty Card (Static) */}
-                                            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col opacity-80 h-48">
+                                            <div className="bg-white/5 rounded-[2.5rem] border border-white/10 shadow-sm overflow-hidden flex flex-col opacity-60 h-48 backdrop-blur-md">
                                                 <div className="p-6 flex flex-col justify-between h-full">
                                                     <div>
                                                         <div className="flex items-center justify-between mb-4">
-                                                            <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-sm bg-sky-100 text-sky-500">
+                                                            <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-lg bg-sky-500/20 text-sky-400">
                                                                 <Milestone className="h-5 w-5" />
                                                             </div>
                                                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none text-right flex-1 ml-4 truncate">
@@ -943,13 +944,13 @@ export function VariablesConfig() {
                                                             </p>
                                                         </div>
                                                         <div className="flex items-baseline gap-1">
-                                                            <span className="text-3xl font-black tracking-tight text-slate-800">1</span>
-                                                            <span className="text-[10px] text-slate-400 font-black uppercase">total</span>
+                                                            <span className="text-3xl font-black tracking-tight text-white">1</span>
+                                                            <span className="text-[10px] text-slate-500 font-black uppercase">total</span>
                                                         </div>
                                                     </div>
                                                     <div className="mt-6 grid grid-cols-6 gap-1.5">
                                                         {Array.from({ length: 12 }).map((_, i) => (
-                                                            <div key={i} className={cn("h-3 flex-1 rounded-[2px]", i === 0 ? "bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.4)]" : (i === 11 ? "bg-amber-400" : "bg-slate-200/50"))} />
+                                                            <div key={i} className={cn("h-3 flex-1 rounded-full", i === 0 ? "bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.4)]" : (i === 11 ? "bg-amber-400/50" : "bg-white/5"))} />
                                                         ))}
                                                     </div>
                                                 </div>
@@ -960,23 +961,24 @@ export function VariablesConfig() {
                                     {/* SECTION 2: BMI GAUGE MOCK (Not Editable Yet) */}
                                     <div className="space-y-4 opacity-50 grayscale pointer-events-none">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">En Próximas Versiones...</h3>
+                                            <div className="h-2 w-2 rounded-full bg-slate-500" />
+                                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">En Próximas Versiones...</h3>
                                         </div>
-                                        <Card className="rounded-[2.5rem] border-slate-200 shadow-sm h-72 flex items-center justify-center bg-white">
+                                        <Card className="rounded-[2.5rem] border-white/5 shadow-sm h-72 flex items-center justify-center bg-white/5 backdrop-blur-sm">
                                             <div className="text-center">
-                                                <Activity className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                                                <h4 className="text-lg font-black text-slate-400">BMI Gauge & Progreso (No Editable)</h4>
+                                                <Activity className="h-12 w-12 text-slate-700 mx-auto mb-4" />
+                                                <h4 className="text-lg font-black text-slate-600">BMI Gauge & Progreso (No Editable)</h4>
                                             </div>
                                         </Card>
                                         <div className="grid grid-cols-2 gap-6">
-                                            <Card className="rounded-[2.5rem] border-slate-200 shadow-sm h-64 flex items-center justify-center bg-white">
+                                            <Card className="rounded-[2.5rem] border-white/5 shadow-sm h-64 flex items-center justify-center bg-white/5 backdrop-blur-sm">
                                                 <div className="text-center">
-                                                    <span className="text-lg font-black text-slate-400">Tracking Dashboard</span>
+                                                    <span className="text-lg font-black text-slate-600">Tracking Dashboard</span>
                                                 </div>
                                             </Card>
-                                            <Card className="rounded-[2.5rem] border-slate-200 shadow-sm h-64 flex items-center justify-center bg-white">
+                                            <Card className="rounded-[2.5rem] border-white/5 shadow-sm h-64 flex items-center justify-center bg-white/5 backdrop-blur-sm">
                                                 <div className="text-center">
-                                                    <span className="text-lg font-black text-slate-400">Subscription Info</span>
+                                                    <span className="text-lg font-black text-slate-600">Subscription Info</span>
                                                 </div>
                                             </Card>
                                         </div>
@@ -986,32 +988,32 @@ export function VariablesConfig() {
                         </DialogContent>
                     </Dialog>
 
-                    <Card className="rounded-[2.5rem] border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col max-h-[600px]">
-                        <CardHeader className="bg-slate-50 border-b py-4 px-6">
-                            <CardTitle className="text-[11px] font-black uppercase text-slate-500 tracking-[0.2em]">Variables Clínicas</CardTitle>
+                    <Card className="rounded-[2.5rem] border-white/10 bg-white/5 backdrop-blur-md shadow-2xl overflow-hidden flex-1 flex flex-col max-h-[600px]">
+                        <CardHeader className="bg-white/5 border-b border-white/10 py-4 px-6">
+                            <CardTitle className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em]">Variables Clínicas</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 overflow-hidden flex-1">
                             <ScrollArea className="h-full pr-4">
                                 <div className="space-y-3 pb-4">
                                     {variables.map((v) => (
                                         <div key={v.id} onClick={() => { setSelectedVarId(v.id); setActiveBranchId(v.branches[0]?.id || ""); }} className={cn(
-                                            "p-4 rounded-3xl border-2 transition-all cursor-pointer group relative",
-                                            selectedVarId === v.id ? "border-nutrition-500 bg-white shadow-lg" : "border-slate-50 bg-white hover:border-slate-200 shadow-sm"
+                                            "p-4 rounded-3xl border transition-all cursor-pointer group relative",
+                                            selectedVarId === v.id ? "border-nutrition-500 bg-white/10 shadow-[0_0_20px_rgba(235,116,36,0.1)]" : "border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10 shadow-sm"
                                         )}>
                                             <div className="flex items-center gap-3">
                                                 <div className={cn("h-9 w-9 rounded-2xl flex items-center justify-center shadow-inner transition-colors",
-                                                    selectedVarId === v.id ? "bg-nutrition-600 text-white" : "bg-slate-100 text-slate-400")}>
+                                                    selectedVarId === v.id ? "bg-nutrition-500 text-white" : "bg-white/5 text-slate-500")}>
                                                     <Calculator className="h-4 w-4" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <h3 className="text-[13px] font-black text-slate-800 leading-tight truncate">{v.name}</h3>
+                                                    <h3 className={cn("text-[13px] font-black leading-tight truncate", selectedVarId === v.id ? "text-white" : "text-slate-300")}>{v.name}</h3>
                                                     <div className="flex items-center gap-2 mt-0.5">
-                                                        <Badge className="bg-slate-100 text-slate-500 border-none font-bold text-[8px] h-3 px-1">{v.code}</Badge>
-                                                        {v.isCalculated && <Badge className="bg-blue-50 text-blue-600 border-none font-bold text-[8px] h-3 px-1">AUTO</Badge>}
+                                                        <Badge className="bg-white/5 text-slate-500 border-none font-bold text-[8px] h-3 px-1">{v.code}</Badge>
+                                                        {v.isCalculated && <Badge className="bg-blue-500/20 text-blue-400 border-none font-bold text-[8px] h-3 px-1">AUTO</Badge>}
                                                     </div>
                                                 </div>
                                                 {selectedVarId === v.id && (
-                                                    <div className="absolute -left-1 top-1/2 -translate-y-1/2 h-8 w-2 bg-nutrition-600 rounded-r-full" />
+                                                    <div className="absolute -left-1 top-1/2 -translate-y-1/2 h-8 w-2 bg-nutrition-500 rounded-r-full shadow-[0_0_10px_rgba(235,116,36,0.5)]" />
                                                 )}
 
                                                 {/* Controles Ocultos que se revelan con group-hover */}
@@ -1052,11 +1054,11 @@ export function VariablesConfig() {
 
                 {/* RIGHT SECTION: FULL EDITOR (WIDER) */}
                 <div className="lg:col-span-8 xl:col-span-9 space-y-6">
-                    <Card className="rounded-[2.5rem] border-slate-100 shadow-2xl overflow-hidden bg-white">
-                        <CardHeader className="bg-slate-50 border-b p-8 space-y-6">
+                    <Card className="rounded-[2.5rem] border-white/10 bg-white/5 backdrop-blur-md shadow-2xl overflow-hidden">
+                        <CardHeader className="bg-white/5 border-b border-white/10 p-8 space-y-6">
                             <div className="flex flex-row items-center justify-between">
-                                <CardTitle className="text-xl font-black text-slate-800 flex items-center gap-3 flex-1">
-                                    <SettingsIcon className="h-5 w-5 text-nutrition-600" />
+                                <CardTitle className="text-xl font-black text-white flex items-center gap-3 flex-1">
+                                    <SettingsIcon className="h-5 w-5 text-nutrition-500" />
                                     <span className="shrink-0">Propiedades de</span>
                                     <Input
                                         value={selectedVar?.name || ""}
@@ -1067,46 +1069,46 @@ export function VariablesConfig() {
                                         }}
                                         disabled={selectedVar?.isSystem}
                                         className={cn(
-                                            "border-none bg-transparent hover:bg-slate-100/50 focus:bg-white text-xl font-black p-0 px-2 h-9 focus-visible:ring-0 transition-colors w-full max-w-[400px]",
-                                            selectedVar?.isSystem && "opacity-70 cursor-not-allowed"
+                                            "border-none bg-transparent hover:bg-white/10 focus:bg-white/5 text-xl font-black p-0 px-2 h-9 focus-visible:ring-0 transition-colors w-full max-w-[400px] text-white",
+                                            selectedVar?.isSystem && "opacity-50 cursor-not-allowed"
                                         )}
                                         placeholder="Nombre de la variable"
                                     />
                                 </CardTitle>
-                                {selectedVar?.isSystem && <Badge className="bg-slate-900 text-white font-black text-[10px] px-3 py-1 rounded-full">SISTEMA</Badge>}
+                                {selectedVar?.isSystem && <Badge className="bg-nutrition-500 text-white font-black text-[10px] px-3 py-1 rounded-full shadow-[0_0_15px_rgba(235,116,36,0.5)]">SISTEMA</Badge>}
                             </div>
 
                             {/* Property Selection Row */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 bg-white p-4 rounded-3xl border shadow-sm">
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 bg-white/5 p-4 rounded-3xl border border-white/10 shadow-inner">
                                 <div className="space-y-1.5">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo de Dato</p>
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Tipo de Dato</p>
                                     <select
                                         value={selectedVar?.dataType}
                                         onChange={e => updateCurrentVariable({ dataType: e.target.value as any })}
-                                        className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-3 text-xs font-black text-slate-700 outline-none focus:ring-2 focus:ring-nutrition-500/20"
+                                        className="w-full h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-xs font-black text-white outline-none focus:ring-2 focus:ring-nutrition-500/20"
                                     >
-                                        <option value="number">Número</option>
-                                        <option value="text">Texto</option>
-                                        <option value="date">Fecha</option>
-                                        <option value="boolean">Booleano</option>
+                                        <option value="number" className="bg-slate-900">Número</option>
+                                        <option value="text" className="bg-slate-900">Texto</option>
+                                        <option value="date" className="bg-slate-900">Fecha</option>
+                                        <option value="boolean" className="bg-slate-900">Booleano</option>
                                     </select>
                                 </div>
                                 {selectedVar?.dataType === 'number' && (
                                     <div className="space-y-1.5">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Unidad</p>
+                                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Unidad</p>
                                         <select
                                             value={selectedVar?.unit || ""}
                                             onChange={e => updateCurrentVariable({ unit: e.target.value })}
-                                            className="w-full h-10 rounded-xl border border-slate-100 bg-slate-50 px-3 text-xs font-black text-slate-700 outline-none focus:ring-2 focus:ring-nutrition-500/20"
+                                            className="w-full h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-xs font-black text-white outline-none focus:ring-2 focus:ring-nutrition-500/20"
                                         >
-                                            <option value="">Ninguna</option>
-                                            <option value="kg">kg (Kilogramos)</option>
-                                            <option value="g">g (Gramos)</option>
-                                            <option value="cm">cm (Centímetros)</option>
-                                            <option value="m">m (Metros)</option>
-                                            <option value="%">% (Porcentaje)</option>
-                                            <option value="kcal">kcal (Kilocalorías)</option>
-                                            <option value="mm">mm (Milímetros)</option>
+                                            <option value="" className="bg-slate-900">Ninguna</option>
+                                            <option value="kg" className="bg-slate-900">kg (Kilogramos)</option>
+                                            <option value="g" className="bg-slate-900">g (Gramos)</option>
+                                            <option value="cm" className="bg-slate-900">cm (Centímetros)</option>
+                                            <option value="m" className="bg-slate-900">m (Metros)</option>
+                                            <option value="%" className="bg-slate-900">% (Porcentaje)</option>
+                                            <option value="kcal" className="bg-slate-900">kcal (Kilocalorías)</option>
+                                            <option value="mm" className="bg-slate-900">mm (Milímetros)</option>
                                         </select>
                                     </div>
                                 )}
@@ -1116,7 +1118,7 @@ export function VariablesConfig() {
                                         name={`editVarType_${selectedVar?.id}`}
                                     />
                                 </div>
-                                <label className="flex items-center gap-2 px-3 h-10 mt-auto rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors relative">
+                                <label className="flex items-center gap-2 px-3 h-10 mt-auto rounded-xl border border-white/10 hover:bg-white/5 cursor-pointer transition-colors relative">
                                     <input
                                         type="radio"
                                         name={`editVarType_${selectedVar?.id}`}
@@ -1124,10 +1126,10 @@ export function VariablesConfig() {
                                         onChange={() => updateCurrentVariable({ isManual: true, isCalculated: false })}
                                         className="appearance-none absolute opacity-0"
                                     />
-                                    <div className={cn("w-4 h-4 rounded-full border flex flex-shrink-0 items-center justify-center pointer-events-none transition-colors", selectedVar?.isManual ? "border-nutrition-600 border-[5px] bg-white" : "border-slate-300 bg-white")} />
-                                    <span className={cn("text-[10px] font-black uppercase transition-colors", selectedVar?.isManual ? "text-nutrition-600" : "text-slate-600")}>Manual</span>
+                                    <div className={cn("w-4 h-4 rounded-full border flex flex-shrink-0 items-center justify-center pointer-events-none transition-colors", selectedVar?.isManual ? "border-nutrition-500 border-[5px] bg-white" : "border-white/20 bg-white/5")} />
+                                    <span className={cn("text-[10px] font-black uppercase transition-colors", selectedVar?.isManual ? "text-nutrition-500" : "text-slate-500")}>Manual</span>
                                 </label>
-                                <label className="flex items-center gap-2 px-3 h-10 mt-auto rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors relative">
+                                <label className="flex items-center gap-2 px-3 h-10 mt-auto rounded-xl border border-white/10 hover:bg-white/5 cursor-pointer transition-colors relative">
                                     <input
                                         type="radio"
                                         name={`editVarType_${selectedVar?.id}`}
@@ -1135,19 +1137,19 @@ export function VariablesConfig() {
                                         onChange={() => updateCurrentVariable({ isCalculated: true, isManual: false })}
                                         className="appearance-none absolute opacity-0"
                                     />
-                                    <div className={cn("w-4 h-4 rounded-full border flex flex-shrink-0 items-center justify-center pointer-events-none transition-colors", selectedVar?.isCalculated ? "border-nutrition-600 border-[5px] bg-white" : "border-slate-300 bg-white")} />
-                                    <span className={cn("text-[10px] font-black uppercase transition-colors", selectedVar?.isCalculated ? "text-nutrition-600" : "text-slate-600")}>Calculado</span>
+                                    <div className={cn("w-4 h-4 rounded-full border flex flex-shrink-0 items-center justify-center pointer-events-none transition-colors", selectedVar?.isCalculated ? "border-nutrition-500 border-[5px] bg-white" : "border-white/20 bg-white/5")} />
+                                    <span className={cn("text-[10px] font-black uppercase transition-colors", selectedVar?.isCalculated ? "text-nutrition-500" : "text-slate-500")}>Calculado</span>
                                 </label>
-                                <label className="flex items-center gap-2 px-3 h-10 mt-auto rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer">
-                                    <input type="checkbox" checked={selectedVar?.hasFormula} onChange={e => updateCurrentVariable({ hasFormula: e.target.checked })} className="h-4 w-4 rounded border-slate-300 text-nutrition-600" />
-                                    <span className="text-[10px] font-black text-slate-600 uppercase">Fórmula</span>
+                                <label className="flex items-center gap-2 px-3 h-10 mt-auto rounded-xl border border-white/10 hover:bg-white/5 cursor-pointer">
+                                    <input type="checkbox" checked={selectedVar?.hasFormula} onChange={e => updateCurrentVariable({ hasFormula: e.target.checked })} className="h-4 w-4 rounded border-white/20 bg-white/5 text-nutrition-500" />
+                                    <span className="text-[10px] font-black text-slate-500 uppercase">Fórmula</span>
                                 </label>
-                                <div className="flex items-center gap-2 px-3 h-10 mt-auto rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer">
+                                <div className="flex items-center gap-2 px-3 h-10 mt-auto rounded-xl border border-white/10 hover:bg-white/5 cursor-pointer">
                                     <input type="checkbox" checked={selectedVar?.hasRanges} onChange={e => {
                                         updateCurrentVariable({ hasRanges: e.target.checked });
                                         if (!e.target.checked) updateCurrentBranch({ ranges: [] });
-                                    }} className="h-4 w-4 rounded border-slate-300 text-nutrition-600" />
-                                    <span className="text-[10px] font-black text-slate-600 uppercase">Rangos</span>
+                                    }} className="h-4 w-4 rounded border-white/20 bg-white/5 text-nutrition-500" />
+                                    <span className="text-[10px] font-black text-slate-500 uppercase">Rangos</span>
                                 </div>
                             </div>
                         </CardHeader>
@@ -1156,12 +1158,12 @@ export function VariablesConfig() {
                             <div className="p-8">
                                 {/* Selector Dinámico de Condiciones y Ramas Lógicas */}
                                 <div className="space-y-8">
-                                    <div className="flex bg-slate-100/50 p-2 rounded-2xl gap-2 overflow-x-auto items-center">
-                                        <div className="flex items-center text-[10px] font-black uppercase text-slate-400 pl-2 pr-4 tracking-widest gap-2">
+                                    <div className="flex bg-white/5 p-2 rounded-2xl gap-2 overflow-x-auto items-center border border-white/10 shadow-inner">
+                                        <div className="flex items-center text-[10px] font-black uppercase text-slate-500 pl-2 pr-4 tracking-widest gap-2">
                                             <GitBranch className="h-4 w-4" /> Condiciones:
                                         </div>
                                         {selectedVar?.branches.map(b => (
-                                            <div key={b.id} className={cn("flex items-center rounded-xl text-[11px] font-black transition-all shadow-sm border overflow-hidden", activeBranchId === b.id ? "bg-white text-nutrition-600 border-slate-200" : "bg-transparent text-slate-500 border-transparent hover:bg-slate-200/50")}>
+                                            <div key={b.id} className={cn("flex items-center rounded-xl text-[11px] font-black transition-all shadow-sm border overflow-hidden", activeBranchId === b.id ? "bg-nutrition-500 text-white border-none shadow-lg shadow-nutrition-500/20" : "bg-transparent text-slate-500 border-transparent hover:bg-white/10")}>
                                                 <button
                                                     onClick={() => setActiveBranchId(b.id)}
                                                     className="px-4 py-2 whitespace-nowrap outline-none"
@@ -1171,20 +1173,20 @@ export function VariablesConfig() {
                                                 {b.conditionName !== 'General' && (
                                                     <Dialog>
                                                         <DialogTrigger asChild>
-                                                            <button className="px-2 py-2 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors h-full outline-none">
+                                                            <button className="px-2 py-2 text-white/50 hover:text-red-400 hover:bg-red-500/10 transition-colors h-full outline-none">
                                                                 <X className="h-3 w-3" />
                                                             </button>
                                                         </DialogTrigger>
-                                                        <DialogContent className="max-w-[400px] rounded-[2rem]">
+                                                        <DialogContent className="max-w-[400px] rounded-[2.5rem] bg-[#0A0F1C] border-white/10 shadow-2xl">
                                                             <DialogHeader>
-                                                                <DialogTitle className="text-xl font-black text-slate-800">Eliminar Variación</DialogTitle>
-                                                                <DialogDescription>
+                                                                <DialogTitle className="text-xl font-black text-white">Eliminar Variación</DialogTitle>
+                                                                <DialogDescription className="text-slate-400 font-bold">
                                                                     ¿Estás seguro que deseas eliminar la variación de "{b.conditionName}"? Esta acción no se puede deshacer.
                                                                 </DialogDescription>
                                                             </DialogHeader>
                                                             <div className="flex gap-3 justify-end mt-4">
                                                                 <DialogTrigger asChild>
-                                                                    <Button variant="outline" className="rounded-xl font-bold border-slate-200">Cancelar</Button>
+                                                                    <Button variant="outline" className="rounded-xl font-black border-white/10 text-slate-300 bg-transparent hover:bg-white/5">Cancelar</Button>
                                                                 </DialogTrigger>
                                                                 <Button
                                                                     onClick={(e) => {
@@ -1195,7 +1197,7 @@ export function VariablesConfig() {
                                                                             setActiveBranchId(newBranches[0]?.id || "b_init");
                                                                         }
                                                                     }}
-                                                                    className="rounded-xl font-bold bg-red-500 hover:bg-red-600 text-white border-none shadow-md"
+                                                                    className="rounded-xl font-black bg-red-500 hover:bg-red-600 text-white border-none shadow-lg shadow-red-500/20"
                                                                 >
                                                                     Sí, eliminar
                                                                 </Button>
@@ -1208,23 +1210,23 @@ export function VariablesConfig() {
                                         <div className="flex-1" />
                                         <Dialog>
                                             <DialogTrigger asChild>
-                                                <Button size="sm" className="h-8 text-[10px] font-black uppercase bg-white border border-slate-200 text-nutrition-600 hover:bg-nutrition-50 rounded-lg shrink-0 shadow-sm">
+                                                <Button size="sm" className="h-8 text-[10px] font-black uppercase bg-white/5 border border-white/10 text-nutrition-500 hover:bg-white/10 rounded-lg shrink-0 shadow-sm backdrop-blur-md">
                                                     <Plus className="h-3 w-3 mr-1" /> Variación
                                                 </Button>
                                             </DialogTrigger>
-                                            <DialogContent className="max-w-[400px] rounded-[2rem]">
+                                            <DialogContent className="max-w-[400px] rounded-[2.5rem] bg-[#0A0F1C] border-white/10 shadow-2xl">
                                                 <DialogHeader>
-                                                    <DialogTitle className="text-xl font-black">Añadir Condición Especial</DialogTitle>
-                                                    <DialogDescription>
+                                                    <DialogTitle className="text-xl font-black text-white">Añadir Condición Especial</DialogTitle>
+                                                    <DialogDescription className="text-slate-400 font-bold">
                                                         Permite asignar su propia fórmula matemática y rangos dependiendo de quién sea el paciente analizado.
                                                     </DialogDescription>
                                                 </DialogHeader>
                                                 <div className="grid grid-cols-2 gap-4 py-4">
-                                                    <Button onClick={() => addConditionalBranch('gender', 'M', 'Hombres')} className="h-16 flex-col gap-1 font-black bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 border-none rounded-2xl hover:scale-105 transition-all">
-                                                        <span className="text-xl px-0 py-0">♂️</span> Hombres
+                                                    <Button onClick={() => addConditionalBranch('gender', 'M', 'Hombres')} className="h-20 flex-col gap-2 font-black bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 border border-blue-500/10 rounded-2xl hover:scale-105 transition-all shadow-lg shadow-blue-500/5">
+                                                        <span className="text-2xl px-0 py-0">♂️</span> Hombres
                                                     </Button>
-                                                    <Button onClick={() => addConditionalBranch('gender', 'F', 'Mujeres')} className="h-16 flex-col gap-1 font-black bg-pink-50 text-pink-600 hover:bg-pink-100 hover:text-pink-700 border-none rounded-2xl hover:scale-105 transition-all">
-                                                        <span className="text-xl px-0 py-0">♀️</span> Mujeres
+                                                    <Button onClick={() => addConditionalBranch('gender', 'F', 'Mujeres')} className="h-20 flex-col gap-2 font-black bg-pink-500/10 text-pink-400 hover:bg-pink-500/20 hover:text-pink-300 border border-pink-500/10 rounded-2xl hover:scale-105 transition-all shadow-lg shadow-pink-500/5">
+                                                        <span className="text-2xl px-0 py-0">♀️</span> Mujeres
                                                     </Button>
                                                 </div>
                                             </DialogContent>
@@ -1233,62 +1235,62 @@ export function VariablesConfig() {
 
                                     <Accordion type="multiple" defaultValue={["logic", "ranges"]} className="w-full space-y-4">
                                         {selectedVar?.hasFormula && (
-                                            <AccordionItem value="logic" className="border border-slate-100 rounded-[2rem] px-8 bg-slate-50/30">
-                                                <AccordionTrigger className="font-black uppercase text-sm text-slate-700 py-6 hover:no-underline">
+                                            <AccordionItem value="logic" className="border border-white/10 rounded-[2rem] px-8 bg-white/5">
+                                                <AccordionTrigger className="font-black uppercase text-sm text-white py-6 hover:no-underline">
                                                     <div className="flex items-center gap-3">
-                                                        <Calculator className="h-5 w-5 text-nutrition-600" />
+                                                        <Calculator className="h-5 w-5 text-nutrition-500" />
                                                         Lógica de Cálculo
                                                     </div>
                                                 </AccordionTrigger>
                                                 <AccordionContent className="pb-8 space-y-8">
                                                     <div className="space-y-4">
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Fórmula (ej. PESO / (TALLA_V^2))</p>
+                                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Fórmula (ej. PESO / (TALLA_V^2))</p>
                                                         <textarea
                                                             value={activeBranch?.tokens?.[0]?.type === 'formula_text' ? activeBranch.tokens[0].value : activeBranch?.tokens?.map(t => t.value).join(" ")}
                                                             onChange={e => updateCurrentBranch({ tokens: [{ id: "t_text", type: "formula_text", value: e.target.value, display: "text" }] })}
                                                             placeholder="Escriba la fórmula aquí. Use el código exacto de la variable en mayúsculas."
-                                                            className="w-full min-h-[120px] p-6 rounded-[2rem] border-2 border-slate-200 focus:border-nutrition-500 focus:ring-4 focus:ring-nutrition-500/10 text-lg font-black font-mono text-slate-800 outline-none transition-all resize-y shadow-inner"
+                                                            className="w-full min-h-[120px] p-6 rounded-[2rem] border-2 border-white/10 bg-black/20 focus:border-nutrition-500 focus:ring-4 focus:ring-nutrition-500/10 text-lg font-black font-mono text-white outline-none transition-all resize-y shadow-inner"
                                                         />
                                                         <div className="flex flex-wrap items-center gap-2 mt-2">
-                                                            <p className="text-[10px] font-black uppercase text-slate-400 mr-2">Variables Activas (Clic para añadir):</p>
+                                                            <p className="text-[10px] font-black uppercase text-slate-500 mr-2">Variables Activas (Clic para añadir):</p>
                                                             {variables.filter(v => v.dataType === 'number').map(v => (
                                                                 <Badge key={v.id} onClick={() => {
                                                                     const txt = activeBranch?.tokens?.[0]?.type === 'formula_text' ? activeBranch.tokens[0].value : activeBranch?.tokens?.map(t => t.value).join(" ");
                                                                     updateCurrentBranch({ tokens: [{ id: "t_text", type: "formula_text", value: `${txt || ''} ${v.code}`.trimStart(), display: "text" }] });
-                                                                }} className="bg-slate-100 text-slate-500 hover:bg-slate-200 border-none px-2 py-0.5 font-bold uppercase cursor-pointer transition-colors active:scale-95">
+                                                                }} className="bg-white/5 text-slate-400 hover:bg-white/10 border border-white/10 px-2 py-0.5 font-bold uppercase cursor-pointer transition-colors active:scale-95">
                                                                     {v.code}
                                                                 </Badge>
                                                             ))}
                                                         </div>
                                                     </div>
 
-                                                    <div className="pt-8 border-t border-slate-100">
+                                                    <div className="pt-8 border-t border-white/10">
                                                         <div className="flex items-center justify-between mb-6">
                                                             <div className="flex items-center gap-2">
-                                                                <Play className="h-4 w-4 text-nutrition-600" />
-                                                                <p className="text-xs font-black text-slate-700 uppercase tracking-tight">Probador en Vivo</p>
+                                                                <Play className="h-4 w-4 text-nutrition-500" />
+                                                                <p className="text-xs font-black text-white uppercase tracking-tight">Probador en Vivo</p>
                                                             </div>
-                                                            <Button onClick={handleTestFormula} className="bg-nutrition-600 hover:bg-nutrition-700 text-white px-8 h-10 font-black rounded-xl border-none shadow-lg">Ejecutar Prueba</Button>
+                                                            <Button onClick={handleTestFormula} className="bg-nutrition-500 hover:bg-nutrition-600 text-white px-8 h-10 font-black rounded-xl border-none shadow-lg shadow-nutrition-500/10">Ejecutar Prueba</Button>
                                                         </div>
                                                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                                                             {detectedInputs.length > 0 ? detectedInputs.map(input => (
-                                                                <div key={input} className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                                                                    <p className="text-[9px] font-black text-slate-400 uppercase mb-1.5 tracking-tighter">{input}</p>
+                                                                <div key={input} className="p-4 bg-white/5 rounded-2xl border border-white/10 shadow-sm transition-all hover:bg-white/10">
+                                                                    <p className="text-[9px] font-black text-slate-500 uppercase mb-1.5 tracking-tighter">{input}</p>
                                                                     <Input
                                                                         placeholder="0.00"
                                                                         value={testInputs[input] || ""}
                                                                         onChange={e => setTestInputs({ ...testInputs, [input]: e.target.value })}
-                                                                        className="h-9 text-sm font-black rounded-xl border-slate-50 bg-slate-50/50 focus:bg-white transition-colors"
+                                                                        className="h-9 text-sm font-black rounded-xl border-white/10 bg-black/20 text-white focus:bg-black/40 transition-colors"
                                                                     />
                                                                 </div>
                                                             )) : (
                                                                 <div className="col-span-full py-4 text-center">
-                                                                    <p className="text-slate-300 text-[10px] font-bold uppercase italic">Construye la fórmula para ver los campos de prueba</p>
+                                                                    <p className="text-slate-600 text-[10px] font-bold uppercase italic">Construye la fórmula para ver los campos de prueba</p>
                                                                 </div>
                                                             )}
                                                         </div>
                                                         {testResult !== null && (
-                                                            <div className="p-6 bg-slate-900 rounded-[2.5rem] flex items-center justify-between shadow-2xl ring-4 ring-nutrition-500/10 transition-all animate-in zoom-in-95 duration-300">
+                                                            <div className="p-6 bg-black/40 rounded-[2.5rem] flex items-center justify-between shadow-2xl ring-2 ring-nutrition-500/20 transition-all animate-in zoom-in-95 duration-300 border border-white/10">
                                                                 <div>
                                                                     <span className="text-nutrition-500 text-[10px] font-black uppercase tracking-widest block mb-1">Resultado Simulado</span>
                                                                     <span className="text-white text-4xl font-black">
@@ -1296,7 +1298,7 @@ export function VariablesConfig() {
                                                                     </span>
                                                                 </div>
                                                                 <div className="flex flex-col items-end gap-2">
-                                                                    <Badge className="bg-green-500/20 text-green-400 border-none px-4 py-1 font-black uppercase text-[10px]">Cálculo Correcto</Badge>
+                                                                    <Badge className="bg-emerald-500/20 text-emerald-400 border-none px-4 py-1 font-black uppercase text-[10px]">Cálculo Correcto</Badge>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -1306,45 +1308,45 @@ export function VariablesConfig() {
                                         )}
 
                                         {selectedVar?.hasRanges && (
-                                            <AccordionItem value="ranges" className="border border-slate-100 rounded-[2rem] px-8 bg-slate-50/30">
-                                                <AccordionTrigger className="font-black uppercase text-sm text-slate-700 py-6 hover:no-underline">
+                                            <AccordionItem value="ranges" className="border border-white/10 rounded-[2rem] px-8 bg-white/5">
+                                                <AccordionTrigger className="font-black uppercase text-sm text-white py-6 hover:no-underline">
                                                     <div className="flex items-center gap-3">
-                                                        <Layers className="h-5 w-5 text-purple-600" />
+                                                        <Layers className="h-5 w-5 text-purple-400" />
                                                         Configuración de Rangos
                                                     </div>
                                                 </AccordionTrigger>
                                                 <AccordionContent className="pb-8">
                                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                                                         {activeBranch?.ranges.map((range, idx) => (
-                                                            <div key={idx} className="relative p-6 bg-white rounded-[2rem] border-2 border-slate-100/50 space-y-4 shadow-sm group hover:border-purple-200 transition-colors">
-                                                                <button onClick={() => removeRange(idx)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors">
+                                                            <div key={idx} className="relative p-6 bg-black/20 rounded-[2rem] border border-white/10 space-y-4 shadow-sm group hover:border-purple-500/50 transition-colors">
+                                                                <button onClick={() => removeRange(idx)} className="absolute top-4 right-4 text-slate-500 hover:text-red-400 transition-colors">
                                                                     <X className="h-4 w-4" />
                                                                 </button>
                                                                 <div className="flex items-center gap-3 w-full">
-                                                                    <div className="relative h-8 w-8 min-w-[2rem] rounded-full overflow-hidden shadow-sm border-2 border-slate-200 focus-within:border-nutrition-500 focus-within:ring-2 focus-within:ring-nutrition-500/20" style={{ backgroundColor: (range.color && range.color.startsWith('#')) ? range.color : '#94a3b8' }}>
+                                                                    <div className="relative h-8 w-8 min-w-[2rem] rounded-full overflow-hidden shadow-sm border-2 border-white/10 focus-within:border-nutrition-500 focus-within:ring-2 focus-within:ring-nutrition-500/20" style={{ backgroundColor: (range.color && range.color.startsWith('#')) ? range.color : '#475569' }}>
                                                                         <input
                                                                             type="color"
-                                                                            value={(range.color && range.color.startsWith('#')) ? range.color : '#94a3b8'}
+                                                                            value={(range.color && range.color.startsWith('#')) ? range.color : '#475569'}
                                                                             onChange={e => handleUpdateRange(idx, 'color', e.target.value)}
                                                                             className="absolute -top-4 -left-4 w-16 h-16 cursor-pointer p-0 border-0 opacity-0"
                                                                             title="Elegir color"
                                                                         />
                                                                     </div>
-                                                                    <Input value={range.label} onChange={e => handleUpdateRange(idx, 'label', e.target.value)} className="h-8 font-black flex-1 text-slate-700 bg-transparent border-none p-0 focus-visible:ring-0 text-sm" style={{ color: (range.color && range.color.startsWith('#')) ? range.color : undefined }} />
+                                                                    <Input value={range.label} onChange={e => handleUpdateRange(idx, 'label', e.target.value)} className="h-8 font-black flex-1 text-white bg-transparent border-none p-0 focus-visible:ring-0 text-sm" style={{ color: (range.color && range.color.startsWith('#')) ? range.color : undefined }} />
                                                                 </div>
                                                                 <div className="grid grid-cols-2 gap-4">
                                                                     <div className="space-y-1">
-                                                                        <p className="text-[9px] font-black text-slate-400 uppercase">Desde</p>
-                                                                        <Input type="number" value={range.min} onChange={e => handleUpdateRange(idx, 'min', parseFloat(e.target.value))} className="h-10 font-black rounded-xl bg-slate-50 border-none" />
+                                                                        <p className="text-[9px] font-black text-slate-500 uppercase">Desde</p>
+                                                                        <Input type="number" value={range.min} onChange={e => handleUpdateRange(idx, 'min', parseFloat(e.target.value))} className="h-10 font-black rounded-xl bg-white/5 border-white/10 text-white" />
                                                                     </div>
                                                                     <div className="space-y-1">
-                                                                        <p className="text-[9px] font-black text-slate-400 uppercase">Hasta</p>
-                                                                        <Input type="number" value={range.max} onChange={e => handleUpdateRange(idx, 'max', parseFloat(e.target.value))} className="h-10 font-black rounded-xl bg-slate-50 border-none" />
+                                                                        <p className="text-[9px] font-black text-slate-500 uppercase">Hasta</p>
+                                                                        <Input type="number" value={range.max} onChange={e => handleUpdateRange(idx, 'max', parseFloat(e.target.value))} className="h-10 font-black rounded-xl bg-white/5 border-white/10 text-white" />
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         ))}
-                                                        <button onClick={addRange} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-200 rounded-[2rem] hover:border-nutrition-500 hover:bg-nutrition-50 transition-all text-slate-400 hover:text-nutrition-600 gap-2 min-h-[140px]">
+                                                        <button onClick={addRange} className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-white/10 rounded-[2rem] hover:border-nutrition-500 hover:bg-white/5 transition-all text-slate-500 hover:text-white gap-2 min-h-[140px]">
                                                             <Plus className="h-6 w-6" />
                                                             <span className="text-[10px] font-black uppercase">Nueva Etiqueta</span>
                                                         </button>
@@ -1356,11 +1358,11 @@ export function VariablesConfig() {
                                 </div>
                             </div>
 
-                            <div className="p-8 bg-white border-t flex gap-4">
+                            <div className="p-8 bg-white/5 border-t border-white/10 flex gap-4">
                                 <Button
                                     onClick={handleSaveChanges}
                                     disabled={isSaving}
-                                    className="flex-1 bg-nutrition-600 hover:bg-nutrition-700 text-white font-black rounded-[1.5rem] h-14 shadow-xl shadow-nutrition-200/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                    className="flex-1 bg-nutrition-500 hover:bg-nutrition-600 text-white font-black rounded-[1.5rem] h-14 shadow-xl shadow-nutrition-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
                                 >
                                     {isSaving ? <Loader2 className="h-5 w-5 animate-spin mr-3" /> : <Save className="h-5 w-5 mr-3" />}
                                     Guardar Cambios en {selectedVar?.name || 'Variable'}

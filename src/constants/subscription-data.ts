@@ -14,7 +14,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     {
         id: "free",
         name: "Plan Básico",
-        price: "$0",
+        price: "S/0",
         period: "Para siempre",
         benefits: [
             "Contador de calorias diario",
@@ -28,7 +28,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     {
         id: "premium",
         name: "Premium Nutrition Plan",
-        price: "$29.99",
+        price: "S/29.99",
         period: "Por mes",
         benefits: [
             "Plan de comidas personalizado",
@@ -44,7 +44,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     {
         id: "elite",
         name: "Elite Performance",
-        price: "$49.99",
+        price: "S/49.99",
         period: "Por mes",
         benefits: [
             "Todo lo de Premium",

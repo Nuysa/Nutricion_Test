@@ -551,6 +551,7 @@ export default function PatientDetailPage() {
                 <TabsContent value="historial">
                     {isAddingMode && editingId === "new" && (
                         <NewConsultationForm
+                            patientId={patientId}
                             date={editValues.date || ''}
                             setDate={(d: string) => setEditValues({ ...editValues, date: d })}
                             editValues={editValues}
@@ -780,6 +781,7 @@ export default function PatientDetailPage() {
             <EditConsultationModal
                 isOpen={isAddingMode && editingId !== 'new' && editingId !== null}
                 onClose={() => { setIsAddingMode(false); setEditingId(null); }}
+                patientId={patientId}
                 date={editValues.date || ''}
                 setDate={(d: string) => setEditValues({ ...editValues, date: d })}
                 editValues={editValues}

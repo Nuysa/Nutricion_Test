@@ -38,10 +38,8 @@ import {
 
 export function AdminStaffDashboardContent({ initialTab = "overview" }: { initialTab?: any }) {
     const { toast } = useToast();
-    const [activeTab, setActiveTab] = useState<"overview" | "verification" | "assignments" | "subscriptions" | "metrics" | "calendar" | "settings" | "visualization" | "landing_cms" | "plans_management" | "food_database" | "users_management">(initialTab);
+    const [activeTab, setActiveTab] = useState<"overview" | "verification" | "assignments" | "plan_assignments" | "subscriptions" | "metrics" | "calendar" | "settings" | "visualization" | "landing_cms" | "plans_management" | "food_database" | "users_management">(initialTab);
     const [plansEditMode, setPlansEditMode] = useState(true);
-
-
 
     const [profiles, setProfiles] = useState<GlobalProfile[]>([]);
     const [assignments, setAssignments] = useState<Record<string, string[]>>({});
@@ -52,6 +50,13 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
     const [verifSearch, setVerifSearch] = useState("");
     const [assignPSearch, setAssignPSearch] = useState("");
     const [assignNSearch, setAssignNSearch] = useState("");
+    const [assignPlanSearch, setAssignPlanSearch] = useState("");
+    const [planHistory, setPlanHistory] = useState<any[]>([]);
+    const [selectedPlanPatientId, setSelectedPlanPatientId] = useState<string | null>(null);
+    const [selectedPlanType, setSelectedPlanType] = useState<string>("plan flexible");
+    const [selectedPlanMeasurements, setSelectedPlanMeasurements] = useState<number>(2);
+    const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+    const [selectedNutriId, setSelectedNutriId] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(true);
 
@@ -76,6 +81,10 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
     const [subReviewSearch, setSubReviewSearch] = useState("");
     const [selectedPatientPlan, setSelectedPatientPlan] = useState<GlobalProfile | null>(null);
     const [newPlanType, setNewPlanType] = useState("");
+
+    // Delete Plan States
+    const [isDeletePlanDialogOpen, setIsDeletePlanDialogOpen] = useState(false);
+    const [planToDelete, setPlanToDelete] = useState<string | null>(null);
 
     // Create User States
     const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState(false);
@@ -208,6 +217,15 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                     loadData(true);
                 }
             )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'subscriptions' },
+                () => {
+                    if (activeTab === 'plan_assignments' && selectedPlanPatientId) {
+                        void refreshPlanHistory(selectedPlanPatientId);
+                    }
+                }
+            )
             .subscribe();
 
         // 2. Local Sync Channel (For cross-tab same-browser actions)
@@ -247,9 +265,6 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
         }
     };
 
-    const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
-    const [selectedNutriId, setSelectedNutriId] = useState<string | null>(null);
-
     const handleAssign = async () => {
         if (!selectedPatientId || !selectedNutriId) {
             toast({ title: "Error", description: "Selecciona un paciente y un nutricionista", variant: "destructive" });
@@ -264,6 +279,49 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
             variant: "success"
         });
         loadData();
+    };
+
+    const refreshPlanHistory = async (pid: string) => {
+        const history = await MessagingService.getPatientPlanHistory(pid);
+        setPlanHistory(history);
+    };
+
+    useEffect(() => {
+        if (activeTab === "plan_assignments" && selectedPlanPatientId) {
+            refreshPlanHistory(selectedPlanPatientId);
+        }
+    }, [activeTab, selectedPlanPatientId]);
+
+    const handleAssignPlan = async () => {
+        if (!selectedPlanPatientId || !selectedPlanType) return;
+        try {
+            await MessagingService.assignPlanToPatient(selectedPlanPatientId, selectedPlanType, selectedPlanMeasurements);
+            toast({ title: "Plan Asignado Correctamente", variant: "success" });
+            loadData(true);
+            if (selectedPlanPatientId) refreshPlanHistory(selectedPlanPatientId);
+        } catch (e: any) {
+            toast({ title: "Error", description: e.message, variant: "destructive" });
+        }
+    };
+
+    const confirmDeletePlan = (sid: string) => {
+        setPlanToDelete(sid);
+        setIsDeletePlanDialogOpen(true);
+    };
+
+    const executeDeletePlan = async () => {
+        if (!planToDelete) return;
+        try {
+            await MessagingService.deleteSubscription(planToDelete);
+            toast({ title: "Registro Eliminado", variant: "success" });
+            loadData(true);
+            if (selectedPlanPatientId) refreshPlanHistory(selectedPlanPatientId);
+        } catch (e: any) {
+            toast({ title: "Error", description: e.message, variant: "destructive" });
+        } finally {
+            setIsDeletePlanDialogOpen(false);
+            setPlanToDelete(null);
+        }
     };
 
     const handleUnassign = async (pid: string, nid: string) => {
@@ -322,15 +380,12 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
         try {
             const supabase = createClient();
             const { error } = await supabase
-                .from("subscription_offers")
+                .from("subscription_plans")
                 .update({
-                    name: newOfferName,
-                    price: parseFloat(newOfferPrice),
-                    offer_price: newOfferPriceOffer ? parseFloat(newOfferPriceOffer) : null,
-                    offer_reason: newOfferOfferReason,
-                    benefit_highlight: newOfferHighlight,
-                    description: newOfferDescription,
-                    features: newOfferFeatures.split('\n').filter(f => f.trim() !== '')
+                    name_es: newOfferName,
+                    price_pen: parseFloat(newOfferPrice),
+                    description_es: newOfferDescription,
+                    included_measurements: 2 // Default or add a field in the UI
                 })
                 .eq("id", editingOffer.id);
 
@@ -347,16 +402,14 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
         try {
             const supabase = createClient();
             const { error } = await supabase
-                .from("subscription_offers")
+                .from("subscription_plans")
                 .insert([{
-                    name: newOfferName,
-                    price: parseFloat(newOfferPrice),
-                    offer_price: newOfferPriceOffer ? parseFloat(newOfferPriceOffer) : null,
-                    offer_reason: newOfferOfferReason,
-                    benefit_highlight: newOfferHighlight,
-                    description: newOfferDescription,
-                    duration_days: 30, // Default
-                    features: newOfferFeatures.split('\n').filter(f => f.trim() !== '')
+                    name_es: newOfferName,
+                    price_pen: parseFloat(newOfferPrice),
+                    description_es: newOfferDescription,
+                    duration_months: 1, // Default or add field
+                    included_measurements: 2, // Default
+                    is_active: true
                 }]);
 
             if (error) throw error;
@@ -505,8 +558,9 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                             {[
                                 { id: "overview", label: "Resumen", fullLabel: "Resumen General", icon: Users },
                                 { id: "verification", label: "Verif.", fullLabel: "Verificaciones", icon: UserCheck, badge: pendingNutris.length },
-                                { id: "assignments", label: "Asign.", fullLabel: "Asignaciones", icon: Link2 },
-                                { id: "subscriptions", label: "Planes", fullLabel: "Planes Pacientes", icon: DatabaseZap },
+                                { id: "assignments", label: "Asig. Nutri", fullLabel: "Asignación de Nutricionista", icon: UserCheckIcon },
+                                { id: "plan_assignments", label: "Asig. Plan", fullLabel: "Asignación de Plan", icon: LayoutGrid },
+                                { id: "subscriptions", label: "Planes", fullLabel: "Suscripciones Pro", icon: DatabaseZap },
                                 { id: "calendar", label: "Agenda", fullLabel: "Agenda Global", icon: Calendar },
                                 ...(currentAdminRole === "administrador" ? [{ id: "users_management", label: "Usuarios", fullLabel: "Usuarios", icon: ShieldPlus }] : []),
                             ].map(tab => (
@@ -1023,6 +1077,217 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                             </div>
                         )}
 
+                        {activeTab === "plan_assignments" && (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <Card className="rounded-[2.5rem] border-white/10 bg-white/[0.03] backdrop-blur-md shadow-2xl overflow-hidden">
+                                    <CardHeader className="border-b border-white/5">
+                                        <CardTitle className="font-black text-xl text-white uppercase tracking-tight">Asignación de Plan</CardTitle>
+                                        <CardDescription className="font-bold text-slate-400 text-xs uppercase tracking-widest opacity-60">Define el protocolo nutricional para cada paciente.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="p-10 space-y-8">
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">1. Selecciona Paciente</p>
+                                                <div className="relative w-40">
+                                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                                                    <Input
+                                                        placeholder="Filtrar..."
+                                                        className="pl-9 h-9 text-[10px] rounded-xl border-white/5 bg-white/5 text-white focus:ring-nutrition-500/50"
+                                                        value={assignPlanSearch}
+                                                        onChange={(e) => setAssignPlanSearch(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <ScrollArea className="h-56 border-white/5 rounded-[1.5rem] p-2 bg-white/[0.02]">
+                                                <div className="space-y-1">
+                                                    {patients.filter(p => (p.name || "").toLowerCase().includes(assignPlanSearch.toLowerCase())).map(p => (
+                                                        <button
+                                                            key={p.id}
+                                                            onClick={() => setSelectedPlanPatientId(p.id)}
+                                                            className={cn(
+                                                                "w-full text-left p-4 rounded-xl flex items-center justify-between group transition-all",
+                                                                selectedPlanPatientId === p.id ? "bg-nutrition-500 text-white shadow-lg shadow-nutrition-500/20" : "hover:bg-white/5"
+                                                            )}
+                                                        >
+                                                            <span className={cn("text-xs font-black uppercase tracking-widest", selectedPlanPatientId === p.id ? "text-white" : "text-slate-300")}>{p.name}</span>
+                                                            <Badge variant="outline" className={cn(
+                                                                "text-[8px] font-black uppercase border-none px-2 py-0.5",
+                                                                p.planType && p.planType !== 'sin plan' ? "bg-green-500/10 text-green-500" : "bg-slate-500/10 text-slate-500"
+                                                            )}>
+                                                                {p.planType || 'Sin Plan'}
+                                                            </Badge>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </ScrollArea>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">2. Protocolo a Activar</p>
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {['plan flexible', 'plan menu semanal', 'sin plan'].map(type => (
+                                                    <button
+                                                        key={type}
+                                                        onClick={() => setSelectedPlanType(type)}
+                                                        className={cn(
+                                                            "w-full text-left p-5 rounded-2xl border transition-all flex items-center justify-between group",
+                                                            selectedPlanType === type ? "bg-nutrition-500/10 border-nutrition-500/50" : "bg-white/[0.02] border-white/5 hover:bg-white/5"
+                                                        )}
+                                                    >
+                                                        <span className={cn("text-xs font-black uppercase tracking-widest", selectedPlanType === type ? "text-nutrition-400" : "text-slate-500")}>
+                                                            {type}
+                                                        </span>
+                                                        <div className={cn(
+                                                            "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all",
+                                                            selectedPlanType === type ? "border-nutrition-500 bg-nutrition-500" : "border-white/10"
+                                                        )}>
+                                                            {selectedPlanType === type && <Check className="h-3 w-3 text-white" />}
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {selectedPlanType !== 'sin plan' && (
+                                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">3. Cantidad de Mediciones</p>
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    {[2, 4, 6].map(count => (
+                                                        <button
+                                                            key={count}
+                                                            onClick={() => setSelectedPlanMeasurements(count)}
+                                                            className={cn(
+                                                                "p-4 rounded-xl border text-[10px] font-black uppercase tracking-tighter transition-all flex flex-col items-center gap-1",
+                                                                selectedPlanMeasurements === count
+                                                                    ? "bg-nutrition-500/10 border-nutrition-500/50 text-nutrition-400 shadow-lg shadow-nutrition-500/10"
+                                                                    : "bg-white/[0.02] border-white/5 text-slate-500 hover:bg-white/5"
+                                                            )}
+                                                        >
+                                                            <span>{count}</span>
+                                                            <span className="text-[8px] opacity-60">Mediciones</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <Button
+                                            onClick={handleAssignPlan}
+                                            disabled={!selectedPlanPatientId}
+                                            className="w-full rounded-2xl bg-white text-black hover:bg-nutrition-50 font-black h-16 uppercase tracking-[0.3em] text-[11px] disabled:opacity-20 transition-all shadow-xl"
+                                        >
+                                            Asignar Plan
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+
+                                <Card className="rounded-[2.5rem] border-white/10 bg-white/[0.03] backdrop-blur-md shadow-2xl overflow-hidden flex flex-col">
+                                    <CardHeader className="border-b border-white/5">
+                                        <div className="flex items-center justify-between">
+                                            <CardTitle className="font-black text-xl text-white uppercase tracking-tight">Historial de Planes</CardTitle>
+                                            <Badge className="bg-white/5 text-slate-400 border-white/5 font-black uppercase text-[10px] px-3 py-1 rounded-lg">
+                                                {planHistory.length} Registros
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="flex-1 p-0 overflow-hidden">
+                                        <ScrollArea className="h-[700px]">
+                                            {planHistory.length > 0 ? (
+                                                <div className="divide-y divide-white/5">
+                                                    {planHistory.map((entry, i) => (
+                                                        <div key={i} className="p-8 hover:bg-white/[0.02] transition-all">
+                                                            <div className="flex justify-between items-start mb-4">
+                                                                <div className="space-y-1">
+                                                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Protocolo Activado</p>
+                                                                    <h4 className="text-sm font-black text-white uppercase">{entry.plan?.name_es || "Asignación Manual"}</h4>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    {entry.plan?.included_measurements && (
+                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">
+                                                                            {entry.plan.included_measurements} Mediciones
+                                                                        </span>
+                                                                    )}
+                                                                    <Badge className="bg-green-500/10 text-green-500 border-none font-black uppercase text-[8px] tracking-widest px-2">
+                                                                        {entry.status}
+                                                                    </Badge>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-6 w-6 rounded-lg text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                                                        onClick={() => confirmDeletePlan(entry.id)}
+                                                                    >
+                                                                        <Trash2 className="h-3 w-3" />
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-6">
+                                                                <div className="flex items-center gap-2 text-slate-400">
+                                                                    <Calendar className="h-3 w-3" />
+                                                                    <span className="text-[10px] font-bold">{new Date(entry.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-slate-400">
+                                                                    <Clock className="h-3 w-3" />
+                                                                    <span className="text-[10px] font-bold">{new Date(entry.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                                </div>
+                                                                {entry.metadata?.measurements_limit && (
+                                                                    <div className="flex items-center gap-2 text-nutrition-400">
+                                                                        <Activity className="h-3 w-3" />
+                                                                        <span className="text-[10px] font-black">{entry.metadata.measurements_limit} Mediciones</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="p-20 text-center space-y-4">
+                                                    <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center mx-auto border border-white/5">
+                                                        <Activity className="h-8 w-8 text-slate-700" />
+                                                    </div>
+                                                    <p className="text-slate-500 font-black uppercase tracking-widest text-[10px] italic">No se registran activaciones previas para este paciente.</p>
+                                                </div>
+                                            )}
+                                        </ScrollArea>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Delete Plan Confirmation Dialog */}
+                                <Dialog open={isDeletePlanDialogOpen} onOpenChange={setIsDeletePlanDialogOpen}>
+                                    <DialogContent className="rounded-[2.5rem] max-w-sm border-white/5 bg-nutri-base/95 backdrop-blur-2xl p-8">
+                                        <div className="flex flex-col items-center text-center space-y-6">
+                                            <div className="h-20 w-20 rounded-[2rem] bg-red-500/10 flex items-center justify-center p-4 border border-red-500/20">
+                                                <AlertTriangle className="h-10 w-10 text-red-500 animate-pulse" />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <DialogTitle className="text-2xl font-black text-white uppercase italic tracking-tight">Confirmar Eliminación</DialogTitle>
+                                                <DialogDescription className="text-slate-400 font-medium">
+                                                    ¿Estás seguro de eliminar este registro de plan? Esta acción no se puede deshacer.
+                                                </DialogDescription>
+                                            </div>
+
+                                            <div className="flex flex-col w-full gap-3 pt-4">
+                                                <Button
+                                                    variant="destructive"
+                                                    className="h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                                    onClick={executeDeletePlan}
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-2" /> Eliminar Plan
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] text-slate-500 hover:text-white hover:bg-white/5 transition-all"
+                                                    onClick={() => setIsDeletePlanDialogOpen(false)}
+                                                >
+                                                    Cancelar
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                        )}
+
                         {activeTab === "calendar" && (
                             <div className="space-y-6">
                                 <Card className="rounded-[2.5rem] border-slate-100 shadow-xl p-8">
@@ -1425,37 +1690,37 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                 <div className="space-y-4">
                                                     {subscriptions.filter(s =>
                                                         s.patient?.profile?.full_name.toLowerCase().includes(subReviewSearch.toLowerCase()) ||
-                                                        s.offer?.name.toLowerCase().includes(subReviewSearch.toLowerCase())
+                                                        (s.plan?.name_es || "").toLowerCase().includes(subReviewSearch.toLowerCase())
                                                     ).map(sub => (
                                                         <div key={sub.id} className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-3">
                                                             <div className="flex justify-between items-start">
                                                                 <div>
                                                                     <p className="font-black text-slate-800 text-sm leading-none">{sub.patient?.profile?.full_name}</p>
-                                                                    <p className="text-[10px] font-black text-nutrition-600 mt-1 uppercase">{sub.offer?.name}</p>
+                                                                    <p className="text-[10px] font-black text-nutrition-600 mt-1 uppercase">{sub.plan?.name_es || "Plan Activo"}</p>
                                                                 </div>
                                                                 <Badge className={cn(
                                                                     "border-none rounded-lg text-[10px] font-black uppercase",
-                                                                    sub.status === 'active' ? "bg-green-100 text-green-700" :
-                                                                        sub.status === 'pending' ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
+                                                                    sub.status === 'activa' ? "bg-green-100 text-green-700" :
+                                                                        sub.status === 'pendiente' ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
                                                                 )}>
-                                                                    {sub.status === 'active' ? 'Activa' : sub.status === 'pending' ? 'Pendiente' : 'Rechazada'}
+                                                                    {sub.status === 'activa' ? 'Activa' : sub.status === 'pendiente' ? 'Pendiente' : 'Rechazada'}
                                                                 </Badge>
                                                             </div>
 
-                                                            {sub.status === 'pending' && currentAdminRole === 'administrador' && (
+                                                            {sub.status === 'pendiente' && currentAdminRole === 'administrador' && (
                                                                 <div className="flex gap-2">
                                                                     <Button
                                                                         variant="outline"
                                                                         size="sm"
                                                                         className="flex-1 rounded-xl text-red-500 font-bold"
-                                                                        onClick={() => MessagingService.handleSubscriptionStatus(sub.id, 'cancelled').then(() => loadData(false))}
+                                                                        onClick={() => MessagingService.handleSubscriptionStatus(sub.id, 'cancelada').then(() => loadData(false))}
                                                                     >
                                                                         X
                                                                     </Button>
                                                                     <Button
                                                                         size="sm"
                                                                         className="flex-1 rounded-xl bg-nutrition-600 text-white font-bold"
-                                                                        onClick={() => MessagingService.handleSubscriptionStatus(sub.id, 'active').then(() => loadData(false))}
+                                                                        onClick={() => MessagingService.handleSubscriptionStatus(sub.id, 'activa').then(() => loadData(false))}
                                                                     >
                                                                         Aprobar
                                                                     </Button>

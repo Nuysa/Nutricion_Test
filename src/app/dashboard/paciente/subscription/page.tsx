@@ -66,15 +66,15 @@ export default function SubscriptionPage() {
                 if (patientId) {
                     const { data: sub } = await supabase
                         .from('subscriptions')
-                        .select('*, offer:subscription_offers(*)')
+                        .select('*, plan:subscription_plans(*)')
                         .eq('patient_id', patientId)
                         .eq('status', 'active')
                         .maybeSingle();
 
-                    if (sub && sub.offer) {
-                        setCurrentPlanId(sub.offer_id);
-                        setCurrentPlanName(sub.offer.name);
-                        setSelectedUIPlanId(sub.offer_id);
+                    if (sub) {
+                        setCurrentPlanId(sub.plan_id || "manual");
+                        setCurrentPlanName(sub.plan?.name_es || "Plan Activo");
+                        setSelectedUIPlanId(sub.plan_id || "manual");
                     } else {
                         setCurrentPlanName("Sin Plan Activo");
                         setCurrentPlanId("none");
@@ -92,7 +92,7 @@ export default function SubscriptionPage() {
                         setHistory(invoices.map(inv => ({
                             id: inv.id.slice(0, 8).toUpperCase(),
                             date: new Date(inv.paid_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }),
-                            amount: `$${inv.amount}`,
+                            amount: `S/${inv.amount}`,
                             status: inv.status === 'paid' ? 'Pagado' : inv.status,
                             plan: inv.plan_name
                         })));
@@ -100,18 +100,22 @@ export default function SubscriptionPage() {
                 }
 
                 const { data: availableOffers } = await supabase
-                    .from('subscription_offers')
+                    .from('subscription_plans')
                     .select('*')
                     .eq('is_active', true)
-                    .order('price', { ascending: true });
+                    .order('price_pen', { ascending: true });
 
                 if (availableOffers && availableOffers.length > 0) {
-                    setOffers(availableOffers);
+                    setOffers(availableOffers.map(p => ({
+                        ...p,
+                        name: p.name_es,
+                        price: p.price_pen
+                    })));
                 } else {
                     setOffers(SUBSCRIPTION_PLANS.map(p => ({
                         id: p.id,
                         name: p.name,
-                        price: parseFloat(p.price.replace('$', '')),
+                        price: parseFloat(p.price.replace('S/', '')),
                         features: p.benefits,
                         benefit_highlight: p.id === 'premium' ? "Plan más popular" : ""
                     })));
@@ -154,20 +158,22 @@ export default function SubscriptionPage() {
             if (patientId) {
                 await supabase.from('invoices').insert([{
                     patient_id: patientId,
-                    amount: typeof selectedPlan.price === 'string' ? parseFloat(selectedPlan.price.replace('$', '')) : selectedPlan.price,
+                    amount: typeof selectedPlan.price === 'string' ? parseFloat(selectedPlan.price.replace('S/', '')) : selectedPlan.price,
                     plan_name: selectedPlan.name,
                     payment_method: 'Card •••• 4242',
                     status: 'paid'
                 }]);
 
-                await supabase.from('subscriptions').update({ status: 'cancelled' }).eq('patient_id', patientId).eq('status', 'active');
+                await supabase.from('subscriptions').update({ status: 'cancelada' }).eq('patient_id', patientId).eq('status', 'activa');
+                const price = typeof selectedPlan.price === 'string' ? parseFloat(selectedPlan.price.replace('S/', '')) : selectedPlan.price;
                 await supabase.from('subscriptions').insert([{
                     patient_id: patientId,
-                    offer_id: selectedPlan.id,
+                    plan_id: selectedPlan.id,
                     start_date: new Date().toISOString().split('T')[0],
                     end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    status: 'active',
-                    payment_status: 'paid'
+                    status: 'activa',
+                    original_price: price,
+                    final_price: price
                 }]);
             }
 

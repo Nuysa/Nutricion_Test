@@ -56,20 +56,20 @@ const medicalHistorySchema = z.object({
     // Step 4: Estado de Salud
     health_conditions: z.array(z.string()).default([]),
     family_history: z.array(z.string()).default([]),
-    takes_medication: z.string().min(1, "Respuesta requerida"),
+    takes_medication: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
     medication_details: z.string().optional(),
     medication_frequency: z.string().optional(),
-    recent_lab_tests: z.string().min(1, "Respuesta requerida"),
+    recent_lab_tests: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
 
     // Step 5: Actividad y Ejercicio
     activity_level: z.string().min(1, "Actividad diaria requerida"),
     work_schedule: z.string().optional(),
-    does_exercise: z.string().min(1, "Respuesta requerida"),
+    does_exercise: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
     exercise_duration: z.string().optional(),
     exercise_types: z.array(z.string()).default([]),
     exercise_days: z.array(z.string()).default([]),
     exercise_time: z.string().optional(),
-    has_calorie_tracker: z.string().optional(),
+    has_calorie_tracker: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().optional()),
     calorie_expenditure_details: z.string().optional(),
 
     // Step 6: Hábitos Fisiológicos
@@ -88,16 +88,16 @@ const medicalHistorySchema = z.object({
     available_instruments: z.array(z.string()).default([]),
     specific_diet_type: z.string().optional(),
     cooks_for_self: z.string().min(1, "Quién prepara tu comida es requerido"),
-    likes_cooking: z.string().min(1, "Respuesta requerida"),
+    likes_cooking: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
     cooking_preparations: z.string().optional(),
     food_allergies: z.string().optional(),
-    food_intolerances: z.string().min(1, "Respuesta requerida"),
+    food_intolerances: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
     intolerance_details: z.string().optional(),
 
     // Step 8: Lácteos y Suplementos
     dairy_consumption: z.string().min(1, "Respuesta requerida"),
     dairy_brands: z.string().optional(),
-    supplements_consumption: z.string().min(1, "Respuesta requerida"),
+    supplements_consumption: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
     supplement_types: z.array(z.string()).default([]),
 
     // Step 9: Aversiones
@@ -146,6 +146,37 @@ export function MedicalHistoryForm() {
             email: "",
             age: 0,
             birth_date: "",
+            gender: "",
+            education_level: "",
+            region: "",
+            district: "",
+            occupation: "",
+            job_details: "",
+            nutritional_goal: "",
+            previous_nutrition_service: "",
+            height_cm: 160,
+            takes_medication: "no",
+            recent_lab_tests: "no",
+            activity_level: "sedentario",
+            does_exercise: "no",
+            appetite_level: "normal",
+            thirst_level: "normal",
+            water_intake: "1.5L - 2L",
+            sleep_quality: "buena",
+            sleep_hours: "7-8",
+            bowel_movements: "normal",
+            bowel_frequency: "diario",
+            urine_status: "normal",
+            urine_color_index: 1,
+            cooks_for_self: "si",
+            likes_cooking: "no",
+            food_intolerances: "no",
+            dairy_consumption: "ninguno",
+            supplements_consumption: "no",
+            wake_up_time: "07:00",
+            sleep_time: "23:00",
+            prep_preference: "faciles",
+            taste_preference: "salados",
             health_conditions: [],
             family_history: [],
             exercise_types: [],
@@ -154,7 +185,11 @@ export function MedicalHistoryForm() {
             available_instruments: [],
             supplement_types: [],
             previous_unhealthy_habits: [],
-            gender: "",
+            disliked_cereals: [],
+            disliked_tubers: [],
+            disliked_legumes: [],
+            disliked_meats: [],
+            disliked_fats: [],
         } as any,
     });
 
@@ -190,14 +225,18 @@ export function MedicalHistoryForm() {
                                         } else {
                                             form.setValue(key as any, value || []);
                                         }
-                                    } else if (['previous_nutrition_service', 'takes_medication', 'recent_lab_tests', 'does_exercise', 'likes_cooking', 'supplements_consumption'].includes(key)) {
-                                        // If stored as boolean, convert to 'yes'/'no' for the form radio groups
-                                        // or if already 'yes_pro' etc it handles it
-                                        if (value === true) form.setValue(key as any, 'yes');
-                                        else if (value === false) form.setValue(key as any, 'no');
+                                    } else if (['previous_nutrition_service', 'takes_medication', 'recent_lab_tests', 'does_exercise', 'likes_cooking', 'supplements_consumption', 'has_calorie_tracker', 'food_intolerances'].includes(key)) {
+                                        // If stored as boolean, convert to 'yes'/'no' for the form components
+                                        if (value === true || value === 'si' || value === 'sí') form.setValue(key as any, 'yes');
+                                        else if (value === false || value === 'no' || value === 'nunca') form.setValue(key as any, 'no');
                                         else form.setValue(key as any, value ?? "");
                                     } else {
-                                        form.setValue(key as any, value ?? "");
+                                        // Global safety: Many fields might come as boolean from old DB structures
+                                        if (typeof value === 'boolean') {
+                                            form.setValue(key as any, value ? "yes" : "no");
+                                        } else {
+                                            form.setValue(key as any, value ?? "");
+                                        }
                                     }
                                 }
                             });
@@ -232,6 +271,18 @@ export function MedicalHistoryForm() {
         }
     }, [watchedBirthDate, form]);
 
+    const onError = (errors: any) => {
+        console.error("Form Validation Errors:", errors);
+        const errorDetails = Object.entries(errors).map(([field, err]: [string, any]) => `${field}: ${err.message}`).filter(Boolean);
+        if (errorDetails.length > 0) {
+            toast({
+                title: "Error de validación",
+                description: `Por favor revisa: ${errorDetails.slice(0, 2).join(", ")}${errorDetails.length > 2 ? '...' : ''}`,
+                variant: "destructive"
+            });
+        }
+    };
+
     const onSubmit = async (values: MedicalHistoryFormValues) => {
         if (!patientId) {
             toast({ title: "Error", description: "No se encontró el ID del paciente.", variant: "destructive" });
@@ -241,32 +292,96 @@ export function MedicalHistoryForm() {
         setLoading(true);
         try {
             // Prepare data for database, converting types where necessary
-            const dbData = {
-                ...values,
-                patient_id: patientId,
-                // Numeric transformations: convert empty strings to null for nullable columns
-                weight_kg: values.weight_kg === "" ? null : values.weight_kg,
-                waist_cm: values.waist_cm === "" ? null : values.waist_cm,
-                // Boolean transformations: explicitly transform to boolean or null to avoid "" errors
-                previous_nutrition_service: values.previous_nutrition_service ? values.previous_nutrition_service.startsWith('yes') : null,
-                takes_medication: values.takes_medication === 'yes',
-                recent_lab_tests: values.recent_lab_tests === 'yes',
-                does_exercise: values.does_exercise === 'yes',
-                likes_cooking: values.likes_cooking === 'yes',
-                supplements_consumption: values.supplements_consumption === 'yes',
-                has_calorie_tracker: values.has_calorie_tracker === 'yes',
-                // Array to string transformations for columns defined as text in DB
-                disliked_cereals: Array.isArray(values.disliked_cereals) ? values.disliked_cereals.join(', ') : values.disliked_cereals,
-                disliked_tubers: Array.isArray(values.disliked_tubers) ? values.disliked_tubers.join(', ') : values.disliked_tubers,
-                disliked_legumes: Array.isArray(values.disliked_legumes) ? values.disliked_legumes.join(', ') : values.disliked_legumes,
-                disliked_meats: Array.isArray(values.disliked_meats) ? values.disliked_meats.join(', ') : values.disliked_meats,
-                disliked_fats: Array.isArray(values.disliked_fats) ? values.disliked_fats.join(', ') : values.disliked_fats,
+            const dbData: any = { ...values };
+            dbData.patient_id = patientId;
+
+            // Numeric transformations: convert empty strings to null for nullable columns
+            if (!values.weight_kg && values.weight_kg !== 0) dbData.weight_kg = null;
+            if (!values.waist_cm && values.waist_cm !== 0) dbData.waist_cm = null;
+            if (!values.height_cm && values.height_cm !== 0) dbData.height_cm = null;
+            if (!values.urine_color_index && values.urine_color_index !== 0) dbData.urine_color_index = null;
+            if (!values.age && values.age !== 0) dbData.age = null;
+
+            // Boolean transformations: Ensure we return true/false/null for bool columns
+            const cleanBool = (v: any) => {
+                if (v === null || v === undefined || v === "") return null;
+                const s = String(v).toLowerCase();
+                if (s === 'yes' || s === 'true' || s === 'si' || s === 'sí' || s.startsWith('yes')) return true;
+                if (s === 'no' || s === 'false' || s === 'never' || s === 'nunca') return false;
+                return null;
             };
+
+            const boolFields = [
+                'does_exercise', 'has_calorie_tracker', 'likes_cooking',
+                'previous_nutrition_service', 'recent_lab_tests',
+                'supplements_consumption', 'takes_medication'
+            ];
+
+            boolFields.forEach(field => {
+                dbData[field] = cleanBool(values[field as keyof MedicalHistoryFormValues]);
+            });
+
+            // Fields that are defined as actual ARRAY (text[]) in the database
+            const nativeArrayFields = [
+                'health_conditions', 'family_history', 'exercise_types', 'exercise_days',
+                'appetite_peak_time', 'available_instruments', 'supplement_types',
+                'previous_unhealthy_habits'
+            ];
+
+            // Fields that are defined as text (standard strings) in the database but are arrays in the form
+            const stringJoinedFields = [
+                'disliked_cereals', 'disliked_tubers', 'disliked_legumes',
+                'disliked_meats', 'disliked_fats'
+            ];
+
+            nativeArrayFields.forEach(field => {
+                const val = (values as any)[field];
+                dbData[field] = Array.isArray(val) ? val : [];
+            });
+
+            stringJoinedFields.forEach(field => {
+                const val = (values as any)[field];
+                if (Array.isArray(val)) {
+                    dbData[field] = val.join(', ');
+                }
+            });
+
+            // Final Cleanup: Ensure we only send fields that exist in the patient_medical_histories table
+            // and have the correct types. 
+            // We use a whitelist approach for maximum safety.
+            const tableColumns = [
+                'patient_id', 'full_name', 'dni', 'email', 'age', 'birth_date', 'instagram',
+                'education_level', 'region', 'district', 'occupation', 'job_details',
+                'nutritional_goal', 'previous_nutrition_service', 'previous_experience_rating',
+                'time_following_plan', 'weight_kg', 'height_cm', 'waist_cm', 'health_conditions',
+                'family_history', 'takes_medication', 'medication_details', 'medication_frequency',
+                'recent_lab_tests', 'activity_level', 'work_schedule', 'does_exercise',
+                'exercise_duration', 'exercise_types', 'exercise_days', 'exercise_time',
+                'has_calorie_tracker', 'calorie_expenditure_details', 'appetite_level',
+                'appetite_peak_time', 'thirst_level', 'water_intake', 'sleep_quality',
+                'sleep_hours', 'bowel_movements', 'bowel_frequency', 'urine_status',
+                'urine_color_index', 'available_instruments', 'specific_diet_type',
+                'cooks_for_self', 'likes_cooking', 'cooking_preparations', 'food_allergies',
+                'food_intolerances', 'intolerance_details', 'dairy_consumption',
+                'dairy_brands', 'supplements_consumption', 'supplement_types',
+                'disliked_cereals', 'disliked_tubers', 'disliked_legumes', 'disliked_vegetables',
+                'disliked_fruits', 'disliked_meats', 'disliked_fats', 'disliked_preparations',
+                'previous_unhealthy_habits', 'wake_up_time', 'sleep_time', 'breakfast_time',
+                'breakfast_details', 'lunch_time', 'lunch_details', 'dinner_time',
+                'dinner_details', 'snack_details', 'prep_preference', 'taste_preference'
+            ];
+
+            const finalData: any = {};
+            tableColumns.forEach(col => {
+                if (col in dbData) {
+                    finalData[col] = dbData[col];
+                }
+            });
 
             // Update medical history
             const medicalHistoryPromise = supabase
                 .from('patient_medical_histories')
-                .upsert(dbData, { onConflict: 'patient_id' });
+                .upsert(finalData, { onConflict: 'patient_id' });
 
             // Update basic patient data in 'patients' table
             const patientDataPromise = supabase
@@ -302,8 +417,11 @@ export function MedicalHistoryForm() {
         if (step === 2) fields.push('nutritional_goal', 'previous_nutrition_service');
         if (step === 3) fields.push('weight_kg', 'height_cm', 'waist_cm');
         if (step === 4) fields.push('takes_medication', 'recent_lab_tests');
-        if (step === 5) fields.push('activity_level', 'work_schedule', 'does_exercise');
+        if (step === 5) fields.push('activity_level', 'does_exercise');
         if (step === 6) fields.push('appetite_level', 'thirst_level', 'water_intake', 'sleep_quality', 'sleep_hours', 'bowel_movements', 'bowel_frequency', 'urine_status', 'urine_color_index');
+        if (step === 7) fields.push('cooks_for_self', 'likes_cooking', 'food_intolerances');
+        if (step === 8) fields.push('dairy_consumption', 'supplements_consumption');
+        if (step === 10) fields.push('wake_up_time', 'sleep_time', 'prep_preference', 'taste_preference');
 
         const isStepValid = await form.trigger(fields);
         if (isStepValid) setStep(prev => Math.min(prev + 1, totalSteps));
@@ -330,7 +448,7 @@ export function MedicalHistoryForm() {
     return (
         <Card className="rounded-[3rem] shadow-2xl border-white/5 bg-[#151F32] overflow-hidden">
             <CardHeader className="p-8 lg:p-12 border-b border-white/5 relative">
-                <div className="absolute top-0 right-10 w-40 h-full bg-nutri-brand/10 blur-[60px] rounded-full" />
+                <div className="absolute top-0 right-10 w-40 h-full bg-nutri-brand/10 blur-[60px] rounded-full pointer-events-none" />
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="text-3xl lg:text-4xl font-black text-white tracking-tighter uppercase mb-2">
@@ -349,7 +467,7 @@ export function MedicalHistoryForm() {
             </CardHeader>
             <CardContent className="p-8 lg:p-12">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-8">
+                    <form onSubmit={form.handleSubmit(onSubmit as any, onError)} className="space-y-8">
                         {step === 1 && <PersonalData form={form} />}
 
                         {step === 2 && <GoalExperience form={form} />}
@@ -417,129 +535,206 @@ function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => 
         return val;
     };
 
-    const getYesNo = (val: string | boolean) => {
-        if (val === 'yes' || val === true) return 'Sí';
-        if (val === 'no' || val === false) return 'No';
+    const getYesNo = (val: any) => {
+        const s = String(val).toLowerCase();
+        if (s === 'yes' || s === 'true' || s === 'si' || s === 'sí' || s.startsWith('yes')) return 'Sí';
+        if (s === 'no' || s === 'false' || s === 'never' || s === 'nunca') return 'No';
         return val || 'No registrado';
+    };
+
+    const getUrineColor = (index: number) => {
+        const colors: Record<number, string> = {
+            1: "#FDF5E6", 2: "#FBE7A1", 3: "#F9D94A", 4: "#FAD02C",
+            5: "#F2C029", 6: "#EAAC14", 7: "#D99101", 8: "#7C7601"
+        };
+        return colors[index] || "transparent";
     };
 
     return (
         <Card className="rounded-[3rem] shadow-2xl border-white/5 bg-[#151F32] overflow-hidden">
             <CardHeader className="p-8 lg:p-12 border-b border-white/5 relative">
-                <div className="absolute top-0 right-10 w-40 h-full bg-nutri-brand/10 blur-[60px] rounded-full" />
+                <div className="absolute top-0 right-10 w-40 h-full bg-nutri-brand/10 blur-[60px] rounded-full pointer-events-none" />
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="text-3xl lg:text-4xl font-black text-white tracking-tighter uppercase mb-2">
                             Tu <span className="text-nutri-brand">Historia Clínica</span>
                         </CardTitle>
                         <CardDescription className="text-slate-400 font-medium italic">
-                            Resumen completo de tu perfil nutricional.
+                            Expediente clínico completo y detallado.
                         </CardDescription>
                     </div>
                     <Button
                         onClick={onEdit}
-                        className="h-12 px-8 rounded-xl font-black uppercase tracking-widest bg-nutri-brand text-white hover:scale-105 transition-all"
+                        className="h-12 px-8 rounded-xl font-black uppercase tracking-widest bg-nutri-brand text-white hover:scale-105 transition-all shadow-lg shadow-nutri-brand/20"
                     >
                         Editar Historia <Sparkles className="ml-2 h-4 w-4" />
                     </Button>
                 </div>
             </CardHeader>
-            <CardContent className="p-8 lg:p-12 space-y-16">
-                {/* 01: Datos Personales */}
+            <CardContent className="p-8 lg:p-12 space-y-20 custom-scrollbar max-h-[70vh] overflow-y-auto">
+                {/* 01: Identidad */}
                 <section className="space-y-8">
                     <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
-                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 01 // DATOS PERSONALES
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 01 // IDENTIDAD Y DATOS PERSONALES
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         <SummaryItem label="Nombre" value={values.full_name} />
                         <SummaryItem label="DNI" value={values.dni} />
                         <SummaryItem label="Email" value={values.email} />
                         <SummaryItem label="Género" value={values.gender} />
                         <SummaryItem label="Edad" value={`${values.age} años`} />
                         <SummaryItem label="Nacimiento" value={values.birth_date} />
+                        <SummaryItem label="Instagram" value={values.instagram} />
                         <SummaryItem label="Educación" value={values.education_level} />
-                        <SummaryItem label="Ubicación" value={`${values.district}, ${values.region}`} />
-                        <SummaryItem label="Ocupación" value={`${values.occupation} (${values.job_details})`} />
+                        <SummaryItem label="Región" value={values.region} />
+                        <SummaryItem label="Distrito" value={values.district} />
+                        <SummaryItem label="Ocupación" value={values.occupation} />
+                        <SummaryItem label="Horario Laboral" value={values.job_details} />
                     </div>
                 </section>
 
-                {/* 02: Objetivos y Mediciones */}
+                {/* 02: Objetivo */}
                 <section className="space-y-8">
                     <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
-                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 02 // OBJETIVOS Y MEDICIONES
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 02 // OBJETIVO Y EXPERIENCIA
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        <SummaryItem label="Objetivo Nutricional" value={values.nutritional_goal} className="lg:col-span-2" />
-                        <SummaryItem label="Peso Inicial" value={values.weight_kg ? `${values.weight_kg} kg` : 'N/A'} />
-                        <SummaryItem label="Talla" value={`${values.height_cm} cm`} />
-                        <SummaryItem label="Cintura" value={values.waist_cm ? `${values.waist_cm} cm` : 'N/A'} />
-                        <SummaryItem label="Exp. Previa" value={values.previous_nutrition_service === 'never' ? 'Nunca' : `Sí (${values.time_following_plan || 'Tiempos no espec.'})`} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <SummaryItem label="Objetivo Nutricional" value={values.nutritional_goal} />
+                        <SummaryItem label="Exp. Previa" value={values.previous_nutrition_service === 'never' || values.previous_nutrition_service === false ? 'Nunca' : `Sí (${values.time_following_plan || 'N/A'})`} />
+                        <SummaryItem label="Calificación Anterior" value={values.previous_experience_rating} />
                     </div>
                 </section>
 
-                {/* 03: Salud */}
+                {/* 03: Mediciones */}
                 <section className="space-y-8">
                     <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
-                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 03 // ESTADO DE SALUD
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 03 // MEDICIONES ANTROPOMÉTRICAS
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <SummaryItem label="Condiciones Médicas" value={formatList(values.health_conditions)} />
-                        <SummaryItem label="Antecedentes Familiares" value={formatList(values.family_history)} />
-                        <SummaryItem label="Medicamentos" value={values.takes_medication === 'yes' ? `${values.medication_details} (Frec: ${values.medication_frequency})` : 'No'} />
-                        <SummaryItem label="Análisis Recientes" value={getYesNo(values.recent_lab_tests)} />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <SummaryItem label="Peso Inicial" value={values.weight_kg ? `${values.weight_kg} kg` : 'Pte.'} />
+                        <SummaryItem label="Talla" value={values.height_cm ? `${values.height_cm} cm` : 'Pte.'} />
+                        <SummaryItem label="Cintura" value={values.waist_cm ? `${values.waist_cm} cm` : 'Pte.'} />
                     </div>
                 </section>
 
-                {/* 04: Actividad y Hábitos */}
+                {/* 04: Salud */}
                 <section className="space-y-8">
                     <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
-                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 04 // ACTIVIDAD Y HÁBITOS
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 04 // CONDICIONES DE SALUD
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <SummaryItem label="Nivel de Actividad" value={values.activity_level} />
-                        <SummaryItem label="Ejercicio" value={values.does_exercise === 'yes' ? `${formatList(values.exercise_types)}` : 'No realiza'} />
-                        <SummaryItem label="Días de Ejercicio" value={formatList(values.exercise_days)} />
-                        <SummaryItem label="Agua" value={values.water_intake} />
-                        <SummaryItem label="Sueño" value={`${values.sleep_hours} (Calidad: ${values.sleep_quality})`} />
-                        <SummaryItem label="Deposiciones" value={`${values.bowel_movements} (Frec: ${values.bowel_frequency})`} />
-                        <SummaryItem label="Orina" value={`${values.urine_status} (Color Ind: ${values.urine_color_index})`} />
-                        <SummaryItem label="Apetito" value={`${values.appetite_level} (Pico: ${formatList(values.appetite_peak_time)})`} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <SummaryItem label="Condiciones" value={formatList(values.health_conditions)} />
+                        <SummaryItem label="Antecedentes" value={formatList(values.family_history)} />
+                        <SummaryItem label="Medicamentos" value={getYesNo(values.takes_medication)} />
+                        <SummaryItem label="Detalle Medicamento" value={`${values.medication_details || 'N/A'} (${values.medication_frequency || ''})`} />
+                        <SummaryItem label="Análisis 3 meses" value={getYesNo(values.recent_lab_tests)} />
                     </div>
                 </section>
 
-                {/* 05: Alimentación y Aversiones */}
+                {/* 05: Actividad */}
                 <section className="space-y-8">
                     <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
-                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 05 // ALIMENTACIÓN Y AVERSIONES
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 05 // ACTIVIDAD Y EJERCICIO
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <SummaryItem label="Actividad Diaria" value={values.activity_level} />
+                        <SummaryItem label="Horario Trabajo" value={values.work_schedule} />
+                        <SummaryItem label="Hace Ejercicio" value={getYesNo(values.does_exercise)} />
+                        <SummaryItem label="Tiempo Ejercicio" value={values.exercise_duration} />
+                        <SummaryItem label="Tipos Ejercicio" value={formatList(values.exercise_types)} />
+                        <SummaryItem label="Días Frecuentes" value={formatList(values.exercise_days)} />
+                        <SummaryItem label="Hora de Entrenamiento" value={values.exercise_time} />
+                        <SummaryItem label="Contador Calorías" value={getYesNo(values.has_calorie_tracker)} />
+                        <SummaryItem label="Detalle Gasto" value={values.calorie_expenditure_details} />
+                    </div>
+                </section>
+
+                {/* 06: Hábitos */}
+                <section className="space-y-8">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 06 // HÁBITOS FISIOLÓGICOS
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <SummaryItem label="Apetito" value={values.appetite_level} />
+                        <SummaryItem label="Horario Apetito" value={formatList(values.appetite_peak_time)} />
+                        <SummaryItem label="Sed" value={values.thirst_level} />
+                        <SummaryItem label="Cantidad Agua" value={values.water_intake} />
+                        <SummaryItem label="Calidad Sueño" value={values.sleep_quality} />
+                        <SummaryItem label="Horas Sueño" value={values.sleep_hours} />
+                        <SummaryItem label="Deposiciones" value={values.bowel_movements} />
+                        <SummaryItem label="Frecuencia" value={values.bowel_frequency} />
+                        <SummaryItem label="Estado Orina" value={values.urine_status} />
+                        <div className="space-y-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                            <div>
+                                <p className="text-[10px] uppercase font-black tracking-tighter text-slate-500">Color Orina</p>
+                                <p className="text-white font-medium text-sm">Nivel {values.urine_color_index || '0'}</p>
+                            </div>
+                            <div className="w-10 h-10 rounded-full border-2 border-white/10" style={{ backgroundColor: getUrineColor(values.urine_color_index) }} />
+                        </div>
+                    </div>
+                </section>
+
+                {/* 07: Alimentación */}
+                <section className="space-y-8">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 07 // ALIMENTACIÓN Y COCINA
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <SummaryItem label="Instrumentos" value={formatList(values.available_instruments)} />
+                        <SummaryItem label="Dieta Específica" value={values.specific_diet_type} />
                         <SummaryItem label="Prepara Comida" value={values.cooks_for_self} />
                         <SummaryItem label="Le gusta cocinar" value={getYesNo(values.likes_cooking)} />
-                        <SummaryItem label="Lácteos" value={values.dairy_consumption} />
-                        <SummaryItem label="Suplementos" value={values.supplements_consumption === 'yes' ? formatList(values.supplement_types) : 'No'} />
-                        <SummaryItem label="Cereales que no agradan" value={formatList(values.disliked_cereals)} />
-                        <SummaryItem label="Tubérculos que no agradan" value={formatList(values.disliked_tubers)} />
-                        <SummaryItem label="Menestras que no agradan" value={formatList(values.disliked_legumes)} />
-                        <SummaryItem label="Carnes que no agradan" value={formatList(values.disliked_meats)} />
-                        <SummaryItem label="Grasas que no agradan" value={formatList(values.disliked_fats)} />
+                        <SummaryItem label="Alergias" value={values.food_allergies} />
+                        <SummaryItem label="Intolerancias" value={getYesNo(values.food_intolerances)} />
+                        <SummaryItem label="Detalles Intolerancia" value={values.intolerance_details} />
                     </div>
                 </section>
 
-                {/* 06: Estilo de Vida y Horarios */}
+                {/* 08: Lácteos */}
                 <section className="space-y-8">
                     <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
-                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 06 // ESTILO DE VIDA Y HORARIOS
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 08 // LÁCTEOS Y SUPLEMENTACIÓN
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <SummaryItem label="Consumo Lácteos" value={values.dairy_consumption} />
+                        <SummaryItem label="Marcas Lácteos" value={values.dairy_brands} />
+                        <SummaryItem label="Suplementos" value={getYesNo(values.supplements_consumption)} />
+                        <SummaryItem label="Tipos de Suplemento" value={formatList(values.supplement_types)} />
+                    </div>
+                </section>
+
+                {/* 09: Aversiones */}
+                <section className="space-y-8">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 09 // AVERSIONES Y ESTILO DE VIDA
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <SummaryItem label="Cereales No" value={formatList(values.disliked_cereals)} />
+                        <SummaryItem label="Tubérculos No" value={formatList(values.disliked_tubers)} />
+                        <SummaryItem label="Menestras No" value={formatList(values.disliked_legumes)} />
+                        <SummaryItem label="Vegetales No" value={values.disliked_vegetables} />
+                        <SummaryItem label="Frutas No" value={values.disliked_fruits} />
+                        <SummaryItem label="Carnes No" value={formatList(values.disliked_meats)} />
+                        <SummaryItem label="Grasas No" value={formatList(values.disliked_fats)} />
+                        <SummaryItem label="Preparaciones No" value={values.disliked_preparations} />
+                        <SummaryItem label="Hábitos a mejorar" value={formatList(values.previous_unhealthy_habits)} className="lg:col-span-2" />
+                    </div>
+                </section>
+
+                {/* 10: Horarios */}
+                <section className="space-y-8">
+                    <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 10 // HORARIOS Y LIFESTYLE
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <SummaryItem label="Despertar" value={values.wake_up_time} />
                         <SummaryItem label="Dormir" value={values.sleep_time} />
-                        <SummaryItem label="Desayuno" value={values.breakfast_time ? `${values.breakfast_time}: ${values.breakfast_details}` : 'N/A'} />
-                        <SummaryItem label="Almuerzo" value={values.lunch_time ? `${values.lunch_time}: ${values.lunch_details}` : 'N/A'} />
-                        <SummaryItem label="Cena" value={values.dinner_time ? `${values.dinner_time}: ${values.dinner_details}` : 'N/A'} />
-                        <SummaryItem label="Snacks" value={values.snack_details || 'N/A'} />
-                        <SummaryItem label="Prep. Pref." value={values.prep_preference} />
-                        <SummaryItem label="Sabor Pref." value={values.taste_preference} />
-                        <SummaryItem label="Hábitos a mejorar" value={formatList(values.previous_unhealthy_habits)} className="col-span-full" />
+                        <SummaryItem label="Desayuno" value={values.breakfast_time ? `${values.breakfast_time} - ${values.breakfast_details || ''}` : 'N/A'} />
+                        <SummaryItem label="Almuerzo" value={values.lunch_time ? `${values.lunch_time} - ${values.lunch_details || ''}` : 'N/A'} />
+                        <SummaryItem label="Cena" value={values.dinner_time ? `${values.dinner_time} - ${values.dinner_details || ''}` : 'N/A'} />
+                        <SummaryItem label="Snacks" value={values.snack_details} />
+                        <SummaryItem label="Prep. Preferida" value={values.prep_preference} />
+                        <SummaryItem label="Sabor Preferido" value={values.taste_preference} />
                     </div>
                 </section>
             </CardContent>
@@ -547,9 +742,9 @@ function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => 
     );
 }
 
-function SummaryItem({ label, value, className }: { label: string, value: string, className?: string }) {
+function SummaryItem({ label, value, className }: { label: string, value: any, className?: string }) {
     return (
-        <div className={cn("space-y-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5", className)}>
+        <div className={cn("space-y-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all", className)}>
             <p className="text-[10px] uppercase font-black tracking-tighter text-slate-500">{label}</p>
             <p className="text-white font-medium text-sm leading-relaxed">{value || 'No registrado'}</p>
         </div>
@@ -754,11 +949,11 @@ function HealthStatus({ form }: { form: any }) {
         <div className="space-y-10">
             <FormField control={form.control} name="health_conditions" render={() => (
                 <FormItem>
-                    <FormLabel className="text-lg">¿Presentas algunas de estas condiciones?</FormLabel>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                    <FormLabel className="text-lg font-bold text-white uppercase tracking-widest">¿Presentas algunas de estas condiciones?</FormLabel>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                         {conditions.map((item) => (
                             <FormField key={item} control={form.control} name="health_conditions" render={({ field }) => (
-                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormItem className="flex items-center space-x-3 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
                                     <FormControl>
                                         <Checkbox
                                             checked={field.value?.includes(item)}
@@ -768,7 +963,31 @@ function HealthStatus({ form }: { form: any }) {
                                             }}
                                         />
                                     </FormControl>
-                                    <FormLabel className="font-medium text-slate-300">{item}</FormLabel>
+                                    <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
+                                </FormItem>
+                            )} />
+                        ))}
+                    </div>
+                </FormItem>
+            )} />
+
+            <FormField control={form.control} name="family_history" render={() => (
+                <FormItem>
+                    <FormLabel className="text-lg font-bold text-white uppercase tracking-widest">Antecedentes Familiares (Padre, madre, abuelos)</FormLabel>
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                        {["Diabetes", "Hipertensión", "Cáncer", "Obesidad", "Enfermedades del corazón"].map((item) => (
+                            <FormField key={item} control={form.control} name="family_history" render={({ field }) => (
+                                <FormItem className="flex items-center space-x-3 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value?.includes(item)}
+                                            onCheckedChange={(checked: boolean) => {
+                                                const current = (field.value as string[]) || [];
+                                                return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
+                                            }}
+                                        />
+                                    </FormControl>
+                                    <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
                                 </FormItem>
                             )} />
                         ))}
@@ -814,7 +1033,7 @@ function ActivityExercise({ form }: { form: any }) {
     return (
         <div className="space-y-10">
             <FormField control={form.control} name="activity_level" render={({ field }) => (
-                <FormItem><FormLabel className="text-lg">¿Cómo es tu actividad diaria?</FormLabel>
+                <FormItem><FormLabel className="text-lg font-bold text-white uppercase tracking-widest">¿Cómo es tu actividad diaria?</FormLabel>
                     <FormControl>
                         <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-1 gap-4 mt-4">
                             <div className="flex items-center space-x-3 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-nutri-brand/30 transition-all cursor-pointer">
@@ -837,13 +1056,93 @@ function ActivityExercise({ form }: { form: any }) {
                 <FormItem><FormLabel>Horario de trabajo (Días y horas) (Opcional)</FormLabel><FormControl><Input {...field} placeholder="L-V 8am-6pm" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="does_exercise" render={({ field }) => (
-                <FormItem><FormLabel>¿Actualmente realizas ejercicio?</FormLabel>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8">
+                <FormItem><FormLabel className="text-lg font-bold text-white uppercase tracking-widest">¿Actualmente realizas ejercicio?</FormLabel>
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
                         <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="exe-yes" /><Label htmlFor="exe-yes" className="text-white">Sí</Label></div>
                         <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="exe-no" /><Label htmlFor="exe-no" className="text-white">No</Label></div>
                     </RadioGroup>
                     <FormMessage /></FormItem>
             )} />
+
+            {form.watch('does_exercise') === 'yes' && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-top-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FormField control={form.control} name="exercise_duration" render={({ field }) => (
+                            <FormItem><FormLabel>¿Cuánto tiempo de ejercicio realizas?</FormLabel><FormControl><Input {...field} placeholder="Ej: 1 hora" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="exercise_time" render={({ field }) => (
+                            <FormItem><FormLabel>¿A qué hora sueles entrenar?</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    </div>
+
+                    <FormField control={form.control} name="exercise_types" render={() => (
+                        <FormItem>
+                            <FormLabel className="text-sm font-bold text-slate-400">¿Qué tipo de ejercicio realizas?</FormLabel>
+                            <div className="flex flex-wrap gap-3 mt-3">
+                                {["Pesas", "Funcional", "Crossfit", "Natación", "Ciclismo", "Correr", "Yoga", "Pilates"].map((item) => (
+                                    <FormField key={item} control={form.control} name="exercise_types" render={({ field }) => (
+                                        <FormItem className="flex items-center space-x-2 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value?.includes(item)}
+                                                    onCheckedChange={(checked: boolean) => {
+                                                        const current = (field.value as string[]) || [];
+                                                        return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
+                                        </FormItem>
+                                    )} />
+                                ))}
+                            </div>
+                        </FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="exercise_days" render={() => (
+                        <FormItem>
+                            <FormLabel className="text-sm font-bold text-slate-400">¿Qué días sueles entrenar?</FormLabel>
+                            <div className="flex gap-2 mt-3">
+                                {["L", "Ma", "Mi", "J", "V", "S", "D"].map((item) => (
+                                    <FormField key={item} control={form.control} name="exercise_days" render={({ field }) => (
+                                        <FormItem className="flex-1 space-y-0">
+                                            <FormControl>
+                                                <div
+                                                    onClick={() => {
+                                                        const current = (field.value as string[]) || [];
+                                                        const exists = current.includes(item);
+                                                        field.onChange(exists ? current.filter(v => v !== item) : [...current, item]);
+                                                    }}
+                                                    className={cn(
+                                                        "h-12 rounded-xl border flex items-center justify-center font-black cursor-pointer transition-all",
+                                                        field.value?.includes(item) ? "bg-nutri-brand border-nutri-brand text-white" : "bg-white/5 border-white/10 text-slate-500"
+                                                    )}
+                                                >
+                                                    {item}
+                                                </div>
+                                            </FormControl>
+                                        </FormItem>
+                                    )} />
+                                ))}
+                            </div>
+                        </FormItem>
+                    )} />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FormField control={form.control} name="has_calorie_tracker" render={({ field }) => (
+                            <FormItem><FormLabel>¿Cuentas con un contador de calorías?</FormLabel>
+                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="cal-yes" /><Label htmlFor="cal-yes" className="text-white">Sí</Label></div>
+                                    <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="cal-no" /><Label htmlFor="cal-no" className="text-white">No</Label></div>
+                                </RadioGroup>
+                                <FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="calorie_expenditure_details" render={({ field }) => (
+                            <FormItem><FormLabel>Detalle de gasto calórico (Opcional)</FormLabel><FormControl><Input {...field} placeholder="Ej: 500 kcal por sesión" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -862,6 +1161,30 @@ function Habits({ form }: { form: any }) {
                         </SelectContent>
                     </Select>
                     <FormMessage /></FormItem>
+            )} />
+
+            <FormField control={form.control} name="appetite_peak_time" render={() => (
+                <FormItem className="col-span-full">
+                    <FormLabel className="text-sm font-bold text-slate-400">¿En qué momento del día sientes más hambre?</FormLabel>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                        {["Mañana", "Tarde", "Noche", "Todo el día", "Madrugada"].map((item) => (
+                            <FormField key={item} control={form.control} name="appetite_peak_time" render={({ field }) => (
+                                <FormItem className="flex items-center space-x-2 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value?.includes(item)}
+                                            onCheckedChange={(checked: boolean) => {
+                                                const current = (field.value as string[]) || [];
+                                                return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
+                                            }}
+                                        />
+                                    </FormControl>
+                                    <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
+                                </FormItem>
+                            )} />
+                        ))}
+                    </div>
+                </FormItem>
             )} />
             <FormField control={form.control} name="thirst_level" render={({ field }) => (
                 <FormItem><FormLabel>¿Cómo está tu sed?</FormLabel>
@@ -991,6 +1314,19 @@ function Habits({ form }: { form: any }) {
                     <FormMessage />
                 </FormItem>
             )} />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
+                <FormField control={form.control} name="disliked_vegetables" render={({ field }) => (
+                    <FormItem><FormLabel>Vegetales que no te agradan</FormLabel><FormControl><Input {...field} placeholder="Ej: Cebolla, Brócoli" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="disliked_fruits" render={({ field }) => (
+                    <FormItem><FormLabel>Frutas que no te agradan</FormLabel><FormControl><Input {...field} placeholder="Ej: Papaya, Melón" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                )} />
+            </div>
+
+            <FormField control={form.control} name="disliked_preparations" render={({ field }) => (
+                <FormItem><FormLabel>Preparaciones que no te agradan</FormLabel><FormControl><Input {...field} placeholder="Ej: Guisos, Ensaladas crudas" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+            )} />
         </div>
     );
 }
@@ -998,38 +1334,84 @@ function Habits({ form }: { form: any }) {
 function DietCooking({ form }: { form: any }) {
     return (
         <div className="space-y-10">
-            <FormField control={form.control} name="cooks_for_self" render={({ field }) => (
-                <FormItem><FormLabel>¿Quién prepara tu comida?</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                        <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                            <SelectItem value="yo_mismo">Yo mism@</SelectItem>
-                            <SelectItem value="pareja">Pareja</SelectItem>
-                            <SelectItem value="mama">Mamá</SelectItem>
-                            <SelectItem value="hermana">Hermana</SelectItem>
-                            <SelectItem value="abuela">Abuela</SelectItem>
-                            <SelectItem value="restaurante">Come en el restaurante</SelectItem>
-                            <SelectItem value="concesionario">Come en el concesionario</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage /></FormItem>
+            <FormField control={form.control} name="available_instruments" render={() => (
+                <FormItem>
+                    <FormLabel className="text-lg font-bold text-white uppercase tracking-widest">¿Cuentas con algunos de estos instrumentos?</FormLabel>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                        {["Balanza de alimentos", "Balanza corporal", "Cinta métrica", "Air fryer", "Licuadora"].map((item) => (
+                            <FormField key={item} control={form.control} name="available_instruments" render={({ field }) => (
+                                <FormItem className="flex items-center space-x-3 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value?.includes(item)}
+                                            onCheckedChange={(checked: boolean) => {
+                                                const current = (field.value as string[]) || [];
+                                                return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
+                                            }}
+                                        />
+                                    </FormControl>
+                                    <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
+                                </FormItem>
+                            )} />
+                        ))}
+                    </div>
+                </FormItem>
             )} />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <FormField control={form.control} name="specific_diet_type" render={({ field }) => (
+                    <FormItem><FormLabel>¿Tienes algún tipo de alimentación específica?</FormLabel><FormControl><Input {...field} placeholder="Ej: Vegano, Keto, etc." className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="cooks_for_self" render={({ field }) => (
+                    <FormItem><FormLabel>¿Quién prepara tu comida?</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                            <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                <SelectItem value="yo_mismo">Yo mism@</SelectItem>
+                                <SelectItem value="pareja">Pareja</SelectItem>
+                                <SelectItem value="mama">Mamá</SelectItem>
+                                <SelectItem value="restaurante">Restaurante</SelectItem>
+                                <SelectItem value="otros">Otros</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage /></FormItem>
+                )} />
+            </div>
+
             <FormField control={form.control} name="likes_cooking" render={({ field }) => (
                 <FormItem><FormLabel>¿Te gusta cocinar?</FormLabel>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8">
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
                         <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="cook-yes" /><Label htmlFor="cook-yes" className="text-white">Sí</Label></div>
                         <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="cook-no" /><Label htmlFor="cook-no" className="text-white">No</Label></div>
                     </RadioGroup>
                     <FormMessage /></FormItem>
             )} />
-            <FormField control={form.control} name="food_intolerances" render={({ field }) => (
-                <FormItem><FormLabel>¿Eres intolerante a algún alimento?</FormLabel>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8">
-                        <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="int-yes" /><Label htmlFor="int-yes" className="text-white">Sí</Label></div>
-                        <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="int-no" /><Label htmlFor="int-no" className="text-white">No</Label></div>
-                    </RadioGroup>
-                    <FormMessage /></FormItem>
-            )} />
+
+            {form.watch('likes_cooking') === 'yes' && (
+                <FormField control={form.control} name="cooking_preparations" render={({ field }) => (
+                    <FormItem><FormLabel>¿Qué preparaciones sueles realizar?</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                )} />
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
+                <FormField control={form.control} name="food_allergies" render={({ field }) => (
+                    <FormItem><FormLabel>¿Tienes alergia a algún alimento?</FormLabel><FormControl><Input {...field} placeholder="Ej: Maní, Mariscos" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="food_intolerances" render={({ field }) => (
+                    <FormItem><FormLabel>¿Eres intolerante a algún alimento?</FormLabel>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="int-yes" /><Label htmlFor="int-yes" className="text-white">Sí</Label></div>
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="int-no" /><Label htmlFor="int-no" className="text-white">No</Label></div>
+                        </RadioGroup>
+                        <FormMessage /></FormItem>
+                )} />
+            </div>
+
+            {form.watch('food_intolerances') === 'yes' && (
+                <FormField control={form.control} name="intolerance_details" render={({ field }) => (
+                    <FormItem><FormLabel>Especifica a qué eres intolerante</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                )} />
+            )}
         </div>
     );
 }
@@ -1050,14 +1432,47 @@ function DairySupplements({ form }: { form: any }) {
                     </Select>
                     <FormMessage /></FormItem>
             )} />
+
+            {form.watch('dairy_consumption') !== 'ninguno' && (
+                <FormField control={form.control} name="dairy_brands" render={({ field }) => (
+                    <FormItem><FormLabel>Especifica la marca y tipo de los lácteos</FormLabel><FormControl><Input {...field} placeholder="Ej: Gloria Light, Laive Sin Lactosa" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                )} />
+            )}
+
             <FormField control={form.control} name="supplements_consumption" render={({ field }) => (
                 <FormItem><FormLabel>¿Consumes suplementos?</FormLabel>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8">
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
                         <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="sup-yes" /><Label htmlFor="sup-yes" className="text-white">Sí</Label></div>
                         <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="sup-no" /><Label htmlFor="sup-no" className="text-white">No</Label></div>
                     </RadioGroup>
                     <FormMessage /></FormItem>
             )} />
+
+            {form.watch('supplements_consumption') === 'yes' && (
+                <FormField control={form.control} name="supplement_types" render={() => (
+                    <FormItem>
+                        <FormLabel className="text-sm font-bold text-slate-400">¿Qué tipo de suplemento consumes?</FormLabel>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                            {["Whey Protein", "Creatina", "Multivitamínico", "Magnesio", "Omega 3", "Colágeno", "Pre-entreno", "BCAA"].map((item) => (
+                                <FormField key={item} control={form.control} name="supplement_types" render={({ field }) => (
+                                    <FormItem className="flex items-center space-x-2 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value?.includes(item)}
+                                                onCheckedChange={(checked: boolean) => {
+                                                    const current = (field.value as string[]) || [];
+                                                    return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
+                                                }}
+                                            />
+                                        </FormControl>
+                                        <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
+                                    </FormItem>
+                                )} />
+                            ))}
+                        </div>
+                    </FormItem>
+                )} />
+            )}
         </div>
     );
 }
@@ -1137,7 +1552,31 @@ function Dislikes({ form }: { form: any }) {
 function Lifestyle({ form }: { form: any }) {
     return (
         <div className="space-y-10">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <FormField control={form.control} name="previous_unhealthy_habits" render={() => (
+                <FormItem>
+                    <FormLabel className="text-lg font-bold text-white uppercase tracking-widest">¿Qué hábitos no saludables consumías antes?</FormLabel>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+                        {["Gaseosas", "Dulces/Postres", "Alcohol", "Tabaco", "Comida rápida", "Frituras", "Exceso de sal", "Picoteo"].map((item) => (
+                            <FormField key={item} control={form.control} name="previous_unhealthy_habits" render={({ field }) => (
+                                <FormItem className="flex items-center space-x-2 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value?.includes(item)}
+                                            onCheckedChange={(checked: boolean) => {
+                                                const current = (field.value as string[]) || [];
+                                                return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
+                                            }}
+                                        />
+                                    </FormControl>
+                                    <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
+                                </FormItem>
+                            )} />
+                        ))}
+                    </div>
+                </FormItem>
+            )} />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-white/5">
                 <FormField control={form.control} name="wake_up_time" render={({ field }) => (
                     <FormItem><FormLabel>Hora despertar</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
                 )} />
@@ -1145,20 +1584,56 @@ function Lifestyle({ form }: { form: any }) {
                     <FormItem><FormLabel>Hora dormir</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
                 )} />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+
+            <div className="space-y-6 pt-6 border-t border-white/5">
+                <h4 className="font-bold text-slate-400 uppercase tracking-widest text-xs">Detalle de Comidas Diarias</h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField control={form.control} name="breakfast_time" render={({ field }) => (
+                        <FormItem><FormLabel>Hora Desayuno</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="breakfast_details" render={({ field }) => (
+                        <FormItem className="md:col-span-2"><FormLabel>¿Qué sueles desayunar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Avena con frutas" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                    )} />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField control={form.control} name="lunch_time" render={({ field }) => (
+                        <FormItem><FormLabel>Hora Almuerzo</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="lunch_details" render={({ field }) => (
+                        <FormItem className="md:col-span-2"><FormLabel>¿Qué sueles almorzar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Pollo con arroz y ensalada" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                    )} />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField control={form.control} name="dinner_time" render={({ field }) => (
+                        <FormItem><FormLabel>Hora Cena</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="dinner_details" render={({ field }) => (
+                        <FormItem className="md:col-span-2"><FormLabel>¿Qué sueles cenar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Sopa de verduras" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                    )} />
+                </div>
+
+                <FormField control={form.control} name="snack_details" render={({ field }) => (
+                    <FormItem><FormLabel>Detalles de Media Mañana / Media Tarde</FormLabel><FormControl><Input {...field} placeholder="Ej: Fruta, frutos secos" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                )} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-8 border-t border-white/5">
                 <FormField control={form.control} name="prep_preference" render={({ field }) => (
                     <FormItem><FormLabel>Preferencia preparación</FormLabel>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8">
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="faciles" id="p-e" /><Label htmlFor="p-e" className="text-white">Fáciles</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="dificiles" id="p-h" /><Label htmlFor="p-h" className="text-white">Difíciles</Label></div>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="faciles" id="p-e" /><Label htmlFor="p-e" className="text-white cursor-pointer">Fáciles</Label></div>
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="dificiles" id="p-h" /><Label htmlFor="p-h" className="text-white cursor-pointer">Difíciles</Label></div>
                         </RadioGroup>
                         <FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="taste_preference" render={({ field }) => (
                     <FormItem><FormLabel>Preferencia sabor</FormLabel>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8">
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="dulces" id="t-s" /><Label htmlFor="t-s" className="text-white">Dulces</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="salados" id="t-a" /><Label htmlFor="t-a" className="text-white">Salados</Label></div>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="dulces" id="t-s" /><Label htmlFor="t-s" className="text-white cursor-pointer">Dulces</Label></div>
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="salados" id="t-a" /><Label htmlFor="t-a" className="text-white cursor-pointer">Salados</Label></div>
                         </RadioGroup>
                         <FormMessage /></FormItem>
                 )} />

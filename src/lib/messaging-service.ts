@@ -353,8 +353,13 @@ export const MessagingService = {
 
     // 9. Subscription Management
     getSubscriptionOffers: async () => {
-        const { data, error } = await supabase.from("subscription_offers").select("*").eq("is_active", true);
-        return error ? [] : data;
+        const { data, error } = await supabase.from("subscription_plans").select("*").eq("is_active", true);
+        return error ? [] : data.map(p => ({
+            ...p,
+            name: p.name_es,
+            price: p.price_pen,
+            duration_days: p.duration_months * 30
+        }));
     },
 
     getAllSubscriptions: async () => {
@@ -362,11 +367,16 @@ export const MessagingService = {
             .from("subscriptions")
             .select(`
                 *,
-                patient:patients(profile:profiles(full_name)),
-                offer:subscription_offers(name, price)
+                profile:profiles(full_name),
+                plan:subscription_plans(name_es, price_pen, included_measurements)
             `)
             .order("created_at", { ascending: false });
-        return error ? [] : data;
+        // Map profile to patient structure expected by UI
+        const mappedData = data?.map(sub => ({
+            ...sub,
+            patient: { profile: sub.profile }
+        }));
+        return error ? [] : mappedData;
     },
 
     requestSubscription: async (patientProfileId: string, offerId: string) => {
@@ -374,13 +384,18 @@ export const MessagingService = {
         const { data: patient } = await supabase.from("patients").select("id").eq("profile_id", patientProfileId).single();
         if (!patient) throw new Error("Patient not found");
 
+        // Get plan price for required fields
+        const { data: planData } = await supabase.from("subscription_plans").select("price_pen").eq("id", offerId).single();
+        const price = planData?.price_pen || 0;
+
         const { error } = await supabase.from("subscriptions").insert({
-            patient_id: patient.id,
-            offer_id: offerId,
-            start_date: new Date().toISOString(),
-            end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-            status: "pending",
-            payment_status: "pending"
+            patient_id: patientProfileId,
+            plan_id: offerId,
+            start_date: new Date().toISOString().split('T')[0],
+            end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            status: "pendiente",
+            original_price: price,
+            final_price: price
         });
         if (error) throw error;
 
@@ -389,12 +404,11 @@ export const MessagingService = {
         channel.close();
     },
 
-    handleSubscriptionStatus: async (subscriptionId: string, status: "active" | "cancelled") => {
+    handleSubscriptionStatus: async (subscriptionId: string, status: "activa" | "cancelada") => {
         const { error } = await supabase
             .from("subscriptions")
             .update({
-                status: status,
-                payment_status: status === "active" ? "paid" : "pending"
+                status: status
             })
             .eq("id", subscriptionId);
 
@@ -421,6 +435,135 @@ export const MessagingService = {
 
         const channel = new BroadcastChannel('nutrigo_global_sync');
         channel.postMessage({ type: 'PROFILE_UPDATED' });
+        channel.close();
+    },
+
+    assignPlanToPatient: async (patientProfileId: string, planType: string, measurements: number = 2) => {
+        // 1. Get real patient ID or create if missing
+        let pId: string;
+        const { data: pData, error: findError } = await supabase.from("patients").select("id").eq("profile_id", patientProfileId).maybeSingle();
+
+        if (findError) {
+            console.error("[assignPlanToPatient] RLS or DB error finding patient:", findError);
+            throw findError;
+        }
+
+        if (pData) {
+            pId = pData.id;
+        } else {
+            // Create record if missing for this profile
+            console.log("[assignPlanToPatient] Missing patient record for profile, creating...");
+            const { data: createdPatient, error: createError } = await supabase
+                .from("patients")
+                .insert({
+                    profile_id: patientProfileId,
+                    plan_type: planType
+                })
+                .select("id")
+                .single();
+
+            if (createError) throw createError;
+            pId = createdPatient.id;
+        }
+
+        // 2. Update current plan type in patients table
+        const { error: updateError } = await supabase.from("patients").update({
+            plan_type: planType,
+        }).eq("id", pId);
+
+        if (updateError) throw updateError;
+
+        // 3. Create entry in subscriptions history if not 'sin plan'
+        if (planType && planType !== "sin plan") {
+            let properPlanName = "Flexible Mensual";
+            const baseName = planType === 'plan menu semanal' ? 'Menú Semanal' : 'Flexible';
+
+            if (measurements === 2) properPlanName = `${baseName} Mensual`;
+            else if (measurements === 4) properPlanName = `${baseName} Bimestral`;
+            else if (measurements === 6) properPlanName = `${baseName} Trimestral`;
+
+            // Find a corresponding plan_id in subscription_plans
+            const { data: planData } = await supabase
+                .from("subscription_plans")
+                .select("id, price_pen, duration_months")
+                .ilike('name_es', properPlanName)
+                .eq('is_active', true)
+                .limit(1)
+                .maybeSingle();
+
+            // Fallback to any active plan if no name match
+            let planId = planData?.id;
+            let price = planData?.price_pen || 0;
+            let duration = planData?.duration_months || 1;
+
+            if (!planId) {
+                const { data: fallbackPlan } = await supabase
+                    .from("subscription_plans")
+                    .select("id, price_pen, duration_months")
+                    .eq('is_active', true)
+                    .limit(1)
+                    .maybeSingle();
+                planId = fallbackPlan?.id;
+                price = fallbackPlan?.price_pen || 0;
+                duration = fallbackPlan?.duration_months || 1;
+            }
+
+            const startDate = new Date();
+            const endDate = new Date(startDate);
+            endDate.setMonth(startDate.getMonth() + duration);
+
+            const { error: insertError } = await supabase.from("subscriptions").insert({
+                patient_id: patientProfileId,
+                plan_id: planId,
+                status: 'activa',
+                start_date: startDate.toISOString().split('T')[0],
+                end_date: endDate.toISOString().split('T')[0],
+                original_price: price,
+                final_price: price
+            });
+
+            if (insertError) {
+                console.error("Error inserting subscription history:", insertError);
+                throw insertError;
+            }
+        }
+
+        const channel = new BroadcastChannel('nutrigo_global_sync');
+        channel.postMessage({ type: 'PLAN_ASSIGNED' });
+        channel.close();
+    },
+
+    getPatientPlanHistory: async (patientProfileId: string) => {
+
+        const { data, error } = await supabase
+            .from("subscriptions")
+            .select(`*, plan:subscription_plans(name_es, price_pen, included_measurements)`)
+            .eq("patient_id", patientProfileId)
+            .order("created_at", { ascending: false });
+
+        return error ? [] : data;
+    },
+
+    deleteSubscription: async (subscriptionId: string) => {
+        const { data: subData } = await supabase.from("subscriptions").select("patient_id").eq("id", subscriptionId).maybeSingle();
+
+        const { error } = await supabase.from("subscriptions").delete().eq("id", subscriptionId);
+        if (error) throw error;
+
+        if (subData?.patient_id) {
+            const { count } = await supabase
+                .from("subscriptions")
+                .select("*", { count: 'exact', head: true })
+                .eq("patient_id", subData.patient_id)
+                .eq("status", "activa");
+
+            if (count === 0) {
+                await supabase.from("patients").update({ plan_type: "sin plan" }).eq("profile_id", subData.patient_id);
+            }
+        }
+
+        const channel = new BroadcastChannel('nutrigo_global_sync');
+        channel.postMessage({ type: 'SUBSCRIPTION_DELETED' });
         channel.close();
     }
 };

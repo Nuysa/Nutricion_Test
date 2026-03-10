@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Check, Ruler, User, Stethoscope, Apple } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardColumn, ClinicalVariable } from "@/lib/variables-service";
+import { PhotoUploadGroup } from "./PhotoUploadGroup";
 
 interface NewConsultationFormProps {
     date: string;
@@ -12,6 +13,7 @@ interface NewConsultationFormProps {
     setExtraData: (v: Record<string, any>) => void;
     onSave: () => void;
     onCancel: () => void;
+    patientId: string;
     patientHeight: number;
     recordNumber: number;
     layout: DashboardColumn[];
@@ -19,7 +21,7 @@ interface NewConsultationFormProps {
 }
 
 export function NewConsultationForm({
-    date, setDate, editValues, setEditValues, extraData, setExtraData, onSave, onCancel, patientHeight, recordNumber, layout, clinicalVariables
+    date, setDate, editValues, setEditValues, extraData, setExtraData, onSave, onCancel, patientId, patientHeight, recordNumber, layout, clinicalVariables
 }: NewConsultationFormProps) {
 
     // Auto-calculate IMC
@@ -152,6 +154,9 @@ export function NewConsultationForm({
                         );
                     })}
                 </div>
+
+                {/* Registro Fotográfico */}
+                <PhotoUploadGroup patientId={patientId} extraData={extraData} setExtraData={setExtraData} />
             </div>
         </div>
     );

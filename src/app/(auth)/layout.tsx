@@ -27,7 +27,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
                     <div className="space-y-4 sm:space-y-6">
                         <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white leading-[0.9] tracking-tighter uppercase italic">
-                            Tu Biología <br />
+                            Nutrición <br />
                             <span className="text-nutri-brand drop-shadow-[0_0_30px_rgba(255,122,0,0.3)]">Optimizada.</span>
                         </h1>
                         <p className="text-slate-400 text-lg lg:text-xl font-bold leading-relaxed max-w-lg mx-auto lg:mx-0">
@@ -37,7 +37,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
                     <div className="grid grid-cols-3 gap-3 sm:gap-6 pt-4 sm:pt-8 max-w-sm mx-auto lg:mx-0">
                         {[
-                            { label: "Pacientes", val: "5K+" },
+                            { label: "A tu medida", val: "Planes" },
                             { label: "Resultados", val: "100%" },
                             { label: "Precisión", val: "Gold" },
                         ].map((stat, i) => (

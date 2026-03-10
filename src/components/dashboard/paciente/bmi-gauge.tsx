@@ -82,6 +82,8 @@ export function BMIGauge() {
             let findingsValue = "No hay una medición registrada.";
             let recommendationsValue = "No hay una medición registrada.";
 
+            let idealWeightData: number | null = null;
+
             if (wData && wData.length > 0) {
                 const latest = wData[0];
                 weightValue = parseFloat(latest.weight?.toString() || "0");
@@ -90,6 +92,10 @@ export function BMIGauge() {
                 }
                 findingsValue = (latest.extra_data && latest.extra_data['PRINCIPALES_HALLAZGOS']) || latest.clinical_findings || "No hay hallazgos para esta medición.";
                 recommendationsValue = (latest.extra_data && latest.extra_data['RECOMENDACION_NUTRICIONAL']) || latest.nutritional_recommendations || "No hay recomendaciones para esta medición.";
+
+                if (latest.extra_data && latest.extra_data['PESO_IDEAL']) {
+                    idealWeightData = parseFloat(latest.extra_data['PESO_IDEAL']);
+                }
 
                 const oldest = wData[wData.length - 1];
                 startWeightValue = parseFloat(oldest.weight?.toString() || startWeightValue.toString());
@@ -102,13 +108,42 @@ export function BMIGauge() {
                 recommendationsValue = "Bienvenido a tu plan de nutrición.";
             }
 
-            const idealWeight = h > 0 ? parseFloat((22 * (h / 100) * (h / 100)).toFixed(1)) : 0;
-
-            const { data: diagVar } = await supabase
+            const { data: clinicalVars } = await supabase
                 .from("clinical_variables")
-                .select("id, code, variable_logic(id, type, condition_name, variable_ranges(*))")
-                .eq("code", "DIAGNOSTICO_IMC")
-                .single();
+                .select("id, code, variable_logic(id, type, condition_name, variable_ranges(*), tokens)")
+                .in("code", ["DIAGNOSTICO_IMC", "PESO_IDEAL"]);
+
+            const diagVar = clinicalVars?.find(v => v.code === "DIAGNOSTICO_IMC");
+            const pesoIdealVar = clinicalVars?.find(v => v.code === "PESO_IDEAL");
+
+            if (idealWeightData === null && pesoIdealVar && pesoIdealVar.variable_logic && pesoIdealVar.variable_logic.length > 0) {
+                const logic = pesoIdealVar.variable_logic.find((l: any) => l.condition_name === 'General' || l.type === 'default') || pesoIdealVar.variable_logic[0];
+                if (logic && logic.tokens && logic.tokens.length > 0) {
+                    try {
+                        let formulaStr = "";
+                        logic.tokens.forEach((t: any) => { formulaStr += t.value; });
+
+                        // Parse custom variables to current values
+                        formulaStr = formulaStr.replace(/PESO_ACTUAL/gi, weightValue.toString());
+                        formulaStr = formulaStr.replace(/TALLA/gi, h.toString());
+                        formulaStr = formulaStr.replace(/IMC/gi, imcValue.toString());
+
+                        // Convert math power operator for JavaScript evaluation
+                        formulaStr = formulaStr.replace(/\^/g, "**");
+
+                        // Safely evaluate math expression
+                        const calculatedIdeal = Function(`"use strict"; return (${formulaStr})`)();
+                        if (calculatedIdeal && !isNaN(calculatedIdeal)) {
+                            idealWeightData = parseFloat(Number(calculatedIdeal).toFixed(1));
+                        }
+                    } catch (e) {
+                        console.error("Error evaluating ideal weight formula locally:", e);
+                    }
+                }
+            }
+
+            const idealWeight = idealWeightData !== null ? idealWeightData : (h > 0 ? parseFloat((22 * (h / 100) * (h / 100)).toFixed(1)) : 0);
+            const targetWeight = Math.max(weightValue - 2, idealWeight);
 
             let dynamicSegments = fallbackBmiData;
             let dynamicInfo = fallbackGetBMIInfo(imcValue);
@@ -169,6 +204,7 @@ export function BMIGauge() {
                 currentWeight: weightValue,
                 initialWeight: startWeightValue,
                 goalWeight: idealWeight,
+                targetWeight: targetWeight,
                 info: dynamicInfo,
                 chartSegments: dynamicSegments,
                 findings: findingsValue,
@@ -208,11 +244,12 @@ export function BMIGauge() {
         };
     }, [fetchBMI, supabase]);
 
-    const { currentIMC, currentWeight, initialWeight, goalWeight, info } = imcData || {
+    const { currentIMC, currentWeight, initialWeight, goalWeight, targetWeight, info } = imcData || {
         currentIMC: 0,
         currentWeight: 0,
         initialWeight: 0,
         goalWeight: 0,
+        targetWeight: 0,
         info: fallbackGetBMIInfo(0)
     };
     const progress = Math.min(Math.max((currentIMC - info.min) / (info.max - info.min), 0), 1);
@@ -251,7 +288,7 @@ export function BMIGauge() {
                                 Índice de Masa Corporal (IMC)
                             </h3>
 
-                            <div className="relative h-[200px] w-full max-w-[360px] mb-8">
+                            <div className="relative h-[220px] w-full max-w-[400px] mb-8">
                                 <ResponsiveContainer width="100%" height="100%" className="pointer-events-none">
                                     {shouldAnimate ? (
                                         <PieChart>
@@ -262,8 +299,8 @@ export function BMIGauge() {
                                                 cy="100%"
                                                 startAngle={180}
                                                 endAngle={0}
-                                                innerRadius={120}
-                                                outerRadius={180}
+                                                innerRadius={135}
+                                                outerRadius={175}
                                                 paddingAngle={4}
                                                 dataKey="value"
                                                 stroke="none"
@@ -295,8 +332,8 @@ export function BMIGauge() {
                                                 cy="100%"
                                                 startAngle={180}
                                                 endAngle={0}
-                                                innerRadius={90}
-                                                outerRadius={115}
+                                                innerRadius={105}
+                                                outerRadius={125}
                                                 paddingAngle={0}
                                                 dataKey="value"
                                                 stroke="none"
@@ -323,12 +360,11 @@ export function BMIGauge() {
                                     </p>
                                 </div>
 
-                                {/* Centered IMC Text */}
                                 <div className="absolute bottom-2 left-0 right-0 text-center pointer-events-none z-10 transition-all duration-500">
                                     <span className="text-4xl font-tech font-black text-white tracking-tighter">
                                         {currentIMC || "---"}
                                     </span>
-                                    <p className="text-[15px] font-tech font-black tracking-[0.3em] uppercase mt-2 transition-all duration-500"
+                                    <p className="text-[14px] font-tech font-black tracking-[0.25em] uppercase mt-1 transition-all duration-500 truncate px-4"
                                         style={{ color: info.color }}
                                     >
                                         {info.category}
@@ -351,8 +387,8 @@ export function BMIGauge() {
                                     <p className="text-xl font-tech font-bold text-white tracking-tight">{initialWeight.toFixed(1)} kg</p>
                                 </div>
                                 <div className="border-t border-white/5 pt-3 text-center">
-                                    <p className="text-[14px] font-bold text-slate-500 uppercase">Diferencia Meta</p>
-                                    <p className="text-xl font-tech font-bold text-white tracking-tight">{Math.abs(currentWeight - goalWeight).toFixed(1)} kg</p>
+                                    <p className="text-[14px] font-bold text-slate-500 uppercase">Peso Objetivo</p>
+                                    <p className="text-xl font-tech font-bold text-white tracking-tight">{targetWeight.toFixed(1)} kg</p>
                                 </div>
                                 <div className="border-t border-white/5 pt-3 text-right">
                                     <p className="text-[14px] font-bold text-slate-500 uppercase">Peso Meta</p>

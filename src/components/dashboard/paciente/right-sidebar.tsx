@@ -317,16 +317,20 @@ function ScheduledAppointments({ date, patientId }: { date: Date, patientId?: st
     );
 }
 
-function NextAppointment({ patientId }: { patientId?: string }) {
+function NextAppointment({ patientId, profileId }: { patientId?: string; profileId?: string }) {
     const [nextAppt, setNextAppt] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [planStats, setPlanStats] = useState({ used: 0, limit: 0, isActive: false });
     const supabase = createClient();
 
     useEffect(() => {
         if (!patientId) return;
         async function fetchNext() {
+            setLoading(true);
             const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
-            const { data, error } = await supabase
+
+            // 1. Fetch Next Appointment
+            const { data: appt } = await supabase
                 .from("appointments")
                 .select("*, nutritionist:profiles!nutritionist_id(full_name)")
                 .eq("patient_id", patientId)
@@ -337,11 +341,31 @@ function NextAppointment({ patientId }: { patientId?: string }) {
                 .limit(1)
                 .maybeSingle();
 
-            if (data && !error) {
-                setNextAppt(data);
+            setNextAppt(appt);
+
+            // 2. Fetch Plan Stats
+            const { data: sub } = await supabase
+                .from('subscriptions')
+                .select('*, plan:subscription_plans(included_measurements)')
+                .eq('patient_id', profileId)
+                .eq('status', 'activa')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (sub) {
+                const limit = sub.plan?.included_measurements || sub.metadata?.measurements_limit || 0;
+                const { count } = await supabase
+                    .from('measurements')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('patient_id', profileId)
+                    .gte('created_at', sub.created_at);
+
+                setPlanStats({ used: count || 0, limit, isActive: true });
             } else {
-                setNextAppt(null);
+                setPlanStats({ used: 0, limit: 0, isActive: false });
             }
+
             setLoading(false);
         }
         fetchNext();
@@ -357,7 +381,19 @@ function NextAppointment({ patientId }: { patientId?: string }) {
     return (
         <Card className="rounded-[2.5rem] bg-nutri-base text-white shadow-xl overflow-hidden relative group border border-nutri-brand/10">
             <CardHeader className="pb-2">
-                <CardTitle className="text-[10px] font-tech font-black uppercase tracking-[0.2em] text-nutri-brand">Próxima Cita</CardTitle>
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-[10px] font-tech font-black uppercase tracking-[0.2em] text-nutri-brand">Próxima Cita</CardTitle>
+                    <Badge variant="outline" className={cn(
+                        "text-[10px] border-none font-black px-3 py-1 rounded-lg",
+                        (!planStats.isActive || planStats.used >= planStats.limit)
+                            ? "bg-red-500/10 text-red-500"
+                            : "bg-nutrition-500/10 text-nutrition-400"
+                    )}>
+                        {(!planStats.isActive || planStats.used >= planStats.limit)
+                            ? "0 Mediciones Restantes"
+                            : `${planStats.limit - planStats.used} Mediciones Restantes`}
+                    </Badge>
+                </div>
             </CardHeader>
             <CardContent>
                 {nextAppt && d ? (
@@ -396,6 +432,7 @@ function NextAppointment({ patientId }: { patientId?: string }) {
 export function RightSidebar() {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [patientId, setPatientId] = useState<string>();
+    const [profileId, setProfileId] = useState<string>();
     const [planType, setPlanType] = useState<string>();
     const [version, setVersion] = useState(0);
     const supabase = createClient();
@@ -406,6 +443,7 @@ export function RightSidebar() {
             if (!user) return;
             const { data: profile } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
             if (!profile) return;
+            setProfileId(profile.id);
             const { data: patient } = await supabase.from("patients").select("id, plan_type").eq("profile_id", profile.id).single();
             if (patient) {
                 setPatientId(patient.id);
@@ -437,7 +475,7 @@ export function RightSidebar() {
     return (
         <div className="space-y-4 sticky top-24 h-[calc(100vh-7rem)] overflow-y-auto pr-2 custom-scrollbar">
             <MiniCalendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
-            <NextAppointment patientId={patientId} />
+            <NextAppointment patientId={patientId} profileId={profileId} />
             <MealsTimeline date={selectedDate} patientId={patientId} planType={planType} version={version} />
             <ScheduledAppointments date={selectedDate} patientId={patientId} />
         </div>
