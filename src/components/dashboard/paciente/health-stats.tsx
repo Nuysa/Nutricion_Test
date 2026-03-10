@@ -196,7 +196,7 @@ export function HealthStats() {
                             const techName = (variable.code || "").toLowerCase();
                             const fixedMap: Record<string, string> = { "peso": "weight", "grasa": "body_fat_percentage", "cintura": "waist_circumference_cm", "musculo": "muscle_mass_percentage" };
                             const fCol = fixedMap[techName];
-                            if (fCol && latest && latest[fCol]) computedVal = latest[fCol].toString();
+                            if (fCol && latest && (latest as any)[fCol] != null) computedVal = (latest as any)[fCol].toString();
                         }
                     }
                     value = computedVal;
@@ -207,11 +207,11 @@ export function HealthStats() {
                     const techName = (variable.code || "").toLowerCase();
                     const fixedMapping: Record<string, string> = { "peso": "weight", "grasa": "body_fat_percentage", "cintura": "waist_circumference_cm", "musculo": "muscle_mass_percentage" };
                     const col = fixedMapping[techName];
-                    const recordValue = (latest && col) ? latest[col] : null;
+                    const recordValue = (latest && col) ? (latest as any)[col] : null;
 
                     if (recordValue != null) {
                         value = recordValue.toString();
-                        chartData = allRecords.slice(0, 5).reverse().map(r => ({ v: r[col] || 0 }));
+                        chartData = allRecords.slice(0, 5).reverse().map(r => ({ v: (r as any)[col] || 0 }));
                     } else {
                         if (techName === "peso") value = patientFallbackWeight.toString();
                         else if (techName === "talla") value = (patientData?.height_cm != null) ? patientData.height_cm.toString() : "0";

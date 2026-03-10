@@ -135,11 +135,11 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                 MessagingService.getSubscriptionOffers(),
                 MessagingService.getAllAppointments()
             ]);
-            setProfiles(fetchedProfiles);
-            setAssignments(fetchedAssignments);
-            setSubscriptions(fetchedSubs);
-            setOffers(fetchedOffers);
-            setAllAppointments(fetchedAppointments);
+            setProfiles(fetchedProfiles || []);
+            setAssignments(fetchedAssignments || {});
+            setSubscriptions(fetchedSubs || []);
+            setOffers(fetchedOffers || []);
+            setAllAppointments(fetchedAppointments || []);
             console.log(`[Dashboard] Data loaded. Assignments: ${Object.keys(fetchedAssignments).length}`);
         } catch (error) {
             console.error("Error loading admin data:", error);
