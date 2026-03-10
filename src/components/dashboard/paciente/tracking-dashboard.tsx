@@ -17,6 +17,7 @@ export function TrackingDashboard() {
     const [stats, setStats] = useState<any>({
         totalLost: "0.0",
         goalWeight: "--",
+        targetWeight: "--",
         specialistsCount: 0,
         reportStatus: "Pendiente"
     });
@@ -225,7 +226,15 @@ export function TrackingDashboard() {
 
                 setMeasurements(formatted);
 
-                const latestWeight = records[0].weight;
+                const latestWeight = records[0].weight || patientData.current_weight || 0;
+                const h = parseFloat(patientData.height_cm?.toString() || "0");
+
+                // Buscar Peso Ideal en la última medición
+                let pesoIdealActual = formatted[0]?._computedInputs?.['PESO_IDEAL'] || idealWeight;
+                if (typeof pesoIdealActual === 'number') pesoIdealActual = pesoIdealActual.toFixed(1);
+
+                const targetWeight = h > 0 ? Math.max(latestWeight - 2, parseFloat(String(pesoIdealActual || "0"))).toFixed(1) : "--";
+
                 const oldestWeight = records[records.length - 1].weight || patientData.current_weight || latestWeight;
                 const totalLost = (oldestWeight - latestWeight).toFixed(1);
 
@@ -247,7 +256,8 @@ export function TrackingDashboard() {
 
                 setStats({
                     totalLost,
-                    goalWeight: idealWeight,
+                    goalWeight: pesoIdealActual,
+                    targetWeight: targetWeight,
                     specialistsCount: patientData.nutritionist_id ? 1 : 0,
                     reportStatus: isComplete ? "Evaluación Completa" : "Evaluación Pendiente"
                 });
@@ -423,7 +433,6 @@ export function TrackingDashboard() {
         };
     }, []);
 
-    const isLosing = parseFloat(stats.totalLost) > 0;
 
     return (
         <div className="space-y-8">
@@ -454,10 +463,10 @@ export function TrackingDashboard() {
                             <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20">Meta</span>
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Diferencia Total</p>
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Peso Objetivo</p>
                             <div className="flex items-baseline gap-1">
                                 <h3 className="text-4xl font-tech font-black text-white tracking-tight">
-                                    {isLosing ? `-${stats.totalLost}` : stats.totalLost}
+                                    {stats.targetWeight}
                                 </h3>
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">kg</span>
                             </div>
@@ -475,7 +484,7 @@ export function TrackingDashboard() {
                             <span className="text-[10px] font-black text-sky-400 uppercase tracking-widest bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">Peso</span>
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Objetivo Ideal</p>
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Peso Ideal</p>
                             <div className="flex items-baseline gap-1">
                                 <h3 className="text-4xl font-tech font-black text-white tracking-tight">{stats.goalWeight}</h3>
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">kg</span>
