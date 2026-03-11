@@ -93,9 +93,9 @@ export function SubscriptionInfo() {
 
                 // Count measurements since sub start
                 let mQuery = supabase
-                    .from('measurements')
+                    .from('weight_records')
                     .select('*', { count: 'exact', head: true })
-                    .eq('patient_id', profile.id);
+                    .eq('patient_id', patient.id);
 
                 if (subStartDate) {
                     mQuery = mQuery.gte('created_at', subStartDate);

@@ -356,9 +356,9 @@ function NextAppointment({ patientId, profileId }: { patientId?: string; profile
             if (sub) {
                 const limit = sub.plan?.included_measurements || sub.metadata?.measurements_limit || 0;
                 const { count } = await supabase
-                    .from('measurements')
+                    .from('weight_records')
                     .select('*', { count: 'exact', head: true })
-                    .eq('patient_id', profileId)
+                    .eq('patient_id', patientId)
                     .gte('created_at', sub.created_at);
 
                 setPlanStats({ used: count || 0, limit, isActive: true });

@@ -100,7 +100,7 @@ export function HealthStats() {
 
             const [slotsRes, recordsRes, varsRes] = await Promise.all([
                 VariablesService.getCardSlots('paciente'),
-                patientData ? supabase.from("weight_records").select("id, weight, waist_circumference_cm, body_fat_percentage, muscle_mass_percentage, extra_data").eq("patient_id", patientData.id).order("date", { ascending: false }).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
+                patientData ? supabase.from("weight_records").select("id, weight, waist_circumference_cm, body_fat_percentage, extra_data").eq("patient_id", patientData.id).order("date", { ascending: false }).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
                 VariablesService.getVariables()
             ]);
 

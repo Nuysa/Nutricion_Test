@@ -24,7 +24,8 @@ import { NewConsultationForm } from "@/components/dashboard/nutricionista/NewCon
 import { EditConsultationModal } from "@/components/dashboard/nutricionista/EditConsultationModal";
 import { MedicalHistoryModal } from "@/components/dashboard/nutricionista/MedicalHistoryModal";
 import { PatientHistoryCharts } from "@/components/dashboard/paciente/PatientHistoryCharts";
-import { History } from "lucide-react";
+import { PhotoHistoryCarousel } from "@/components/dashboard/shared/photo-history-carousel";
+import { History, Camera } from "lucide-react";
 
 export default function PatientDetailPage() {
     const params = useParams();
@@ -57,6 +58,8 @@ export default function PatientDetailPage() {
     const [editValues, setEditValues] = useState<any>({});
     const [showChartsDialog, setShowChartsDialog] = useState(false);
     const [extraData, setExtraData] = useState<Record<string, any>>({});
+    const [todayAppointment, setTodayAppointment] = useState<any>(null);
+    const [photoHistory, setPhotoHistory] = useState<any[]>([]);
 
     const getIMCCategory = (val: string) => {
         if (val === "—" || !val) return "Sin datos";
@@ -140,6 +143,65 @@ export default function PatientDetailPage() {
                 .order("created_at", { ascending: false });
 
             if (hError) throw hError;
+
+            // Fetch Medical history photos
+            const { data: medHists } = await supabase
+                .from("patient_medical_histories")
+                .select("*")
+                .eq("patient_id", patientId)
+                .order("created_at", { ascending: false });
+            
+            let mappedHistory: any[] = [];
+            if (medHists && medHists.length > 0) {
+                mappedHistory = medHists
+                    .filter(h => h.photo_front_url || h.photo_side1_url || h.photo_side2_url || h.photo_back_url)
+                    .map(h => ({
+                        date: h.created_at.split('T')[0],
+                        photos: {
+                            1: h.photo_front_url,
+                            2: h.photo_side1_url,
+                            3: h.photo_side2_url,
+                            4: h.photo_back_url
+                        }
+                    }));
+            }
+            
+            const getExtra = (r: any) => (typeof r.extra_data === 'string' ? JSON.parse(r.extra_data) : (r.extra_data || {}));
+            const mappedRecords = (hData || [])
+                .filter((r: any) => {
+                    const ex = getExtra(r);
+                    return ex.photo_front_url || ex.photo_side1_url || ex.photo_side2_url || ex.photo_back_url;
+                })
+                .map((r: any) => {
+                    const ex = getExtra(r);
+                    return {
+                        date: r.date,
+                        photos: {
+                            1: ex.photo_front_url || null,
+                            2: ex.photo_side1_url || null,
+                            3: ex.photo_side2_url || null,
+                            4: ex.photo_back_url || null
+                        }
+                    };
+                });
+            const combinedHistory = [...mappedRecords, ...mappedHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            setPhotoHistory(combinedHistory);
+
+            // Fetch today's appointment
+            const todayD = new Date();
+            const yyyy = todayD.getFullYear();
+            const mm = String(todayD.getMonth() + 1).padStart(2, '0');
+            const dd = String(todayD.getDate()).padStart(2, '0');
+            const todayStr = `${yyyy}-${mm}-${dd}`;
+            
+            const { data: apts } = await supabase
+                .from("appointments")
+                .select("*")
+                .eq("patient_id", patientId)
+                .eq("date", todayStr);
+            
+            const activeApt = apts?.find(a => a.status !== 'cancelada' && a.status !== 'completada' && a.status !== 'completado' && a.status !== 'canceled');
+            setTodayAppointment(activeApt || null);
 
             let age = 0;
             if (pData.date_of_birth) {
@@ -371,7 +433,7 @@ export default function PatientDetailPage() {
                 waist_circumference_cm: parseNum(editValues.waist_circumference_cm),
                 clinical_findings: editValues.clinical_findings || "",
                 nutritional_recommendations: editValues.nutritional_recommendations || "",
-                extra_data: { ...filteredExtraData, ...cleanedExtraData } // fusionar manteniendo los 0s
+                extra_data: { ...filteredExtraData, ...cleanedExtraData, appointment_id: todayAppointment?.id || null } // fusionar manteniendo los 0s
             };
 
             const isNew = editingId === "new" || !editingId;
@@ -381,6 +443,10 @@ export default function PatientDetailPage() {
                 : await supabase.from("weight_records").update(rowData).eq("id", editingId);
 
             if (error) throw error;
+            
+            if (isNew && todayAppointment) {
+                await supabase.from("appointments").update({ status: 'completada' }).eq("id", todayAppointment.id);
+            }
 
             toast({ title: "Medición guardada" });
             setEditingId(null);
@@ -605,22 +671,24 @@ export default function PatientDetailPage() {
                     <Button variant="outline" className="rounded-xl font-black text-xs h-12 border-white/10 bg-white/5 text-white hover:bg-white/10 shadow-lg" onClick={() => setShowBioDialog(true)}>
                         <Edit2 className="h-4 w-4 mr-2 text-nutri-brand" /> Editar Ficha
                     </Button>
-                    <Button
-                        disabled={patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan")}
-                        className="rounded-xl bg-nutri-brand font-black text-xs text-white shadow-xl h-12 px-6 hover:scale-105 transition-all shadow-nutri-brand/20 uppercase tracking-widest disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:scale-100"
-                        onClick={() => {
-                            setIsAddingMode(true);
-                            setEditingId("new");
-                            setEditValues({
-                                date: new Date().toISOString().split('T')[0],
-                                weight: patient.rawWeight || "",
-                                findings: "",
-                                recommendations: ""
-                            });
-                            setExtraData({});
-                        }}>
-                        <Plus className="h-4 w-4 mr-2" /> Nueva Consulta
-                    </Button>
+                    <div title={!todayAppointment ? "Requiere una cita programada para hoy" : (patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan") ? "Requiere un plan activo" : "")}>
+                        <Button
+                            disabled={patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan") || !todayAppointment}
+                            className="rounded-xl bg-nutri-brand font-black text-xs text-white shadow-xl h-12 px-6 hover:scale-105 transition-all shadow-nutri-brand/20 uppercase tracking-widest disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:scale-100"
+                            onClick={() => {
+                                setIsAddingMode(true);
+                                setEditingId("new");
+                                setEditValues({
+                                    date: new Date().toISOString().split('T')[0],
+                                    weight: patient.rawWeight || "",
+                                    findings: "",
+                                    recommendations: ""
+                                });
+                                setExtraData({});
+                            }}>
+                            <Plus className="h-4 w-4 mr-2" /> Nueva Consulta
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -791,7 +859,7 @@ export default function PatientDetailPage() {
                                                     })()}
                                                 </td>
                                                 <td className="px-8 py-7">
-                                                    <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex justify-end transition-opacity">
                                                         <Button size="icon" variant="ghost" className="h-10 w-10 text-white rounded-xl bg-white/5 hover:bg-white/10 hover:text-nutri-brand transition-all border border-white/5" onClick={() => {
                                                             setEditingId(r.id);
                                                             setIsAddingMode(false);
@@ -936,7 +1004,15 @@ export default function PatientDetailPage() {
                     </DialogHeader>
                     <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
                         {chartProps ? (
-                            <PatientHistoryCharts {...chartProps} />
+                            <div className="space-y-8">
+                                <PatientHistoryCharts {...chartProps} />
+                                <div className="mt-8 bg-[#151F32] p-8 rounded-[3rem] border border-white/5 shadow-2xl">
+                                    <h3 className="text-xl font-black text-white tracking-tight uppercase mb-6 flex items-center gap-3">
+                                        <Camera className="h-5 w-5 text-nutri-brand" /> Seguimiento Fotográfico
+                                    </h3>
+                                    <PhotoHistoryCarousel photoHistory={photoHistory} />
+                                </div>
+                            </div>
                         ) : (
                             <div className="h-full flex flex-col items-center justify-center text-slate-600 gap-4">
                                 <History className="h-12 w-12 opacity-20" />
