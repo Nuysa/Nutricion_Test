@@ -36,25 +36,25 @@ export function NewConsultationForm({
     };
 
     return (
-        <div className="bg-[#151F32] border border-white/10 rounded-3xl p-8 mb-8 relative overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-4">
-            <div className="absolute top-0 right-0 bg-nutrition-500 text-white text-[10px] font-black px-6 py-2 rounded-bl-3xl tracking-widest uppercase">
+        <div className="bg-[#151F32] border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-8 mb-8 relative overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-4">
+            <div className="absolute top-0 right-0 bg-nutrition-500 text-white text-[8px] sm:text-[10px] font-black px-4 sm:px-6 py-1 sm:py-2 rounded-bl-2xl sm:rounded-bl-3xl tracking-widest uppercase">
                 Nueva Medición N° {recordNumber}
             </div>
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-6 mb-8 gap-6 border-b border-white/5 pb-8">
-                <div className="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-2xl border border-white/5">
-                    <p className="text-slate-400 font-black text-xs uppercase tracking-widest">Fecha Registro:</p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-6 mb-8 gap-4 sm:gap-6 border-b border-white/5 pb-8">
+                <div className="flex items-center gap-3 sm:gap-4 bg-white/5 px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border border-white/5 w-full sm:w-auto">
+                    <p className="text-slate-400 font-black text-[10px] sm:text-xs uppercase tracking-widest">Fecha Registro:</p>
                     <input
                         type="date"
                         value={date}
                         onChange={e => setDate(e.target.value)}
-                        className="text-white font-tech font-black bg-transparent border-none outline-none focus:ring-0 text-lg cursor-pointer"
+                        className="text-white font-tech font-black bg-transparent border-none outline-none focus:ring-0 text-base sm:text-lg cursor-pointer flex-1 sm:flex-none"
                     />
                 </div>
                 <div className="flex gap-4 w-full md:w-auto">
                     <button
                         onClick={onCancel}
-                        className="flex-1 md:flex-none text-slate-400 hover:text-white hover:bg-white/5 px-6 py-3 rounded-2xl transition-all font-black text-xs uppercase tracking-widest border border-white/5"
+                        className="flex-1 md:flex-none text-slate-400 hover:text-white hover:bg-white/5 px-4 sm:px-6 py-3 rounded-xl sm:rounded-2xl transition-all font-black text-[10px] sm:text-xs uppercase tracking-widest border border-white/5"
                     >
                         Cancelar
                     </button>
@@ -62,7 +62,7 @@ export function NewConsultationForm({
                         onClick={onSave}
                         disabled={isUploadingPhoto}
                         className={cn(
-                            "flex-1 md:flex-none px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg",
+                            "flex-1 md:flex-none px-6 sm:px-8 py-3 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 sm:gap-3 shadow-lg",
                             isUploadingPhoto
                                 ? "bg-slate-700 text-slate-400 cursor-not-allowed opacity-50"
                                 : "bg-nutrition-500 hover:bg-nutrition-600 text-white shadow-nutrition-500/20"
@@ -74,20 +74,20 @@ export function NewConsultationForm({
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <div className="col-span-1 flex flex-col gap-6">
-                    <div className="bg-white/[0.03] p-6 rounded-[2rem] border border-white/5 shadow-inner focus-within:border-nutrition-500/50 transition-all group">
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 group-focus-within:text-nutrition-400 transition-colors">Peso Actual (kg)</label>
+                <div className="col-span-1 flex flex-col gap-4 sm:gap-6">
+                    <div className="bg-white/[0.03] p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border border-white/5 shadow-inner focus-within:border-nutrition-500/50 transition-all group">
+                        <label className="block text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 sm:mb-2 group-focus-within:text-nutrition-400 transition-colors">Peso Actual (kg)</label>
                         <input
                             type="number" step="0.1" placeholder="0.0"
                             value={editValues.weight || ''}
                             onChange={e => setEditValues({ ...editValues, weight: e.target.value })}
-                            className="w-full text-4xl font-tech font-black text-white focus:outline-none transition-colors bg-transparent placeholder:text-white/10"
+                            className="w-full text-3xl sm:text-4xl font-tech font-black text-white focus:outline-none transition-colors bg-transparent placeholder:text-white/10"
                         />
                     </div>
-                    <div className="bg-white/[0.01] p-6 rounded-[2rem] border border-white/5 opacity-50 relative overflow-hidden">
+                    <div className="bg-white/[0.01] p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border border-white/5 opacity-50 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/5 blur-3xl -mr-16 -mt-16" />
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">IMC Auto-calculado</label>
-                        <div className="text-3xl font-tech font-black text-sky-400/60">{imc}</div>
+                        <label className="block text-[8px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 sm:mb-2">IMC Auto-calculado</label>
+                        <div className="text-2xl sm:text-3xl font-tech font-black text-sky-400/60">{imc}</div>
                     </div>
                 </div>
 

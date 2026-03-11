@@ -213,9 +213,9 @@ export function PatientHistoryCharts({
     };
 
     const FechasRow = () => (
-        <div className="flex items-center bg-white/[0.03] py-2 rounded-[2rem] border border-white/5 mb-4 px-6 w-full">
-            <div className="w-[260px] flex-none"><h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Registro Histórico</h3></div>
-            <div className="flex-1 min-w-0 flex px-2 text-[11px] font-tech font-black text-slate-400 uppercase tracking-widest relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-center bg-white/[0.03] py-2 rounded-2xl sm:rounded-[2rem] border border-white/5 mb-4 px-4 sm:px-6 w-full gap-4">
+            <div className="w-full sm:w-[260px] flex-none text-center sm:text-left"><h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Registro Histórico</h3></div>
+            <div className="flex-1 min-w-0 w-full flex px-2 text-[11px] font-tech font-black text-slate-400 uppercase tracking-widest relative overflow-hidden">
                 <div className="flex justify-between w-full relative">
                     {renderFechas.map((f, i) => <div key={i} className="flex-1 text-center opacity-60 min-w-[50px]">{f}</div>)}
                 </div>
@@ -224,15 +224,15 @@ export function PatientHistoryCharts({
     );
 
     const ChartCard = ({ title, subtitle, dataPoints, lineColor, customLabels }: { title: string, subtitle?: string, dataPoints: number[], lineColor: string, customLabels?: any[] }) => (
-        <div className="flex items-center bg-[#151F32] py-1 px-6 rounded-[1.5rem] border border-white/5 shadow-2xl hover:border-white/10 transition-all group overflow-hidden relative w-full">
+        <div className="flex flex-col sm:flex-row items-center bg-[#151F32] py-4 sm:py-1 px-4 sm:px-6 rounded-2xl sm:rounded-[1.5rem] border border-white/5 shadow-2xl hover:border-white/10 transition-all group overflow-hidden relative w-full gap-4 sm:gap-0">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/[0.01] blur-3xl -mr-16 -mt-16" />
-            <div className="w-[260px] flex-none relative z-10 pr-4">
-                <h3 className="text-xl font-black text-white tracking-tight leading-none uppercase">
+            <div className="w-full sm:w-[260px] flex-none relative z-10 pr-0 sm:pr-4 text-center sm:text-left">
+                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight leading-none uppercase">
                     {title}
                     {subtitle && <><br /><span className="text-[10px] text-slate-500 font-tech font-black tracking-widest uppercase mt-2 block opacity-60">{subtitle}</span></>}
                 </h3>
             </div>
-            <div className="flex-1 min-w-0 h-[90px] relative z-10 overflow-hidden text-left flex items-center px-1">
+            <div className="flex-1 min-w-0 w-full h-[90px] relative z-10 overflow-hidden text-left flex items-center px-1">
                 <div className="w-full h-full relative flex justify-between">
                     <Line options={getChartOptions(dataPoints, customLabels)} data={getChartData(dataPoints, lineColor, customLabels)} />
                 </div>
@@ -241,11 +241,11 @@ export function PatientHistoryCharts({
     );
 
     return (
-        <div className="bg-[#0B1120] rounded-[3rem] border border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] p-0 flex flex-col overflow-hidden m-auto w-full mb-12 pb-12 relative">
+        <div className="bg-[#0B1120] rounded-3xl sm:rounded-[3rem] border border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] p-0 flex flex-col overflow-hidden m-auto w-full mb-8 sm:mb-12 pb-8 sm:pb-12 relative">
             {/* Decorative Background Glow */}
             <div className="absolute top-0 left-1/4 w-1/2 h-64 bg-nutrition-500/5 blur-[120px] pointer-events-none" />
 
-            <div className="bg-white/[0.02] border-b border-white/5 rounded-b-[3rem] px-10 py-1.5 mb-4 flex justify-between items-center z-10 w-full relative overflow-x-auto no-scrollbar">
+            <div className="bg-white/[0.02] border-b border-white/5 rounded-b-[2rem] sm:rounded-b-[3rem] px-4 sm:px-10 py-1.5 mb-4 flex justify-between items-center z-10 w-full relative overflow-x-auto no-scrollbar">
                 {[
                     { key: 'peso', config: pesoConfig },
                     { key: 'grasa', config: grasaConfig },
@@ -254,8 +254,8 @@ export function PatientHistoryCharts({
                     { key: 'medidas', config: medidasConfig }
                 ].map(({ key, config }) => (
                     <button key={key} onClick={() => setActiveTab(key as any)} className={cn(btnBase, activeTab === key ? btnActive : btnInactive)}>
-                        <config.Icon className={cn("h-6 w-6 mb-2 transition-colors", activeTab !== key && "text-slate-600")} style={activeTab === key ? { color: config.color } : {}} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{config.label}</span>
+                        <config.Icon className={cn("h-5 w-5 sm:h-6 sm:w-6 mb-1 sm:mb-2 transition-colors", activeTab !== key && "text-slate-600")} style={activeTab === key ? { color: config.color } : {}} />
+                        <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{config.label}</span>
                     </button>
                 ))}
             </div>

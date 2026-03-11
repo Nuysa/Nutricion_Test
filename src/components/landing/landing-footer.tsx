@@ -93,13 +93,13 @@ export function LandingFooter() {
     };
 
     return (
-        <footer id="contacto" className="scroll-mt-32 relative z-10 pt-20 pb-10 border-t border-white/10 overflow-hidden bg-nutri-base">
+        <footer id="contacto" className="scroll-mt-32 relative z-10 pt-12 md:pt-20 pb-10 border-t border-white/10 overflow-hidden bg-nutri-base">
             <div className="absolute inset-0 organic-grid opacity-20 pointer-events-none z-0"></div>
 
-            <div className="max-w-screen-2xl mx-auto px-6 lg:px-8 relative z-10">
+            <div className="max-w-screen-2xl mx-auto px-4 md:px-8 relative z-10">
 
                 {/* CTA WhatsApp Box */}
-                <div className="bg-gradient-to-r from-nutri-panel to-nutri-base border border-white/10 rounded-[2rem] p-6 sm:p-10 md:p-14 flex flex-col md:flex-row justify-between items-center gap-6 md:gap-10 mb-16 shadow-2xl">
+                <div className="bg-gradient-to-r from-nutri-panel to-nutri-base border border-white/10 rounded-[2rem] p-6 md:p-14 flex flex-col md:flex-row justify-between items-center gap-8 md:gap-10 mb-16 shadow-2xl">
                     <div>
                         {isEditable ? (
                             <>

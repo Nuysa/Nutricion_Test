@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Beef, WheatOff, Droplets, Pencil, Play } from "lucide-react";
+import { Beef, WheatOff, Droplets } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useVisualEditor } from "@/components/dashboard/admin/visual-editor-context";
@@ -82,14 +82,14 @@ export function LandingHero() {
     };
 
     return (
-        <section id="inicio" className="relative pt-40 pb-20 lg:pt-48 lg:pb-32 min-h-screen flex items-center">
+        <section id="inicio" className="relative pt-32 pb-16 md:pt-48 md:pb-32 min-h-screen flex items-center overflow-x-hidden">
             <div className="absolute inset-0 organic-grid z-0 opacity-40"></div>
 
-            <div className="max-w-screen-2xl mx-auto px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-12 relative z-10 w-full">
+            <div className="max-w-screen-2xl mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center gap-12 lg:gap-20 relative z-10 w-full">
 
-                {/* Left content */}
-                <div className="lg:w-5/12 flex flex-col items-start text-left z-20">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-nutri-brand/30 bg-nutri-brand/5 text-nutri-brand text-[15px] font-tech font-bold mb-6 tracking-widest uppercase">
+                {/* Left content: Text & Stats */}
+                <div className="w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left z-20">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-nutri-brand/30 bg-nutri-brand/5 text-nutri-brand text-xs md:text-[15px] font-tech font-bold mb-6 tracking-widest uppercase">
                         {isEditable ? (
                             <EditableText
                                 label="Subtítulo"
@@ -106,13 +106,12 @@ export function LandingHero() {
                                     label="Título Hero (Usa \n para saltos de línea)"
                                     value={content.title}
                                     onSave={(val) => handleSave('title', val)}
-                                    className="text-4xl lg:text-6xl font-tech font-extrabold text-white"
+                                    className="text-4xl md:text-5xl lg:text-7xl font-tech font-extrabold text-white"
                                     multiline
                                 />
-                                <div className="text-[10px] text-slate-500 font-bold italic">* La última palabra siempre será naranja automáticamente.</div>
                             </div>
                         ) : (
-                            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-tech font-extrabold text-white leading-tight mb-6 sm:mb-8 tracking-tighter whitespace-pre-line">
+                            <h1 className="text-4xl md:text-5xl lg:text-7xl font-tech font-extrabold text-white leading-[1.1] mb-6 md:mb-8 tracking-tighter whitespace-pre-line">
                                 {content.title.replace(/\\n/g, '\n').split(' ').map((word, idx, arr) => {
                                     if (idx === arr.length - 1 || (idx === arr.length - 2 && arr[arr.length - 1] === '')) {
                                         return <span key={idx} className="text-nutri-brand">{word} </span>
@@ -123,60 +122,68 @@ export function LandingHero() {
                         )}
                     </div>
 
-                    <div className="mt-10 mb-2 border-l-2 border-dashed border-nutri-brand pl-6 py-2">
+                    <div className="mt-4 md:mt-8 mb-2 border-l-2 md:border-l-4 border-dashed border-nutri-brand pl-6 py-2">
                         {isEditable ? (
                             <EditableText
                                 label="Texto adicional"
                                 value={content.text}
                                 onSave={(val) => handleSave('text', val)}
-                                className="text-slate-400 text-sm sm:text-base font-bold leading-relaxed"
+                                className="text-slate-400 text-sm md:text-base font-bold leading-relaxed"
                                 multiline
                             />
                         ) : (
-                            <p className="text-slate-400 text-sm sm:text-base font-bold leading-relaxed whitespace-pre-line text-pretty">
+                            <p className="text-slate-400 text-sm md:text-base font-bold leading-relaxed whitespace-pre-line text-pretty">
                                 {content.text}
                             </p>
                         )}
                     </div>
 
-                    <div className="mt-8 grid grid-cols-3 gap-4 w-full">
+                    {/* Stats Grid */}
+                    <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
                         {[
                             { id: 1, val: content.stat1_val, label: content.stat1_label, fieldV: 'stat1_val', fieldL: 'stat1_label' },
                             { id: 2, val: content.stat2_val, label: content.stat2_label, fieldV: 'stat2_val', fieldL: 'stat2_label' },
                             { id: 3, val: content.stat3_val, label: content.stat3_label, fieldV: 'stat3_val', fieldL: 'stat3_label' }
                         ].map((stat) => (
-                            <div key={stat.id} className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl flex flex-col items-center text-center group hover:border-nutri-brand/40 transition-all">
+                            <div key={stat.id} className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl flex flex-col items-center text-center group hover:border-nutri-brand/40 transition-all shadow-xl">
                                 {isEditable ? (
                                     <div className="space-y-1 w-full flex flex-col items-center">
                                         <EditableText
                                             value={stat.val as string}
                                             onSave={(val) => handleSave(stat.fieldV, val)}
-                                            className="text-lg sm:text-2xl font-tech font-extrabold text-white italic"
+                                            className="text-2xl font-tech font-extrabold text-white italic"
                                         />
                                         <EditableText
                                             value={stat.label as string}
                                             onSave={(val) => handleSave(stat.fieldL, val)}
-                                            className="text-[8px] sm:text-[10px] font-tech font-bold text-slate-500 uppercase tracking-widest"
+                                            className="text-[10px] font-tech font-bold text-slate-500 uppercase tracking-widest"
                                         />
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="text-lg sm:text-2xl font-tech font-extrabold text-white italic">{stat.val}</div>
-                                        <div className="text-[8px] sm:text-[10px] font-tech font-bold text-slate-500 uppercase tracking-widest">{stat.label}</div>
+                                        <div className="text-2xl font-tech font-extrabold text-white italic">{stat.val}</div>
+                                        <div className="text-[10px] font-tech font-bold text-slate-500 uppercase tracking-widest">{stat.label}</div>
                                     </>
                                 )}
                             </div>
                         ))}
                     </div>
+
+                    <div className="mt-10 w-full sm:w-auto">
+                        <Button className="w-full sm:w-auto h-14 px-10 rounded-2xl bg-nutri-brand hover:bg-orange-600 text-white font-black uppercase tracking-widest shadow-lg shadow-orange-600/20 transition-all active:scale-95">
+                            Empezar ahora
+                        </Button>
+                    </div>
                 </div>
 
-                {/* Right content (Video & Carteles) */}
-                <div className="lg:w-7/12 relative w-full flex justify-center mt-12 lg:mt-0 py-8 md:py-16">
-                    <div className="relative w-full max-w-[450px] aspect-square flex items-center justify-center">
-
+                {/* Right content: Video & Adaptive Cards */}
+                <div className="w-full md:w-1/2 flex flex-col items-center relative z-10 py-10 md:py-20 lg:py-0">
+                    
+                    {/* Circle Video Container */}
+                    <div className="relative w-full max-w-[320px] sm:max-w-[400px] lg:max-w-[480px] aspect-square flex items-center justify-center mb-12 md:mb-0">
                         <div className="absolute -inset-4 border border-nutri-brand/20 rounded-full border-dashed pointer-events-none z-0"></div>
 
-                        <div className="relative z-10 w-[85%] h-[85%] rounded-full overflow-hidden border-2 border-nutri-brand/40 shadow-[0_0_60px_rgba(255,122,0,0.1)] bg-nutri-base flex items-center justify-center group">
+                        <div className="relative z-10 w-[85%] h-[85%] rounded-full overflow-hidden border-2 border-nutri-brand/40 shadow-[0_0_80px_rgba(255,122,0,0.15)] bg-nutri-base flex items-center justify-center group">
                             <video
                                 ref={videoRef}
                                 className="w-full h-full object-cover opacity-95 scale-[1.15]"
@@ -189,7 +196,6 @@ export function LandingHero() {
                                 onLoadedMetadata={handleVideoSync}
                             >
                                 <source src={content.videoUrl} type="video/mp4" />
-                                Tu navegador no soporta el formato de video.
                             </video>
                             {isEditable && (
                                 <EditableLink
@@ -201,78 +207,92 @@ export function LandingHero() {
                             )}
                         </div>
 
-                        {/* Cartel Proteína */}
-                        <div className={cn(
-                            "cartel-base pos-proteina bg-nutri-panel border border-white/10 p-5 rounded-xl w-[200px] sm:w-[260px] shadow-2xl relative group/card",
-                            activeCartel === "proteina" && "cartel-active"
+                        {/* DESKTOP FLOATING CARDS (md+) */}
+                        <div className="hidden md:block absolute inset-0 pointer-events-none">
+                            {/* Proteína */}
+                            <div className={cn(
+                                "cartel-base pos-proteina bg-nutri-panel border border-white/10 p-5 rounded-xl w-[260px] shadow-2xl relative group/card pointer-events-auto",
+                                activeCartel === "proteina" && "cartel-active"
+                            )}>
+                                <div className="flex items-center gap-2 pb-2 mb-2 line-clamp-1">
+                                    <Beef className="h-5 w-5 text-nutri-brand" />
+                                    <h4 className="font-tech font-bold text-sm text-white uppercase tracking-wider">PROTEÍNAS</h4>
+                                </div>
+                                <p className="text-[11px] text-slate-300 font-sans leading-relaxed text-pretty-justify">
+                                    {content.cartelProteina}
+                                </p>
+                            </div>
+
+                            {/* Carbohidrato */}
+                            <div className={cn(
+                                "cartel-base pos-carbo bg-nutri-panel border border-white/10 p-5 rounded-xl w-[260px] shadow-2xl pointer-events-auto",
+                                activeCartel === "carbo" && "cartel-active"
+                            )}>
+                                <div className="flex items-center gap-2 pb-2 mb-2 line-clamp-1">
+                                    <WheatOff className="h-5 w-5 text-nutri-brand" />
+                                    <h4 className="font-tech font-bold text-sm text-white uppercase tracking-wider">CARBOHIDRATOS</h4>
+                                </div>
+                                <p className="text-[11px] text-slate-300 font-sans leading-relaxed text-pretty-justify">
+                                    {content.cartelCarbo}
+                                </p>
+                            </div>
+
+                            {/* Lípido */}
+                            <div className={cn(
+                                "cartel-base pos-lipido bg-nutri-panel border border-white/10 p-5 rounded-xl w-[260px] shadow-2xl pointer-events-auto",
+                                activeCartel === "lipido" && "cartel-active"
+                            )}>
+                                <div className="flex items-center gap-2 pb-2 mb-2 line-clamp-1">
+                                    <Droplets className="h-5 w-5 text-nutri-brand" />
+                                    <h4 className="font-tech font-bold text-sm text-white uppercase tracking-wider">LÍPIDOS</h4>
+                                </div>
+                                <p className="text-[11px] text-slate-300 font-sans leading-relaxed text-pretty-justify">
+                                    {content.cartelLipido}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* MOBILE CARDS (Below Video on small screens) */}
+                    <div className="md:hidden grid grid-cols-1 gap-4 w-full px-4">
+                         <div className={cn(
+                            "bg-nutri-panel/80 border border-white/10 p-5 rounded-2xl shadow-xl transition-all duration-500",
+                            activeCartel === "proteina" ? "border-nutri-brand/50 scale-100 opacity-100" : "opacity-40 scale-95"
                         )}>
-                            <div className="flex items-center gap-2 pb-2 mb-2">
+                            <div className="flex items-center gap-3 mb-2">
                                 <Beef className="h-5 w-5 text-nutri-brand" />
-                                <h4 className="font-tech font-bold text-sm text-white uppercase tracking-wider">SECCIÓN: <span className="text-nutri-brand">PROTEÍNAS</span></h4>
+                                <h4 className="font-tech font-bold text-sm text-white uppercase tracking-widest">Proteínas</h4>
                             </div>
-                            {isEditable ? (
-                                <EditableText
-                                    label="Texto Proteína"
-                                    value={content.cartelProteina}
-                                    onSave={(val) => handleSave('cartelProteina', val)}
-                                    className="text-xs text-slate-300 font-sans leading-relaxed"
-                                    multiline
-                                />
-                            ) : (
-                                <p className="text-xs text-slate-300 font-sans leading-relaxed text-pretty-justify">
-                                    <strong className="text-white">Función:</strong> {content.cartelProteina}
-                                </p>
-                            )}
+                            <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                                {content.cartelProteina}
+                            </p>
                         </div>
 
-                        {/* Cartel Carbohidrato */}
                         <div className={cn(
-                            "cartel-base pos-carbo bg-nutri-panel border border-white/10 p-5 rounded-xl w-[200px] sm:w-[260px] shadow-2xl",
-                            activeCartel === "carbo" && "cartel-active"
+                            "bg-nutri-panel/80 border border-white/10 p-5 rounded-2xl shadow-xl transition-all duration-500",
+                            activeCartel === "carbo" ? "border-nutri-brand/50 scale-100 opacity-100" : "opacity-40 scale-95"
                         )}>
-                            <div className="flex items-center gap-2 pb-2 mb-2">
+                            <div className="flex items-center gap-3 mb-2">
                                 <WheatOff className="h-5 w-5 text-nutri-brand" />
-                                <h4 className="font-tech font-bold text-sm text-white uppercase tracking-wider">SECCIÓN: <span className="text-nutri-brand">CARBOHIDRATOS</span></h4>
+                                <h4 className="font-tech font-bold text-sm text-white uppercase tracking-widest">Carbohidratos</h4>
                             </div>
-                            {isEditable ? (
-                                <EditableText
-                                    label="Texto Carbohidratos"
-                                    value={content.cartelCarbo}
-                                    onSave={(val) => handleSave('cartelCarbo', val)}
-                                    className="text-xs text-slate-300 font-sans leading-relaxed"
-                                    multiline
-                                />
-                            ) : (
-                                <p className="text-xs text-slate-300 font-sans leading-relaxed text-pretty-justify">
-                                    <strong className="text-white">Función:</strong> {content.cartelCarbo}
-                                </p>
-                            )}
+                            <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                                {content.cartelCarbo}
+                            </p>
                         </div>
 
-                        {/* Cartel Lípido */}
                         <div className={cn(
-                            "cartel-base pos-lipido bg-nutri-panel border border-white/10 p-5 rounded-xl w-[200px] sm:w-[260px] shadow-2xl",
-                            activeCartel === "lipido" && "cartel-active"
+                            "bg-nutri-panel/80 border border-white/10 p-5 rounded-2xl shadow-xl transition-all duration-500",
+                            activeCartel === "lipido" ? "border-nutri-brand/50 scale-100 opacity-100" : "opacity-40 scale-95"
                         )}>
-                            <div className="flex items-center gap-2 pb-2 mb-2">
+                            <div className="flex items-center gap-3 mb-2">
                                 <Droplets className="h-5 w-5 text-nutri-brand" />
-                                <h4 className="font-tech font-bold text-sm text-white uppercase tracking-wider">SECCIÓN: <span className="text-nutri-brand">LÍPIDOS</span></h4>
+                                <h4 className="font-tech font-bold text-sm text-white uppercase tracking-widest">Lípidos</h4>
                             </div>
-                            {isEditable ? (
-                                <EditableText
-                                    label="Texto Lípidos"
-                                    value={content.cartelLipido}
-                                    onSave={(val) => handleSave('cartelLipido', val)}
-                                    className="text-xs text-slate-300 font-sans leading-relaxed"
-                                    multiline
-                                />
-                            ) : (
-                                <p className="text-xs text-slate-300 font-sans leading-relaxed text-pretty-justify">
-                                    <strong className="text-white">Función:</strong> {content.cartelLipido}
-                                </p>
-                            )}
+                            <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                                {content.cartelLipido}
+                            </p>
                         </div>
-
                     </div>
                 </div>
             </div>

@@ -422,13 +422,13 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-5xl rounded-[3rem] p-0 border-white/10 shadow-2xl bg-[#0B1120] text-white overflow-hidden max-h-[90vh] flex flex-col [&>button:last-child]:z-[100] [&>button:last-child]:right-10 [&>button:last-child]:top-10 [&>button:last-child]:h-12 [&>button:last-child]:w-12 [&>button:last-child]:rounded-2xl [&>button:last-child]:bg-white/5 [&>button:last-child]:border-white/10 [&>button:last-child]:hover:bg-white/10 [&>button:last-child]:transition-all [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center [&>button:last-child]:p-0 [&>button:last-child>svg]:h-6 [&>button:last-child>svg]:w-6 [&>button:last-child>svg]:text-slate-400 [&>button:last-child:hover>svg]:text-white">
+            <DialogContent className="w-[95vw] max-w-5xl rounded-3xl sm:rounded-[3rem] p-0 border-white/10 shadow-2xl bg-[#0B1120] text-white overflow-hidden max-h-[95vh] flex flex-col [&>button:last-child]:z-[100] [&>button:last-child]:right-4 sm:right-10 [&>button:last-child]:top-4 sm:top-10 [&>button:last-child]:h-10 sm:h-12 [&>button:last-child]:w-10 sm:w-12 [&>button:last-child]:rounded-xl sm:rounded-2xl [&>button:last-child]:bg-white/5 [&>button:last-child]:border-white/10 [&>button:last-child]:hover:bg-white/10 [&>button:last-child]:transition-all [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center [&>button:last-child]:p-0 [&>button:last-child>svg]:h-5 sm:h-6 [&>button:last-child>svg]:w-5 sm:w-6 [&>button:last-child>svg]:text-slate-400 [&>button:last-child:hover>svg]:text-white">
                 <div className="absolute top-0 right-10 w-64 h-64 bg-nutri-brand/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
 
-                <DialogHeader className="p-10 lg:p-12 border-b border-white/5 relative">
-                    <div className="flex justify-between items-start pr-16 lg:pr-20">
+                <DialogHeader className="p-6 sm:p-10 lg:p-12 border-b border-white/5 relative">
+                    <div className="flex flex-col sm:flex-row justify-between items-start pr-12 sm:pr-16 lg:pr-20 gap-6">
                         <div>
-                            <DialogTitle className="text-4xl font-black tracking-tighter uppercase italic mb-2">
+                            <DialogTitle className="text-2xl sm:text-4xl font-black tracking-tighter uppercase italic mb-2">
                                 Historia <span className="text-nutri-brand">Clínica</span>
                             </DialogTitle>
                             <DialogDescription className="text-slate-400 font-medium italic">
@@ -462,18 +462,18 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="flex gap-3">
+                                <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                                     <Button
                                         onClick={() => { setIsEditing(false); setEditedData(historyData); }}
                                         variant="ghost"
-                                        className="h-12 px-6 rounded-xl text-slate-400 font-black uppercase text-[10px] tracking-widest"
+                                        className="h-10 sm:h-12 px-6 rounded-xl text-slate-400 font-black uppercase text-[10px] tracking-widest w-full sm:w-auto"
                                     >
                                         <RotateCcw className="h-4 w-4 mr-2" /> Cancelar
                                     </Button>
                                     <Button
                                         onClick={handleSave}
                                         disabled={isSaving}
-                                        className="h-12 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-500/20"
+                                        className="h-10 sm:h-12 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-500/20 w-full sm:w-auto"
                                     >
                                         <Save className="h-4 w-4 mr-2" /> {isSaving ? "Guardando..." : "Guardar Cambios"}
                                     </Button>
@@ -483,7 +483,7 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                     </div>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto p-10 lg:p-12 space-y-16 custom-scrollbar relative">
+                <div className="flex-1 overflow-y-auto p-6 sm:p-10 lg:p-12 space-y-12 sm:space-y-16 custom-scrollbar relative">
                     {loading ? (
                         <div className="py-20 text-center font-black animate-pulse text-slate-500 uppercase tracking-widest text-sm">
                             Cargando expediente clínico...

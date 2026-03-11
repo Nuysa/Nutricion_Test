@@ -990,10 +990,10 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
                 worker.postMessage({ file, typeId });
             });
 
-            const processedFile = new File([processedBlob], file.name.replace(/\.[^/.]+$/, "") + ".png", { type: "image/png" });
+            const processedFile = new File([processedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: "image/jpeg" });
 
             setStatusText("Subiendo a la nube...");
-            const fileExt = "png";
+            const fileExt = "jpg";
             const fileName = `${patientId}/${Date.now()}_${typeId}.${fileExt}`;
 
             const { error: uploadError } = await supabase.storage

@@ -28,6 +28,8 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { VariablesService } from "@/lib/variables-service";
+import { useFormulaEngine } from "@/hooks/useFormulaEngine";
 
 // --- CONSTANTS ---
 const DB_PORCIONES: Record<string, { label: string; kcal: number; cho: number; pro: number; fat: number }> = {
@@ -68,6 +70,7 @@ export function FlexiblePlanEditor({ patientId }: { patientId: string }) {
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
     const supabase = createClient();
+    const { calculate } = useFormulaEngine();
 
     // --- BIOMETRY STATES ---
     const [genero, setGenero] = useState<"M" | "F">("M");
@@ -162,7 +165,7 @@ export function FlexiblePlanEditor({ patientId }: { patientId: string }) {
     const bioCalculations = useMemo(() => {
         const tmb = genero === "M"
             ? 66.47 + (13.75 * peso) + (5.0 * talla) - (6.75 * edad)
-            : 655.09 + (9.56 * peso) + (1.85 * talla) - (4.68 * edad);
+            : 65.59 + (9.56 * peso) + (5.0 * talla) - (4.7 * edad);
 
         const gastoBase = tmb * factorActividad;
         const gastoTotal = gastoBase + gastoEntrenamiento;
@@ -280,7 +283,6 @@ export function FlexiblePlanEditor({ patientId }: { patientId: string }) {
         if (!patientId) return;
         setIsLoading(true);
         try {
-            // Load patient base data first (Biometría básica)
             const { data: patient } = await supabase
                 .from("patients")
                 .select("id, gender, date_of_birth, height_cm, current_weight")
@@ -288,10 +290,13 @@ export function FlexiblePlanEditor({ patientId }: { patientId: string }) {
                 .single();
 
             if (patient) {
+                // Fetch clinical variables for calculations
+                const vars = await VariablesService.getVariables();
+
                 // Obtener el último peso registrado para cálculos más precisos
                 const { data: latestRecord } = await supabase
                     .from("weight_records")
-                    .select("weight")
+                    .select("*")
                     .eq("patient_id", patient.id)
                     .order("date", { ascending: false })
                     .order("created_at", { ascending: false })
@@ -300,20 +305,56 @@ export function FlexiblePlanEditor({ patientId }: { patientId: string }) {
 
                 const currentPatientWeight = latestRecord?.weight || patient.current_weight || 0;
 
+                // Calculate Age
+                let age = 0;
+                if (patient.date_of_birth) {
+                    const birth = new Date(patient.date_of_birth.includes('T') ? patient.date_of_birth : `${patient.date_of_birth}T12:00:00`);
+                    const now = new Date();
+                    age = now.getFullYear() - birth.getFullYear();
+                    const m = now.getMonth() - birth.getMonth();
+                    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+                }
+
+                // Prepare inputs for formula engine
+                const inputs: Record<string, any> = {
+                    ...(latestRecord?.extra_data || {}),
+                    "PESO": currentPatientWeight,
+                    "TALLA": patient.height_cm || 0,
+                    "TALLA_CM": patient.height_cm || 0,
+                    "EDAD": age,
+                    "GENERO_V": patient.gender === 'masculino' || patient.gender === 'M' ? 1 : (patient.gender === 'femenino' || patient.gender === 'F' ? 2 : 0)
+                };
+
+                // Execute calculations (multiple passes for dependencies)
+                let diagnosisLabel = "";
+                for (let pass = 0; pass < 3; pass++) {
+                    vars.forEach(v => {
+                        if (v.is_calculated && v.code) {
+                            const calc = calculate(v, { gender: patient.gender, age, inputs });
+                            inputs[v.code.toUpperCase()] = calc.result;
+                            if (v.code === 'DIAGNOSTICO_IMC') {
+                                diagnosisLabel = (calc.range?.label || "").toLowerCase();
+                            }
+                        }
+                    });
+                }
+
+                // Apply logic for loading initial weight
+                let weightToLoad = currentPatientWeight;
+                const diagnosis = diagnosisLabel.toLowerCase();
+
+                if (diagnosis.includes("sobrepeso")) {
+                    weightToLoad = inputs['PESO_IDEAL'] || currentPatientWeight;
+                } else if (diagnosis.includes("obesidad")) {
+                    weightToLoad = inputs['PESO_CORREGIDO'] || currentPatientWeight;
+                } else if (diagnosis.includes("normal") || diagnosis.includes("bajo peso")) {
+                    weightToLoad = currentPatientWeight;
+                }
+
                 if (patient.gender) setGenero(patient.gender === 'femenino' || patient.gender === 'F' ? 'F' : 'M');
                 if (patient.height_cm) setTalla(Number(patient.height_cm));
-                if (currentPatientWeight > 0) setPeso(Number(currentPatientWeight));
-
-                if (patient.date_of_birth) {
-                    const birth = new Date(patient.date_of_birth + 'T12:00:00');
-                    const today = new Date();
-                    let age = today.getFullYear() - birth.getFullYear();
-                    const m = today.getMonth() - birth.getMonth();
-                    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-                        age--;
-                    }
-                    setEdad(age);
-                }
+                if (weightToLoad > 0) setPeso(Number(weightToLoad));
+                setEdad(age);
             }
 
             const { data, error } = await supabase
@@ -549,8 +590,8 @@ export function FlexiblePlanEditor({ patientId }: { patientId: string }) {
                                         <label className="text-[10px] font-black text-white uppercase tracking-widest">Ajustes (%)</label>
                                         <div className="flex items-center bg-yellow-500/5 rounded-xl border border-yellow-500/20 w-32 overflow-hidden group">
                                             <button onClick={() => setAjustePct(prev => prev - 1)} className="w-9 h-9 text-yellow-500/60 hover:text-yellow-400 hover:bg-yellow-500/10 transition-all">-</button>
-                                            <div className="flex-1 flex items-center justify-center gap-0.5">
-                                                <input type="number" value={ajustePct} onChange={e => setAjustePct(parseInt(e.target.value) || 0)} className="w-8 bg-transparent text-right text-yellow-400 font-tech font-bold text-xs outline-none" />
+                                            <div className="flex-1 flex items-center justify-center gap-1">
+                                                <input type="number" value={ajustePct} onChange={e => setAjustePct(parseInt(e.target.value) || 0)} className="w-12 bg-transparent text-right text-yellow-400 font-tech font-bold text-xs outline-none" />
                                                 <span className="text-[10px] text-yellow-500/60 font-black">%</span>
                                             </div>
                                             <button onClick={() => setAjustePct(prev => prev + 1)} className="w-9 h-9 text-yellow-500/60 hover:text-yellow-400 hover:bg-yellow-500/10 transition-all">+</button>

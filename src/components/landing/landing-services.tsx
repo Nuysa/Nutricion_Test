@@ -71,28 +71,28 @@ export function LandingServices() {
     };
 
     return (
-        <section id="servicios" className="scroll-mt-32 py-24 relative z-10 border-y border-white/5">
-            <div className="max-w-screen-2xl mx-auto px-6 lg:px-8">
+        <section id="servicios" className="scroll-mt-32 py-16 md:py-24 relative z-10 border-y border-white/5">
+            <div className="max-w-screen-2xl mx-auto px-4 md:px-8">
                 <div className="text-center mb-16 relative">
                     {isEditable ? (
                         <EditableText
                             label="Título Servicios"
                             value={content.title}
                             onSave={(val) => handleSave({ ...content, title: val })}
-                            className="text-4xl lg:text-5xl font-tech font-black text-white leading-tight"
+                            className="text-3xl md:text-5xl lg:text-6xl font-tech font-black text-white leading-tight"
                         />
                     ) : (
-                        <h3 className="text-4xl lg:text-5xl font-tech font-black text-white leading-tight">{content.title}</h3>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-tech font-black text-white leading-tight">{content.title}</h3>
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-stretch">
                     {content.services.map((service) => {
                         const isExpanded = expandedServices.includes(service.id);
                         const isLongText = service.description.length > 120;
 
                         return (
-                            <div key={service.id} className="bg-nutri-panel border border-white/5 rounded-3xl p-8 hover:-translate-y-2 hover:border-nutri-brand/50 transition-all duration-300 group relative flex flex-col">
+                            <div key={service.id} className="bg-nutri-panel border border-white/5 rounded-3xl p-6 md:p-8 hover:-translate-y-2 hover:border-nutri-brand/50 transition-all duration-300 group relative flex flex-col">
                                 <div className="w-full h-81 bg-nutri-base border border-nutri-brand/30 rounded-xl flex items-center justify-center text-2xl mb-6 shadow-lg overflow-hidden relative shrink-0">
                                     <img src={service.image} alt={service.title} className="w-full h-full object-cover opacity-80" />
                                     {isEditable && (

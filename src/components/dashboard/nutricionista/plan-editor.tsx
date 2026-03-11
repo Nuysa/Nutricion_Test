@@ -66,7 +66,9 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FlexiblePlanEditor } from "./flexible-plan-editor"; // Added from instruction
+import { FlexiblePlanEditor } from "./flexible-plan-editor"; 
+import { VariablesService } from "@/lib/variables-service";
+import { useFormulaEngine } from "@/hooks/useFormulaEngine";
 
 // --- Types ---
 interface Food {
@@ -101,6 +103,7 @@ const MEAL_CONFIG = [
 export function PlanEditor() {
     const { toast } = useToast();
     const supabase = useMemo(() => createClient(), []);
+    const { calculate } = useFormulaEngine();
 
     // Configuration States
     const [activeDay, setActiveDay] = useState("Lunes");
@@ -193,32 +196,86 @@ export function PlanEditor() {
         const fetchPatientData = async () => {
             if (!selectedPatientId) return;
             try {
-                const { data: patient, error } = await supabase
+                const { data: pData, error: pError } = await supabase
                     .from("patients")
-                    .select("plan_type, current_weight")
+                    .select("id, plan_type, current_weight, height_cm, date_of_birth, gender")
                     .eq("id", selectedPatientId)
                     .single();
-                if (patient) {
-                    setPatientPlanType(patient.plan_type || "sin plan");
+                
+                if (pError) throw pError;
+
+                if (pData) {
+                    setPatientPlanType(pData.plan_type || "sin plan");
                     
-                    // Fetch latest weight record
+                    // Fetch latest weight record to get current weight and extra_data
                     const { data: latestRecord } = await supabase
                         .from("weight_records")
-                        .select("weight")
+                        .select("*")
                         .eq("patient_id", selectedPatientId)
                         .order("date", { ascending: false })
                         .order("created_at", { ascending: false })
                         .limit(1)
                         .maybeSingle();
 
-                    setPatientWeight(latestRecord?.weight || patient.current_weight || 0);
+                    const currentWeight = latestRecord?.weight || pData.current_weight || 0;
+                    
+                    // Fetch clinical variables for calculation
+                    const vars = await VariablesService.getVariables();
+                    
+                    // Calculate Age
+                    let age = 0;
+                    if (pData.date_of_birth) {
+                        const birth = new Date(pData.date_of_birth.includes('T') ? pData.date_of_birth : `${pData.date_of_birth}T12:00:00`);
+                        const now = new Date();
+                        age = now.getFullYear() - birth.getFullYear();
+                        const m = now.getMonth() - birth.getMonth();
+                        if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+                    }
+
+                    // Prepare inputs for formula engine
+                    const inputs: Record<string, any> = {
+                        ...(latestRecord?.extra_data || {}),
+                        "PESO": currentWeight,
+                        "TALLA": pData.height_cm || 0,
+                        "TALLA_CM": pData.height_cm || 0,
+                        "EDAD": age,
+                        "GENERO_V": pData.gender === 'masculino' || pData.gender === 'M' ? 1 : (pData.gender === 'femenino' || pData.gender === 'F' ? 2 : 0)
+                    };
+
+                    // Execute calculations (multiple passes for dependencies)
+                    let diagnosisLabel = "";
+                    for (let pass = 0; pass < 3; pass++) {
+                        vars.forEach(v => {
+                            if (v.is_calculated && v.code) {
+                                const calc = calculate(v, { gender: pData.gender, age, inputs });
+                                inputs[v.code.toUpperCase()] = calc.result;
+                                if (v.code === 'DIAGNOSTICO_IMC') {
+                                    diagnosisLabel = (calc.range?.label || "").toLowerCase();
+                                }
+                            }
+                        });
+                    }
+
+                    // Apply requested logic for initial weight in plans
+                    let weightToLoad = currentWeight;
+                    const diagnosis = diagnosisLabel.toLowerCase();
+
+                    if (diagnosis.includes("sobrepeso")) {
+                        weightToLoad = inputs['PESO_IDEAL'] || currentWeight;
+                    } else if (diagnosis.includes("obesidad")) {
+                        weightToLoad = inputs['PESO_CORREGIDO'] || currentWeight;
+                    } else if (diagnosis.includes("normal") || diagnosis.includes("bajo peso")) {
+                        weightToLoad = currentWeight;
+                    }
+
+                    setPatientWeight(Number(weightToLoad));
                 }
             } catch (err) {
                 console.error("Error fetching patient data:", err);
             }
         };
         fetchPatientData();
-    }, [selectedPatientId, supabase]);
+    }, [selectedPatientId, supabase, calculate]);
 
     const handlePlanTypeChange = async (newType: string) => {
         setPatientPlanType(newType);

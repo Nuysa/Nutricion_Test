@@ -53,22 +53,22 @@ export function LandingAbout() {
         fetchContent();
     }, []);
     return (
-        <section id="nosotros" className="scroll-mt-32 py-24 relative z-10 bg-nutri-base/50 border-y border-white/5">
-            <div className="max-w-screen-2xl mx-auto px-6 lg:px-8">
-                <div className="text-center mb-16 relative">
+        <section id="nosotros" className="scroll-mt-32 py-16 md:py-24 relative z-10 bg-nutri-base/50 border-y border-white/5">
+            <div className="max-w-screen-2xl mx-auto px-4 md:px-8">
+                <div className="text-center mb-12 md:mb-16 relative">
                     {isEditable ? (
                         <EditableText
                             label="Título Sección"
                             value={content.topTitle}
                             onSave={(val) => handleSave('topTitle', val)}
-                            className="text-4xl lg:text-5xl font-tech font-black text-white leading-tight"
+                            className="text-3xl md:text-5xl lg:text-6xl font-tech font-black text-white leading-tight"
                         />
                     ) : (
-                        <h3 className="text-4xl lg:text-5xl font-tech font-black text-white leading-tight">{content.topTitle}</h3>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-tech font-black text-white leading-tight">{content.topTitle}</h3>
                     )}
                 </div>
-                <div className="bio-panel bio-cut p-10 md:p-14 border border-nutri-brand/20 relative overflow-hidden">
-                    <div className="flex flex-col lg:flex-row gap-14 items-center relative z-10">
+                <div className="bio-panel bio-cut p-6 md:p-14 border border-nutri-brand/20 relative overflow-hidden">
+                    <div className="flex flex-col lg:flex-row gap-8 lg:gap-14 items-center relative z-10">
 
                         {/* Image */}
                         <div className="lg:w-2/5 group">
@@ -132,7 +132,7 @@ export function LandingAbout() {
                                     </p>
                                     <br />
 
-                                    <h3 className="text-4xl md:text-5xl font-tech font-bold text-white mb-6 leading-tight whitespace-pre-line">
+                                    <h3 className="text-3xl md:text-5xl font-tech font-bold text-white mb-6 leading-tight whitespace-pre-line">
                                         {content.title2.split(' ').map((word, idx, arr) => {
                                             if (idx === arr.length - 1 || (idx === arr.length - 2 && arr[arr.length - 1] === '')) {
                                                 return <span key={idx} className="text-nutri-brand">{word} </span>
@@ -140,7 +140,7 @@ export function LandingAbout() {
                                             return word + ' '
                                         })}
                                     </h3>
-                                    <p style={{ marginBottom: "6px" }} className="text-base text-slate-300 font-sans leading-relaxed mb-4 whitespace-pre-line text-pretty-justify">
+                                    <p style={{ marginBottom: "6px" }} className="text-sm md:text-base text-slate-300 font-sans leading-relaxed mb-4 whitespace-pre-line text-pretty-justify text-pretty">
                                         {content.text2}
                                     </p>
 

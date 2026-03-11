@@ -449,7 +449,7 @@ export function Topbar({ userName: initialUserName = "Usuario", userAvatar: init
                                 )}
                             </div>
                             <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-0.5">
-                                {pathname.startsWith("/dashboard/nutricionista") ? "Especialista Nutrición" : (userRole === "administrador" ? "Activa v7.0" : "")}
+                                {pathname.startsWith("/dashboard/nutricionista") ? "Especialista Nutrición" : (userRole === "root" ? "Activa v7.0" : "")}
                             </p>
                         </div>
                         <Avatar className="h-11 w-11 border-2 border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.3)] ring-2 ring-nutri-brand/20">

@@ -55,8 +55,8 @@ export function LandingTestimonials() {
     };
 
     return (
-        <section id="testimonios" className="scroll-mt-32 py-24 relative z-10 border-y border-white/5">
-            <div className="max-w-screen-2xl mx-auto px-6 lg:px-8">
+        <section id="testimonios" className="scroll-mt-32 py-16 md:py-24 relative z-10 border-y border-white/5">
+            <div className="max-w-screen-2xl mx-auto px-4 md:px-8">
 
                 <div className="text-center mb-16">
                     {isEditable ? (
@@ -64,16 +64,16 @@ export function LandingTestimonials() {
                             label="Título Testimonios"
                             value={content.title}
                             onSave={(val) => handleSave({ ...content, title: val })}
-                            className="text-4xl lg:text-5xl font-tech font-black text-white mb-5 leading-tight block"
+                            className="text-3xl md:text-5xl lg:text-6xl font-tech font-black text-white mb-5 leading-tight block"
                         />
                     ) : (
-                        <h3 className="text-4xl lg:text-5xl font-tech font-black text-white mb-5 leading-tight">{content.title}</h3>
+                        <h3 className="text-3xl md:text-5xl lg:text-6xl font-tech font-black text-white mb-5 leading-tight">{content.title}</h3>
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                     {content.testimonials.map((testimonial) => (
-                        <div key={testimonial.id} className="bg-nutri-base border border-white/10 p-8 rounded-3xl relative hover:border-nutri-brand/30 transition-all duration-300">
+                        <div key={testimonial.id} className="bg-nutri-base border border-white/10 p-6 md:p-8 rounded-3xl relative hover:border-nutri-brand/30 transition-all duration-300">
                             <Quote className="h-10 w-10 text-nutri-brand/20 absolute top-8 right-8" />
                             <div className="flex items-center gap-4 mb-6">
                                 <div>

@@ -527,8 +527,8 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
     };
 
     return (
-        <section id="planes" className={cn("relative z-10 w-full", (mode === "landing" || mode === "admin_cms") ? "scroll-mt-32 py-24 bg-nutri-base/30 border-y border-white/5" : "py-8")}>
-            <div className={cn("mx-auto", (mode === "landing" || mode === "admin_cms") ? "max-w-screen-2xl px-6 lg:px-8" : "w-full")}>
+        <section id="planes" className={cn("relative z-10 w-full", (mode === "landing" || mode === "admin_cms") ? "scroll-mt-32 py-16 md:py-24 bg-nutri-base/30 border-y border-white/5" : "py-8")}>
+            <div className={cn("mx-auto", (mode === "landing" || mode === "admin_cms") ? "max-w-screen-2xl px-4 md:px-8" : "w-full")}>
 
                 {mode !== "dashboard" && (
                     <div className="text-center mb-10 relative">
@@ -537,10 +537,10 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                                 label="Título Sección"
                                 value={content.title}
                                 onSave={(val) => handleSaveContent({ ...content, title: val })}
-                                className="text-4xl lg:text-5xl font-tech font-bold text-white mb-4 block"
+                                className="text-3xl md:text-5xl lg:text-6xl font-tech font-bold text-white mb-4 block"
                             />
                         ) : (
-                            <h3 className="text-3xl lg:text-5xl font-tech font-black text-white leading-tight">{content.title}</h3>
+                            <h3 className="text-3xl md:text-5xl lg:text-6xl font-tech font-black text-white leading-tight">{content.title}</h3>
                         )}
                         {isEditable ? (
                             <EditableText
@@ -628,7 +628,7 @@ export function PlansSection({ mode = "landing", onPlanSelect, currentPlanId, is
                     </div>
                 ) : (
                     <div className={cn(
-                        "grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto w-full px-6",
+                        "grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-7xl mx-auto w-full px-4 md:px-6",
                         mode === "dashboard" && "mt-12"
                     )}>
                         {planesActuales.map((plan, index) => {

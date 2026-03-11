@@ -614,7 +614,7 @@ export default function PatientDetailPage() {
     const manualVars = clinicalVariables.filter(v => !v.is_calculated);
 
     return (
-        <div className="space-y-6 max-w-[95%] mx-auto pb-20">
+        <div className="space-y-4 sm:space-y-6 max-w-[98%] sm:max-w-[95%] mx-auto pb-20">
             {/* Cabecera */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -667,14 +667,14 @@ export default function PatientDetailPage() {
                     </div>
                 </div>
 
-                <div className="flex gap-3">
-                    <Button variant="outline" className="rounded-xl font-black text-xs h-12 border-white/10 bg-white/5 text-white hover:bg-white/10 shadow-lg" onClick={() => setShowBioDialog(true)}>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <Button variant="outline" className="rounded-xl font-black text-xs h-12 border-white/10 bg-white/5 text-white hover:bg-white/10 shadow-lg w-full sm:w-auto" onClick={() => setShowBioDialog(true)}>
                         <Edit2 className="h-4 w-4 mr-2 text-nutri-brand" /> Editar Ficha
                     </Button>
-                    <div title={!todayAppointment ? "Requiere una cita programada para hoy" : (patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan") ? "Requiere un plan activo" : "")}>
+                    <div title={!todayAppointment ? "Requiere una cita programada para hoy" : (patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan") ? "Requiere un plan activo" : "")} className="w-full sm:w-auto">
                         <Button
                             disabled={patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan") || !todayAppointment}
-                            className="rounded-xl bg-nutri-brand font-black text-xs text-white shadow-xl h-12 px-6 hover:scale-105 transition-all shadow-nutri-brand/20 uppercase tracking-widest disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:scale-100"
+                            className="rounded-xl bg-nutri-brand font-black text-xs text-white shadow-xl h-12 px-6 w-full hover:scale-105 transition-all shadow-nutri-brand/20 uppercase tracking-widest disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:scale-100"
                             onClick={() => {
                                 setIsAddingMode(true);
                                 setEditingId("new");
@@ -693,61 +693,59 @@ export default function PatientDetailPage() {
             </div>
 
             {/* Métricas Destacadas */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className={cn("border-0 text-white shadow-2xl overflow-hidden relative rounded-[2rem]", parseFloat(stats.imc) < 25 ? "bg-gradient-to-br from-nutri-brand to-emerald-600" : "bg-gradient-to-br from-orange-500 to-red-600")}>
-                    <div className="absolute top-0 right-0 p-4 opacity-10">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <Card className={cn("border-0 text-white shadow-2xl overflow-hidden relative rounded-3xl sm:rounded-[2rem]", parseFloat(stats.imc) < 25 ? "bg-gradient-to-br from-nutri-brand to-emerald-600" : "bg-gradient-to-br from-orange-500 to-red-600")}>
+                    <div className="absolute top-0 right-0 p-4 opacity-10 hidden sm:block">
                         <Calculator className="h-20 w-20" />
                     </div>
-                    <CardContent className="p-7 relative z-10">
-                        <div className="text-[10px] font-black uppercase opacity-70 mb-2 tracking-widest">IMC Actual</div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-5xl font-black tracking-tighter">{stats.imc}</span>
-                            <Badge variant="secondary" className="bg-white/20 text-white text-[9px] border-0 font-black uppercase px-2">{getIMCCategory(stats.imc)}</Badge>
+                    <CardContent className="p-4 sm:p-7 relative z-10">
+                        <div className="text-[8px] sm:text-[10px] font-black uppercase opacity-70 mb-1 sm:mb-2 tracking-widest">IMC Actual</div>
+                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                            <span className="text-3xl sm:text-5xl font-black tracking-tighter">{stats.imc}</span>
+                            <Badge variant="secondary" className="bg-white/20 text-white text-[7px] sm:text-[9px] border-0 font-black uppercase px-2 w-fit">{getIMCCategory(stats.imc)}</Badge>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-[2rem] overflow-hidden relative group">
+                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-3xl sm:rounded-[2rem] overflow-hidden relative group">
                     <div className="absolute top-0 right-10 w-20 h-20 bg-nutri-brand/5 blur-3xl group-hover:bg-nutri-brand/10 transition-all opacity-0 group-hover:opacity-100" />
-                    <CardContent className="p-7">
-                        <div className="text-[10px] font-black uppercase text-nutri-brand mb-2 tracking-widest">Peso</div>
+                    <CardContent className="p-4 sm:p-7">
+                        <div className="text-[8px] sm:text-[10px] font-black uppercase text-nutri-brand mb-1 sm:mb-2 tracking-widest">Peso</div>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-4xl font-black text-white tracking-tighter">{stats.weight}</span>
+                            <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">{stats.weight}</span>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-[2rem] overflow-hidden relative group">
+                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-3xl sm:rounded-[2rem] overflow-hidden relative group">
                     <div className="absolute top-0 right-10 w-20 h-20 bg-orange-500/5 blur-3xl group-hover:bg-orange-500/10 transition-all opacity-0 group-hover:opacity-100" />
-                    <CardContent className="p-7">
-                        <div className="text-[10px] font-black uppercase text-orange-500 mb-2 tracking-widest">% Grasa</div>
-                        <span className="text-4xl font-black text-white tracking-tighter">{stats.fat}</span>
+                    <CardContent className="p-4 sm:p-7">
+                        <div className="text-[8px] sm:text-[10px] font-black uppercase text-orange-500 mb-1 sm:mb-2 tracking-widest">% Grasa</div>
+                        <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">{stats.fat}</span>
                     </CardContent>
                 </Card>
-                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-[2rem] overflow-hidden relative group">
+                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-3xl sm:rounded-[2rem] overflow-hidden relative group">
                     <div className="absolute top-0 right-10 w-20 h-20 bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-all opacity-0 group-hover:opacity-100" />
-                    <CardContent className="p-7">
-                        <div className="text-[10px] font-black uppercase text-indigo-500 mb-2 tracking-widest">Cintura</div>
-                        <span className="text-4xl font-black text-white tracking-tighter">{stats.waist}</span>
+                    <CardContent className="p-4 sm:p-7">
+                        <div className="text-[8px] sm:text-[10px] font-black uppercase text-indigo-500 mb-1 sm:mb-2 tracking-widest">Cintura</div>
+                        <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">{stats.waist}</span>
                     </CardContent>
                 </Card>
             </div>
 
-            <Tabs defaultValue="historial">
-                <TabsList className="bg-[#1A253A]/80 p-1.5 rounded-2xl mb-8 border border-white/5 inline-flex backdrop-blur-xl shadow-2xl">
-                    <div className="flex items-center gap-4">
-                        <TabsTrigger
-                            value="historial"
-                            className="font-black text-[10px] uppercase px-8 py-3 flex items-center gap-2 rounded-xl data-[state=active]:bg-nutri-brand data-[state=active]:text-white text-slate-400 tracking-widest transition-all duration-300 data-[state=active]:shadow-[0_0_20px_rgba(255,102,0,0.3)] border border-transparent data-[state=active]:border-white/10"
-                        >
-                            <ClipboardList className="h-4 w-4" /> Historial de Consultas
-                        </TabsTrigger>
-                        <Button
-                            onClick={() => setShowChartsDialog(true)}
-                            variant="ghost"
-                            className="h-10 px-4 rounded-xl border border-white/5 bg-white/5 text-[10px] font-black uppercase text-slate-400 hover:text-nutri-brand transition-all tracking-widest"
-                        >
-                            <History className="h-3.5 w-3.5 mr-2" /> Ver Registro
-                        </Button>
-                    </div>
+            <Tabs defaultValue="historial" className="w-full">
+                <TabsList className="bg-[#1A253A]/80 p-1 sm:p-1.5 rounded-2xl mb-8 border border-white/5 flex flex-col sm:flex-row h-auto w-full sm:w-fit backdrop-blur-xl shadow-2xl gap-2 sm:gap-0">
+                    <TabsTrigger
+                        value="historial"
+                        className="font-black text-[9px] sm:text-[10px] uppercase px-4 sm:px-8 py-3 flex items-center justify-center gap-2 rounded-xl data-[state=active]:bg-nutri-brand data-[state=active]:text-white text-slate-400 tracking-widest transition-all duration-300 data-[state=active]:shadow-[0_0_20px_rgba(255,102,0,0.3)] border border-transparent data-[state=active]:border-white/10 w-full sm:w-auto"
+                    >
+                        <ClipboardList className="h-4 w-4" /> Historial de Consultas
+                    </TabsTrigger>
+                    <Button
+                        onClick={() => setShowChartsDialog(true)}
+                        variant="ghost"
+                        className="h-10 sm:h-auto px-4 py-3 rounded-xl border border-white/5 bg-white/5 text-[9px] sm:text-[10px] font-black uppercase text-slate-400 hover:text-nutri-brand transition-all tracking-widest w-full sm:w-auto sm:ml-4"
+                    >
+                        <History className="h-3.5 w-3.5 mr-2" /> Ver Registro
+                    </Button>
                 </TabsList>
                 <TabsContent value="historial">
                     {isAddingMode && editingId === "new" && (
@@ -767,111 +765,65 @@ export default function PatientDetailPage() {
                             clinicalVariables={clinicalVariables}
                         />
                     )}
-                    <Card className="rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/5 overflow-hidden bg-[#1A253A]/60 backdrop-blur-xl">
+                    <Card className="rounded-3xl sm:rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/5 overflow-hidden bg-[#1A253A]/60 backdrop-blur-xl">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead className="bg-white/5 text-[10px] font-black uppercase text-slate-500 border-b border-white/5">
                                     <tr>
-                                        <th className="px-8 py-7 tracking-widest text-center w-12 text-[#8F9BB3]">Nº</th>
+                                        <th className="px-3 sm:px-8 py-4 sm:py-7 tracking-widest text-center w-10 sm:w-12 text-[#8F9BB3]">Nº</th>
                                         {layout.slice(0, 4).map((col, idx) => (
-                                            <th key={idx} className="px-8 py-7 tracking-widest text-center text-[#8F9BB3]">
+                                            <th key={idx} className="px-3 sm:px-8 py-4 sm:py-7 tracking-widest text-center text-[#8F9BB3]">
                                                 {col.header}
                                             </th>
                                         ))}
-                                        <th className="px-8 py-7 tracking-widest text-right text-[#8F9BB3]">ESTADO</th>
-                                        <th className="px-8 py-7 text-right w-16 text-[#8F9BB3]">ACCIONES</th>
+                                        <th className="px-3 sm:px-8 py-4 sm:py-7 tracking-widest text-center text-[#8F9BB3]">Fecha</th>
+                                        <th className="px-3 sm:px-8 py-4 sm:py-7 tracking-widest text-center text-[#8F9BB3]">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
-                                    {records.map((r, rIdx) => {
-                                        if (isAddingMode && editingId === r.id) return null;
-                                        return (
-                                            <tr key={r.id} className="group hover:bg-white/5 transition-all">
-                                                <td className="px-8 py-7 text-center text-slate-600 font-bold text-sm">
-                                                    {records.length - rIdx}
-                                                </td>
-                                                {layout.slice(0, 4).map((col, idx) => {
-                                                    const targetVar = clinicalVariables.find(v => v.id === col.variable_id);
-                                                    let val = "—";
-                                                    let color = null;
-
-                                                    if (col.fixed_variable === 'date') {
-                                                        const dateObj = new Date(r.date + 'T12:00:00');
-                                                        val = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).toUpperCase();
-                                                    } else if (targetVar) {
-                                                        val = r[`col_${targetVar.id}`] !== undefined ? r[`col_${targetVar.id}`] : "—";
-                                                        color = r[`color_${targetVar.id}`];
-                                                    } else if (col.fixed_variable) {
-                                                        if (col.fixed_variable === 'bmi') {
-                                                            const w = parseFloat(r.weight || patient?.rawWeight || '0');
-                                                            const h = patient?.rawHeight || 100;
-                                                            val = (w > 0 && h > 0) ? (w / ((h / 100) * (h / 100))).toFixed(1) : "—";
-                                                        } else {
-                                                            const nativeFieldMap: Record<string, string> = {
-                                                                'weight': 'weight',
-                                                                'body_fat': 'body_fat_percentage',
-                                                                'waist': 'waist_circumference_cm'
-                                                            };
-                                                            const field = nativeFieldMap[col.fixed_variable];
-                                                            if (field && r[field] != null) {
-                                                                val = r[field];
-                                                            }
-                                                        }
+                                    {records.map((record, index) => (
+                                        <tr
+                                            key={record.id}
+                                            className="group hover:bg-white/5 transition-all cursor-pointer"
+                                            onClick={() => {
+                                                setEditingId(record.id);
+                                                setIsAddingMode(true);
+                                                setEditValues(record);
+                                                setExtraData(record.extra_data || {});
+                                            }}
+                                        >
+                                            <td className="px-3 sm:px-8 py-5 text-center font-bold text-slate-400">
+                                                {records.length - index}
+                                            </td>
+                                            {layout.slice(0, 4).map((col, cIdx) => {
+                                                let value: any = "—";
+                                                if (col.fixed_variable === 'weight') value = record.weight;
+                                                else if (col.fixed_variable === 'bmi') value = record.bmi;
+                                                else if (col.variable_id) {
+                                                    const v = clinicalVariables.find(cv => cv.id === col.variable_id);
+                                                    if (v && record.extra_data) {
+                                                        value = record.extra_data[v.code] ?? record.extra_data[v.code.toUpperCase()] ?? "—";
                                                     }
+                                                }
 
-                                                    return (
-                                                        <td key={idx} className="px-8 py-7 text-sm text-center">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <span className={cn(
-                                                                    "font-black tracking-tight",
-                                                                    col.fixed_variable === 'date' ? "text-[#8F9BB3] text-[10px] tracking-widest italic" : "text-xl text-white",
-                                                                    (!color || color.startsWith('#')) ? undefined : color.replace('bg-', 'text-')
-                                                                )} style={{ color: color?.startsWith('#') ? color : undefined }}>
-                                                                    {val}
-                                                                </span>
-                                                                {r[`trend_${col.variable_id || col.fixed_variable}`] === 'up' && <TrendingUp className="h-[14px] w-[14px] text-emerald-500 stroke-[3]" />}
-                                                                {r[`trend_${col.variable_id || col.fixed_variable}`] === 'down' && <TrendingDown className="h-[14px] w-[14px] text-rose-500 stroke-[3]" />}
-                                                            </div>
-                                                        </td>
-                                                    );
-                                                })}
-                                                <td className="px-8 py-7 text-right font-medium text-[11px] uppercase tracking-wider">
-                                                    {(() => {
-                                                        const requiredExtraKeys = [
-                                                            'BRAZO_RELAJADO', 'BRAZO_FLEXIONADO', 'ANTEBRAZO_MAXIMO', 'TORAX',
-                                                            'CINTURA_MINIMA', 'CINTURA_MAXIMA', 'CADERA_MAXIMA', 'MUSLO_MAXIMO',
-                                                            'P_TRICEPS', 'P_SUBESCAPULAR', 'P_SUPRAESPINAL', 'P_ABDOMINAL',
-                                                            'P_MUSLO_MEDIAL', 'P_PANTORRILLA', 'CRESTA_ILIACA', 'BICEPS'
-                                                        ];
-                                                        const checkWeight = r.weight !== null && r.weight !== undefined && r.weight !== '';
-                                                        const checkExtra = requiredExtraKeys.every(k => r.extra_data && r.extra_data[k] !== undefined && r.extra_data[k] !== null && String(r.extra_data[k]).trim() !== '');
-                                                        const isComplete = checkWeight && checkExtra;
-
-                                                        return isComplete ? (
-                                                            <span className="text-emerald-400 bg-emerald-400/10 px-4 py-2 rounded-xl border border-emerald-400/20 shadow-sm flex items-center justify-end gap-2 w-max ml-auto text-[9px] font-black tracking-widest italic">
-                                                                <Check className="h-3 w-3" /> COMPLETADO
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-orange-400 bg-orange-400/10 px-4 py-2 rounded-xl border border-orange-400/20 shadow-sm flex items-center justify-end w-max ml-auto text-[9px] font-black tracking-widest italic">
-                                                                INCOMPLETO
-                                                            </span>
-                                                        );
-                                                    })()}
-                                                </td>
-                                                <td className="px-8 py-7">
-                                                    <div className="flex justify-end transition-opacity">
-                                                        <Button size="icon" variant="ghost" className="h-10 w-10 text-white rounded-xl bg-white/5 hover:bg-white/10 hover:text-nutri-brand transition-all border border-white/5" onClick={() => {
-                                                            setEditingId(r.id);
-                                                            setIsAddingMode(false);
-                                                            setEditValues(r);
-                                                            setExtraData(r.extra_data || {});
-                                                            setIsAddingMode(true);
-                                                        }}><Edit2 className="h-4 w-4" /></Button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
+                                                return (
+                                                    <td key={cIdx} className="px-3 sm:px-8 py-5 text-center">
+                                                        <span className="text-sm font-black text-white">{value}</span>
+                                                    </td>
+                                                );
+                                            })}
+                                            <td className="px-3 sm:px-8 py-5 text-center font-bold text-white italic">
+                                                {new Date(record.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            </td>
+                                            <td className="px-3 sm:px-8 py-5 text-center">
+                                                <div className="flex justify-center gap-2">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white">
+                                                        <Edit2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
                                 </tbody>
                             </table>
                         </div>
@@ -888,10 +840,10 @@ export default function PatientDetailPage() {
 
             {/* Modal Ficha Biográfica */}
             <Dialog open={showBioDialog} onOpenChange={setShowBioDialog}>
-                <DialogContent className="rounded-[3rem] p-0 max-w-md border-white/10 shadow-2xl bg-[#151F32] text-white overflow-hidden">
+                <DialogContent className="rounded-3xl sm:rounded-[3rem] p-0 w-[95vw] max-w-md border-white/10 shadow-2xl bg-[#151F32] text-white overflow-hidden">
                     <div className="absolute top-0 right-10 w-32 h-32 bg-nutri-brand/10 blur-[60px] rounded-full" />
 
-                    <div className="p-8 lg:p-10 space-y-8">
+                    <div className="p-6 sm:p-8 lg:p-10 space-y-6 sm:space-y-8">
                         <DialogHeader>
                             <div className="flex justify-between items-start">
                                 <DialogTitle className="text-3xl font-black tracking-tighter uppercase italic">
@@ -960,7 +912,7 @@ export default function PatientDetailPage() {
                             </div>
                         </div>
 
-                        <DialogFooter className="gap-3 pt-6 border-t border-white/5">
+                        <DialogFooter className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-white/5">
                             <Button
                                 variant="ghost"
                                 className="h-14 rounded-2xl flex-1 font-black uppercase tracking-widest text-slate-500 hover:text-white hover:bg-white/5"
@@ -981,14 +933,14 @@ export default function PatientDetailPage() {
 
             {/* Modal Registro de Mediciones (Gráficos) */}
             <Dialog open={showChartsDialog} onOpenChange={setShowChartsDialog}>
-                <DialogContent className="max-w-[90vw] w-[1200px] h-[85vh] p-0 rounded-[3rem] border-white/10 shadow-2xl bg-[#0B1120] overflow-hidden flex flex-col">
+                <DialogContent className="w-[95vw] max-w-7xl h-[95vh] sm:h-[85vh] p-0 rounded-3xl sm:rounded-[3rem] border-white/10 shadow-2xl bg-[#0B1120] overflow-hidden flex flex-col">
                     <DialogHeader className="p-8 pb-4 border-b border-white/5 shrink-0 relative">
                         <div className="flex justify-between items-start">
                             <div>
-                                <DialogTitle className="text-2xl font-black text-white tracking-tight uppercase flex items-center gap-3">
-                                    <TrendingUp className="h-6 w-6 text-nutri-brand" /> Registro de <span className="text-nutri-brand">Mediciones</span>
+                                <DialogTitle className="text-xl sm:text-2xl font-black text-white tracking-tight uppercase flex items-center gap-3">
+                                    <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-nutri-brand" /> Registro de <span className="text-nutri-brand">Mediciones</span>
                                 </DialogTitle>
-                                <DialogDescription className="text-xs font-medium text-slate-500 italic">
+                                <DialogDescription className="text-[10px] sm:text-xs font-medium text-slate-500 italic">
                                     Evolución histórica detallada del paciente {patient.name}.
                                 </DialogDescription>
                             </div>
@@ -1002,13 +954,13 @@ export default function PatientDetailPage() {
                             </Button>
                         </div>
                     </DialogHeader>
-                    <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-4 sm:p-8 no-scrollbar">
                         {chartProps ? (
                             <div className="space-y-8">
                                 <PatientHistoryCharts {...chartProps} />
-                                <div className="mt-8 bg-[#151F32] p-8 rounded-[3rem] border border-white/5 shadow-2xl">
-                                    <h3 className="text-xl font-black text-white tracking-tight uppercase mb-6 flex items-center gap-3">
-                                        <Camera className="h-5 w-5 text-nutri-brand" /> Seguimiento Fotográfico
+                                <div className="mt-8 bg-[#151F32] p-4 sm:p-8 rounded-3xl sm:rounded-[3rem] border border-white/5 shadow-2xl">
+                                    <h3 className="text-lg sm:text-xl font-black text-white tracking-tight uppercase mb-6 flex items-center gap-3">
+                                        <Camera className="h-4 w-4 sm:h-5 sm:w-5 text-nutri-brand" /> Seguimiento Fotográfico
                                     </h3>
                                     <PhotoHistoryCarousel photoHistory={photoHistory} />
                                 </div>
