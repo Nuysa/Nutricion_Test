@@ -23,8 +23,10 @@ import {
 } from "@/components/ui/form";
 import {
     ChevronRight, ChevronLeft, Save, HeartPulse, User, Ruler, Activity,
-    Moon, Utensils, Camera, AlertCircle, Sparkles, CheckCircle2, Clock
+    Moon, Utensils, Camera, AlertCircle, Sparkles, CheckCircle2, Clock,
+    Loader2, Upload, X
 } from "lucide-react";
+import { removeBackground } from "@imgly/background-removal";
 import { cn } from "@/lib/utils";
 
 const medicalHistorySchema = z.object({
@@ -52,6 +54,10 @@ const medicalHistorySchema = z.object({
     weight_kg: z.union([z.coerce.number().min(20, "Peso inválido"), z.literal("")]).optional(),
     height_cm: z.coerce.number().min(50, "Talla inválida"),
     waist_cm: z.union([z.coerce.number().min(30, "Medida de cintura inválida"), z.literal("")]).optional(),
+    front_photo_url: z.string().optional(),
+    side_photo_1_url: z.string().optional(),
+    side_photo_2_url: z.string().optional(),
+    back_photo_url: z.string().optional(),
 
     // Step 4: Estado de Salud
     health_conditions: z.array(z.string()).default([]),
@@ -136,6 +142,7 @@ export function MedicalHistoryForm() {
     const [hasHistory, setHasHistory] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [patientId, setPatientId] = useState<string | null>(null);
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
     const totalSteps = 10;
 
     const form = useForm<MedicalHistoryFormValues>({
@@ -190,6 +197,10 @@ export function MedicalHistoryForm() {
             disliked_legumes: [],
             disliked_meats: [],
             disliked_fats: [],
+            front_photo_url: "",
+            side_photo_1_url: "",
+            side_photo_2_url: "",
+            back_photo_url: "",
         } as any,
     });
 
@@ -368,7 +379,8 @@ export function MedicalHistoryForm() {
                 'disliked_fruits', 'disliked_meats', 'disliked_fats', 'disliked_preparations',
                 'previous_unhealthy_habits', 'wake_up_time', 'sleep_time', 'breakfast_time',
                 'breakfast_details', 'lunch_time', 'lunch_details', 'dinner_time',
-                'dinner_details', 'snack_details', 'prep_preference', 'taste_preference'
+                'dinner_details', 'snack_details', 'prep_preference', 'taste_preference',
+                'front_photo_url', 'side_photo_1_url', 'side_photo_2_url', 'back_photo_url'
             ];
 
             const finalData: any = {};
@@ -471,7 +483,7 @@ export function MedicalHistoryForm() {
                         {step === 1 && <PersonalData form={form} />}
 
                         {step === 2 && <GoalExperience form={form} />}
-                        {step === 3 && <Measurements form={form} />}
+                        {step === 3 && <Measurements form={form} patientId={patientId!} setIsUploadingPhoto={setIsUploadingPhoto} />}
                         {step === 4 && <HealthStatus form={form} />}
                         {step === 5 && <ActivityExercise form={form} />}
                         {step === 6 && <Habits form={form} />}
@@ -485,8 +497,8 @@ export function MedicalHistoryForm() {
                                 type="button"
                                 variant="ghost"
                                 onClick={prevStep}
-                                disabled={step === 1}
-                                className="px-8 h-14 rounded-2xl font-black uppercase tracking-widest text-slate-500 hover:text-white"
+                                disabled={step === 1 || isUploadingPhoto}
+                                className="px-8 h-14 rounded-2xl font-black uppercase tracking-widest text-slate-500 hover:text-white disabled:opacity-50"
                             >
                                 <ChevronLeft className="mr-2 h-5 w-5" /> Anterior
                             </Button>
@@ -495,8 +507,8 @@ export function MedicalHistoryForm() {
                                 {isEditMode && step < totalSteps && (
                                     <Button
                                         type="submit"
-                                        disabled={loading}
-                                        className="px-8 h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all text-sm"
+                                        disabled={loading || isUploadingPhoto}
+                                        className="px-8 h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all text-sm disabled:opacity-50 disabled:hover:scale-100"
                                     >
                                         {loading ? "Guardando..." : "Guardar Cambios"} <Save className="ml-2 h-4 w-4" />
                                     </Button>
@@ -506,15 +518,16 @@ export function MedicalHistoryForm() {
                                     <Button
                                         type="button"
                                         onClick={nextStep}
-                                        className="px-10 h-14 rounded-2xl font-black uppercase tracking-widest bg-nutri-brand text-white shadow-lg shadow-nutri-brand/20 hover:scale-105 transition-all"
+                                        disabled={isUploadingPhoto}
+                                        className="px-10 h-14 rounded-2xl font-black uppercase tracking-widest bg-nutri-brand text-white shadow-lg shadow-nutri-brand/20 hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
                                     >
                                         Siguiente <ChevronRight className="ml-2 h-5 w-5" />
                                     </Button>
                                 ) : (
                                     <Button
                                         type="submit"
-                                        disabled={loading}
-                                        className="px-12 h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all"
+                                        disabled={loading || isUploadingPhoto}
+                                        className="px-12 h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
                                     >
                                         {loading ? "Guardando..." : "Guardar Cambios"} <Save className="ml-2 h-5 w-5" />
                                     </Button>
@@ -614,6 +627,29 @@ function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => 
                         <SummaryItem label="Peso Inicial" value={values.weight_kg ? `${values.weight_kg} kg` : 'Pte.'} />
                         <SummaryItem label="Talla" value={values.height_cm ? `${values.height_cm} cm` : 'Pte.'} />
                         <SummaryItem label="Cintura" value={values.waist_cm ? `${values.waist_cm} cm` : 'Pte.'} />
+                    </div>
+                    {/* Fotos de Progreso Display */}
+                    <div className="pt-4">
+                        <h4 className="font-tech font-bold text-slate-400 uppercase tracking-widest text-[10px] mb-4">Fotos de Progreso</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {[
+                                { label: 'Frente', url: values.front_photo_url },
+                                { label: 'Costado 1', url: values.side_photo_1_url },
+                                { label: 'Costado 2', url: values.side_photo_2_url },
+                                { label: 'Espalda', url: values.back_photo_url }
+                            ].map(photo => (
+                                <div key={photo.label} className="flex flex-col gap-2">
+                                    <span className="text-[10px] uppercase font-black tracking-widest text-slate-500 text-center">{photo.label}</span>
+                                    <div className="relative h-40 w-full rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden flex items-center justify-center">
+                                        {photo.url && photo.url !== "" ? (
+                                            <img src={photo.url} alt={photo.label} className="w-full h-full object-contain" />
+                                        ) : (
+                                            <Camera className="h-6 w-6 text-slate-600 opacity-50" />
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </section>
 
@@ -911,7 +947,80 @@ function GoalExperience({ form }: { form: any }) {
     );
 }
 
-function Measurements({ form }: { form: any }) {
+function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, patientId: string, setIsUploadingPhoto: (v: boolean) => void }) {
+    const supabase = createClient();
+    const { toast } = useToast();
+    const [uploading, setUploading] = useState<string | null>(null);
+    const [statusText, setStatusText] = useState("Subiendo...");
+
+    const PHOTO_TYPES = [
+        { id: 'front_photo_url', label: 'Frente' },
+        { id: 'side_photo_1_url', label: 'Costado 1' },
+        { id: 'side_photo_2_url', label: 'Costado 2' },
+        { id: 'back_photo_url', label: 'Espalda' }
+    ];
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, typeId: string) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(typeId);
+        setIsUploadingPhoto(true);
+        setStatusText("Procesando silueta con IA...");
+
+        try {
+            // Dar tiempo al navegador para renderizar el spinner antes de bloquear el hilo principal
+            await new Promise(resolve => setTimeout(resolve, 150));
+
+            const worker = new Worker(new URL('../../../lib/workers/bg-removal.worker.ts', import.meta.url));
+
+            const processedBlob = await new Promise<Blob>((resolve, reject) => {
+                worker.onmessage = (event) => {
+                    if (event.data.success) {
+                        resolve(event.data.blob);
+                    } else {
+                        reject(new Error(event.data.error));
+                    }
+                    worker.terminate();
+                };
+                worker.onerror = (error) => {
+                    reject(error);
+                    worker.terminate();
+                };
+                worker.postMessage({ file, typeId });
+            });
+
+            const processedFile = new File([processedBlob], file.name.replace(/\.[^/.]+$/, "") + ".png", { type: "image/png" });
+
+            setStatusText("Subiendo a la nube...");
+            const fileExt = "png";
+            const fileName = `${patientId}/${Date.now()}_${typeId}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('progress-photos')
+                .upload(fileName, processedFile, { upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('progress-photos')
+                .getPublicUrl(fileName);
+
+            form.setValue(typeId, publicUrl);
+            toast({ title: "Foto subida y procesada correctamente", variant: "default" });
+        } catch (error: any) {
+            toast({ title: "Error al subir foto", description: error.message, variant: "destructive" });
+        } finally {
+            setUploading(null);
+            setIsUploadingPhoto(false);
+            setStatusText("Subiendo...");
+        }
+    };
+
+    const handleRemove = (typeId: string) => {
+        form.setValue(typeId, "");
+    };
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <FormField control={form.control} name="weight_kg" render={({ field }) => (
@@ -924,18 +1033,54 @@ function Measurements({ form }: { form: any }) {
                 <FormItem><FormLabel>Cintura (cm) (Opcional)</FormLabel><FormControl><Input type="number" step="0.1" {...field} className="h-14 text-lg font-black rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
             )} />
             <div className="col-span-full bg-white/5 p-6 rounded-[2rem] border border-dashed border-white/10">
-                <div className="flex items-start gap-4">
-                    <Camera className="h-6 w-6 text-nutri-brand mt-1" />
-                    <div>
-                        <h4 className="font-tech font-bold text-white uppercase tracking-widest text-sm mb-2">Fotos de Progreso (Opcional)</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                            {['Frente', 'Costado 1', 'Costado 2', 'Espalda'].map(label => (
-                                <div key={label} className="h-24 rounded-2xl bg-white/5 border border-white/5 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white/10 transition-colors">
-                                    <Camera className="h-5 w-5 text-slate-600" />
-                                    <span className="text-[10px] uppercase font-black tracking-widest text-slate-500">{label}</span>
+                <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-3">
+                        <Camera className="h-6 w-6 text-nutri-brand" />
+                        <h4 className="font-tech font-bold text-white uppercase tracking-widest text-sm">Fotos de Progreso (Opcional)</h4>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                        {PHOTO_TYPES.map(type => {
+                            const currentUrl = form.watch(type.id);
+                            const isUploading = uploading === type.id;
+
+                            return (
+                                <div key={type.id} className="flex flex-col gap-2">
+                                    <span className="text-[10px] uppercase font-black tracking-widest text-slate-500 text-center">{type.label}</span>
+                                    <div className="relative h-40 w-full rounded-2xl border-2 border-dashed border-white/10 bg-white/5 overflow-hidden group hover:border-nutri-brand/30 transition-all flex items-center justify-center">
+                                        {isUploading ? (
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-nutri-brand">
+                                                <Loader2 className="h-6 w-6 animate-spin mb-2" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-center px-1">{statusText}</span>
+                                            </div>
+                                        ) : currentUrl && currentUrl !== "" ? (
+                                            <>
+                                                <img src={currentUrl} alt={type.label} className="w-full h-full object-contain" />
+                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemove(type.id)}
+                                                        className="bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-xl transition-colors shadow-lg"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-white/10 transition-colors text-slate-400">
+                                                <Upload className="h-6 w-6 mb-2 text-nutri-brand opacity-80" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest px-4 text-center">Subir Foto</span>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) => handleUpload(e, type.id)}
+                                                />
+                                            </label>
+                                        )}
+                                    </div>
                                 </div>
-                            ))}
-                        </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

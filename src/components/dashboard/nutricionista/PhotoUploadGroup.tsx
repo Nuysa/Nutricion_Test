@@ -4,11 +4,14 @@ import React, { useState } from 'react';
 import { Camera, Upload, X, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { removeBackground } from "@imgly/background-removal";
 
 interface PhotoUploadGroupProps {
     patientId: string;
     extraData: Record<string, any>;
     setExtraData: (v: Record<string, any>) => void;
+    isUploadingPhoto?: boolean;
+    setIsUploadingPhoto?: (v: boolean) => void;
 }
 
 const PHOTO_TYPES = [
@@ -18,23 +21,51 @@ const PHOTO_TYPES = [
     { id: 'photo_back_url', label: 'De espalda' }
 ];
 
-export function PhotoUploadGroup({ patientId, extraData, setExtraData }: PhotoUploadGroupProps) {
+export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadingPhoto, setIsUploadingPhoto }: PhotoUploadGroupProps) {
     const { toast } = useToast();
     const supabase = createClient();
     const [uploading, setUploading] = useState<string | null>(null);
+    const [statusText, setStatusText] = useState("Subiendo...");
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, typeId: string) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         setUploading(typeId);
+        if (setIsUploadingPhoto) setIsUploadingPhoto(true);
+        setStatusText("Procesando silueta con IA...");
+        
         try {
-            const fileExt = file.name.split('.').pop();
+            // Dar tiempo al navegador para renderizar el spinner antes de bloquear el hilo principal
+            await new Promise(resolve => setTimeout(resolve, 150));
+
+            const worker = new Worker(new URL('../../../lib/workers/bg-removal.worker.ts', import.meta.url));
+
+            const processedBlob = await new Promise<Blob>((resolve, reject) => {
+                worker.onmessage = (event) => {
+                    if (event.data.success) {
+                        resolve(event.data.blob);
+                    } else {
+                        reject(new Error(event.data.error));
+                    }
+                    worker.terminate();
+                };
+                worker.onerror = (error) => {
+                    reject(error);
+                    worker.terminate();
+                };
+                worker.postMessage({ file, typeId });
+            });
+
+            const processedFile = new File([processedBlob], file.name.replace(/\.[^/.]+$/, "") + ".png", { type: "image/png" });
+
+            setStatusText("Subiendo a la nube...");
+            const fileExt = "png";
             const fileName = `${patientId}/${Date.now()}_${typeId}.${fileExt}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('progress-photos')
-                .upload(fileName, file, { upsert: true });
+                .upload(fileName, processedFile, { upsert: true });
 
             if (uploadError) throw uploadError;
 
@@ -43,11 +74,13 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData }: PhotoUp
                 .getPublicUrl(fileName);
 
             setExtraData({ ...extraData, [typeId]: publicUrl });
-            toast({ title: "Foto subida correctamente" });
+            toast({ title: "Foto subida y procesada correctamente" });
         } catch (error: any) {
             toast({ title: "Error al subir foto", description: error.message, variant: "destructive" });
         } finally {
             setUploading(null);
+            if (setIsUploadingPhoto) setIsUploadingPhoto(false);
+            setStatusText("Subiendo...");
         }
     };
 
@@ -79,11 +112,11 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData }: PhotoUp
                                 {isUploading ? (
                                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-pink-400">
                                         <Loader2 className="h-6 w-6 animate-spin mb-2" />
-                                        <span className="text-[9px] font-black uppercase tracking-widest">Subiendo...</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-center px-2">{statusText}</span>
                                     </div>
                                 ) : currentUrl ? (
                                     <>
-                                        <img src={currentUrl} alt={type.label} className="w-full h-full object-cover" />
+                                        <img src={currentUrl} alt={type.label} className="w-full h-full object-contain" />
                                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
                                             <button
                                                 type="button"

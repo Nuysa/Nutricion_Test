@@ -23,6 +23,7 @@ interface NewConsultationFormProps {
 export function NewConsultationForm({
     date, setDate, editValues, setEditValues, extraData, setExtraData, onSave, onCancel, patientId, patientHeight, recordNumber, layout, clinicalVariables
 }: NewConsultationFormProps) {
+    const [isUploadingPhoto, setIsUploadingPhoto] = React.useState(false);
 
     // Auto-calculate IMC
     const currentWeight = parseFloat(editValues.weight?.toString().replace(',', '.') || '0');
@@ -59,7 +60,13 @@ export function NewConsultationForm({
                     </button>
                     <button
                         onClick={onSave}
-                        className="flex-1 md:flex-none bg-nutrition-500 hover:bg-nutrition-600 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg shadow-nutrition-500/20"
+                        disabled={isUploadingPhoto}
+                        className={cn(
+                            "flex-1 md:flex-none px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg",
+                            isUploadingPhoto
+                                ? "bg-slate-700 text-slate-400 cursor-not-allowed opacity-50"
+                                : "bg-nutrition-500 hover:bg-nutrition-600 text-white shadow-nutrition-500/20"
+                        )}
                     >
                         <Check className="h-4 w-4" /> Guardar Registro
                     </button>
@@ -156,7 +163,7 @@ export function NewConsultationForm({
                 </div>
 
                 {/* Registro Fotográfico */}
-                <PhotoUploadGroup patientId={patientId} extraData={extraData} setExtraData={setExtraData} />
+                <PhotoUploadGroup patientId={patientId} extraData={extraData} setExtraData={setExtraData} isUploadingPhoto={isUploadingPhoto} setIsUploadingPhoto={setIsUploadingPhoto} />
             </div>
         </div>
     );

@@ -27,6 +27,7 @@ export function EditConsultationModal({
     isOpen, onClose, date, setDate, editValues, setEditValues,
     extraData, setExtraData, onSave, onDelete, patientId, patientHeight, patientName, recordNumber, layout, clinicalVariables
 }: EditConsultationModalProps) {
+    const [isUploadingPhoto, setIsUploadingPhoto] = React.useState(false);
 
     // Prevent body scroll when open
     useEffect(() => {
@@ -192,7 +193,9 @@ export function EditConsultationModal({
                         </div>
 
                         {/* Registro Fotográfico */}
-                        <PhotoUploadGroup patientId={patientId} extraData={extraData} setExtraData={setExtraData} />
+                        <div className="col-span-1 lg:col-span-4 mt-6">
+                            <PhotoUploadGroup patientId={patientId} extraData={extraData} setExtraData={setExtraData} isUploadingPhoto={isUploadingPhoto} setIsUploadingPhoto={setIsUploadingPhoto} />
+                        </div>
                     </div>
                 </div>
 
@@ -213,7 +216,13 @@ export function EditConsultationModal({
                         </button>
                         <button
                             onClick={onSave}
-                            className="px-12 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-white bg-nutrition-500 hover:bg-nutrition-600 shadow-2xl shadow-nutrition-500/40 transition-all flex items-center gap-3 active:scale-95"
+                            disabled={isUploadingPhoto}
+                            className={cn(
+                                "px-12 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-white transition-all flex items-center gap-3",
+                                isUploadingPhoto
+                                    ? "bg-slate-700 text-slate-400 cursor-not-allowed opacity-50 shadow-none"
+                                    : "bg-nutrition-500 hover:bg-nutrition-600 shadow-2xl shadow-nutrition-500/40 active:scale-95"
+                            )}
                         >
                             <Save className="h-4 w-4" /> Guardar Cambios
                         </button>
