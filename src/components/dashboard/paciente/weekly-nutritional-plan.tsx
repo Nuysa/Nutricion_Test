@@ -29,7 +29,8 @@ import {
     AlertTriangle,
     Save,
     Loader2,
-    Trash2
+    Trash2,
+    Scale
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,7 @@ export function WeeklyNutritionalPlan() {
     const [isSavingCompliance, setIsSavingCompliance] = useState(false);
     const { toast } = useToast();
     const [patientId, setPatientId] = useState<string | null>(null);
+    const [patientWeight, setPatientWeight] = useState<number | null>(null);
 
     useEffect(() => {
         const today = new Date();
@@ -123,8 +125,21 @@ export function WeeklyNutritionalPlan() {
             if (!user) return;
             const { data: profile } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
             if (!profile) return;
-            const { data: patient } = await supabase.from("patients").select("id, plan_type").eq("profile_id", profile.id).single();
+            const { data: patient } = await supabase.from("patients").select("id, plan_type, current_weight").eq("profile_id", profile.id).single();
             if (!patient) return;
+
+            // Obtener el último peso registrado para cálculos más precisos
+            const { data: latestRecord } = await supabase
+                .from("weight_records")
+                .select("weight")
+                .eq("patient_id", patient.id)
+                .order("date", { ascending: false })
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            const currentPatientWeight = latestRecord?.weight || patient.current_weight || 0;
+            setPatientWeight(currentPatientWeight);
 
             setPatientId(patient.id);
             setPatientPlanType(patient.plan_type || "sin plan");
@@ -153,6 +168,8 @@ export function WeeklyNutritionalPlan() {
             if (flexData && flexData.data) {
                 setFlexiblePlan(flexData.data);
                 const p = flexData.data;
+                const activeWeight = currentPatientWeight > 0 ? currentPatientWeight : (p.peso || 0);
+                
                 if (p.portions) {
                     let totK = 0, totC = 0, totPr = 0, totF = 0;
                     Object.entries(p.portions).forEach(([key, val]: [string, any]) => {
@@ -173,9 +190,9 @@ export function WeeklyNutritionalPlan() {
                 } else if (p.kcalTotales) {
                     setGoals({
                         kcal: Math.round(Number(p.kcalTotales) || 1820),
-                        pro: Math.round(p.gProKg * p.peso || 140),
-                        car: Math.round(p.gChoKg * p.peso || 180),
-                        fat: Math.round((p.kcalTotales - (p.gProKg * p.peso * 4) - (p.gChoKg * p.peso * 4)) / 9 || 60)
+                        pro: Math.round(p.gProKg * activeWeight || 140),
+                        car: Math.round(p.gChoKg * activeWeight || 180),
+                        fat: Math.round((p.kcalTotales - (p.gProKg * activeWeight * 4) - (p.gChoKg * activeWeight * 4)) / 9 || 60)
                     });
                 }
             } else {
@@ -492,7 +509,15 @@ export function WeeklyNutritionalPlan() {
                                 </div>
                                 <div>
                                     <h1 className="text-4xl font-black tracking-tight text-white mb-1">Plan Flexible</h1>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">CUMPLIMIENTO DE MACROS Y PORCIONES</p>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">CUMPLIMIENTO DE MACROS Y PORCIONES</p>
+                                        {patientWeight && (
+                                            <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-lg w-fit">
+                                                <Scale className="h-3 w-3 text-orange-500" />
+                                                <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">PESO CARGADO: {patientWeight}kg</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -783,7 +808,15 @@ export function WeeklyNutritionalPlan() {
                                         Plan Nutricional Semanal
                                     </h1>
                                 </div>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] font-tech text-center sm:text-left">PLAN PERSONALIZADO POR TU NUTRICIONISTA</p>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] font-tech text-center sm:text-left">PLAN PERSONALIZADO POR TU NUTRICIONISTA</p>
+                                    {patientWeight && (
+                                        <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-lg w-fit mx-auto sm:mx-0">
+                                            <Scale className="h-3 w-3 text-orange-500" />
+                                            <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">PESO CARGADO: {patientWeight}kg</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Week Navigation for Weekly Menu */}

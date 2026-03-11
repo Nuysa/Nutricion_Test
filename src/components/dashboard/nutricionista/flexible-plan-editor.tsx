@@ -283,14 +283,26 @@ export function FlexiblePlanEditor({ patientId }: { patientId: string }) {
             // Load patient base data first (Biometría básica)
             const { data: patient } = await supabase
                 .from("patients")
-                .select("gender, date_of_birth, height_cm, current_weight")
+                .select("id, gender, date_of_birth, height_cm, current_weight")
                 .eq("id", patientId)
                 .single();
 
             if (patient) {
+                // Obtener el último peso registrado para cálculos más precisos
+                const { data: latestRecord } = await supabase
+                    .from("weight_records")
+                    .select("weight")
+                    .eq("patient_id", patient.id)
+                    .order("date", { ascending: false })
+                    .order("created_at", { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                const currentPatientWeight = latestRecord?.weight || patient.current_weight || 0;
+
                 if (patient.gender) setGenero(patient.gender === 'femenino' || patient.gender === 'F' ? 'F' : 'M');
                 if (patient.height_cm) setTalla(Number(patient.height_cm));
-                if (patient.current_weight) setPeso(Number(patient.current_weight));
+                if (currentPatientWeight > 0) setPeso(Number(currentPatientWeight));
 
                 if (patient.date_of_birth) {
                     const birth = new Date(patient.date_of_birth + 'T12:00:00');

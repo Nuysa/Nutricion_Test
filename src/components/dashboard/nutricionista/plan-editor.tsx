@@ -110,6 +110,7 @@ export function PlanEditor() {
     const [loading, setLoading] = useState(false);
     const [weekOffset, setWeekOffset] = useState(0);
     const [patientPlanType, setPatientPlanType] = useState<string>("sin plan");
+    const [patientWeight, setPatientWeight] = useState<number | null>(null);
 
     // Macro Goal States
     const [goalKcal, setGoalKcal] = useState(1820);
@@ -189,20 +190,34 @@ export function PlanEditor() {
     }, [supabase]);
 
     useEffect(() => {
-        const fetchPlanType = async () => {
+        const fetchPatientData = async () => {
             if (!selectedPatientId) return;
             try {
-                const { data, error } = await supabase
+                const { data: patient, error } = await supabase
                     .from("patients")
-                    .select("plan_type")
+                    .select("plan_type, current_weight")
                     .eq("id", selectedPatientId)
                     .single();
-                if (data) setPatientPlanType(data.plan_type || "sin plan");
+                if (patient) {
+                    setPatientPlanType(patient.plan_type || "sin plan");
+                    
+                    // Fetch latest weight record
+                    const { data: latestRecord } = await supabase
+                        .from("weight_records")
+                        .select("weight")
+                        .eq("patient_id", selectedPatientId)
+                        .order("date", { ascending: false })
+                        .order("created_at", { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+
+                    setPatientWeight(latestRecord?.weight || patient.current_weight || 0);
+                }
             } catch (err) {
-                console.error("Error fetching plan type:", err);
+                console.error("Error fetching patient data:", err);
             }
         };
-        fetchPlanType();
+        fetchPatientData();
     }, [selectedPatientId, supabase]);
 
     const handlePlanTypeChange = async (newType: string) => {
@@ -818,6 +833,12 @@ export function PlanEditor() {
                                                     <Scale className="h-5 w-5" />
                                                 </div>
                                                 <CardTitle className="text-lg font-black text-white">Objetivo del Paciente</CardTitle>
+                                                {patientWeight && (
+                                                    <div className="flex items-center gap-2 bg-[#FF7A00]/10 border border-[#FF7A00]/20 px-3 py-1 rounded-lg">
+                                                        <Scale className="h-3 w-3 text-orange-500" />
+                                                        <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">Peso Actual: {patientWeight}kg</span>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-8">
                                                 <div className="flex flex-col items-end">
