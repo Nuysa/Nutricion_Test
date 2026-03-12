@@ -146,10 +146,7 @@ export default function NutritionistCalendarPage() {
                     .from("appointments")
                     .select(`
                         *,
-                        patient:patients(
-                            id,
-                            profile:profiles(full_name)
-                        )
+                        patient:profiles!patient_id(full_name)
                     `)
                     .eq("nutritionist_id", profile.id);
 
@@ -162,7 +159,7 @@ export default function NutritionistCalendarPage() {
                             day: d.getDate(),
                             month: d.getMonth(),
                             year: d.getFullYear(),
-                            patient: (apt.patient as any)?.profile?.full_name || "Paciente",
+                            patient: (apt.patient as any)?.full_name || "Paciente",
                             time: apt.start_time.substring(0, 5),
                             type: apt.modality,
                             status: apt.status

@@ -67,7 +67,7 @@ export default function PatientsPage() {
 
             if (assignedPatients) {
                 setPatients(assignedPatients.map(p => {
-                    const profileData = (p.profile as any) || {};
+                    const profileData = Array.isArray(p.profile) ? p.profile[0] : (p.profile || {});
                     return {
                         id: p.id,
                         name: profileData.full_name || "Paciente",
@@ -146,7 +146,7 @@ export default function PatientsPage() {
             const startTime = `${scheduleValues.time.padStart(5, '0')}:00`;
 
             const { error } = await supabase.from("appointments").insert({
-                patient_id: selectedPatient.id,
+                patient_id: selectedPatient.profileId,
                 nutritionist_id: profile.id,
                 scheduled_by: profile.id, // Mandatory column
                 modality: scheduleValues.type,

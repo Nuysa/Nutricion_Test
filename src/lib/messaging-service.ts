@@ -22,6 +22,7 @@ export interface GlobalProfile {
     status?: string;
     email?: string;
     planType?: string;
+    patientId?: string;
 }
 
 const supabase = createClient();
@@ -118,6 +119,7 @@ export const MessagingService = {
             .select(`
                 *,
                 patients!profile_id (
+                    id,
                     plan_type
                 )
             `);
@@ -153,7 +155,8 @@ export const MessagingService = {
                 avatar: p.avatar_url,
                 status: p.status,
                 email: p.email,
-                planType: patientData?.plan_type || 'sin plan'
+                planType: patientData?.plan_type || 'sin plan',
+                patientId: patientData?.id
             };
         });
     },
