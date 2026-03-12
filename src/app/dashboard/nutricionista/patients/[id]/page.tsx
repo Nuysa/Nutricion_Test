@@ -26,6 +26,12 @@ import { MedicalHistoryModal } from "@/components/dashboard/nutricionista/Medica
 import { PatientHistoryCharts } from "@/components/dashboard/paciente/PatientHistoryCharts";
 import { PhotoHistoryCarousel } from "@/components/dashboard/shared/photo-history-carousel";
 import { History, Camera } from "lucide-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function PatientDetailPage() {
     const params = useParams();
@@ -714,23 +720,40 @@ export default function PatientDetailPage() {
                     <Button variant="outline" className="rounded-xl font-black text-xs h-12 border-white/10 bg-white/5 text-white hover:bg-white/10 shadow-lg w-full sm:w-auto" onClick={() => setShowBioDialog(true)}>
                         <Edit2 className="h-4 w-4 mr-2 text-nutri-brand" /> Editar Ficha
                     </Button>
-                    <div title={!todayAppointment ? "Requiere una cita programada para hoy" : (patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan") ? "Requiere un plan activo" : "")} className="w-full sm:w-auto">
-                        <Button
-                            disabled={patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan") || !todayAppointment}
-                            className="rounded-xl bg-nutri-brand font-black text-xs text-white shadow-xl h-12 px-6 w-full hover:scale-105 transition-all shadow-nutri-brand/20 uppercase tracking-widest disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:scale-100"
-                            onClick={() => {
-                                setIsAddingMode(true);
-                                setEditingId("new");
-                                setEditValues({
-                                    date: new Date().toISOString().split('T')[0],
-                                    weight: patient.rawWeight || "",
-                                    findings: "",
-                                    recommendations: ""
-                                });
-                                setExtraData({});
-                            }}>
-                            <Plus className="h-4 w-4 mr-2" /> Nueva Consulta
-                        </Button>
+                    <div className="w-full sm:w-auto">
+                        <TooltipProvider>
+                            <Tooltip delayDuration={0}>
+                                <TooltipTrigger asChild>
+                                    <div className="w-full sm:w-auto">
+                                        <Button
+                                            disabled={patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan") || !todayAppointment}
+                                            className="rounded-xl bg-nutri-brand font-black text-xs text-white shadow-xl h-12 px-6 w-full hover:scale-105 transition-all shadow-nutri-brand/20 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                                            onClick={() => {
+                                                setIsAddingMode(true);
+                                                setEditingId("new");
+                                                setEditValues({
+                                                    date: new Date().toISOString().split('T')[0],
+                                                    weight: patient.rawWeight || "",
+                                                    findings: "",
+                                                    recommendations: ""
+                                                });
+                                                setExtraData({});
+                                            }}>
+                                            <Plus className="h-4 w-4 mr-2" /> Nueva Consulta
+                                        </Button>
+                                    </div>
+                                </TooltipTrigger>
+                                {(patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan") || !todayAppointment) && (
+                                    <TooltipContent className="bg-[#151F32] border-white/10 text-white p-4 rounded-2xl shadow-2xl max-w-xs transition-all animate-in fade-in zoom-in-95" side="top">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-center leading-relaxed">
+                                            {!todayAppointment 
+                                                ? "Primero debes agendar una cita para hoy para poder ingresar una nueva consulta."
+                                                : "El paciente requiere un plan activo para registrar nuevas consultas."}
+                                        </p>
+                                    </TooltipContent>
+                                )}
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 </div>
             </div>
