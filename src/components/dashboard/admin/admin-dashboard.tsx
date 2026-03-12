@@ -48,6 +48,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
     const [subscriptions, setSubscriptions] = useState<any[]>([]);
     const [offers, setOffers] = useState<any[]>([]);
     const [currentAdminRole, setCurrentAdminRole] = useState<string>("");
+    const [currentAdminId, setCurrentAdminId] = useState<string>("");
     const [searchTerm, setSearchTerm] = useState("");
     const [verifSearch, setVerifSearch] = useState("");
     const [assignPSearch, setAssignPSearch] = useState("");
@@ -126,8 +127,11 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
             const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { data: profile } = await supabase.from("profiles").select("role").eq("user_id", user.id).single();
-                if (profile) setCurrentAdminRole(profile.role);
+                const { data: profile } = await supabase.from("profiles").select("id, role").eq("user_id", user.id).single();
+                if (profile) {
+                    setCurrentAdminRole(profile.role);
+                    setCurrentAdminId(profile.id);
+                }
             }
 
             const [fetchedProfiles, fetchedAssignments, fetchedSubs, fetchedOffers, fetchedAppointments] = await Promise.all([
@@ -354,6 +358,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
             const { error } = await supabase.from("appointments").insert({
                 patient_id: agendaPatientId,
                 nutritionist_id: agendaNutriId,
+                scheduled_by: currentAdminId, // Fix NOT NULL violation
                 appointment_date: agendaDate,
                 start_time: agendaTime,
                 end_time: (() => {

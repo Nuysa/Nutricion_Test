@@ -312,6 +312,7 @@ export const MessagingService = {
                 id: appt.id && !appt.id.startsWith("appt_") ? appt.id : undefined,
                 patient_id: appt.patientId,
                 nutritionist_id: appt.nutritionistId,
+                scheduled_by: appt.scheduledBy || appt.nutritionistId, // Add mandatory field
                 appointment_date: appt.date,
                 start_time: appt.startTime,
                 end_time: appt.endTime,
