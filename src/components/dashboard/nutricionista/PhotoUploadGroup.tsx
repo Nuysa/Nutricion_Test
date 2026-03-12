@@ -24,19 +24,17 @@ const PHOTO_TYPES = [
 export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadingPhoto, setIsUploadingPhoto }: PhotoUploadGroupProps) {
     const { toast } = useToast();
     const supabase = createClient();
-    const [uploading, setUploading] = useState<string | null>(null);
-    const [statusText, setStatusText] = useState("Subiendo...");
+    const [uploadingSlots, setUploadingSlots] = useState<Record<string, string>>({});
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, typeId: string) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        setUploading(typeId);
+        setUploadingSlots(prev => ({ ...prev, [typeId]: "Procesando silueta..." }));
         if (setIsUploadingPhoto) setIsUploadingPhoto(true);
-        setStatusText("Procesando silueta con IA...");
         
         try {
-            // Dar tiempo al navegador para renderizar el spinner antes de bloquear el hilo principal
+            // Dar tiempo al navegador para renderizar el spinner
             await new Promise(resolve => setTimeout(resolve, 150));
 
             const worker = new Worker(new URL('../../../lib/workers/bg-removal.worker.ts', import.meta.url));
@@ -59,7 +57,7 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
 
             const processedFile = new File([processedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: "image/jpeg" });
 
-            setStatusText("Subiendo a la nube...");
+            setUploadingSlots(prev => ({ ...prev, [typeId]: "Subiendo..." }));
             const fileExt = "jpg";
             const fileName = `${patientId}/${Date.now()}_${typeId}.${fileExt}`;
 
@@ -73,21 +71,31 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                 .from('progress-photos')
                 .getPublicUrl(fileName);
 
-            setExtraData({ ...extraData, [typeId]: publicUrl });
-            toast({ title: "Foto subida y procesada correctamente" });
+            // Uso de actualización funcional para evitar condiciones de carrera entre cargas simultáneas
+            setExtraData((prev: any) => ({ ...prev, [typeId]: publicUrl }));
+            toast({ title: "Foto subida y procesada" });
         } catch (error: any) {
             toast({ title: "Error al subir foto", description: error.message, variant: "destructive" });
         } finally {
-            setUploading(null);
-            if (setIsUploadingPhoto) setIsUploadingPhoto(false);
-            setStatusText("Subiendo...");
+            setUploadingSlots(prev => {
+                const next = { ...prev };
+                delete next[typeId];
+                
+                // Si ya no quedan procesos activos, avisamos al padre
+                if (Object.keys(next).length === 0 && setIsUploadingPhoto) {
+                    setIsUploadingPhoto(false);
+                }
+                return next;
+            });
         }
     };
 
     const handleRemove = (typeId: string) => {
-        const newData = { ...extraData };
-        delete newData[typeId];
-        setExtraData(newData);
+        setExtraData((prev: any) => {
+            const newData = { ...prev };
+            delete newData[typeId];
+            return newData;
+        });
     };
 
     return (
@@ -100,7 +108,8 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                 {PHOTO_TYPES.map((type) => {
                     const currentUrl = extraData[type.id];
-                    const isUploading = uploading === type.id;
+                    const slotStatus = uploadingSlots[type.id];
+                    const isUploading = !!slotStatus;
 
                     return (
                         <div key={type.id} className="flex flex-col gap-2">
@@ -108,11 +117,13 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                                 {type.label}
                             </label>
 
-                            <div className="relative aspect-[3/4] w-full rounded-2xl border-2 border-dashed border-white/10 bg-white/5 overflow-hidden group hover:border-pink-500/30 transition-all">
+                            <div className="relative aspect-[3/4] w-full rounded-2xl border-2 border-dashed border-white/10 bg-white/5 overflow-hidden group hover:border-pink-500/30 transition-all text-white">
                                 {isUploading ? (
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-pink-400">
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0B1120]/80 backdrop-blur-sm text-pink-400 z-20">
                                         <Loader2 className="h-6 w-6 animate-spin mb-2" />
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-center px-2">{statusText}</span>
+                                        <span className="text-[8px] font-black uppercase tracking-widest text-center px-2 leading-tight">
+                                            {slotStatus}
+                                        </span>
                                     </div>
                                 ) : currentUrl ? (
                                     <>
@@ -136,6 +147,7 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                                             accept="image/*"
                                             className="hidden"
                                             onChange={(e) => handleUpload(e, type.id)}
+                                            disabled={isUploadingPhoto} 
                                         />
                                     </label>
                                 )}

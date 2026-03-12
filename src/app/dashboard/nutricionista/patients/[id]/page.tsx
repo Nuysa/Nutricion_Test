@@ -474,21 +474,64 @@ export default function PatientDetailPage() {
 
     const stats = useMemo(() => {
         const latest = records[0];
-        const h = latest?._computedInputs?.['TALLA'] || patient?.rawHeight || null;
+        const h = latest?._computedInputs?.['TALLA'] || latest?._computedInputs?.['TALLA_CM'] || patient?.rawHeight || null;
         const w = latest?._computedInputs?.['PESO'] || latest?.weight || patient?.rawWeight || null;
 
-        let imc = "—";
-        if (h && w) imc = (w / ((h / 100) * (h / 100))).toFixed(1);
+        let imcVal = "—";
+        let imcLabel = "Sin datos";
+        let imcColor = "bg-white/20";
+        if (h && w) {
+            const n = (w / ((h / 100) * (h / 100)));
+            imcVal = n.toFixed(1);
+            imcLabel = getIMCCategory(imcVal);
+            if (imcLabel === 'Sobrepeso') imcColor = 'bg-orange-500/40 text-white';
+            else if (imcLabel.includes('Obesidad')) imcColor = 'bg-red-500/40 text-white';
+            else if (imcLabel === 'Saludable') imcColor = 'bg-green-500/40 text-white';
+        }
+
+        const varDiagGrasa = clinicalVariables.find((v: any) => (v.name?.toUpperCase().includes('SUMA DE PLIEGUES') || v.code?.toUpperCase().includes('SUMA_PLIEGUES')) && (v.has_ranges || v.hasRanges));
+        const varDiagMusculo = clinicalVariables.find((v: any) => v.name?.toUpperCase().includes('MUSCULO LEE') && (v.has_ranges || v.hasRanges));
+        const varDiagCintura = clinicalVariables.find((v: any) => v.name?.toUpperCase().includes('CINTURA') && (v.has_ranges || v.hasRanges));
+
+        const getDiag = (v: any) => {
+            if (!v || !latest?._computedInputs) return { label: "—", color: "bg-white/10" };
+            const calc = calculate(v, { gender: patient?.gender, age: patient?.age, inputs: latest._computedInputs });
+            return {
+                label: calc.range?.label || "Normal",
+                color: calc.range?.color ? `bg-${calc.range.color}-500/20 text-${calc.range.color}-500` : "bg-white/10 text-slate-400"
+            };
+        };
+
+        const fatDiag = getDiag(varDiagGrasa);
+        const musDiag = getDiag(varDiagMusculo);
+        const cinDiag = getDiag(varDiagCintura);
 
         return {
             weight: w != null ? `${w} kg` : "—",
             height: h != null ? `${h} cm` : "—",
-            fat: (latest?._computedInputs?.['GRASA'] || latest?._computedInputs?.['GRASA_CORPORAL'] || latest?.body_fat_percentage) ? `${latest?._computedInputs?.['GRASA'] || latest?._computedInputs?.['GRASA_CORPORAL'] || latest?.body_fat_percentage}%` : "—",
-            waist: (latest?._computedInputs?.['CINTURA'] || latest?._computedInputs?.['CINTURA_MINIMA'] || latest?.waist_circumference_cm) ? `${latest?._computedInputs?.['CINTURA'] || latest?._computedInputs?.['CINTURA_MINIMA'] || latest?.waist_circumference_cm} cm` : "—",
-            imc,
+            fat: {
+                value: (latest?._computedInputs?.['GRASA_CORPORAL'] || latest?.body_fat_percentage || 0).toString(),
+                diag: fatDiag.label,
+                color: fatDiag.color
+            },
+            muscle: {
+                value: (latest?._computedInputs?.['MASA_MUSCULAR_LEE'] || 0).toString(),
+                diag: musDiag.label,
+                color: musDiag.color
+            },
+            waist: {
+                value: (latest?._computedInputs?.['CINTURA_MINIMA'] || latest?.waist_circumference_cm || latest?._computedInputs?.['CINTURA'] || 0).toString(),
+                diag: cinDiag.label,
+                color: cinDiag.color
+            },
+            imc: {
+                value: imcVal,
+                label: imcLabel,
+                color: imcColor
+            },
             lastVisit: latest ? new Date(latest.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : "Sin mediciones"
         };
-    }, [records, patient]);
+    }, [records, patient, clinicalVariables, calculate]);
 
     const chartProps = useMemo(() => {
         if (!records || records.length === 0) return null;
@@ -694,39 +737,47 @@ export default function PatientDetailPage() {
 
             {/* Métricas Destacadas */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <Card className={cn("border-0 text-white shadow-2xl overflow-hidden relative rounded-3xl sm:rounded-[2rem]", parseFloat(stats.imc) < 25 ? "bg-gradient-to-br from-nutri-brand to-emerald-600" : "bg-gradient-to-br from-orange-500 to-red-600")}>
-                    <div className="absolute top-0 right-0 p-4 opacity-10 hidden sm:block">
-                        <Calculator className="h-20 w-20" />
-                    </div>
-                    <CardContent className="p-4 sm:p-7 relative z-10">
-                        <div className="text-[8px] sm:text-[10px] font-black uppercase opacity-70 mb-1 sm:mb-2 tracking-widest">IMC Actual</div>
+                <Card className={cn("border-0 text-white shadow-2xl overflow-hidden relative rounded-3xl sm:rounded-[2rem]", parseFloat(stats.imc.value) < 25 ? "bg-gradient-to-br from-nutri-brand to-emerald-600" : "bg-gradient-to-br from-orange-500 to-red-600")}>
+                    <div className="absolute top-0 right-10 w-20 h-20 bg-white/10 blur-[50px] rounded-full -mr-10 -mt-10" />
+                    <CardContent className="p-4 sm:p-7 relative z-10 h-full flex flex-col justify-between">
+                        <div className="text-[8px] sm:text-[10px] font-black uppercase opacity-80 mb-1 sm:mb-2 tracking-widest">IMC Actual</div>
                         <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
-                            <span className="text-3xl sm:text-5xl font-black tracking-tighter">{stats.imc}</span>
-                            <Badge variant="secondary" className="bg-white/20 text-white text-[7px] sm:text-[9px] border-0 font-black uppercase px-2 w-fit">{getIMCCategory(stats.imc)}</Badge>
+                            <span className="text-3xl sm:text-5xl font-black tracking-tighter text-white">{stats.imc.value}</span>
+                            <Badge variant="secondary" className={cn("text-[7px] sm:text-[9px] border-0 font-black uppercase px-2 w-fit", stats.imc.color)}>{stats.imc.label}</Badge>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-3xl sm:rounded-[2rem] overflow-hidden relative group">
-                    <div className="absolute top-0 right-10 w-20 h-20 bg-nutri-brand/5 blur-3xl group-hover:bg-nutri-brand/10 transition-all opacity-0 group-hover:opacity-100" />
-                    <CardContent className="p-4 sm:p-7">
-                        <div className="text-[8px] sm:text-[10px] font-black uppercase text-nutri-brand mb-1 sm:mb-2 tracking-widest">Peso</div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">{stats.weight}</span>
-                        </div>
-                    </CardContent>
-                </Card>
+
                 <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-3xl sm:rounded-[2rem] overflow-hidden relative group">
                     <div className="absolute top-0 right-10 w-20 h-20 bg-orange-500/5 blur-3xl group-hover:bg-orange-500/10 transition-all opacity-0 group-hover:opacity-100" />
-                    <CardContent className="p-4 sm:p-7">
+                    <CardContent className="p-4 sm:p-7 h-full flex flex-col justify-between">
                         <div className="text-[8px] sm:text-[10px] font-black uppercase text-orange-500 mb-1 sm:mb-2 tracking-widest">% Grasa</div>
-                        <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">{stats.fat}</span>
+                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                             <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">{stats.fat.value}%</span>
+                             <Badge variant="secondary" className={cn("text-[7px] sm:text-[9px] border-0 font-black uppercase px-2 w-fit", stats.fat.color)}>{stats.fat.diag}</Badge>
+                        </div>
                     </CardContent>
                 </Card>
+
+                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-3xl sm:rounded-[2rem] overflow-hidden relative group">
+                    <div className="absolute top-0 right-10 w-20 h-20 bg-emerald-500/5 blur-3xl group-hover:bg-emerald-500/10 transition-all opacity-0 group-hover:opacity-100" />
+                    <CardContent className="p-4 sm:p-7 h-full flex flex-col justify-between">
+                        <div className="text-[8px] sm:text-[10px] font-black uppercase text-emerald-500 mb-1 sm:mb-2 tracking-widest">% Músculo</div>
+                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                             <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">{stats.muscle.value}%</span>
+                             <Badge variant="secondary" className={cn("text-[7px] sm:text-[9px] border-0 font-black uppercase px-2 w-fit", stats.muscle.color)}>{stats.muscle.diag}</Badge>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-3xl sm:rounded-[2rem] overflow-hidden relative group">
                     <div className="absolute top-0 right-10 w-20 h-20 bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-all opacity-0 group-hover:opacity-100" />
-                    <CardContent className="p-4 sm:p-7">
+                    <CardContent className="p-4 sm:p-7 h-full flex flex-col justify-between">
                         <div className="text-[8px] sm:text-[10px] font-black uppercase text-indigo-500 mb-1 sm:mb-2 tracking-widest">Cintura</div>
-                        <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">{stats.waist}</span>
+                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                            <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">{stats.waist.value} cm</span>
+                            <Badge variant="secondary" className={cn("text-[7px] sm:text-[9px] border-0 font-black uppercase px-2 w-fit", stats.waist.color)}>{stats.waist.diag}</Badge>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -797,18 +848,33 @@ export default function PatientDetailPage() {
                                             </td>
                                             {layout.slice(0, 4).map((col, cIdx) => {
                                                 let value: any = "—";
+                                                let color: string | undefined = undefined;
+
                                                 if (col.fixed_variable === 'weight') value = record.weight;
-                                                else if (col.fixed_variable === 'bmi') value = record.bmi;
-                                                else if (col.variable_id) {
-                                                    const v = clinicalVariables.find(cv => cv.id === col.variable_id);
-                                                    if (v && record.extra_data) {
-                                                        value = record.extra_data[v.code] ?? record.extra_data[v.code.toUpperCase()] ?? "—";
+                                                else if (col.fixed_variable === 'bmi') {
+                                                     const h = patient?.rawHeight || 100;
+                                                     value = record.weight ? (parseFloat(record.weight) / ((h / 100) * (h / 100))).toFixed(1) : "—";
+                                                }
+                                                else if (col.fixed_variable === 'date') {
+                                                     value = new Date(record.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                                                }
+                                                else if (col.variable_id || col.fixed_variable) {
+                                                    const key = `col_${col.variable_id || col.fixed_variable}`;
+                                                    const colorKey = `color_${col.variable_id || col.fixed_variable}`;
+                                                    if (record[key] !== undefined) {
+                                                        value = record[key];
+                                                        color = record[colorKey];
+                                                    } else if (col.variable_id) {
+                                                        const v = clinicalVariables.find(cv => cv.id === col.variable_id);
+                                                        if (v && record.extra_data) {
+                                                            value = record.extra_data[v.code] ?? record.extra_data[v.code.toUpperCase()] ?? "—";
+                                                        }
                                                     }
                                                 }
 
                                                 return (
                                                     <td key={cIdx} className="px-3 sm:px-8 py-5 text-center">
-                                                        <span className="text-sm font-black text-white">{value}</span>
+                                                        <span className={cn("text-sm font-black", color ? "" : "text-white")} style={color ? { color } : {}}>{value}</span>
                                                     </td>
                                                 );
                                             })}
