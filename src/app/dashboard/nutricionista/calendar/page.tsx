@@ -63,7 +63,7 @@ export default function NutritionistCalendarPage() {
         date: "2026-02-23",
         time: "09:00",
         type: "virtual" as "virtual" | "in-person",
-        status: "scheduled"
+        status: "programada"
     });
 
     const timeSlots = [
@@ -511,8 +511,9 @@ export default function NutritionistCalendarPage() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-xl border-0 shadow-xl">
-                                            <SelectItem value="scheduled" className="rounded-lg text-blue-600 font-bold">Pendiente</SelectItem>
-                                            <SelectItem value="confirmed" className="rounded-lg text-green-600 font-bold">Confirmada</SelectItem>
+                                            <SelectItem value="programada" className="rounded-lg text-blue-600 font-bold">Pendiente</SelectItem>
+                                            <SelectItem value="completada" className="rounded-lg text-green-600 font-bold">Confirmada</SelectItem>
+                                            <SelectItem value="cancelada" className="rounded-lg text-red-600 font-bold">Cancelada</SelectItem>
                                             <SelectItem value="reprogrammed" className="rounded-lg text-amber-600 font-bold">Reprogramar</SelectItem>
                                         </SelectContent>
                                     </Select>

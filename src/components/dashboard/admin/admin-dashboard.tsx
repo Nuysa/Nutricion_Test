@@ -367,7 +367,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                     return `${Math.floor(total / 60).toString().padStart(2, '0')}:${(total % 60).toString().padStart(2, '0')}:00`;
                 })(),
                 modality: "virtual",
-                status: "scheduled"
+                status: "programada"
             });
             if (error) throw error;
 

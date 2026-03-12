@@ -317,6 +317,7 @@ export const MessagingService = {
                 start_time: appt.startTime,
                 end_time: appt.endTime,
                 modality: appt.type || 'virtual',
+                status: appt.status || 'programada',
                 notes: appt.notes
             });
 

@@ -51,7 +51,7 @@ export interface Meal {
 
 // ─── Appointment ───
 export type AppointmentType = "virtual" | "in-person";
-export type AppointmentStatus = "scheduled" | "completed" | "cancelled" | "no-show";
+export type AppointmentStatus = "scheduled" | "completed" | "cancelled" | "no-show" | "programada" | "completada" | "cancelada";
 
 export interface Appointment {
     id: string;

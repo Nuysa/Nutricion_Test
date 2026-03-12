@@ -153,7 +153,7 @@ export default function PatientsPage() {
                 appointment_date: scheduleValues.date,
                 start_time: startTime,
                 end_time: endTime,
-                status: "scheduled"
+                status: "programada"
             });
 
             if (error) throw error;
