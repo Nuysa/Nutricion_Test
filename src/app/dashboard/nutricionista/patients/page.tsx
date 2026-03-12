@@ -136,13 +136,22 @@ export default function PatientsPage() {
             const { data: profile } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
             if (!profile) return;
 
+            // Calculate end time (30 mins after start time)
+            const [h, m] = scheduleValues.time.split(":").map(Number);
+            const totalStart = h * 60 + m;
+            const totalEnd = totalStart + 30;
+            const endH = Math.floor(totalEnd / 60).toString().padStart(2, '0');
+            const endM = (totalEnd % 60).toString().padStart(2, '0');
+            const endTime = `${endH}:${endM}:00`;
+            const startTime = `${scheduleValues.time.padStart(5, '0')}:00`;
+
             const { error } = await supabase.from("appointments").insert({
                 patient_id: selectedPatient.id,
                 nutritionist_id: profile.id,
                 appointment_type: scheduleValues.type,
                 date: scheduleValues.date,
-                start_time: scheduleValues.time,
-                end_time: "10:00", // Default 1 hour
+                start_time: startTime,
+                end_time: endTime,
                 status: "scheduled"
             });
 
@@ -160,11 +169,11 @@ export default function PatientsPage() {
             syncChannel.close();
 
             setShowScheduleDialog(false);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error scheduling appointment:", err);
             toast({
                 title: "Error al agendar",
-                description: "No se pudo guardar la cita en Supabase.",
+                description: err.message || "No se pudo guardar la cita en Supabase.",
                 variant: "destructive",
             });
         }
