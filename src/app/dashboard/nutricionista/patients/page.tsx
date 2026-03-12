@@ -148,8 +148,8 @@ export default function PatientsPage() {
             const { error } = await supabase.from("appointments").insert({
                 patient_id: selectedPatient.id,
                 nutritionist_id: profile.id,
-                appointment_type: scheduleValues.type,
-                date: scheduleValues.date,
+                modality: scheduleValues.type,
+                appointment_date: scheduleValues.date,
                 start_time: startTime,
                 end_time: endTime,
                 status: "scheduled"

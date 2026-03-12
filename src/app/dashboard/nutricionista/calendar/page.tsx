@@ -155,7 +155,7 @@ export default function NutritionistCalendarPage() {
 
                 if (dbAppts) {
                     const mappedAppts = dbAppts.map(apt => {
-                        const d = new Date(apt.date + 'T12:00:00');
+                        const d = new Date(apt.appointment_date + 'T12:00:00');
                         return {
                             id: apt.id,
                             patientId: apt.patient_id,
@@ -164,7 +164,7 @@ export default function NutritionistCalendarPage() {
                             year: d.getFullYear(),
                             patient: (apt.patient as any)?.profile?.full_name || "Paciente",
                             time: apt.start_time.substring(0, 5),
-                            type: apt.appointment_type,
+                            type: apt.modality,
                             status: apt.status
                         };
                     });

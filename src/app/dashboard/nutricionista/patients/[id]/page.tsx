@@ -204,7 +204,7 @@ export default function PatientDetailPage() {
                 .from("appointments")
                 .select("*")
                 .eq("patient_id", patientId)
-                .eq("date", todayStr);
+                .eq("appointment_date", todayStr);
             
             const activeApt = apts?.find(a => a.status !== 'cancelada' && a.status !== 'completada' && a.status !== 'completado' && a.status !== 'canceled');
             setTodayAppointment(activeApt || null);

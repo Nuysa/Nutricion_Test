@@ -57,8 +57,8 @@ export interface Appointment {
     id: string;
     patient_id: string;
     nutritionist_id: string;
-    appointment_type: AppointmentType;
-    date: string;
+    modality: AppointmentType;
+    appointment_date: string;
     start_time: string;
     end_time: string;
     status: AppointmentStatus;

@@ -262,7 +262,7 @@ function ScheduledAppointments({ date, patientId }: { date: Date, patientId?: st
                 .from("appointments")
                 .select("*, nutritionist:profiles!nutritionist_id(full_name)")
                 .eq("patient_id", patientId)
-                .eq("date", dateStr);
+                .eq("appointment_date", dateStr);
 
             if (data && !error) {
                 setApts(data);
@@ -288,14 +288,14 @@ function ScheduledAppointments({ date, patientId }: { date: Date, patientId?: st
                         <div key={i} className="flex gap-3 group">
                             <div className="flex flex-col items-center">
                                 <span className="text-xl h-10 w-10 flex items-center justify-center bg-white/5 rounded-full">
-                                    {apt.appointment_type === "virtual" ? "📹" : "🏥"}
+                                    {apt.modality === "virtual" ? "📹" : "🏥"}
                                 </span>
                                 {i < apts.length - 1 && <div className="w-px flex-1 bg-white/5 mt-2" />}
                             </div>
                             <div className="pb-4 flex-1 min-w-0">
                                 <div className="flex justify-between items-start mb-0.5">
                                     <p className="text-xs font-tech font-bold text-white">
-                                        {apt.start_time.substring(0, 5)} - {apt.appointment_type === "virtual" ? "Virtual" : "Presencial"}
+                                        {apt.start_time.substring(0, 5)} - {apt.modality === "virtual" ? "Virtual" : "Presencial"}
                                     </p>
                                     <Badge className="bg-nutri-brand/20 text-nutri-brand border-nutri-brand/20 text-[8px] px-2 py-0.5 uppercase font-tech font-black tracking-tighter rounded-full">
                                         {apt.status}
@@ -334,9 +334,9 @@ function NextAppointment({ patientId, profileId }: { patientId?: string; profile
                 .from("appointments")
                 .select("*, nutritionist:profiles!nutritionist_id(full_name)")
                 .eq("patient_id", patientId)
-                .gte("date", todayStr)
+                .gte("appointment_date", todayStr)
                 .neq("status", "completed")
-                .order("date", { ascending: true })
+                .order("appointment_date", { ascending: true })
                 .order("start_time", { ascending: true })
                 .limit(1)
                 .maybeSingle();
@@ -376,7 +376,7 @@ function NextAppointment({ patientId, profileId }: { patientId?: string; profile
     );
 
     const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    const d = nextAppt ? new Date(nextAppt.date + 'T12:00:00') : null;
+    const d = nextAppt ? new Date(nextAppt.appointment_date + 'T12:00:00') : null;
 
     return (
         <Card className="rounded-[2.5rem] bg-nutri-base text-white shadow-xl overflow-hidden relative group border border-nutri-brand/10">
@@ -414,7 +414,7 @@ function NextAppointment({ patientId, profileId }: { patientId?: string; profile
                                     <Clock className="h-3 w-3 text-nutri-brand" /> {nextAppt.start_time.substring(0, 5)}
                                 </span>
                                 <span className="flex items-center gap-1.5 text-[10px] font-tech font-bold">
-                                    {nextAppt.appointment_type === 'virtual' ? '📹 Virtual' : '🏥 Presencial'}
+                                    {nextAppt.modality === 'virtual' ? '📹 Virtual' : '🏥 Presencial'}
                                 </span>
                             </div>
                         </div>

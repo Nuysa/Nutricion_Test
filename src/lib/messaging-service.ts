@@ -312,10 +312,10 @@ export const MessagingService = {
                 id: appt.id && !appt.id.startsWith("appt_") ? appt.id : undefined,
                 patient_id: appt.patientId,
                 nutritionist_id: appt.nutritionistId,
-                date: appt.date,
+                appointment_date: appt.date,
                 start_time: appt.startTime,
                 end_time: appt.endTime,
-                appointment_type: appt.type || 'virtual',
+                modality: appt.type || 'virtual',
                 notes: appt.notes
             });
 
@@ -343,11 +343,11 @@ export const MessagingService = {
             patientName: a.patient?.profile?.full_name || "Paciente",
             nutritionistId: a.nutritionist_id,
             nutritionistName: a.nutritionist?.full_name || "Nutricionista",
-            date: a.date,
+            appointment_date: a.appointment_date,
             startTime: a.start_time,
             endTime: a.end_time,
             status: a.status,
-            type: a.appointment_type
+            type: a.modality
         }));
     },
 

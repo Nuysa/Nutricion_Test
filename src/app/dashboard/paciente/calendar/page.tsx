@@ -64,7 +64,7 @@ export default function CalendarPage() {
 
                 if (fetchedAppointments) {
                     const mapped = fetchedAppointments.map((a: any) => {
-                        const d = new Date(a.date + 'T12:00:00');
+                        const d = new Date(a.appointment_date + 'T12:00:00');
                         return {
                             id: a.id,
                             day: d.getDate(),
@@ -72,7 +72,7 @@ export default function CalendarPage() {
                             year: d.getFullYear(),
                             title: "Consulta Nutricional",
                             time: a.start_time.substring(0, 5),
-                            type: a.appointment_type,
+                            type: a.modality,
                             status: a.status,
                             nutritionist: a.nutritionist?.full_name || "Especialista"
                         };

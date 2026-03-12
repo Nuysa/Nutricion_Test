@@ -354,14 +354,14 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
             const { error } = await supabase.from("appointments").insert({
                 patient_id: agendaPatientId,
                 nutritionist_id: agendaNutriId,
-                date: agendaDate,
+                appointment_date: agendaDate,
                 start_time: agendaTime,
                 end_time: (() => {
                     const [h, m] = agendaTime.split(":").map(Number);
                     const total = h * 60 + m + 30;
                     return `${Math.floor(total / 60).toString().padStart(2, '0')}:${(total % 60).toString().padStart(2, '0')}:00`;
                 })(),
-                appointment_type: "virtual",
+                modality: "virtual",
                 status: "scheduled"
             });
             if (error) throw error;
