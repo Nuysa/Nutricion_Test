@@ -13,6 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { usePresence } from "@/components/providers/presence-provider";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const supabase = createClient();
 
@@ -31,11 +34,13 @@ export default function PatientsPage() {
     const [viewYear, setViewYear] = useState(new Date().getFullYear());
     const [scheduleValues, setScheduleValues] = useState({
         date: new Date().toISOString().split('T')[0],
-        time: "09:00",
+        time: "",
         type: "virtual" as "virtual" | "in-person"
     });
+    const [allAppointments, setAllAppointments] = useState<any[]>([]);
+    const [occupiedSlots, setOccupiedSlots] = useState<string[]>([]);
 
-    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     const timeSlots = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"];
 
     const loadPatients = useCallback(async () => {
@@ -91,8 +96,28 @@ export default function PatientsPage() {
         }
     }, []);
 
+    const loadAppointments = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const { data: profile } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
+            if (!profile) return;
+
+            const { data } = await supabase
+                .from("appointments")
+                .select("appointment_date, start_time")
+                .eq("nutritionist_id", profile.id)
+                .neq("status", "cancelada");
+            
+            if (data) setAllAppointments(data);
+        } catch (err) {
+            console.error("Error loading appointments:", err);
+        }
+    }, []);
+
     useEffect(() => {
         loadPatients();
+        loadAppointments();
 
         const channel = supabase
             .channel('nutritionist_patients_realtime')
@@ -104,11 +129,18 @@ export default function PatientsPage() {
                 console.log("Realtime: Profiles table changed, refreshing patients list...");
                 loadPatients();
             })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
+                console.log("Realtime: Appointments table changed, refreshing availability...");
+                loadAppointments();
+            })
             .subscribe();
 
         // Broadcast Sync
         const bc = new BroadcastChannel('nutrigo_global_sync');
-        bc.onmessage = () => loadPatients();
+        bc.onmessage = () => {
+            loadPatients();
+            loadAppointments();
+        };
 
         return () => {
             supabase.removeChannel(channel);
@@ -116,18 +148,42 @@ export default function PatientsPage() {
         };
     }, [loadPatients]);
 
+    const getOccupiedSlots = (dateString: string) => {
+        const dayAppts = allAppointments.filter(a => a.appointment_date === dateString);
+        const occupied = new Set<string>();
+        dayAppts.forEach(a => {
+            const time = a.start_time.substring(0, 5);
+            occupied.add(time);
+            const [h, m] = time.split(":").map(Number);
+            const totalMin = h * 60 + m + 30;
+            const nextH = Math.floor(totalMin / 60).toString().padStart(2, '0');
+            const nextM = (totalMin % 60).toString().padStart(2, '0');
+            occupied.add(`${nextH}:${nextM}`);
+        });
+        return Array.from(occupied);
+    };
+
+    useEffect(() => {
+        if (showScheduleDialog && scheduleValues.date) {
+            setOccupiedSlots(getOccupiedSlots(scheduleValues.date));
+        }
+    }, [scheduleValues.date, allAppointments, showScheduleDialog]);
+
     const handleOpenSchedule = (patient: any) => {
         setSelectedPatient(patient);
         setScheduleValues({
             date: new Date().toISOString().split('T')[0],
-            time: "09:00",
+            time: "",
             type: "virtual"
         });
         setShowScheduleDialog(true);
     };
 
     const handleSaveSchedule = async () => {
-        if (!selectedPatient) return;
+        if (!selectedPatient || !scheduleValues.time) {
+            toast({ title: "Error", description: "Selecciona una hora para la cita", variant: "destructive" });
+            return;
+        }
 
         try {
             const { data: { user } } = await supabase.auth.getUser();
@@ -170,6 +226,7 @@ export default function PatientsPage() {
             syncChannel.close();
 
             setShowScheduleDialog(false);
+            loadAppointments();
         } catch (err: any) {
             console.error("Error scheduling appointment:", err);
             toast({
@@ -340,45 +397,140 @@ export default function PatientsPage() {
             </Card>
 
             <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-                <DialogContent className="rounded-[2.5rem] border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-2xl p-10 max-w-md">
-                    <DialogHeader className="space-y-3">
-                        <DialogTitle className="text-2xl font-black text-white uppercase tracking-tight">Agendar Cita</DialogTitle>
-                        <DialogDescription className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] opacity-60">
-                            Programar cita para <span className="text-nutrition-500">{selectedPatient?.name}</span>
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-6 space-y-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Fecha de Consulta</label>
-                            <Input
-                                type="date"
-                                value={scheduleValues.date}
-                                className="h-14 rounded-2xl border-white/10 bg-white/5 text-white text-sm font-black focus:ring-nutrition-500/50 transition-all"
-                                onChange={(e) => setScheduleValues({ ...scheduleValues, date: e.target.value })}
-                            />
+                <DialogContent className="rounded-[2.5rem] border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-2xl p-0 max-w-4xl overflow-hidden border-none">
+                    <div className="flex flex-col lg:flex-row h-full min-h-[500px]">
+                        {/* Left: Mini Calendar */}
+                        <div className="flex-1 p-8 border-r border-white/5 bg-white/[0.02]">
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <h3 className="text-xl font-black text-white uppercase tracking-tight">Selecciona Fecha</h3>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Paso 1: ¿Cuándo será la cita?</p>
+                                </div>
+                                <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10" 
+                                        onClick={() => {
+                                            if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
+                                            else setViewMonth(viewMonth - 1);
+                                        }}>
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <span className="text-[10px] font-black text-white uppercase tracking-widest min-w-[80px] text-center">{monthNames[viewMonth]} {viewYear}</span>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
+                                        onClick={() => {
+                                            if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
+                                            else setViewMonth(viewMonth + 1);
+                                        }}>
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-7 gap-1 mb-2">
+                                {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map(d => (
+                                    <div key={d} className="text-center text-[9px] font-black text-slate-600 uppercase py-2">{d}</div>
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-7 gap-1">
+                                {(() => {
+                                    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+                                    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+                                    const offset = firstDay === 0 ? 6 : firstDay - 1;
+                                    const cells = [];
+                                    for (let i = 0; i < offset; i++) cells.push(<div key={`empty-${i}`} />);
+                                    for (let d = 1; d <= daysInMonth; d++) {
+                                        const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                                        const isSelected = scheduleValues.date === dateStr;
+                                        const isToday = new Date().toISOString().split('T')[0] === dateStr;
+                                        const isPast = new Date(viewYear, viewMonth, d) < new Date(new Date().setHours(0,0,0,0));
+                                        
+                                        cells.push(
+                                            <button
+                                                key={d}
+                                                disabled={isPast}
+                                                onClick={() => setScheduleValues({...scheduleValues, date: dateStr})}
+                                                className={cn(
+                                                    "h-10 w-full rounded-xl text-xs font-black transition-all flex items-center justify-center relative group",
+                                                    isSelected ? "bg-nutrition-500 text-white shadow-lg shadow-nutrition-500/20" : 
+                                                    isToday ? "bg-nutrition-500/10 text-nutrition-400 border border-nutrition-500/20" :
+                                                    isPast ? "text-slate-700 cursor-not-allowed opacity-20" : "text-slate-400 hover:bg-white/5 hover:text-white"
+                                                )}
+                                            >
+                                                {d}
+                                                {isSelected && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white animate-in zoom-in" />}
+                                            </button>
+                                        );
+                                    }
+                                    return cells;
+                                })()}
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Hora de Consulta</label>
-                            <div className="relative">
-                                <select
-                                    className="h-14 w-full px-4 rounded-2xl border border-white/10 bg-white/5 text-sm font-black text-white focus:ring-2 focus:ring-nutrition-500/20 focus:border-nutrition-500/50 outline-none appearance-none cursor-pointer transition-all hover:bg-white/10"
-                                    value={scheduleValues.time}
-                                    onChange={(e) => setScheduleValues({ ...scheduleValues, time: e.target.value })}
+
+                        {/* Right: Time Selection */}
+                        <div className="w-full lg:w-[320px] p-8 bg-slate-900 border-l border-white/5 flex flex-col">
+                            <div className="mb-8">
+                                <h3 className="text-xl font-black text-white uppercase tracking-tight">Horarios</h3>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Paso 2: Disponibilidad para {scheduleValues.date}</p>
+                            </div>
+
+                            <ScrollArea className="flex-1 pr-4 -mr-4">
+                                <div className="grid grid-cols-2 gap-2 pb-6">
+                                    {timeSlots.map(time => {
+                                        const isOccupied = occupiedSlots.includes(time);
+                                        const isSelected = scheduleValues.time === time;
+                                        
+                                        return (
+                                            <button
+                                                key={time}
+                                                disabled={isOccupied}
+                                                onClick={() => setScheduleValues({...scheduleValues, time})}
+                                                className={cn(
+                                                    "py-3 rounded-xl text-[10px] font-black transition-all border uppercase tracking-widest",
+                                                    isSelected ? "bg-nutrition-500 border-nutrition-500 text-white shadow-lg shadow-white/10" :
+                                                    isOccupied ? "bg-white/[0.02] border-white/5 text-slate-700 cursor-not-allowed" :
+                                                    "bg-white/5 border-white/5 text-slate-400 hover:border-nutrition-500/30 hover:bg-nutrition-500/5 hover:text-nutrition-400"
+                                                )}
+                                            >
+                                                {time}
+                                                {isOccupied && <span className="block text-[7px] opacity-40 mt-0.5">Ocupado</span>}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </ScrollArea>
+
+                            <div className="pt-6 mt-auto border-t border-white/5 space-y-4">
+                                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                                    <div>
+                                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Modalidad</p>
+                                        <Select 
+                                            value={scheduleValues.type} 
+                                            onValueChange={(v: any) => setScheduleValues({...scheduleValues, type: v})}
+                                        >
+                                            <SelectTrigger className="h-6 p-0 border-none bg-transparent text-[10px] font-black text-white uppercase tracking-tighter w-auto">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-slate-900 border-white/10">
+                                                <SelectItem value="virtual" className="text-[10px] font-black uppercase text-white">Virtual</SelectItem>
+                                                <SelectItem value="in-person" className="text-[10px] font-black uppercase text-white">Presencial</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Cita Seleccionada</p>
+                                        <p className="text-[10px] font-black text-nutrition-400 uppercase tracking-tight">{scheduleValues.time || "--:--"}</p>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    onClick={handleSaveSchedule}
+                                    disabled={!scheduleValues.time}
+                                    className="w-full h-12 rounded-xl bg-nutrition-600 hover:bg-nutrition-700 text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-lg shadow-nutrition-600/20 transition-all active:scale-[0.98]"
                                 >
-                                    {timeSlots.map(t => <option key={t} value={t} className="bg-slate-900">{t}</option>)}
-                                </select>
-                                <Clock className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+                                    Confirmar Cita
+                                </Button>
                             </div>
                         </div>
                     </div>
-                    <DialogFooter className="pt-2">
-                        <Button
-                            onClick={handleSaveSchedule}
-                            className="w-full h-14 rounded-2xl bg-nutrition-600 hover:bg-nutrition-700 text-white font-black uppercase tracking-[0.2em] text-[11px] shadow-lg shadow-nutrition-600/20 transition-all active:scale-[0.98]"
-                        >
-                            Confirmar Cita
-                        </Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
