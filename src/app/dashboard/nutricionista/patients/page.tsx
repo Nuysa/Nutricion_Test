@@ -146,7 +146,7 @@ export default function PatientsPage() {
             const startTime = `${scheduleValues.time.padStart(5, '0')}:00`;
 
             const { error } = await supabase.from("appointments").insert({
-                patient_id: selectedPatient.profileId,
+                patient_id: selectedPatient.id,
                 nutritionist_id: profile.id,
                 scheduled_by: profile.id, // Mandatory column
                 modality: scheduleValues.type,
