@@ -253,46 +253,36 @@ export function LandingHero() {
                         </div>
                     </div>
 
-                    {/* MOBILE CARDS (Below Video on small screens) */}
-                    <div className="md:hidden grid grid-cols-1 gap-4 w-full px-4">
-                         <div className={cn(
-                            "bg-nutri-panel/80 border border-white/10 p-5 rounded-2xl shadow-xl transition-all duration-500",
-                            activeCartel === "proteina" ? "border-nutri-brand/50 scale-100 opacity-100" : "opacity-40 scale-95"
-                        )}>
-                            <div className="flex items-center gap-3 mb-2">
-                                <Beef className="h-5 w-5 text-nutri-brand" />
-                                <h4 className="font-tech font-bold text-sm text-white uppercase tracking-widest">Proteínas</h4>
+                    {/* MOBILE CARDS (Sequential overlay below video) */}
+                    <div className="md:hidden relative w-full h-[180px] px-4 mt-4">
+                        {[
+                            { id: "proteina", icon: Beef, title: "Proteínas", text: content.cartelProteina },
+                            { id: "carbo", icon: WheatOff, title: "Carbohidratos", text: content.cartelCarbo },
+                            { id: "lipido", icon: Droplets, title: "Lípidos", text: content.cartelLipido }
+                        ].map((card) => (
+                            <div
+                                key={card.id}
+                                className={cn(
+                                    "absolute inset-x-4 bg-nutri-panel/90 backdrop-blur-xl border p-6 rounded-[2rem] shadow-2xl transition-all duration-700 ease-out flex flex-col gap-3",
+                                    activeCartel === card.id 
+                                        ? "border-nutri-brand/50 scale-100 opacity-100 translate-y-0 z-20 pointer-events-auto" 
+                                        : "border-white/5 scale-90 opacity-0 translate-y-8 z-10 pointer-events-none"
+                                )}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-nutri-brand/10 flex items-center justify-center">
+                                        <card.icon className="h-5 w-5 text-nutri-brand" />
+                                    </div>
+                                    <h4 className="font-tech font-black text-sm text-white uppercase tracking-[0.2em]">{card.title}</h4>
+                                </div>
+                                <p className="text-xs text-slate-400 font-bold leading-relaxed italic">
+                                    {card.text}
+                                </p>
+                                
+                                {/* Progress Indicator */}
+                                <div className="absolute bottom-0 left-0 h-1 bg-nutri-brand/30 transition-all duration-[5000ms]" style={{ width: activeCartel === card.id ? '100%' : '0%' }} />
                             </div>
-                            <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                                {content.cartelProteina}
-                            </p>
-                        </div>
-
-                        <div className={cn(
-                            "bg-nutri-panel/80 border border-white/10 p-5 rounded-2xl shadow-xl transition-all duration-500",
-                            activeCartel === "carbo" ? "border-nutri-brand/50 scale-100 opacity-100" : "opacity-40 scale-95"
-                        )}>
-                            <div className="flex items-center gap-3 mb-2">
-                                <WheatOff className="h-5 w-5 text-nutri-brand" />
-                                <h4 className="font-tech font-bold text-sm text-white uppercase tracking-widest">Carbohidratos</h4>
-                            </div>
-                            <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                                {content.cartelCarbo}
-                            </p>
-                        </div>
-
-                        <div className={cn(
-                            "bg-nutri-panel/80 border border-white/10 p-5 rounded-2xl shadow-xl transition-all duration-500",
-                            activeCartel === "lipido" ? "border-nutri-brand/50 scale-100 opacity-100" : "opacity-40 scale-95"
-                        )}>
-                            <div className="flex items-center gap-3 mb-2">
-                                <Droplets className="h-5 w-5 text-nutri-brand" />
-                                <h4 className="font-tech font-bold text-sm text-white uppercase tracking-widest">Lípidos</h4>
-                            </div>
-                            <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                                {content.cartelLipido}
-                            </p>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </div>
