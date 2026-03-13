@@ -568,7 +568,7 @@ export default function NutritionistCalendarPage() {
                     </DialogHeader>
 
                     <ScrollArea className="flex-1">
-                        <div className="flex flex-col lg:flex-row h-full">
+                        <div className="flex flex-col lg:flex-row h-full pb-20 lg:pb-0">
                             {/* Left Side: MINI CALENDAR */}
                             <div className="flex-1 p-6 sm:p-8 lg:border-r border-white/5 bg-white/[0.02]">
                                 <div className="flex items-center justify-between mb-8">
@@ -660,14 +660,14 @@ export default function NutritionistCalendarPage() {
                             </div>
 
                             {/* Right Side: TIME SLOTS */}
-                            <div className="w-full lg:w-[320px] p-6 sm:p-8 bg-slate-900/50 lg:bg-slate-900 border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col">
+                            <div className="w-full lg:w-[320px] p-6 sm:p-8 bg-slate-900/50 lg:bg-slate-900 border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col lg:h-full">
                                 <div className="mb-6">
                                     <h3 className="text-lg font-black text-white uppercase tracking-tight">Horario</h3>
                                     <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mt-1">Disponibilidad para {editValues.date}</p>
                                 </div>
 
-                                <ScrollArea className="h-60 sm:h-72 lg:h-[400px] pr-4">
-                                    <div className="grid grid-cols-2 gap-2 pb-6">
+                                <ScrollArea className="h-[400px] lg:flex-1 pr-2">
+                                    <div className="grid grid-cols-2 gap-2 pb-12">
                                         {timeSlots.map(time => {
                                             const isReserved = occupiedSlots.includes(time);
                                             const isPastDay = new Date(editValues.date + 'T12:00:00') < new Date(new Date().setHours(0,0,0,0));

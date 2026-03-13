@@ -406,7 +406,7 @@ export default function PatientsPage() {
                     </DialogHeader>
 
                     <ScrollArea className="flex-1">
-                        <div className="flex flex-col lg:flex-row h-full">
+                        <div className="flex flex-col lg:flex-row h-full pb-20 lg:pb-0">
                             {/* Left: Mini Calendar */}
                             <div className="flex-1 p-6 sm:p-8 lg:border-r border-white/5 bg-white/[0.02]">
                                 <div className="flex items-center justify-between mb-8">
@@ -474,14 +474,14 @@ export default function PatientsPage() {
                             </div>
 
                             {/* Right: Time Selection */}
-                            <div className="w-full lg:w-[320px] p-6 sm:p-8 bg-slate-900/50 lg:bg-slate-900 border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col">
+                            <div className="w-full lg:w-[320px] p-6 sm:p-8 bg-slate-900/50 lg:bg-slate-900 border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col lg:h-full">
                                 <div className="mb-6">
                                     <h3 className="text-lg font-black text-white uppercase tracking-tight">Horarios</h3>
                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Paso 2: Disponibilidad para {scheduleValues.date}</p>
                                 </div>
 
-                                <ScrollArea className="h-60 sm:h-72 lg:h-[400px] pr-4">
-                                    <div className="grid grid-cols-2 gap-2 pb-6">
+                                <ScrollArea className="h-[400px] lg:flex-1 pr-2">
+                                    <div className="grid grid-cols-2 gap-2 pb-12">
                                         {timeSlots.map(time => {
                                             const isOccupied = occupiedSlots.includes(time);
                                             const isSelected = scheduleValues.time === time;
@@ -506,7 +506,7 @@ export default function PatientsPage() {
                                     </div>
                                 </ScrollArea>
 
-                                <div className="pt-6 mt-auto border-t border-white/5 space-y-4">
+                                <div className="pt-6 mt-6 lg:mt-auto border-t border-white/5 space-y-4">
                                     <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
                                         <div>
                                             <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Modalidad</p>
