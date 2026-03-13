@@ -559,16 +559,16 @@ export default function NutritionistCalendarPage() {
             </div>
 
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent className="w-[95vw] lg:max-w-4xl p-0 overflow-hidden border-none bg-slate-900/95 backdrop-blur-xl shadow-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col rounded-[2rem] sm:rounded-[2.5rem]">
-                    <DialogHeader className="p-6 sm:p-8 border-b border-white/5">
+                <DialogContent className="w-[95vw] lg:max-w-4xl p-0 overflow-hidden border-none bg-slate-900/95 backdrop-blur-xl shadow-2xl h-auto max-h-[95vh] lg:h-[90vh] flex flex-col rounded-[2rem] sm:rounded-[2.5rem]">
+                    <DialogHeader className="p-6 sm:p-8 border-b border-white/5 shrink-0">
                         <DialogTitle className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">Editar Cita</DialogTitle>
                         <DialogDescription className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
                             Ajustando detalles para <span className="text-nutrition-500">{editingAppt?.patient}</span>
                         </DialogDescription>
                     </DialogHeader>
 
-                    <ScrollArea className="flex-1">
-                        <div className="flex flex-col lg:flex-row h-full pb-20 lg:pb-0">
+                    <ScrollArea className="flex-1 overflow-y-auto">
+                        <div className="flex flex-col lg:flex-row h-full">
                             {/* Left Side: MINI CALENDAR */}
                             <div className="flex-1 p-6 sm:p-8 lg:border-r border-white/5 bg-white/[0.02]">
                                 <div className="flex items-center justify-between mb-8">
@@ -666,8 +666,8 @@ export default function NutritionistCalendarPage() {
                                     <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mt-1">Disponibilidad para {editValues.date}</p>
                                 </div>
 
-                                <ScrollArea className="h-[400px] lg:flex-1 pr-2">
-                                    <div className="grid grid-cols-2 gap-2 pb-12">
+                                <div className="h-full flex flex-col">
+                                    <div className="grid grid-cols-2 gap-2 pb-8">
                                         {timeSlots.map(time => {
                                             const isReserved = occupiedSlots.includes(time);
                                             const isPastDay = new Date(editValues.date + 'T12:00:00') < new Date(new Date().setHours(0,0,0,0));
@@ -692,7 +692,7 @@ export default function NutritionistCalendarPage() {
                                             );
                                         })}
                                     </div>
-                                </ScrollArea>
+                                </div>
                             </div>
                         </div>
                     </ScrollArea>

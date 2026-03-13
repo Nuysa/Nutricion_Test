@@ -397,16 +397,16 @@ export default function PatientsPage() {
             </Card>
 
             <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-                <DialogContent className="w-[95vw] lg:max-w-4xl p-0 overflow-hidden border-none bg-slate-900/95 backdrop-blur-xl shadow-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col rounded-[2rem] sm:rounded-[2.5rem]">
-                    <DialogHeader className="p-6 sm:p-8 border-b border-white/5">
+                <DialogContent className="w-[95vw] lg:max-w-4xl p-0 overflow-hidden border-none bg-slate-900/95 backdrop-blur-xl shadow-2xl h-auto max-h-[95vh] lg:h-[90vh] flex flex-col rounded-[2rem] sm:rounded-[2.5rem]">
+                    <DialogHeader className="p-6 sm:p-8 border-b border-white/5 shrink-0">
                         <DialogTitle className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">Agendar Cita</DialogTitle>
                         <DialogDescription className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
                             Programando consulta para <span className="text-nutrition-500">{selectedPatient?.name}</span>
                         </DialogDescription>
                     </DialogHeader>
 
-                    <ScrollArea className="flex-1">
-                        <div className="flex flex-col lg:flex-row h-full pb-20 lg:pb-0">
+                    <ScrollArea className="flex-1 overflow-y-auto">
+                        <div className="flex flex-col lg:flex-row h-full">
                             {/* Left: Mini Calendar */}
                             <div className="flex-1 p-6 sm:p-8 lg:border-r border-white/5 bg-white/[0.02]">
                                 <div className="flex items-center justify-between mb-8">
@@ -480,8 +480,8 @@ export default function PatientsPage() {
                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Paso 2: Disponibilidad para {scheduleValues.date}</p>
                                 </div>
 
-                                <ScrollArea className="h-[400px] lg:flex-1 pr-2">
-                                    <div className="grid grid-cols-2 gap-2 pb-12">
+                                <div className="h-full flex flex-col">
+                                    <div className="grid grid-cols-2 gap-2 pb-8">
                                         {timeSlots.map(time => {
                                             const isOccupied = occupiedSlots.includes(time);
                                             const isSelected = scheduleValues.time === time;
@@ -504,7 +504,7 @@ export default function PatientsPage() {
                                             );
                                         })}
                                     </div>
-                                </ScrollArea>
+                                </div>
 
                                 <div className="pt-6 mt-6 lg:mt-auto border-t border-white/5 space-y-4">
                                     <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
