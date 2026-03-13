@@ -666,31 +666,33 @@ export default function NutritionistCalendarPage() {
                                     <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mt-1">Disponibilidad para {editValues.date}</p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2 pb-6">
-                                    {timeSlots.map(time => {
-                                        const isReserved = occupiedSlots.includes(time);
-                                        const isPastDay = new Date(editValues.date + 'T12:00:00') < new Date(new Date().setHours(0,0,0,0));
-                                        const isPastOrBuffer = isPastDay || isSlotPastOrBuffer(time, editValues.date);
-                                        const isSelected = editValues.time === time;
+                                <ScrollArea className="h-60 sm:h-72 lg:h-[400px] pr-4">
+                                    <div className="grid grid-cols-2 gap-2 pb-6">
+                                        {timeSlots.map(time => {
+                                            const isReserved = occupiedSlots.includes(time);
+                                            const isPastDay = new Date(editValues.date + 'T12:00:00') < new Date(new Date().setHours(0,0,0,0));
+                                            const isPastOrBuffer = isPastDay || isSlotPastOrBuffer(time, editValues.date);
+                                            const isSelected = editValues.time === time;
 
-                                        return (
-                                            <button
-                                                key={time}
-                                                disabled={isReserved || isPastOrBuffer}
-                                                className={cn(
-                                                    "py-3 rounded-xl text-[10px] font-black transition-all border uppercase tracking-widest",
-                                                    isSelected ? "bg-nutrition-500 border-nutrition-500 text-white shadow-xl shadow-white/10" :
-                                                    (isReserved || isPastOrBuffer) ? "bg-white/[0.02] border-white/5 text-slate-700 cursor-not-allowed" :
-                                                    "bg-white/5 border-white/5 text-slate-400 hover:border-nutrition-500/30 hover:bg-nutrition-500/5 hover:text-nutrition-400"
-                                                )}
-                                                onClick={() => setEditValues({ ...editValues, time })}
-                                            >
-                                                {time}
-                                                {isReserved && <span className="block text-[7px] opacity-40 mt-0.5 uppercase">Ocupado</span>}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                            return (
+                                                <button
+                                                    key={time}
+                                                    disabled={isReserved || isPastOrBuffer}
+                                                    className={cn(
+                                                        "py-3 rounded-xl text-[10px] font-black transition-all border uppercase tracking-widest",
+                                                        isSelected ? "bg-nutrition-500 border-nutrition-500 text-white shadow-xl shadow-white/10" :
+                                                        (isReserved || isPastOrBuffer) ? "bg-white/[0.02] border-white/5 text-slate-700 cursor-not-allowed" :
+                                                        "bg-white/5 border-white/5 text-slate-400 hover:border-nutrition-500/30 hover:bg-nutrition-500/5 hover:text-nutrition-400"
+                                                    )}
+                                                    onClick={() => setEditValues({ ...editValues, time })}
+                                                >
+                                                    {time}
+                                                    {isReserved && <span className="block text-[7px] opacity-40 mt-0.5 uppercase">Ocupado</span>}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </ScrollArea>
                             </div>
                         </div>
                     </ScrollArea>

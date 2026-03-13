@@ -480,29 +480,31 @@ export default function PatientsPage() {
                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Paso 2: Disponibilidad para {scheduleValues.date}</p>
                                 </div>
 
-                                <div className="grid grid-cols-2 lg:grid-cols-2 gap-2 pb-6">
-                                    {timeSlots.map(time => {
-                                        const isOccupied = occupiedSlots.includes(time);
-                                        const isSelected = scheduleValues.time === time;
-                                        
-                                        return (
-                                            <button
-                                                key={time}
-                                                disabled={isOccupied}
-                                                onClick={() => setScheduleValues({...scheduleValues, time})}
-                                                className={cn(
-                                                    "py-3 rounded-xl text-[10px] font-black transition-all border uppercase tracking-widest",
-                                                    isSelected ? "bg-nutrition-500 border-nutrition-500 text-white shadow-lg shadow-white/10" :
-                                                    isOccupied ? "bg-white/[0.02] border-white/5 text-slate-700 cursor-not-allowed" :
-                                                    "bg-white/5 border-white/5 text-slate-400 hover:border-nutrition-500/30 hover:bg-nutrition-500/5 hover:text-nutrition-400"
-                                                )}
-                                            >
-                                                {time}
-                                                {isOccupied && <span className="block text-[7px] opacity-40 mt-0.5">Ocupado</span>}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                                <ScrollArea className="h-60 sm:h-72 lg:h-[400px] pr-4">
+                                    <div className="grid grid-cols-2 gap-2 pb-6">
+                                        {timeSlots.map(time => {
+                                            const isOccupied = occupiedSlots.includes(time);
+                                            const isSelected = scheduleValues.time === time;
+                                            
+                                            return (
+                                                <button
+                                                    key={time}
+                                                    disabled={isOccupied}
+                                                    onClick={() => setScheduleValues({...scheduleValues, time})}
+                                                    className={cn(
+                                                        "py-3 rounded-xl text-[10px] font-black transition-all border uppercase tracking-widest",
+                                                        isSelected ? "bg-nutrition-500 border-nutrition-500 text-white shadow-lg shadow-white/10" :
+                                                        isOccupied ? "bg-white/[0.02] border-white/5 text-slate-700 cursor-not-allowed" :
+                                                        "bg-white/5 border-white/5 text-slate-400 hover:border-nutrition-500/30 hover:bg-nutrition-500/5 hover:text-nutrition-400"
+                                                    )}
+                                                >
+                                                    {time}
+                                                    {isOccupied && <span className="block text-[7px] opacity-40 mt-0.5">Ocupado</span>}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </ScrollArea>
 
                                 <div className="pt-6 mt-auto border-t border-white/5 space-y-4">
                                     <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
