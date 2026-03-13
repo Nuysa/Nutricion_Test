@@ -18,10 +18,14 @@ interface NewConsultationFormProps {
     recordNumber: number;
     layout: DashboardColumn[];
     clinicalVariables: ClinicalVariable[];
+    pendingAppointments?: any[];
+    selectedAppointmentId?: string;
+    setSelectedAppointmentId?: (id: string) => void;
 }
 
 export function NewConsultationForm({
-    date, setDate, editValues, setEditValues, extraData, setExtraData, onSave, onCancel, patientId, patientHeight, recordNumber, layout, clinicalVariables
+    date, setDate, editValues, setEditValues, extraData, setExtraData, onSave, onCancel, patientId, patientHeight, recordNumber, layout, clinicalVariables,
+    pendingAppointments, selectedAppointmentId, setSelectedAppointmentId
 }: NewConsultationFormProps) {
     const [isUploadingPhoto, setIsUploadingPhoto] = React.useState(false);
 
@@ -51,6 +55,23 @@ export function NewConsultationForm({
                         className="text-white font-tech font-black bg-transparent border-none outline-none focus:ring-0 text-base sm:text-lg cursor-pointer flex-1 sm:flex-none"
                     />
                 </div>
+                {pendingAppointments && pendingAppointments.length > 0 && setSelectedAppointmentId && (
+                    <div className="flex items-center gap-3 sm:gap-4 bg-white/5 px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border border-white/5 w-full sm:w-auto">
+                        <p className="text-slate-400 font-black text-[10px] sm:text-xs uppercase tracking-widest">Vincular Cita:</p>
+                        <select
+                            value={selectedAppointmentId}
+                            onChange={e => setSelectedAppointmentId(e.target.value)}
+                            className="bg-transparent text-white font-tech font-black border-none outline-none focus:ring-0 text-sm sm:text-base cursor-pointer flex-1 sm:flex-none appearance-none"
+                        >
+                            <option value="" className="bg-[#151F32]">Ninguna</option>
+                            {pendingAppointments.map(apt => (
+                                <option key={apt.id} value={apt.id} className="bg-[#151F32]">
+                                    {apt.appointment_date} - {apt.start_time.substring(0, 5)} ({apt.modality})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
                 <div className="flex gap-4 w-full md:w-auto">
                     <button
                         onClick={onCancel}

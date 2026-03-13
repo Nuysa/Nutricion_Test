@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { X, ClipboardList, Sparkles, ShieldCheck, Edit, Save, RotateCcw, Upload } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from "@/components/ui/dialog";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MedicalHistoryModalProps {
     isOpen: boolean;
@@ -422,10 +423,10 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="w-[95vw] max-w-5xl rounded-3xl sm:rounded-[3rem] p-0 border-white/10 shadow-2xl bg-[#0B1120] text-white overflow-hidden max-h-[95vh] flex flex-col [&>button:last-child]:z-[100] [&>button:last-child]:right-4 sm:right-10 [&>button:last-child]:top-4 sm:top-10 [&>button:last-child]:h-10 sm:h-12 [&>button:last-child]:w-10 sm:w-12 [&>button:last-child]:rounded-xl sm:rounded-2xl [&>button:last-child]:bg-white/5 [&>button:last-child]:border-white/10 [&>button:last-child]:hover:bg-white/10 [&>button:last-child]:transition-all [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center [&>button:last-child]:p-0 [&>button:last-child>svg]:h-5 sm:h-6 [&>button:last-child>svg]:w-5 sm:w-6 [&>button:last-child>svg]:text-slate-400 [&>button:last-child:hover>svg]:text-white">
+            <DialogContent className="w-[95vw] max-w-5xl rounded-3xl sm:rounded-[3rem] p-0 border-white/10 shadow-2xl bg-[#0B1120] text-white overflow-hidden h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col [&>button:last-child]:z-[100] [&>button:last-child]:right-4 sm:right-10 [&>button:last-child]:top-4 sm:top-10 [&>button:last-child]:h-10 sm:h-12 [&>button:last-child]:w-10 sm:w-12 [&>button:last-child]:rounded-xl sm:rounded-2xl [&>button:last-child]:bg-white/5 [&>button:last-child]:border-white/10 [&>button:last-child]:hover:bg-white/10 [&>button:last-child]:transition-all [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center [&>button:last-child]:p-0 [&>button:last-child>svg]:h-5 sm:h-6 [&>button:last-child>svg]:w-5 sm:w-6 [&>button:last-child>svg]:text-slate-400 [&>button:last-child:hover>svg]:text-white">
                 <div className="absolute top-0 right-10 w-64 h-64 bg-nutri-brand/10 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
 
-                <DialogHeader className="p-6 sm:p-10 lg:p-12 border-b border-white/5 relative">
+                <DialogHeader className="p-6 sm:p-10 lg:p-12 border-b border-white/5 relative shrink-0">
                     <div className="flex flex-col sm:flex-row justify-between items-start pr-12 sm:pr-16 lg:pr-20 gap-6">
                         <div>
                             <DialogTitle className="text-2xl sm:text-4xl font-black tracking-tighter uppercase italic mb-2">
@@ -435,55 +436,11 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                                 Perfil clínico y nutricional de <span className="text-white font-bold uppercase">{patientName}</span>
                             </DialogDescription>
                         </div>
-                        <div className="flex items-center gap-4">
-                            {!isEditing ? (
-                                <div className="flex items-center gap-4">
-                                    <div className="relative">
-                                        <input
-                                            type="file"
-                                            accept=".xlsx, .xls"
-                                            className="absolute inset-0 opacity-0 cursor-pointer"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) handleExcelUpload(file);
-                                            }}
-                                        />
-                                        <Button
-                                            className="h-12 px-6 rounded-xl bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10 font-black uppercase text-[10px] tracking-widest transition-all"
-                                        >
-                                            <Upload className="h-4 w-4 mr-2" /> Subir Historia
-                                        </Button>
-                                    </div>
-                                    <Button
-                                        onClick={() => setIsEditing(true)}
-                                        className="h-12 px-6 rounded-xl bg-nutri-brand/10 text-nutri-brand border border-nutri-brand/20 hover:bg-nutri-brand hover:text-white font-black uppercase text-[10px] tracking-widest transition-all"
-                                    >
-                                        <Edit className="h-4 w-4 mr-2" /> Editar Historia
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-                                    <Button
-                                        onClick={() => { setIsEditing(false); setEditedData(historyData); }}
-                                        variant="ghost"
-                                        className="h-10 sm:h-12 px-6 rounded-xl text-slate-400 font-black uppercase text-[10px] tracking-widest w-full sm:w-auto"
-                                    >
-                                        <RotateCcw className="h-4 w-4 mr-2" /> Cancelar
-                                    </Button>
-                                    <Button
-                                        onClick={handleSave}
-                                        disabled={isSaving}
-                                        className="h-10 sm:h-12 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-500/20 w-full sm:w-auto"
-                                    >
-                                        <Save className="h-4 w-4 mr-2" /> {isSaving ? "Guardando..." : "Guardar Cambios"}
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
                     </div>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto p-6 sm:p-10 lg:p-12 space-y-12 sm:space-y-16 custom-scrollbar relative">
+                <ScrollArea className="flex-1">
+                    <div className="p-6 sm:p-10 lg:p-12 space-y-12 sm:space-y-16 relative">
                     {loading ? (
                         <div className="py-20 text-center font-black animate-pulse text-slate-500 uppercase tracking-widest text-sm">
                             Cargando expediente clínico...
@@ -1051,15 +1008,64 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                             </section>
                         </div>
                     )}
-                </div>
+                    </div>
+                </ScrollArea>
 
-                <div className="p-10 border-t border-white/5 bg-white/[0.02] relative flex justify-end">
-                    <DialogClose asChild>
-                        <button className="px-10 h-14 rounded-2xl font-black uppercase tracking-widest bg-white/5 text-slate-400 hover:text-white transition-all border border-white/10">
-                            Cerrar Documento
-                        </button>
-                    </DialogClose>
-                </div>
+                <DialogFooter className="p-6 sm:p-10 border-t border-white/5 bg-slate-900/50 backdrop-blur-md shrink-0 flex flex-col sm:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-4 w-full sm:w-auto order-2 sm:order-1">
+                        <DialogClose asChild>
+                            <Button variant="ghost" className="px-8 h-12 rounded-xl font-black uppercase tracking-widest text-slate-400 hover:text-white border border-white/10 w-full sm:w-auto">
+                                Cerrar
+                            </Button>
+                        </DialogClose>
+                    </div>
+
+                    <div className="flex items-center gap-4 w-full sm:w-auto order-1 sm:order-2">
+                        {!isEditing ? (
+                            <div className="flex items-center gap-4 w-full justify-end">
+                                <div className="relative w-full sm:w-auto">
+                                    <input
+                                        type="file"
+                                        accept=".xlsx, .xls"
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) handleExcelUpload(file);
+                                        }}
+                                    />
+                                    <Button
+                                        className="h-12 px-6 rounded-xl bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10 font-black uppercase text-[10px] tracking-widest transition-all w-full"
+                                    >
+                                        <Upload className="h-4 w-4 mr-2" /> Importar Excel
+                                    </Button>
+                                </div>
+                                <Button
+                                    onClick={() => setIsEditing(true)}
+                                    className="h-12 px-8 rounded-xl bg-nutri-brand/10 text-nutri-brand border border-nutri-brand/20 hover:bg-nutri-brand hover:text-white font-black uppercase text-[10px] tracking-widest transition-all w-full sm:w-auto shadow-lg shadow-nutri-brand/10"
+                                >
+                                    <Edit className="h-4 w-4 mr-2" /> Editar
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                                <Button
+                                    onClick={() => { setIsEditing(false); setEditedData(historyData); }}
+                                    variant="ghost"
+                                    className="h-12 px-8 rounded-xl text-slate-400 font-black uppercase text-[10px] tracking-widest w-full sm:w-auto border border-white/5"
+                                >
+                                    <RotateCcw className="h-4 w-4 mr-2" /> Cancelar
+                                </Button>
+                                <Button
+                                    onClick={handleSave}
+                                    disabled={isSaving}
+                                    className="h-12 px-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest shadow-xl shadow-emerald-500/20 w-full sm:w-auto"
+                                >
+                                    <Save className="h-4 w-4 mr-2" /> {isSaving ? "Guardando..." : "Guardar Cambios"}
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

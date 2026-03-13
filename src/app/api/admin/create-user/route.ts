@@ -41,22 +41,29 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: authError.message }, { status: 400 });
         }
 
-        // 2. The profile should be created by the trigger, but let's ensure it has the correct role
-        // Sometimes the trigger might need a moment or we want to be explicit
+        // 2. Ensure profile exists and has correct data.
+        // We use upsert to avoid race conditions with triggers and ensure data is correct.
         if (authData.user) {
             const { error: profileError } = await supabaseAdmin
                 .from("profiles")
-                .update({ role: role, full_name: fullName })
-                .eq("id", authData.user.id);
+                .upsert({ 
+                    id: authData.user.id,
+                    user_id: authData.user.id,
+                    role: role, 
+                    full_name: fullName,
+                    email: email,
+                    status: 'Activo'
+                }, { onConflict: 'id' });
 
             if (profileError) {
-                console.error("Profile Update Error:", profileError);
+                console.error("Profile Upsert Error:", profileError);
+                // We don't fail the whole request because the user is already created in Auth
             }
         }
 
         return NextResponse.json({ success: true, user: authData.user });
     } catch (error: any) {
         console.error("Internal Error:", error);
-        return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+        return NextResponse.json({ error: error.message || "Error interno del servidor" }, { status: 500 });
     }
 }

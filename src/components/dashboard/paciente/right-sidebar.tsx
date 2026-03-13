@@ -244,7 +244,33 @@ function MealsTimeline({ date, patientId, planType, version }: { date: Date, pat
     );
 }
 
-function ScheduledAppointments({ date, patientId }: { date: Date, patientId?: string }) {
+const getAppointmentStatus = (status: string, date: string, time: string) => {
+    const lowerStatus = (status || '').toLowerCase();
+    const normalizedTime = time.includes(':') ? time : '00:00';
+    const aptDate = new Date(`${date}T${normalizedTime}`);
+    const now = new Date();
+    
+    if (['programada', 'scheduled', 'programado'].includes(lowerStatus)) {
+        if (now > aptDate) return { label: 'no confirmado', className: "bg-red-500/20 text-red-500 border-red-500/20" };
+        return { label: 'programada', className: "bg-blue-500/20 text-blue-400 border-blue-500/20" };
+    }
+    
+    if (['completada', 'completed', 'atendida'].includes(lowerStatus)) {
+        return { label: 'completada', className: "bg-green-500/20 text-green-500 border-green-500/20" };
+    }
+    
+    if (['confirmada', 'confirmed'].includes(lowerStatus)) {
+        return { label: 'confirmada', className: "bg-emerald-500/20 text-emerald-500 border-emerald-500/20" };
+    }
+
+    if (['cancelada', 'cancelled', 'cancelado'].includes(lowerStatus)) {
+        return { label: 'cancelada', className: "bg-slate-500/20 text-slate-500 border-slate-500/20" };
+    }
+
+    return { label: status, className: "bg-white/5 text-slate-400 border-white/10" };
+};
+
+function ScheduledAppointments({ date, patientId, version }: { date: Date, patientId?: string, version?: number }) {
     const [apts, setApts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const supabase = createClient();
@@ -272,7 +298,7 @@ function ScheduledAppointments({ date, patientId }: { date: Date, patientId?: st
             setLoading(false);
         }
         fetchAppointments();
-    }, [date, patientId]);
+    }, [date, patientId, version]);
 
 
     return (
@@ -297,9 +323,14 @@ function ScheduledAppointments({ date, patientId }: { date: Date, patientId?: st
                                     <p className="text-xs font-tech font-bold text-white">
                                         {apt.start_time.substring(0, 5)} - {apt.modality === "virtual" ? "Virtual" : "Presencial"}
                                     </p>
-                                    <Badge className="bg-nutri-brand/20 text-nutri-brand border-nutri-brand/20 text-[8px] px-2 py-0.5 uppercase font-tech font-black tracking-tighter rounded-full">
-                                        {apt.status}
-                                    </Badge>
+                                    {(() => {
+                                        const { label, className } = getAppointmentStatus(apt.status, apt.appointment_date, apt.start_time);
+                                        return (
+                                            <Badge className={cn("text-[8px] px-2 py-0.5 uppercase font-tech font-black tracking-tighter rounded-full border-none", className)}>
+                                                {label}
+                                            </Badge>
+                                        );
+                                    })()}
                                 </div>
                                 <p className="text-xs text-slate-500 font-medium">
                                     {apt.nutritionist?.full_name || "Especialista"}
@@ -317,7 +348,7 @@ function ScheduledAppointments({ date, patientId }: { date: Date, patientId?: st
     );
 }
 
-function NextAppointment({ patientId, profileId }: { patientId?: string; profileId?: string }) {
+function NextAppointment({ patientId, profileId, version }: { patientId?: string; profileId?: string; version?: number }) {
     const [nextAppt, setNextAppt] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [planStats, setPlanStats] = useState({ used: 0, limit: 0, isActive: false });
@@ -369,7 +400,7 @@ function NextAppointment({ patientId, profileId }: { patientId?: string; profile
             setLoading(false);
         }
         fetchNext();
-    }, [patientId]);
+    }, [patientId, version]);
 
     if (loading) return (
         <Card className="rounded-[2.5rem] bg-nutri-panel border border-white/5 h-24 animate-pulse shadow-xl" />
@@ -405,13 +436,18 @@ function NextAppointment({ patientId, profileId }: { patientId?: string; profile
                         <div className="flex-1">
                             <div className="flex items-center justify-between">
                                 <p className="text-sm font-bold text-white leading-tight">Consulta</p>
-                                <Badge className="bg-nutri-brand/20 text-nutri-brand border-nutri-brand/20 text-[8px] px-2 py-0.5 uppercase font-tech font-black tracking-tighter rounded-full">
-                                    {nextAppt.status}
-                                </Badge>
+                                {(() => {
+                                    const { label, className } = getAppointmentStatus(nextAppt.status, nextAppt.appointment_date, nextAppt.start_time);
+                                    return (
+                                        <Badge className={cn("text-[8px] px-2 py-0.5 uppercase font-tech font-black tracking-tighter rounded-full border-none", className)}>
+                                            {label}
+                                        </Badge>
+                                    );
+                                })()}
                             </div>
                             <div className="flex items-center gap-3 mt-1 text-slate-500">
                                 <span className="flex items-center gap-1.5 text-[10px] font-tech font-bold">
-                                    <Clock className="h-3 w-3 text-nutri-brand" /> {nextAppt.start_time.substring(0, 5)}
+                                    {nextAppt.start_time.substring(0, 5)}
                                 </span>
                                 <span className="flex items-center gap-1.5 text-[10px] font-tech font-bold">
                                     {nextAppt.modality === 'virtual' ? '📹 Virtual' : '🏥 Presencial'}
@@ -475,9 +511,9 @@ export function RightSidebar() {
     return (
         <div className="space-y-4 sticky top-24 h-[calc(100vh-7rem)] overflow-y-auto pr-2 custom-scrollbar">
             <MiniCalendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
-            <NextAppointment patientId={patientId} profileId={profileId} />
+            <NextAppointment patientId={patientId} profileId={profileId} version={version} />
             <MealsTimeline date={selectedDate} patientId={patientId} planType={planType} version={version} />
-            <ScheduledAppointments date={selectedDate} patientId={patientId} />
+            <ScheduledAppointments date={selectedDate} patientId={patientId} version={version} />
         </div>
     );
 }

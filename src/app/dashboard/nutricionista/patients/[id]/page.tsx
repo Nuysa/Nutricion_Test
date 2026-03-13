@@ -65,6 +65,8 @@ export default function PatientDetailPage() {
     const [showChartsDialog, setShowChartsDialog] = useState(false);
     const [extraData, setExtraData] = useState<Record<string, any>>({});
     const [todayAppointment, setTodayAppointment] = useState<any>(null);
+    const [pendingAppointments, setPendingAppointments] = useState<any[]>([]);
+    const [selectedAppointmentId, setSelectedAppointmentId] = useState<string>("");
     const [photoHistory, setPhotoHistory] = useState<any[]>([]);
 
     const getIMCCategory = (val: string) => {
@@ -193,21 +195,25 @@ export default function PatientDetailPage() {
             const combinedHistory = [...mappedRecords, ...mappedHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             setPhotoHistory(combinedHistory);
 
-            // Fetch today's appointment
+            // Fetch appointments
+            const { data: allApts } = await supabase
+                .from("appointments")
+                .select("*")
+                .eq("patient_id", patientId)
+                .order("appointment_date", { ascending: false });
+
             const todayD = new Date();
             const yyyy = todayD.getFullYear();
             const mm = String(todayD.getMonth() + 1).padStart(2, '0');
             const dd = String(todayD.getDate()).padStart(2, '0');
             const todayStr = `${yyyy}-${mm}-${dd}`;
+
+            const pending = allApts?.filter(a => a.status !== 'cancelada' && a.status !== 'completada' && a.status !== 'completado' && a.status !== 'canceled') || [];
+            const activeToday = pending.find(a => a.appointment_date === todayStr);
             
-            const { data: apts } = await supabase
-                .from("appointments")
-                .select("*")
-                .eq("patient_id", patientId)
-                .eq("appointment_date", todayStr);
-            
-            const activeApt = apts?.find(a => a.status !== 'cancelada' && a.status !== 'completada' && a.status !== 'completado' && a.status !== 'canceled');
-            setTodayAppointment(activeApt || null);
+            setPendingAppointments(pending);
+            setTodayAppointment(activeToday || null);
+            if (activeToday) setSelectedAppointmentId(activeToday.id);
 
             let age = 0;
             if (pData.date_of_birth) {
@@ -439,7 +445,8 @@ export default function PatientDetailPage() {
                 waist_circumference_cm: parseNum(editValues.waist_circumference_cm),
                 clinical_findings: editValues.clinical_findings || "",
                 nutritional_recommendations: editValues.nutritional_recommendations || "",
-                extra_data: { ...filteredExtraData, ...cleanedExtraData, appointment_id: todayAppointment?.id || null } // fusionar manteniendo los 0s
+                appointment_id: selectedAppointmentId || null,
+                extra_data: { ...filteredExtraData, ...cleanedExtraData } // fusionar manteniendo los 0s
             };
 
             const isNew = editingId === "new" || !editingId;
@@ -450,8 +457,9 @@ export default function PatientDetailPage() {
 
             if (error) throw error;
             
-            if (isNew && todayAppointment) {
-                await supabase.from("appointments").update({ status: 'completada' }).eq("id", todayAppointment.id);
+            if (isNew && selectedAppointmentId) {
+                await supabase.from("appointments").update({ status: 'completada' }).eq("id", selectedAppointmentId);
+                setSelectedAppointmentId("");
             }
 
             toast({ title: "Medición guardada" });
@@ -837,6 +845,9 @@ export default function PatientDetailPage() {
                             recordNumber={records.length + 1}
                             layout={formLayout as any[]}
                             clinicalVariables={clinicalVariables}
+                            pendingAppointments={pendingAppointments}
+                            selectedAppointmentId={selectedAppointmentId}
+                            setSelectedAppointmentId={setSelectedAppointmentId}
                         />
                     )}
                     <Card className="rounded-3xl sm:rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/5 overflow-hidden bg-[#1A253A]/60 backdrop-blur-xl">

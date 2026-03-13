@@ -397,83 +397,90 @@ export default function PatientsPage() {
             </Card>
 
             <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-                <DialogContent className="rounded-[2.5rem] border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-2xl p-0 max-w-4xl overflow-hidden border-none">
-                    <div className="flex flex-col lg:flex-row h-full min-h-[500px]">
-                        {/* Left: Mini Calendar */}
-                        <div className="flex-1 p-8 border-r border-white/5 bg-white/[0.02]">
-                            <div className="flex items-center justify-between mb-8">
-                                <div>
-                                    <h3 className="text-xl font-black text-white uppercase tracking-tight">Selecciona Fecha</h3>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Paso 1: ¿Cuándo será la cita?</p>
+                <DialogContent className="w-[95vw] lg:max-w-4xl p-0 overflow-hidden border-none bg-slate-900/95 backdrop-blur-xl shadow-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col rounded-[2rem] sm:rounded-[2.5rem]">
+                    <DialogHeader className="p-6 sm:p-8 border-b border-white/5">
+                        <DialogTitle className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">Agendar Cita</DialogTitle>
+                        <DialogDescription className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
+                            Programando consulta para <span className="text-nutrition-500">{selectedPatient?.name}</span>
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <ScrollArea className="flex-1">
+                        <div className="flex flex-col lg:flex-row h-full">
+                            {/* Left: Mini Calendar */}
+                            <div className="flex-1 p-6 sm:p-8 lg:border-r border-white/5 bg-white/[0.02]">
+                                <div className="flex items-center justify-between mb-8">
+                                    <div>
+                                        <h3 className="text-lg font-black text-white uppercase tracking-tight">Selecciona Fecha</h3>
+                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Paso 1: ¿Cuándo será la cita?</p>
+                                    </div>
+                                    <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10" 
+                                            onClick={() => {
+                                                if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
+                                                else setViewMonth(viewMonth - 1);
+                                            }}>
+                                            <ChevronLeft className="h-4 w-4" />
+                                        </Button>
+                                        <span className="text-[10px] font-black text-white uppercase tracking-widest min-w-[80px] text-center">{monthNames[viewMonth]} {viewYear}</span>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
+                                            onClick={() => {
+                                                if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
+                                                else setViewMonth(viewMonth + 1);
+                                            }}>
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10" 
-                                        onClick={() => {
-                                            if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
-                                            else setViewMonth(viewMonth - 1);
-                                        }}>
-                                        <ChevronLeft className="h-4 w-4" />
-                                    </Button>
-                                    <span className="text-[10px] font-black text-white uppercase tracking-widest min-w-[80px] text-center">{monthNames[viewMonth]} {viewYear}</span>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
-                                        onClick={() => {
-                                            if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
-                                            else setViewMonth(viewMonth + 1);
-                                        }}>
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Button>
+
+                                <div className="grid grid-cols-7 gap-1 mb-2">
+                                    {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map(d => (
+                                        <div key={d} className="text-center text-[9px] font-black text-slate-600 uppercase py-2">{d}</div>
+                                    ))}
+                                </div>
+                                <div className="grid grid-cols-7 gap-1">
+                                    {(() => {
+                                        const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+                                        const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+                                        const offset = firstDay === 0 ? 6 : firstDay - 1;
+                                        const cells = [];
+                                        for (let i = 0; i < offset; i++) cells.push(<div key={`empty-${i}`} />);
+                                        for (let d = 1; d <= daysInMonth; d++) {
+                                            const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                                            const isSelected = scheduleValues.date === dateStr;
+                                            const isToday = new Date().toISOString().split('T')[0] === dateStr;
+                                            const isPast = new Date(viewYear, viewMonth, d) < new Date(new Date().setHours(0,0,0,0));
+                                            
+                                            cells.push(
+                                                <button
+                                                    key={d}
+                                                    disabled={isPast}
+                                                    onClick={() => setScheduleValues({...scheduleValues, date: dateStr})}
+                                                    className={cn(
+                                                        "h-10 w-full rounded-xl text-xs font-black transition-all flex items-center justify-center relative group",
+                                                        isSelected ? "bg-nutrition-500 text-white shadow-lg shadow-nutrition-500/20" : 
+                                                        isToday ? "bg-nutrition-500/10 text-nutrition-400 border border-nutrition-500/20" :
+                                                        isPast ? "text-slate-700 cursor-not-allowed opacity-20" : "text-slate-400 hover:bg-white/5 hover:text-white"
+                                                    )}
+                                                >
+                                                    {d}
+                                                    {isSelected && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white animate-in zoom-in" />}
+                                                </button>
+                                            );
+                                        }
+                                        return cells;
+                                    })()}
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-7 gap-1 mb-2">
-                                {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map(d => (
-                                    <div key={d} className="text-center text-[9px] font-black text-slate-600 uppercase py-2">{d}</div>
-                                ))}
-                            </div>
-                            <div className="grid grid-cols-7 gap-1">
-                                {(() => {
-                                    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
-                                    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-                                    const offset = firstDay === 0 ? 6 : firstDay - 1;
-                                    const cells = [];
-                                    for (let i = 0; i < offset; i++) cells.push(<div key={`empty-${i}`} />);
-                                    for (let d = 1; d <= daysInMonth; d++) {
-                                        const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                                        const isSelected = scheduleValues.date === dateStr;
-                                        const isToday = new Date().toISOString().split('T')[0] === dateStr;
-                                        const isPast = new Date(viewYear, viewMonth, d) < new Date(new Date().setHours(0,0,0,0));
-                                        
-                                        cells.push(
-                                            <button
-                                                key={d}
-                                                disabled={isPast}
-                                                onClick={() => setScheduleValues({...scheduleValues, date: dateStr})}
-                                                className={cn(
-                                                    "h-10 w-full rounded-xl text-xs font-black transition-all flex items-center justify-center relative group",
-                                                    isSelected ? "bg-nutrition-500 text-white shadow-lg shadow-nutrition-500/20" : 
-                                                    isToday ? "bg-nutrition-500/10 text-nutrition-400 border border-nutrition-500/20" :
-                                                    isPast ? "text-slate-700 cursor-not-allowed opacity-20" : "text-slate-400 hover:bg-white/5 hover:text-white"
-                                                )}
-                                            >
-                                                {d}
-                                                {isSelected && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white animate-in zoom-in" />}
-                                            </button>
-                                        );
-                                    }
-                                    return cells;
-                                })()}
-                            </div>
-                        </div>
+                            {/* Right: Time Selection */}
+                            <div className="w-full lg:w-[320px] p-6 sm:p-8 bg-slate-900/50 lg:bg-slate-900 border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col">
+                                <div className="mb-6">
+                                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Horarios</h3>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Paso 2: Disponibilidad para {scheduleValues.date}</p>
+                                </div>
 
-                        {/* Right: Time Selection */}
-                        <div className="w-full lg:w-[320px] p-8 bg-slate-900 border-l border-white/5 flex flex-col">
-                            <div className="mb-8">
-                                <h3 className="text-xl font-black text-white uppercase tracking-tight">Horarios</h3>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Paso 2: Disponibilidad para {scheduleValues.date}</p>
-                            </div>
-
-                            <ScrollArea className="flex-1 pr-4 -mr-4">
-                                <div className="grid grid-cols-2 gap-2 pb-6">
+                                <div className="grid grid-cols-2 lg:grid-cols-2 gap-2 pb-6">
                                     {timeSlots.map(time => {
                                         const isOccupied = occupiedSlots.includes(time);
                                         const isSelected = scheduleValues.time === time;
@@ -496,41 +503,50 @@ export default function PatientsPage() {
                                         );
                                     })}
                                 </div>
-                            </ScrollArea>
 
-                            <div className="pt-6 mt-auto border-t border-white/5 space-y-4">
-                                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
-                                    <div>
-                                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Modalidad</p>
-                                        <Select 
-                                            value={scheduleValues.type} 
-                                            onValueChange={(v: any) => setScheduleValues({...scheduleValues, type: v})}
-                                        >
-                                            <SelectTrigger className="h-6 p-0 border-none bg-transparent text-[10px] font-black text-white uppercase tracking-tighter w-auto">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-slate-900 border-white/10">
-                                                <SelectItem value="virtual" className="text-[10px] font-black uppercase text-white">Virtual</SelectItem>
-                                                <SelectItem value="in-person" className="text-[10px] font-black uppercase text-white">Presencial</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Cita Seleccionada</p>
-                                        <p className="text-[10px] font-black text-nutrition-400 uppercase tracking-tight">{scheduleValues.time || "--:--"}</p>
+                                <div className="pt-6 mt-auto border-t border-white/5 space-y-4">
+                                    <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                                        <div>
+                                            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Modalidad</p>
+                                            <Select 
+                                                value={scheduleValues.type} 
+                                                onValueChange={(v: any) => setScheduleValues({...scheduleValues, type: v})}
+                                            >
+                                                <SelectTrigger className="h-6 p-0 border-none bg-transparent text-[10px] font-black text-white uppercase tracking-tighter w-auto">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-slate-900 border-white/10">
+                                                    <SelectItem value="virtual" className="text-[10px] font-black uppercase text-white">Virtual</SelectItem>
+                                                    <SelectItem value="in-person" className="text-[10px] font-black uppercase text-white">Presencial</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Cita Seleccionada</p>
+                                            <p className="text-[10px] font-black text-nutrition-400 uppercase tracking-tight">{scheduleValues.time || "--:--"}</p>
+                                        </div>
                                     </div>
                                 </div>
-
-                                <Button
-                                    onClick={handleSaveSchedule}
-                                    disabled={!scheduleValues.time}
-                                    className="w-full h-12 rounded-xl bg-nutrition-600 hover:bg-nutrition-700 text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-lg shadow-nutrition-600/20 transition-all active:scale-[0.98]"
-                                >
-                                    Confirmar Cita
-                                </Button>
                             </div>
                         </div>
-                    </div>
+                    </ScrollArea>
+
+                    <DialogFooter className="p-6 sm:p-8 bg-slate-900 border-t border-white/5 flex flex-row gap-3">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setShowScheduleDialog(false)}
+                            className="flex-1 h-12 rounded-xl text-slate-400 font-black uppercase text-[10px] tracking-widest border border-white/5 hover:bg-white/5"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleSaveSchedule}
+                            disabled={!scheduleValues.time}
+                            className="flex-1 h-12 rounded-xl bg-nutrition-600 hover:bg-nutrition-700 text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-lg shadow-nutrition-600/20 transition-all active:scale-[0.98]"
+                        >
+                            Confirmar Cita
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>

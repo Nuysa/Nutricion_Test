@@ -47,7 +47,7 @@ export default function NutritionistDashboard() {
                     .from("appointments")
                     .select("*", { count: 'exact', head: true })
                     .eq("nutritionist_id", profile.id)
-                    .eq("date", today);
+                    .eq("appointment_date", today);
 
                 setPatients(assignedPatients);
                 setStats({

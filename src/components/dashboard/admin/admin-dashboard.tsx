@@ -14,7 +14,7 @@ import {
     Plus, Trash2, DatabaseZap as DbIcon, Mail, Edit3, Save, Loader2,
     BarChart3, TrendingUp, Target, DollarSign, Activity, AlertTriangle,
     Shield, ShieldPlus, User, FileText, ChevronRight, Play, Layers, Filter, LayoutGrid, LayoutList, LayoutTemplate, Stethoscope,
-    ChevronDown, ChevronUp
+    ChevronDown, ChevronUp, ShieldCheck
 } from "lucide-react";
 import { VariablesConfig } from "@/components/dashboard/admin/variables-config";
 import { TableEditor } from "@/components/dashboard/admin/table-editor";
@@ -37,6 +37,32 @@ import {
     DialogTrigger,
     DialogFooter
 } from "@/components/ui/dialog";
+
+const getAppointmentStatus = (status: string, date: string, time: string) => {
+    const lowerStatus = (status || '').toLowerCase();
+    const normalizedTime = time.includes(':') ? time : '00:00';
+    const aptDate = new Date(`${date}T${normalizedTime}`);
+    const now = new Date();
+    
+    if (['programada', 'scheduled', 'programado'].includes(lowerStatus)) {
+        if (now > aptDate) return { label: 'no confirmado', className: "bg-red-500/10 text-red-500" };
+        return { label: 'programada', className: "bg-blue-500/10 text-blue-500" };
+    }
+    
+    if (['completada', 'completed', 'atendida'].includes(lowerStatus)) {
+        return { label: 'completada', className: "bg-green-500/10 text-green-500" };
+    }
+    
+    if (['confirmada', 'confirmed'].includes(lowerStatus)) {
+        return { label: 'confirmada', className: "bg-emerald-500/10 text-emerald-500" };
+    }
+
+    if (['cancelada', 'cancelled', 'cancelado'].includes(lowerStatus)) {
+        return { label: 'cancelada', className: "bg-slate-500/10 text-slate-500" };
+    }
+
+    return { label: status, className: "bg-slate-500/10 text-slate-500" };
+};
 
 export function AdminStaffDashboardContent({ initialTab = "overview" }: { initialTab?: any }) {
     const { toast } = useToast();
@@ -69,6 +95,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
     const [agendaPatientId, setAgendaPatientId] = useState("");
     const [agendaDate, setAgendaDate] = useState("");
     const [agendaTime, setAgendaTime] = useState("");
+    const [agendaModality, setAgendaModality] = useState<"virtual" | "presencia">("virtual");
 
     // Offer edit states
     const [editingOffer, setEditingOffer] = useState<any>(null);
@@ -109,10 +136,12 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
 
     // Enhanced Calendar States
     const [allAppointments, setAllAppointments] = useState<any[]>([]);
-    const [selectedCalDate, setSelectedCalDate] = useState<Date>(new Date(2026, 1, 23));
+    const [selectedCalDate, setSelectedCalDate] = useState<Date>(new Date());
     const [occupiedSlots, setOccupiedSlots] = useState<string[]>([]);
-    const [calMonth, setCalMonth] = useState(1);
-    const [calYear] = useState(2026);
+    const [calMonth, setCalMonth] = useState(new Date().getMonth());
+    const [calYear, setCalYear] = useState(new Date().getFullYear());
+    const [agendaView, setAgendaView] = useState<"nutricionistas" | "historial">("nutricionistas");
+    const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
 
     const timeSlots = [
         "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
@@ -157,7 +186,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
     const getOccupiedSlots = (dateStr: string, nutriId: string) => {
         if (!nutriId) return [];
         const dayAppts = allAppointments.filter(a => {
-            return a.date === dateStr && a.nutritionistId === nutriId;
+            return a.date === dateStr && a.nutritionistId === nutriId && a.status !== 'cancelada';
         });
 
         const occupied = new Set<string>();
@@ -180,7 +209,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
     };
 
     const isSlotPast = (slotTime: string, dateStr: string) => {
-        const now = new Date(2026, 1, 23, 6, 50); // Simulated now
+        const now = new Date();
         const [h, m] = slotTime.split(":").map(Number);
         const targetDate = new Date(dateStr + 'T' + slotTime);
         return targetDate < now;
@@ -230,6 +259,14 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                     if (activeTab === 'plan_assignments' && selectedPlanPatientId) {
                         void refreshPlanHistory(selectedPlanPatientId);
                     }
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'appointments' },
+                () => {
+                    console.log("Realtime: Appointments changed, refreshing...");
+                    loadData(true);
                 }
             )
             .subscribe();
@@ -355,10 +392,11 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
         }
         try {
             const supabase = createClient();
-            const { error } = await supabase.from("appointments").insert({
+            const { error } = await supabase.from("appointments").upsert({
+                id: editingAppointmentId || undefined,
                 patient_id: agendaPatientId,
                 nutritionist_id: agendaNutriId,
-                scheduled_by: currentAdminId, // Fix NOT NULL violation
+                scheduled_by: currentAdminId,
                 appointment_date: agendaDate,
                 start_time: agendaTime,
                 end_time: (() => {
@@ -366,19 +404,30 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                     const total = h * 60 + m + 30;
                     return `${Math.floor(total / 60).toString().padStart(2, '0')}:${(total % 60).toString().padStart(2, '0')}:00`;
                 })(),
-                modality: "virtual",
+                modality: agendaModality,
                 status: "programada"
             });
             if (error) throw error;
 
-            toast({ title: "Cita Programada", description: "La cita ha sido registrada con éxito.", variant: "success" });
+            toast({ title: editingAppointmentId ? "Cita Actualizada" : "Cita Programada", description: "La cita ha sido registrada con éxito.", variant: "success" });
             setIsAgendaDialogOpen(false);
+            setEditingAppointmentId(null);
             setAgendaNutriId("");
             setAgendaPatientId("");
             setAgendaDate("");
             setAgendaTime("");
         } catch (error: any) {
             toast({ title: "Error al agendar", description: error.message, variant: "destructive" });
+        }
+    };
+
+    const handleDeleteAppointment = async (id: string) => {
+        try {
+            await MessagingService.deleteAppointment(id);
+            toast({ title: "Cita Eliminada", variant: "success" });
+            loadData(true);
+        } catch (error: any) {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
         }
     };
 
@@ -479,6 +528,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
         }
 
         setIsCreatingUser(true);
+        console.log("[AdminDashboard] Creating user:", { email: newUserEmail, fullName: newUserFullName, role: newUserRole });
         try {
             const response = await fetch("/api/admin/create-user", {
                 method: "POST",
@@ -492,6 +542,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
             });
 
             const result = await response.json();
+            console.log("[AdminDashboard] Server response:", result);
 
             if (!response.ok) {
                 throw new Error(result.error || "Error al crear usuario");
@@ -505,6 +556,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
             setNewUserFullName("");
             loadData(true);
         } catch (error: any) {
+            console.error("[AdminDashboard] Creation error:", error);
             toast({ title: "Error", description: error.message, variant: "destructive" });
         } finally {
             setIsCreatingUser(false);
@@ -521,10 +573,25 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
     const filteredPatientsForAssign = patients.filter(p =>
         (p.name || "").toLowerCase().includes(assignPSearch.toLowerCase())
     );
+
     const activeNutris = nutritionists.filter(p =>
         (p as any).status === "Activo" &&
         (p.name || "").toLowerCase().includes(assignNSearch.toLowerCase())
     );
+
+    const globalNextAppt = [...allAppointments]
+        .filter(a => {
+            const now = new Date();
+            const aptDate = new Date(a.date + 'T' + (a.startTime || '00:00'));
+            return aptDate > now && a.status !== 'cancelada';
+        })
+        .sort((a, b) => (a.date + 'T' + a.startTime).localeCompare(b.date + 'T' + b.startTime))[0];
+
+    const todayStr = (() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    })();
+    const todayAppts = allAppointments.filter(a => a.date === todayStr && a.status !== 'cancelada');
 
     return (
         <div className={cn(
@@ -1296,156 +1363,592 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                         )}
 
                         {activeTab === "calendar" && (
-                            <div className="space-y-6">
-                                <Card className="rounded-[2.5rem] border-slate-100 shadow-xl p-8">
-                                    <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-10">
-                                        <div>
-                                            <h2 className="text-3xl font-black text-slate-800">Agenda Global</h2>
-                                            <p className="text-slate-500 font-medium">Gestiona las citas de todos los especialistas desde un solo lugar.</p>
-                                        </div>
-                                        <Dialog open={isAgendaDialogOpen} onOpenChange={setIsAgendaDialogOpen}>
+                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div className="lg:col-span-2 space-y-1">
+                                        <h2 className="text-3xl font-black text-white uppercase italic tracking-tight flex items-center gap-3">
+                                            <div className="h-8 w-1.5 bg-nutri-brand rounded-full" />
+                                            Agenda Global
+                                        </h2>
+                                        <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px] ml-4">Gestión centralizada de especialidades y consultas.</p>
+                                    </div>
+                                    <div className="flex items-center justify-end gap-4">
+                                        <Card className="hidden md:flex bg-white/5 border-white/5 px-6 py-3 rounded-2xl items-center gap-6">
+                                            <div className="flex flex-col">
+                                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Total Citas</span>
+                                                <span className="text-xl font-black text-white">{allAppointments.filter(a => a.date === todayStr && a.status !== 'cancelada').length}</span>
+                                            </div>
+                                            <div className="h-8 w-px bg-white/10" />
+                                            <div className="flex flex-col">
+                                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Atendidas</span>
+                                                <span className="text-xl font-black text-green-400">{allAppointments.filter(a => a.date === todayStr && a.status === 'completada').length}</span>
+                                            </div>
+                                        </Card>
+                                        <Dialog open={isAgendaDialogOpen} onOpenChange={(open) => {
+                                            if (open && !agendaDate) {
+                                                setAgendaDate(todayStr);
+                                            }
+                                            if (!open) {
+                                                setEditingAppointmentId(null);
+                                                setAgendaNutriId("");
+                                                setAgendaPatientId("");
+                                                setAgendaDate("");
+                                                setAgendaTime("");
+                                            }
+                                            setIsAgendaDialogOpen(open);
+                                        }}>
                                             <DialogTrigger asChild>
-                                                <Button className="rounded-2xl bg-nutrition-600 hover:bg-nutrition-700 text-white font-black h-12 px-8 shadow-lg shadow-nutrition-600/20">
-                                                    <Plus className="h-5 w-5 mr-2" /> Agendar Nueva Cita
+                                                <Button className="w-full md:w-auto bg-nutri-brand hover:bg-white text-nutri-base font-black px-10 py-7 rounded-2xl transition-all shadow-[0_10px_30px_rgba(255,122,0,0.3)] hover:scale-105 active:scale-95 uppercase tracking-widest text-xs">
+                                                    <Plus className="h-5 w-5 mr-2" /> Agendar Cita
                                                 </Button>
                                             </DialogTrigger>
-                                            <DialogContent className="rounded-[32px] max-w-4xl p-0 overflow-hidden border-none shadow-2xl">
-                                                <DialogHeader className="p-8 pb-0">
-                                                    <DialogTitle className="text-3xl font-black">Programar Consulta</DialogTitle>
-                                                    <DialogDescription className="text-slate-500 font-medium">Gestiona la agenda global de especialistas y pacientes.</DialogDescription>
-                                                </DialogHeader>
-
-                                                <div className="flex flex-col md:flex-row">
-                                                    {/* Left Column: Configuration */}
-                                                    <div className="w-full md:w-72 bg-slate-50/50 p-6 border-r border-slate-100 space-y-6">
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">1. Nutricionista</label>
-                                                            <select
-                                                                className="w-full p-3 rounded-xl border border-slate-200 bg-white text-sm font-bold outline-none ring-nutrition-500/20 focus:ring-4 transition-all"
-                                                                value={agendaNutriId}
-                                                                onChange={(e) => setAgendaNutriId(e.target.value)}
-                                                            >
-                                                                <option value="">Selecciona Especialista</option>
-                                                                {activeNutris.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
-                                                            </select>
-                                                        </div>
-
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">2. Paciente</label>
-                                                            <select
-                                                                disabled={!agendaNutriId}
-                                                                className="w-full p-3 rounded-xl border border-slate-200 bg-white text-sm font-bold outline-none disabled:opacity-50"
-                                                                value={agendaPatientId}
-                                                                onChange={(e) => setAgendaPatientId(e.target.value)}
-                                                            >
-                                                                <option value="">Selecciona Paciente</option>
-                                                                {Object.entries(assignments)
-                                                                    .filter(([_, nids]) => nids.includes(agendaNutriId))
-                                                                    .map(([pid, _]) => {
-                                                                        const p = patients.find(x => x.id === pid);
-                                                                        return <option key={pid} value={pid}>{p?.name}</option>;
-                                                                    })
-                                                                }
-                                                            </select>
-                                                        </div>
-
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">3. Fecha de Cita</label>
-                                                            <div className="bg-white rounded-2xl border border-slate-200 p-3">
-                                                                <input
-                                                                    type="date"
-                                                                    className="w-full text-sm font-bold outline-none"
-                                                                    value={agendaDate}
-                                                                    onChange={(e) => setAgendaDate(e.target.value)}
-                                                                />
+                                            <DialogContent className="rounded-[2.5rem] w-[95vw] max-w-6xl p-0 overflow-hidden border-none bg-slate-950/95 backdrop-blur-3xl text-white font-tech shadow-[0_0_60px_rgba(0,0,0,0.7)] flex flex-col h-[95vh] sm:h-auto sm:max-h-[90vh]">
+                                                <ScrollArea className="flex-1">
+                                                    <div className="flex flex-col lg:flex-row min-h-full">
+                                                        {/* Config Sidebar */}
+                                                        <div className="w-full lg:w-72 bg-gradient-to-b from-white/[0.03] to-transparent border-b lg:border-b-0 lg:border-r border-white/5 p-6 lg:p-8 space-y-6 flex flex-col shrink-0">
+                                                            <div className="space-y-1">
+                                                                <h3 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3">
+                                                                    <div className="h-5 w-1.5 bg-nutri-brand rounded-full shadow-[0_0_15px_rgba(255,122,0,0.5)]" />
+                                                                    Agendar
+                                                                </h3>
+                                                                <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[7px] ml-4">Configuración</p>
                                                             </div>
-                                                        </div>
-                                                    </div>
 
-                                                    {/* Right Column: Time Selection */}
-                                                    <div className="flex-1 p-6 space-y-6 bg-white">
-                                                        <div className="flex items-center justify-between">
-                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">4. Selecciona Horario</label>
-                                                            {agendaDate && <Badge variant="outline" className="rounded-full font-bold">{agendaDate}</Badge>}
-                                                        </div>
+                                                            <div className="space-y-5 flex-1">
+                                                                <div className="space-y-2.5">
+                                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                                        <div className="p-1 rounded-lg bg-nutri-brand/10 text-nutri-brand">
+                                                                            <Stethoscope className="h-2.5 w-2.5" />
+                                                                        </div>
+                                                                        Nutricionista
+                                                                    </label>
+                                                                    <div className="relative group">
+                                                                        <select
+                                                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-xs font-bold text-white outline-none focus:border-nutri-brand/50 focus:bg-white/10 transition-all appearance-none cursor-pointer"
+                                                                            value={agendaNutriId}
+                                                                            onChange={(e) => {
+                                                                                setAgendaNutriId(e.target.value);
+                                                                                setAgendaPatientId("");
+                                                                            }}
+                                                                        >
+                                                                            <option value="" className="bg-slate-900">Seleccionar...</option>
+                                                                            {activeNutris.map(n => <option key={n.id} value={n.id} className="bg-slate-900">{n.name}</option>)}
+                                                                        </select>
+                                                                        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500 rotate-90 pointer-events-none group-hover:text-nutri-brand transition-colors" />
+                                                                    </div>
+                                                                </div>
 
-                                                        {!agendaNutriId || !agendaDate ? (
-                                                            <div className="h-48 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-100 rounded-[2rem]">
-                                                                <Clock className="h-8 w-8 text-slate-200 mb-2" />
-                                                                <p className="text-xs font-bold text-slate-400">Selecciona especialista y fecha para ver disponibilidad</p>
-                                                            </div>
-                                                        ) : (
-                                                            <ScrollArea className="h-64 pr-2">
-                                                                <div className="grid grid-cols-2 gap-2">
-                                                                    {timeSlots.map(time => {
-                                                                        const isReserved = occupiedSlots.includes(time);
-                                                                        const isPastOrToday = isSlotPast(time, agendaDate);
-                                                                        const isSelected = agendaTime === time;
+                                                                <div className="space-y-2.5">
+                                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                                        <div className="p-1 rounded-lg bg-nutri-brand/10 text-nutri-brand">
+                                                                            <User className="h-2.5 w-2.5" />
+                                                                        </div>
+                                                                        Paciente
+                                                                    </label>
+                                                                    <div className="relative group">
+                                                                        <select
+                                                                            disabled={!agendaNutriId}
+                                                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-xs font-bold text-white outline-none focus:border-nutri-brand/50 focus:bg-white/10 transition-all appearance-none cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
+                                                                            value={agendaPatientId}
+                                                                            onChange={(e) => setAgendaPatientId(e.target.value)}
+                                                                        >
+                                                                            <option value="" className="bg-slate-900">Seleccionar...</option>
+                                                                            {Object.entries(assignments)
+                                                                                .filter(([_, nids]) => nids.includes(agendaNutriId))
+                                                                                .map(([pid, _]) => {
+                                                                                    const p = patients.find(x => x.id === pid);
+                                                                                    return <option key={pid} value={p?.patientId || pid} className="bg-slate-900">{p?.name}</option>;
+                                                                                })
+                                                                            }
+                                                                        </select>
+                                                                        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500 rotate-90 pointer-events-none group-hover:text-nutri-brand transition-colors" />
+                                                                    </div>
+                                                                </div>
 
-                                                                        return (
+                                                                <div className="space-y-2.5 pt-1">
+                                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                                        <div className="p-1 rounded-lg bg-nutri-brand/10 text-nutri-brand">
+                                                                            <Filter className="h-2.5 w-2.5" />
+                                                                        </div>
+                                                                        Modalidad
+                                                                    </label>
+                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                        {[
+                                                                            { id: 'virtual', label: 'Virtual', icon: Play },
+                                                                            { id: 'presencia', label: 'Presencial', icon: Target }
+                                                                        ].map(type => (
                                                                             <button
-                                                                                key={time}
-                                                                                disabled={isReserved || isPastOrToday}
-                                                                                onClick={() => setAgendaTime(time)}
+                                                                                key={type.id}
+                                                                                onClick={() => setAgendaModality(type.id as any)}
                                                                                 className={cn(
-                                                                                    "py-3 rounded-xl text-xs font-black transition-all border",
-                                                                                    isSelected ? "bg-slate-900 border-slate-900 text-white shadow-md" :
-                                                                                        (isReserved || isPastOrToday) ? "bg-slate-50 border-slate-50 text-slate-300 cursor-not-allowed" :
-                                                                                            "bg-white border-slate-100 text-slate-600 hover:border-nutrition-200 hover:bg-nutrition-50"
+                                                                                    "relative flex flex-col items-center gap-2 p-3 rounded-[1.25rem] border transition-all duration-300 group overflow-hidden",
+                                                                                    agendaModality === type.id 
+                                                                                        ? "bg-nutri-brand border-none text-nutri-base shadow-[0_10px_20px_rgba(255,122,0,0.3)] scale-[1.02]" 
+                                                                                        : "bg-white/5 border-white/10 text-slate-500 hover:bg-white/[0.08]"
                                                                                 )}
                                                                             >
-                                                                                {time}
-                                                                                {isReserved && <span className="block text-[8px] opacity-60 font-medium tracking-tighter">Ocupado</span>}
+                                                                                <type.icon className={cn("h-4 w-4 transition-transform duration-500", agendaModality === type.id ? "scale-110" : "group-hover:scale-110")} />
+                                                                                <span className="text-[9px] font-black uppercase tracking-widest">{type.label}</span>
                                                                             </button>
-                                                                        );
-                                                                    })}
+                                                                        ))}
+                                                                    </div>
                                                                 </div>
-                                                            </ScrollArea>
-                                                        )}
+                                                            </div>
 
-                                                        <DialogFooter className="pt-4 border-t border-slate-50">
-                                                            <Button
-                                                                className="w-full rounded-2xl bg-nutrition-600 hover:bg-nutrition-700 text-white font-black h-12 shadow-lg shadow-nutrition-600/20"
-                                                                disabled={!agendaNutriId || !agendaPatientId || !agendaDate || !agendaTime}
-                                                                onClick={handleCreateAppointment}
-                                                            >
-                                                                Confirmar Cita Programada
-                                                            </Button>
-                                                        </DialogFooter>
+                                                            <div className="rounded-2xl bg-nutri-brand/10 p-3 border border-nutri-brand/20">
+                                                                <p className="text-[7px] font-black text-nutri-brand uppercase tracking-[0.2em] leading-relaxed">
+                                                                    Duración: 30 minutos por turno.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Calendar & Selection Content */}
+                                                        <div className="flex-1 p-6 lg:p-10 flex flex-col bg-slate-950/20 min-w-0">
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10">
+                                                                {/* Date Picker */}
+                                                                <div className="space-y-4 lg:space-y-6 flex flex-col">
+                                                                    <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.25em] flex items-center gap-2">
+                                                                        <Calendar className="h-3.5 w-3.5 text-nutri-brand" /> 1. Fecha
+                                                                    </h4>
+                                                                    
+                                                                    <div className="h-[410px] bg-white/[0.03] border border-white/10 rounded-[2rem] p-5 lg:p-7 shadow-2xl relative overflow-hidden group">
+                                                                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-nutri-brand to-transparent opacity-30" />
+                                                                        
+                                                                        <div className="flex items-center justify-between mb-4 lg:mb-6">
+                                                                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all" 
+                                                                                onClick={() => {
+                                                                                    const newMonth = calMonth === 0 ? 11 : calMonth - 1;
+                                                                                    const newYear = calMonth === 0 ? calYear - 1 : calYear;
+                                                                                    setCalMonth(newMonth);
+                                                                                    setCalYear(newYear);
+                                                                                }}>
+                                                                                <ChevronRight className="h-4 w-4 rotate-180" />
+                                                                            </Button>
+                                                                            <div className="text-center">
+                                                                                <span className="text-xs font-black text-white uppercase tracking-[0.2em] italic">
+                                                                                    {["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"][calMonth]}
+                                                                                </span>
+                                                                                <div className="text-[9px] font-black text-nutri-brand tracking-[0.3em] mt-0.5">{calYear}</div>
+                                                                            </div>
+                                                                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                                                                                onClick={() => {
+                                                                                    const newMonth = calMonth === 11 ? 0 : calMonth + 1;
+                                                                                    const newYear = calMonth === 11 ? calYear + 1 : calYear;
+                                                                                    setCalMonth(newMonth);
+                                                                                    setCalYear(newYear);
+                                                                                }}>
+                                                                                <ChevronRight className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </div>
+
+                                                                        <div className="grid grid-cols-7 gap-1 lg:gap-2 mb-3 text-center">
+                                                                            {["L", "M", "X", "J", "V", "S", "D"].map(d => (
+                                                                                <div key={d} className="text-[9px] font-black text-slate-600 uppercase py-1 tracking-widest">{d}</div>
+                                                                            ))}
+                                                                        </div>
+                                                                        <div className="grid grid-cols-7 gap-1 lg:gap-2">
+                                                                            {(() => {
+                                                                                const firstDay = new Date(calYear, calMonth, 1).getDay();
+                                                                                const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+                                                                                const offset = firstDay === 0 ? 6 : firstDay - 1;
+                                                                                const cells = [];
+                                                                                for (let i = 0; i < offset; i++) cells.push(<div key={`empty-${i}`} />);
+                                                                                for (let d = 1; d <= daysInMonth; d++) {
+                                                                                    const dayDate = new Date(calYear, calMonth, d);
+                                                                                    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                                                                    const isSelected = agendaDate === dateStr;
+                                                                                    const isToday = todayStr === dateStr;
+                                                                                    const isDisabled = dayDate < new Date(new Date().setHours(0,0,0,0));
+                                                                                    
+                                                                                    cells.push(
+                                                                                        <button
+                                                                                            key={d}
+                                                                                            disabled={isDisabled}
+                                                                                            onClick={() => setAgendaDate(dateStr)}
+                                                                                            className={cn(
+                                                                                                "h-8 w-8 lg:h-9 lg:w-9 rounded-xl text-[10px] font-black transition-all flex items-center justify-center relative group/day mx-auto",
+                                                                                                isSelected ? "bg-nutri-brand text-nutri-base shadow-[0_5px_15px_rgba(255,122,0,0.4)] scale-110 z-10" :
+                                                                                                isToday ? "border-2 border-nutri-brand/50 text-nutri-brand hover:bg-nutri-brand/10 shadow-[0_0_10px_rgba(255,122,0,0.1)]" :
+                                                                                                isDisabled ? "opacity-10 cursor-not-allowed" :
+                                                                                                "text-slate-400 hover:bg-white/10 hover:text-white"
+                                                                                            )}
+                                                                                        >
+                                                                                            {d}
+                                                                                            {!isSelected && !isDisabled && <div className="absolute inset-0 rounded-xl bg-nutri-brand/5 scale-0 group-hover/day:scale-100 transition-transform duration-300" />}
+                                                                                        </button>
+                                                                                    );
+                                                                                }
+                                                                                return cells;
+                                                                            })()}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Time Picker */}
+                                                                <div className="space-y-4 lg:space-y-6 flex flex-col min-h-0">
+                                                                    <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.25em] flex items-center gap-2">
+                                                                        <Clock className="h-3.5 w-3.5 text-nutri-brand" /> 2. Hora
+                                                                    </h4>
+
+                                                                    {!agendaNutriId || !agendaDate ? (
+                                                                        <div className="h-[410px] flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-white/5 rounded-[2rem] bg-white/[0.01]">
+                                                                            <div className="h-14 w-14 rounded-full bg-white/5 flex items-center justify-center mb-4 animate-pulse">
+                                                                                <ArrowRight className="h-8 w-8 text-slate-700 -rotate-45" />
+                                                                            </div>
+                                                                            <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] leading-relaxed max-w-[150px]">
+                                                                                Completa los datos para ver horarios
+                                                                            </p>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="h-[410px] flex flex-col bg-white/[0.03] border border-white/10 rounded-[2rem] p-6 shadow-2xl relative">
+                                                                            <div className="flex items-center justify-between mb-6">
+                                                                                <div className="flex flex-col">
+                                                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">Turnos</span>
+                                                                                    <span className="text-sm font-black text-white italic">{agendaDate.split('-').reverse().join('/')}</span>
+                                                                                </div>
+                                                                                <Badge className="bg-nutri-brand/20 text-nutri-brand border-none px-3 py-1 rounded-full font-black text-[9px]">
+                                                                                    {timeSlots.length - occupiedSlots.length} Libres
+                                                                                </Badge>
+                                                                            </div>
+
+                                                                            <ScrollArea className="flex-1 pr-3 -mr-3">
+                                                                                <div className="grid grid-cols-2 gap-3 pb-2">
+                                                                                    {timeSlots.map(time => {
+                                                                                        const isReserved = occupiedSlots.includes(time);
+                                                                                        const isPastOrToday = isSlotPast(time, agendaDate);
+                                                                                        const isSelected = agendaTime === time;
+                                                                                        const [h] = time.split(':');
+
+                                                                                        return (
+                                                                                            <button
+                                                                                                key={time}
+                                                                                                disabled={isReserved || isPastOrToday}
+                                                                                                onClick={() => setAgendaTime(time)}
+                                                                                                className={cn(
+                                                                                                    "p-3.5 rounded-xl text-xs font-black transition-all border group relative overflow-hidden flex items-center justify-between",
+                                                                                                    isSelected 
+                                                                                                        ? "bg-white text-nutri-base border-white shadow-[0_10px_20px_rgba(255,255,255,0.1)] scale-[1.03] z-10" 
+                                                                                                        : (isReserved || isPastOrToday) 
+                                                                                                            ? "bg-white/[0.01] border-white/5 text-slate-700 cursor-not-allowed grayscale" 
+                                                                                                            : "bg-white/5 border-white/5 text-slate-300 hover:border-nutri-brand/40 hover:bg-nutri-brand/10"
+                                                                                                )}
+                                                                                            >
+                                                                                                <div className="flex flex-col items-start">
+                                                                                                    <span className="leading-none">{time}</span>
+                                                                                                    <span className={cn(
+                                                                                                        "text-[7px] font-bold uppercase tracking-widest mt-1",
+                                                                                                        isSelected ? "text-slate-500" : "text-slate-600"
+                                                                                                    )}>
+                                                                                                        {parseInt(h) < 12 ? 'MAÑANA' : 'TARDE'}
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                                {isReserved ? (
+                                                                                                    <Badge className="bg-red-500/10 text-red-500 border-none text-[7px] tracking-widest px-1.5 py-0">OCUPADO</Badge>
+                                                                                                ) : (
+                                                                                                    <div className={cn("h-1.5 w-1.5 rounded-full", isSelected ? "bg-nutri-brand" : "bg-green-500/50")} />
+                                                                                                )}
+                                                                                            </button>
+                                                                                        );
+                                                                                    })}
+                                                                                </div>
+                                                                            </ScrollArea>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                </ScrollArea>
+
+                                                <DialogFooter className="p-6 border-t border-white/10 bg-slate-950/50 backdrop-blur-xl flex flex-row shrink-0 gap-4">
+                                                    <div className="hidden lg:flex items-center gap-3 flex-1">
+                                                        <div className="h-9 w-9 rounded-xl bg-white/5 flex items-center justify-center">
+                                                            <ShieldCheck className="h-4 w-4 text-green-500" />
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[9px] font-black text-white uppercase tracking-widest leading-none">Cita Protegida</span>
+                                                            <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sincronización Cloud</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center gap-3 w-full lg:w-auto">
+                                                        <Button
+                                                            variant="ghost"
+                                                            onClick={() => setIsAgendaDialogOpen(false)}
+                                                            className="h-14 lg:h-16 px-8 rounded-2xl text-slate-400 font-black uppercase text-[10px] tracking-widest border border-white/5 hover:bg-white/5"
+                                                        >
+                                                            Cancelar
+                                                        </Button>
+                                                        <Button
+                                                            className="flex-1 lg:flex-none h-14 lg:h-16 px-10 bg-nutri-brand text-nutri-base hover:bg-white transition-all font-black uppercase tracking-[0.3em] text-[11px] rounded-2xl shadow-[0_10px_30px_rgba(255,122,0,0.3)] hover:scale-[1.03] active:scale-95 disabled:opacity-20 group"
+                                                            disabled={!agendaNutriId || !agendaPatientId || !agendaDate || !agendaTime}
+                                                            onClick={handleCreateAppointment}
+                                                        >
+                                                            Confirmar Cita <ArrowRight className="h-4 w-4 ml-3 group-hover:translate-x-1.5 transition-transform" />
+                                                        </Button>
+                                                    </div>
+                                                </DialogFooter>
                                             </DialogContent>
                                         </Dialog>
                                     </div>
+                                </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                        {activeNutris.map(n => {
-                                            const count = Object.values(assignments).filter(nids => nids.includes(n.id)).length;
-                                            return (
-                                                <Card key={n.id} className="rounded-3xl border-slate-100 p-6 flex flex-col items-center text-center hover:shadow-xl transition-all group">
-                                                    <Avatar className="h-16 w-16 mb-4 group-hover:scale-110 transition-transform">
-                                                        <AvatarFallback className="bg-nutrition-50 text-nutrition-600 font-black">{n.name[0]}</AvatarFallback>
-                                                    </Avatar>
-                                                    <h4 className="font-black text-slate-800 leading-none">{n.name}</h4>
-                                                    <p className="text-xs text-slate-400 font-bold mt-2 uppercase tracking-tighter">{count} Pacientes Asignados</p>
-                                                    <Button
-                                                        variant="outline"
-                                                        className="w-full mt-6 rounded-xl font-black text-xs border-slate-100 hover:bg-nutrition-50 hover:text-nutrition-600"
-                                                        onClick={() => {
-                                                            setAgendaNutriId(n.id);
-                                                            setIsAgendaDialogOpen(true);
-                                                        }}
-                                                    >
-                                                        Ver Agenda / Citar
-                                                    </Button>
-                                                </Card>
-                                            );
-                                        })}
+                                    <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+                                    <div className="xl:col-span-3 space-y-6">
+                                        {/* Toggle View */}
+                                        <div className="flex bg-white/5 p-1 rounded-2xl w-fit border border-white/5">
+                                            <button
+                                                onClick={() => setAgendaView("nutricionistas")}
+                                                className={cn(
+                                                    "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                                    agendaView === "nutricionistas" ? "bg-nutri-brand text-nutri-base shadow-lg shadow-nutri-brand/20" : "text-slate-500 hover:text-white"
+                                                )}
+                                            >
+                                                Nutricionistas
+                                            </button>
+                                            <button
+                                                onClick={() => setAgendaView("historial")}
+                                                className={cn(
+                                                    "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                                    agendaView === "historial" ? "bg-nutri-brand text-nutri-base shadow-lg shadow-nutri-brand/20" : "text-slate-500 hover:text-white"
+                                                )}
+                                            >
+                                                Historial
+                                            </button>
+                                        </div>
+
+                                        {agendaView === "nutricionistas" ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                                {activeNutris.map(n => {
+                                                    const count = Object.values(assignments).filter(nids => nids.includes(n.id)).length;
+                                                    const apptsToday = allAppointments.filter(a => 
+                                                        a.nutritionistId === n.id && 
+                                                        a.date === todayStr
+                                                    ).length;
+
+                                                    return (
+                                                        <Card key={n.id} className="relative bg-slate-900/40 border border-white/5 group hover:border-nutri-brand/30 transition-all duration-500 rounded-[2.5rem] overflow-hidden cursor-pointer"
+                                                            onClick={() => {
+                                                                setAgendaNutriId(n.id);
+                                                                setIsAgendaDialogOpen(true);
+                                                            }}
+                                                        >
+                                                            <div className="absolute inset-0 bg-gradient-to-br from-nutri-brand/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                                                            <div className="p-8 flex flex-col items-center text-center space-y-6 relative">
+                                                                <div className="relative">
+                                                                    <div className="absolute inset-0 bg-nutri-brand/20 blur-2xl rounded-full scale-0 group-hover:scale-110 transition-transform duration-700" />
+                                                                    <Avatar className="h-24 w-24 border-2 border-white/10 shadow-2xl relative">
+                                                                        <AvatarFallback className="bg-white/5 text-white font-black text-3xl uppercase italic">
+                                                                            {n.name[0]}
+                                                                        </AvatarFallback>
+                                                                    </Avatar>
+                                                                    <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-green-500 border-4 border-slate-950 rounded-full shadow-lg" />
+                                                                </div>
+                                                                
+                                                                <div>
+                                                                    <h4 className="font-black text-white text-xl tracking-tight uppercase italic group-hover:text-nutri-brand transition-colors">{n.name}</h4>
+                                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mt-2">{count} Pacientes Activos</p>
+                                                                </div>
+
+                                                                <div className="w-full flex items-center justify-between bg-white/[0.03] p-4 rounded-2xl border border-white/5 group-hover:border-white/10 transition-colors">
+                                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Citas Hoy</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="h-1.5 w-1.5 rounded-full bg-nutri-brand animate-pulse" />
+                                                                        <span className="text-lg font-black text-white">{apptsToday}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </Card>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            /* Historial View */
+                                            <Card className="bg-slate-900/40 border-white/5 rounded-[2.5rem] overflow-hidden border">
+                                                <CardHeader className="border-b border-white/5 py-8 px-10">
+                                                    <div className="flex items-center justify-between">
+                                                        <CardTitle className="font-black text-xl text-white uppercase tracking-tight">Historial de Citas</CardTitle>
+                                                        <Badge className="bg-white/5 text-slate-400 border-white/5 font-black uppercase text-[10px] px-3 py-1 rounded-lg">
+                                                            {allAppointments.length} Registros
+                                                        </Badge>
+                                                    </div>
+                                                </CardHeader>
+                                                <CardContent className="p-0">
+                                                    <ScrollArea className="h-[600px]">
+                                                        <div className="divide-y divide-white/5">
+                                                            {[...allAppointments]
+                                                                .sort((a,b) => (b.date + 'T' + b.startTime).localeCompare(a.date + 'T' + a.startTime))
+                                                                .map((apt) => (
+                                                                <div key={apt.id} className="p-8 hover:bg-white/[0.02] transition-all group">
+                                                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                                                        <div className="flex items-center gap-5">
+                                                                            <Avatar className="h-12 w-12 border-2 border-white/10 shadow-xl">
+                                                                                <AvatarFallback className="bg-nutri-brand text-nutri-base font-black uppercase">
+                                                                                    {apt.patientName?.[0] || 'P'}
+                                                                                </AvatarFallback>
+                                                                            </Avatar>
+                                                                            <div className="space-y-1">
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <h4 className="font-black text-white text-base uppercase tracking-tight italic">{apt.patientName}</h4>
+                                                                                    {(() => {
+                                                                                        const { label, className } = getAppointmentStatus(apt.status, apt.date, apt.startTime);
+                                                                                        return (
+                                                                                            <Badge className={cn("text-[8px] font-black uppercase border-none px-2 py-0.5", className)}>
+                                                                                                {label}
+                                                                                            </Badge>
+                                                                                        );
+                                                                                    })()}
+                                                                                </div>
+                                                                                <div className="flex items-center gap-2 text-slate-400">
+                                                                                    <span className="text-[10px] font-bold uppercase tracking-widest">Con: <span className="text-nutri-brand/80">{apt.nutritionistName}</span></span>
+                                                                                    <div className="h-1 w-1 rounded-full bg-slate-700" />
+                                                                                    <span className="text-[10px] font-bold uppercase tracking-widest">{apt.type}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        <div className="flex items-center justify-between md:justify-end gap-10 w-full md:w-auto border-t md:border-none border-white/5 pt-4 md:pt-0">
+                                                                            <div className="flex items-center gap-6">
+                                                                                <div className="flex flex-col">
+                                                                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Fecha</span>
+                                                                                    <span className="text-[11px] font-black text-white italic">{apt.date?.split('-').reverse().join('/')}</span>
+                                                                                </div>
+                                                                                <div className="flex flex-col">
+                                                                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Hora</span>
+                                                                                    <span className="text-[11px] font-black text-white italic">{apt.startTime?.substring(0, 5)}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                            
+                                                                            <div className="flex items-center gap-2">
+                                                                                <Button 
+                                                                                    variant="ghost" 
+                                                                                    size="icon" 
+                                                                                    className="h-10 w-10 rounded-xl text-slate-500 hover:text-nutri-brand hover:bg-nutri-brand/10 transition-all font-tech"
+                                                                                    onClick={() => {
+                                                                                        setEditingAppointmentId(apt.id);
+                                                                                        setAgendaNutriId(apt.nutritionistId);
+                                                                                        setAgendaPatientId(apt.patientId);
+                                                                                        setAgendaDate(apt.date);
+                                                                                        setAgendaTime(apt.startTime);
+                                                                                        setAgendaModality(apt.type as any);
+                                                                                        setIsAgendaDialogOpen(true);
+                                                                                    }}
+                                                                                >
+                                                                                    <Edit3 className="h-4 w-4" />
+                                                                                </Button>
+                                                                                <Button 
+                                                                                    variant="ghost" 
+                                                                                    size="icon" 
+                                                                                    className="h-10 w-10 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all font-tech"
+                                                                                    onClick={() => handleDeleteAppointment(apt.id)}
+                                                                                >
+                                                                                    <Trash2 className="h-4 w-4" />
+                                                                                </Button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </ScrollArea>
+                                                </CardContent>
+                                            </Card>
+                                        )}
                                     </div>
-                                </Card>
-                            </div>
-                        )}
 
+                                        <div className="space-y-8">
+                                            {/* Global Today's Appointments List */}
+                                            <Card className="rounded-[2.5rem] border-white/10 bg-slate-950/60 backdrop-blur-3xl shadow-[0_30px_100px_rgba(0,0,0,0.6)] overflow-hidden border flex flex-col h-[650px] sticky top-24">
+                                                <div className="px-8 py-10 pb-8 relative shrink-0">
+                                                    <div className="absolute top-0 right-0 p-8">
+                                                        <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 rotate-12 group-hover:rotate-0 transition-all duration-500 shadow-xl">
+                                                            <div className="h-7 w-7 text-nutri-brand font-black text-xl flex items-center justify-center italic">!</div>
+                                                        </div>
+                                                    </div>
+                                                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Agenda Hoy</h3>
+                                                    <div className="flex flex-col gap-1 mt-2">
+                                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">
+                                                            {new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                        </p>
+                                                        <div className="flex items-center gap-2 mt-4">
+                                                            <Badge className="bg-nutri-brand/20 text-nutri-brand border-none font-black text-[9px] px-3 py-1 uppercase tracking-widest">
+                                                                {todayAppts.length} Globales
+                                                            </Badge>
+                                                            <div className="h-1 w-1 rounded-full bg-slate-700" />
+                                                            <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Sincronizado</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="px-6 py-4 flex-1 overflow-hidden">
+                                                    {todayAppts.length === 0 ? (
+                                                        <div className="h-full flex flex-col items-center justify-center text-center py-20 px-8 border-2 border-dashed border-white/5 rounded-[2.5rem] bg-white/[0.01]">
+                                                            <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center mb-6 opacity-40">
+                                                                <Clock className="h-8 w-8 text-slate-500" />
+                                                            </div>
+                                                            <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] max-w-[150px] mx-auto leading-relaxed">Sin consultas programadas para este momento</p>
+                                                        </div>
+                                                    ) : (
+                                                        <ScrollArea className="h-full pr-4">
+                                                            <div className="space-y-4 pb-10">
+                                                                {[...todayAppts]
+                                                                    .sort((a,b) => a.startTime.localeCompare(b.startTime))
+                                                                    .map((apt) => (
+                                                                    <div key={apt.id} className="relative group p-5 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300">
+                                                                        <div className="flex items-center gap-3 mb-4">
+                                                                            <div className="h-10 w-10 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center font-black text-xs text-white shrink-0">
+                                                                                {apt.patientName[0]}
+                                                                            </div>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <p className="text-xs font-black text-white uppercase tracking-tight break-words">{apt.patientName}</p>
+                                                                                <div className="flex items-center gap-2 mt-0.5">
+                                                                                    <span className="text-[9px] font-bold text-slate-500 uppercase">Con: {apt.nutritionistName}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="flex flex-col gap-3">
+                                                                            <div className="flex items-center justify-between gap-4">
+                                                                                <div className="flex items-center gap-2 min-w-0">
+                                                                                <div className="flex items-center gap-3 font-tech">
+                                                                                    <div className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 flex items-center gap-2">
+                                                                                        <span className="text-[10px] font-black text-white">
+                                                                                            {apt.startTime.substring(0, 5)} - {apt.type === "virtual" ? 'VIRTUAL' : 'PRESENCIAL'}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="flex items-center justify-start">
+                                                                                {(() => {
+                                                                                    const { label, className } = getAppointmentStatus(apt.status, apt.date, apt.startTime);
+                                                                                    return (
+                                                                                        <Badge className={cn("text-[8px] font-black uppercase border-none px-2.5 py-1 rounded-lg", className)}>
+                                                                                            {label}
+                                                                                        </Badge>
+                                                                                    );
+                                                                                })()}
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        {/* Indicator bar */}
+                                                                        <div className={cn(
+                                                                            "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 rounded-r-full",
+                                                                            apt.type === "virtual" ? "bg-sky-500" : "bg-orange-500"
+                                                                        )} />
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </ScrollArea>
+                                                    )}
+                                                </div>
+                                            </Card>
+                                         </div>
+                                    </div>
+                                </div>
+
+                        )}
                         {activeTab === "metrics" && (
                             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1471,7 +1974,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                             </div>
                                             <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Citas Activas</p>
                                             <h3 className="text-3xl font-black text-slate-800">
-                                                {allAppointments.filter(a => a.status === 'scheduled').length}
+                                                {allAppointments.filter(a => (a.status === 'scheduled' || a.status === 'programada')).length}
                                             </h3>
                                             <p className="text-[10px] font-bold text-slate-400 mt-2">Próximas 72 horas</p>
                                         </div>

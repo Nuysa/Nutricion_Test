@@ -336,24 +336,57 @@ export const MessagingService = {
             .from("appointments")
             .select(`
                 *,
-                patient:patients(profile:profiles(full_name)),
+                patient:patients!patient_id(
+                    profiles!profile_id(full_name)
+                ),
                 nutritionist:profiles!nutritionist_id(full_name)
             `);
 
-        if (error) return [];
+        if (error) {
+            console.error("[MessagingService] Error fetching appointments:", error);
+            return [];
+        }
 
-        return data.map(a => ({
-            id: a.id,
-            patientId: a.patient_id,
-            patientName: a.patient?.profile?.full_name || "Paciente",
-            nutritionistId: a.nutritionist_id,
-            nutritionistName: a.nutritionist?.full_name || "Nutricionista",
-            appointment_date: a.appointment_date,
-            startTime: a.start_time,
-            endTime: a.end_time,
-            status: a.status,
-            type: a.modality
-        }));
+        return data.map(a => {
+            const patientObj = (a.patient as any);
+            const patientName = patientObj?.profiles?.full_name || "Paciente";
+            const nutriName = (a.nutritionist as any)?.full_name || "Nutricionista";
+
+            return {
+                id: a.id,
+                patientId: a.patient_id,
+                patientName: patientName,
+                nutritionistId: a.nutritionist_id,
+                nutritionistName: nutriName,
+                date: a.appointment_date,
+                startTime: a.start_time,
+                endTime: a.end_time,
+                status: a.status,
+                type: a.modality
+            };
+        });
+    },
+
+    deleteAppointment: async (id: string) => {
+        const { error } = await supabase.from("appointments").delete().eq("id", id);
+        if (error) throw error;
+
+        const channel = new BroadcastChannel('nutrigo_global_sync');
+        channel.postMessage({ type: 'APPOINTMENTS_UPDATED' });
+        channel.close();
+    },
+
+    updateAppointmentStatus: async (id: string, status: string) => {
+        const { error } = await supabase
+            .from("appointments")
+            .update({ status })
+            .eq("id", id);
+        
+        if (error) throw error;
+
+        const channel = new BroadcastChannel('nutrigo_global_sync');
+        channel.postMessage({ type: 'APPOINTMENTS_UPDATED' });
+        channel.close();
     },
 
     // 9. Subscription Management

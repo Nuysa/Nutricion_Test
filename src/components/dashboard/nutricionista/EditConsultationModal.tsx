@@ -3,6 +3,17 @@ import { X, Check, Ruler, User, Stethoscope, Apple, Edit, Trash2, Save, Calendar
 import { cn } from "@/lib/utils";
 import { DashboardColumn, ClinicalVariable } from "@/lib/variables-service";
 import { PhotoUploadGroup } from "./PhotoUploadGroup";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogDescription
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface EditConsultationModalProps {
     isOpen: boolean;
@@ -29,20 +40,6 @@ export function EditConsultationModal({
 }: EditConsultationModalProps) {
     const [isUploadingPhoto, setIsUploadingPhoto] = React.useState(false);
 
-    // Prevent body scroll when open
-    useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = "hidden";
-        } else {
-            document.body.style.overflow = "auto";
-        }
-        return () => {
-            document.body.style.overflow = "auto";
-        };
-    }, [isOpen]);
-
-    if (!isOpen) return null;
-
     // Auto-calculate IMC
     const currentWeight = parseFloat(editValues.weight?.toString().replace(',', '.') || '0');
     const imc = (currentWeight > 0 && patientHeight > 0)
@@ -54,182 +51,177 @@ export function EditConsultationModal({
     };
 
     return (
-        <div className="fixed inset-0 bg-[#0B1120]/80 backdrop-blur-xl z-[100] flex justify-center items-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-300">
-            <div className="bg-[#151F32] w-[95vw] lg:w-full max-w-7xl rounded-3xl sm:rounded-[3rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10 relative my-auto animate-in zoom-in-95 slide-in-from-bottom-12 duration-500 overflow-hidden">
-
-                {/* Decorative Elements */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-nutrition-500/50 to-transparent" />
-                <div className="absolute top-0 right-0 w-64 h-64 bg-nutrition-500/5 blur-[100px] -mr-32 -mt-32" />
-
-                {/* Header */}
-                <div className="px-6 py-6 sm:px-12 sm:py-10 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-white/5 relative z-10 gap-6">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
-                        <div className="h-16 w-16 bg-white/[0.03] border border-white/10 rounded-2xl flex items-center justify-center text-nutrition-400 shadow-inner group">
-                            <Edit className="h-8 w-8 group-hover:scale-110 transition-transform" />
-                        </div>
-                        <div>
-                            <div className="flex flex-wrap items-center gap-3 mb-2">
-                                <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight uppercase">Editar Consulta</h2>
-                                <span className="bg-nutrition-500/10 text-nutrition-400 text-[10px] font-black px-4 py-1.5 rounded-full border border-nutrition-500/20 tracking-widest uppercase">
-                                    N° {recordNumber}
-                                </span>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="w-[95vw] max-w-7xl p-0 overflow-hidden border-none bg-slate-900/95 backdrop-blur-xl shadow-2xl h-[95vh] sm:h-auto sm:max-h-[90vh] flex flex-col rounded-[2rem] sm:rounded-[3rem]">
+                <DialogHeader className="p-6 sm:p-10 border-b border-white/5 relative shrink-0">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 pr-12">
+                        <div className="flex items-center gap-4 sm:gap-6">
+                            <div className="h-12 w-12 bg-white/[0.03] border border-white/10 rounded-2xl flex items-center justify-center text-nutrition-400">
+                                <Edit className="h-6 w-6" />
                             </div>
-                             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-slate-400">
-                                <div className="flex items-center gap-2">
-                                    <User className="h-3 w-3 sm:h-4 sm:w-4 text-slate-500" />
-                                    <span className="text-xs sm:text-sm font-bold text-white uppercase tracking-tight">{patientName}</span>
+                            <div>
+                                <div className="flex items-center gap-3 mb-1">
+                                    <DialogTitle className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+                                        Editar Consulta
+                                    </DialogTitle>
+                                    <Badge className="bg-nutrition-500/10 text-nutrition-400 text-[10px] font-black border-none px-3 h-5 uppercase tracking-widest">
+                                        N° {recordNumber}
+                                    </Badge>
                                 </div>
-                                <div className="hidden sm:block h-4 w-px bg-white/10" />
-                                <div className="flex items-center gap-3">
-                                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-slate-500" />
+                                <DialogDescription className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                    Paciente: <span className="text-white">{patientName}</span>
+                                </DialogDescription>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+                            <Calendar className="h-4 w-4 text-slate-500" />
+                            <input
+                                type="date"
+                                value={date}
+                                onChange={e => setDate(e.target.value)}
+                                className="bg-transparent text-white text-xs font-tech font-black outline-none focus:ring-0 cursor-pointer"
+                            />
+                        </div>
+                    </div>
+                </DialogHeader>
+
+                <ScrollArea className="flex-1">
+                    <div className="p-6 sm:p-10 lg:p-12">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            {/* Column 1: Peso e IMC */}
+                            <div className="col-span-1 flex flex-col gap-6">
+                                <div className="bg-white/[0.03] p-6 rounded-[2rem] border border-white/5 shadow-inner focus-within:border-nutrition-500/50 transition-all group">
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 group-focus-within:text-nutrition-400 transition-colors">Peso Actual (kg)</label>
                                     <input
-                                        type="date"
-                                        value={date}
-                                        onChange={e => setDate(e.target.value)}
-                                        className="bg-white/5 text-white text-[10px] sm:text-sm font-tech font-black px-4 py-1.5 rounded-xl border border-white/5 outline-none focus:ring-1 focus:ring-nutrition-500/50 transition-all cursor-pointer"
+                                        type="number" step="0.1"
+                                        value={editValues.weight || ''}
+                                        onChange={e => setEditValues({ ...editValues, weight: e.target.value })}
+                                        className="w-full text-4xl font-tech font-black text-white focus:outline-none transition-colors bg-transparent border-none p-0"
                                     />
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="absolute top-6 right-6 sm:relative sm:top-0 sm:right-0 h-10 w-10 sm:h-12 sm:w-12 flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/5 rounded-2xl transition-all border border-transparent hover:border-white/5"
-                    >
-                        <X className="h-5 w-5 sm:h-6 sm:w-6" />
-                    </button>
-                </div>
-
-                <div className="p-6 sm:p-12 max-h-[75vh] sm:max-h-[75vh] overflow-y-auto custom-scrollbar relative z-10">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10">
-                         <div className="col-span-1 flex flex-col gap-6 sm:gap-8">
-                            <div className="bg-white/[0.03] p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-white/5 shadow-inner focus-within:border-nutrition-500/50 transition-all group">
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 group-focus-within:text-nutrition-400 transition-colors">Peso Actual (kg)</label>
-                                <input
-                                    type="number" step="0.1"
-                                    value={editValues.weight || ''}
-                                    onChange={e => setEditValues({ ...editValues, weight: e.target.value })}
-                                    className="w-full text-4xl sm:text-5xl font-tech font-black text-white focus:outline-none transition-colors bg-transparent border-none p-0"
-                                />
-                            </div>
-                            <div className="bg-white/[0.01] p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-40 h-40 bg-sky-500/5 blur-3xl -mr-20 -mt-20 group-hover:bg-sky-500/10 transition-colors" />
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">IMC Bio-Calculado</label>
-                                <div className="text-4xl font-tech font-black text-sky-400/40 tracking-tighter">{imc}</div>
-                                <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-sky-500/30 w-1/2" />
+                                <div className="bg-white/[0.01] p-6 rounded-[2rem] border border-white/5 relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/5 blur-3xl -mr-16 -mt-16 group-hover:bg-sky-500/10 transition-colors" />
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">IMC Bio-Calculado</label>
+                                    <div className="text-3xl font-tech font-black text-sky-400/40 tracking-tighter">{imc}</div>
+                                    <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-sky-500/30 w-1/2" />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="col-span-1 bg-white/[0.03] p-8 rounded-[2.5rem] border border-white/5">
-                            <h4 className="text-xs font-black text-white uppercase tracking-widest mb-8 flex items-center gap-4">
-                                <div className="h-10 w-10 bg-blue-500/10 rounded-xl flex items-center justify-center"><Ruler className="h-5 w-5 text-blue-400" /></div>
-                                Perímetros (cm)
-                            </h4>
-                            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                                {layout.filter(l => l.section === 'perimeters').map(item => {
+                            {/* Column 2: Perímetros */}
+                            <div className="col-span-1 bg-white/[0.03] p-8 rounded-[2rem] border border-white/5">
+                                <h4 className="text-xs font-black text-white uppercase tracking-widest mb-6 flex items-center gap-3">
+                                    <div className="p-2 bg-blue-500/10 rounded-lg"><Ruler className="h-4 w-4 text-blue-400" /></div>
+                                    Perímetros (cm)
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {layout.filter(l => l.section === 'perimeters').map(item => {
+                                        const v = clinicalVariables.find(v => v.id === item.variable_id);
+                                        return (
+                                            <div key={item.variable_id || item.header} className="space-y-1">
+                                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-tight block">{item.header}</label>
+                                                <input
+                                                    type="number"
+                                                    value={v ? (extraData[v.code] || '') : ''}
+                                                    onChange={e => v && updateExtraData(v.code, e.target.value)}
+                                                    className="w-full bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-sm font-tech font-black text-white focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Column 3: Pliegues */}
+                            <div className="col-span-1 bg-white/[0.03] p-8 rounded-[2rem] border border-white/5">
+                                <h4 className="text-xs font-black text-white uppercase tracking-widest mb-6 flex items-center gap-3">
+                                    <div className="p-2 bg-purple-500/10 rounded-lg"><User className="h-4 w-4 text-purple-400" /></div>
+                                    Pliegues (mm)
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {layout.filter(l => l.section === 'folds').map(item => {
+                                        const v = clinicalVariables.find(v => v.id === item.variable_id);
+                                        return (
+                                            <div key={item.variable_id || item.header} className="space-y-1">
+                                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-tight block">{item.header}</label>
+                                                <input
+                                                    type="number"
+                                                    value={v ? (extraData[v.code] || '') : ''}
+                                                    onChange={e => v && updateExtraData(v.code, e.target.value)}
+                                                    className="w-full bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-sm font-tech font-black text-white focus:ring-1 focus:ring-purple-500/50 outline-none transition-all"
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Column 4: Hallazgos y Sugerencias */}
+                            <div className="col-span-1 flex flex-col gap-6">
+                                {layout.filter(l => l.section === 'findings' || l.section === 'recommendations').map(item => {
                                     const v = clinicalVariables.find(v => v.id === item.variable_id);
+                                    const isFinding = item.section === 'findings';
                                     return (
-                                        <div key={item.variable_id || item.header} className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{item.header}</label>
-                                            <input
-                                                type="number"
+                                        <div key={item.variable_id || item.header} className="bg-white/[0.03] p-6 rounded-[2rem] border border-white/5 flex-1 flex flex-col focus-within:border-white/10 transition-all group">
+                                            <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-3 group-focus-within:text-white transition-colors">
+                                                {isFinding ? (
+                                                    <div className="p-2 bg-amber-500/10 rounded-lg"><Stethoscope className="h-4 w-4 text-amber-400" /></div>
+                                                ) : (
+                                                    <div className="p-2 bg-emerald-500/10 rounded-lg"><Apple className="h-4 w-4 text-emerald-400" /></div>
+                                                )}
+                                                {item.header}
+                                            </label>
+                                            <textarea
                                                 value={v ? (extraData[v.code] || '') : ''}
                                                 onChange={e => v && updateExtraData(v.code, e.target.value)}
-                                                className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-tech font-black text-white focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
-                                            />
+                                                className="w-full flex-1 bg-white/5 border border-white/5 rounded-2xl p-4 text-sm text-slate-300 focus:ring-1 focus:ring-white/10 outline-none resize-none min-h-[120px] custom-scrollbar"
+                                            ></textarea>
                                         </div>
                                     );
                                 })}
                             </div>
-                        </div>
 
-                        <div className="col-span-1 bg-white/[0.03] p-8 rounded-[2.5rem] border border-white/5">
-                            <h4 className="text-xs font-black text-white uppercase tracking-widest mb-8 flex items-center gap-4">
-                                <div className="h-10 w-10 bg-purple-500/10 rounded-xl flex items-center justify-center"><User className="h-5 w-5 text-purple-400" /></div>
-                                Pliegues (mm)
-                            </h4>
-                            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                                {layout.filter(l => l.section === 'folds').map(item => {
-                                    const v = clinicalVariables.find(v => v.id === item.variable_id);
-                                    return (
-                                        <div key={item.variable_id || item.header} className="space-y-2">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{item.header}</label>
-                                            <input
-                                                type="number"
-                                                value={v ? (extraData[v.code] || '') : ''}
-                                                onChange={e => v && updateExtraData(v.code, e.target.value)}
-                                                className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-sm font-tech font-black text-white focus:ring-1 focus:ring-purple-500/50 outline-none transition-all"
-                                            />
-                                        </div>
-                                    );
-                                })}
+                            {/* Registro Fotográfico */}
+                            <div className="col-span-1 lg:col-span-4 mt-4">
+                                <PhotoUploadGroup patientId={patientId} extraData={extraData} setExtraData={setExtraData} isUploadingPhoto={isUploadingPhoto} setIsUploadingPhoto={setIsUploadingPhoto} />
                             </div>
-                        </div>
-
-                        <div className="col-span-1 flex flex-col gap-8">
-                            {layout.filter(l => l.section === 'findings' || l.section === 'recommendations').map(item => {
-                                const v = clinicalVariables.find(v => v.id === item.variable_id);
-                                const isFinding = item.section === 'findings';
-                                return (
-                                    <div key={item.variable_id || item.header} className="bg-white/[0.03] p-8 rounded-[2.5rem] border border-white/5 flex-1 flex flex-col focus-within:border-white/10 transition-all group">
-                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-5 flex items-center gap-4 group-focus-within:text-white transition-colors">
-                                            {isFinding ? (
-                                                <div className="h-10 w-10 bg-amber-500/10 rounded-xl flex items-center justify-center"><Stethoscope className="h-5 w-5 text-amber-400" /></div>
-                                            ) : (
-                                                <div className="h-10 w-10 bg-emerald-500/10 rounded-xl flex items-center justify-center"><Apple className="h-5 w-5 text-emerald-400" /></div>
-                                            )}
-                                            {item.header}
-                                        </label>
-                                        <textarea
-                                            value={v ? (extraData[v.code] || '') : ''}
-                                            onChange={e => v && updateExtraData(v.code, e.target.value)}
-                                            className="w-full flex-1 bg-white/5 border border-white/5 rounded-[1.5rem] p-5 text-sm text-slate-300 focus:ring-1 focus:ring-white/10 outline-none resize-none min-h-[150px] custom-scrollbar"
-                                        ></textarea>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Registro Fotográfico */}
-                        <div className="col-span-1 lg:col-span-4 mt-6">
-                            <PhotoUploadGroup patientId={patientId} extraData={extraData} setExtraData={setExtraData} isUploadingPhoto={isUploadingPhoto} setIsUploadingPhoto={setIsUploadingPhoto} />
                         </div>
                     </div>
-                </div>
+                </ScrollArea>
 
-                 {/* Footer Controls */}
-                <div className="px-6 py-8 sm:px-12 sm:py-10 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center relative z-10 bg-white/[0.01] gap-6">
-                    <button
+                <DialogFooter className="p-6 sm:p-10 bg-slate-900 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-6 shrink-0">
+                    <Button
+                        variant="ghost"
                         onClick={onDelete}
-                        className="w-full sm:w-auto text-red-500 hover:text-white hover:bg-red-500 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 border border-transparent hover:border-red-500/20"
+                        className="w-full sm:w-auto text-red-500 hover:text-white hover:bg-red-500 px-8 h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-transparent hover:border-red-500/20"
                     >
-                        <Trash2 className="h-4 w-4" /> Eliminar Registro
-                    </button>
-                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full sm:w-auto">
-                        <button
+                        <Trash2 className="h-4 w-4 mr-2" /> Eliminar Registro
+                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                        <Button
+                            variant="ghost"
                             onClick={onClose}
-                            className="w-full sm:w-auto px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-white border border-white/10 hover:bg-white/5 transition-all"
+                            className="w-full sm:w-auto px-10 h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-white border border-white/10 hover:bg-white/5 transition-all"
                         >
                             Cancelar
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             onClick={onSave}
                             disabled={isUploadingPhoto}
                             className={cn(
-                                "w-full sm:w-auto px-12 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-white transition-all flex items-center justify-center gap-3",
+                                "w-full sm:w-auto px-12 h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest text-white transition-all flex items-center justify-center gap-3",
                                 isUploadingPhoto
-                                    ? "bg-slate-700 text-slate-400 cursor-not-allowed opacity-50 shadow-none"
-                                    : "bg-nutrition-500 hover:bg-nutrition-600 shadow-2xl shadow-nutrition-500/40 active:scale-95"
+                                    ? "bg-slate-700 text-slate-400 cursor-not-allowed opacity-50"
+                                    : "bg-nutrition-500 hover:bg-nutrition-600 shadow-2xl shadow-nutrition-500/40"
                             )}
                         >
                             <Save className="h-4 w-4" /> {isUploadingPhoto ? "Subiendo..." : "Guardar Cambios"}
-                        </button>
+                        </Button>
                     </div>
-                </div>
-
-            </div>
-        </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }

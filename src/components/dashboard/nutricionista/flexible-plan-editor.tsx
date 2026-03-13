@@ -63,7 +63,19 @@ interface MealBlock {
     rows: MealRow[];
 }
 
-export function FlexiblePlanEditor({ patientId }: { patientId: string }) {
+export function FlexiblePlanEditor({ 
+    patientId, 
+    appointmentId,
+    pendingAppointments,
+    selectedAppointmentId,
+    setSelectedAppointmentId
+}: { 
+    patientId: string; 
+    appointmentId?: string;
+    pendingAppointments?: any[];
+    selectedAppointmentId?: string;
+    setSelectedAppointmentId?: (id: string) => void;
+}) {
     const [activeTab, setActiveTab] = useState<"calculos" | "resumen">("calculos");
     const [weekOffset, setWeekOffset] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
@@ -402,10 +414,26 @@ export function FlexiblePlanEditor({ patientId }: { patientId: string }) {
                 .upsert({
                     patient_id: patientId,
                     week_number: weekOffset + 1,
-                    data: planData
+                    data: planData,
+                    appointment_id: selectedAppointmentId || appointmentId || null
                 }, { onConflict: 'patient_id, week_number' });
 
             if (error) throw error;
+
+            const finalAptId = selectedAppointmentId || appointmentId;
+            if (finalAptId) {
+                const { error: aptError } = await supabase
+                    .from("appointments")
+                    .update({ status: 'completada' })
+                    .eq("id", finalAptId);
+                
+                if (!aptError) {
+                    if (setSelectedAppointmentId) setSelectedAppointmentId("");
+                    const channel = new BroadcastChannel('nutrigo_global_sync');
+                    channel.postMessage({ type: 'APPOINTMENTS_UPDATED' });
+                    channel.close();
+                }
+            }
 
             toast({
                 title: "Plan Guardado",
@@ -452,6 +480,24 @@ export function FlexiblePlanEditor({ patientId }: { patientId: string }) {
                     >
                         <ChevronRight className="h-5 w-5" />
                     </button>
+
+                    {pendingAppointments && pendingAppointments.length > 0 && (
+                        <div className="bg-[#151F32] rounded-2xl px-6 py-2.5 border border-white/5 shadow-2xl flex items-center gap-4 ml-4">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-r border-white/10 pr-4">Vincular Cita</span>
+                            <select
+                                value={selectedAppointmentId}
+                                onChange={e => setSelectedAppointmentId && setSelectedAppointmentId(e.target.value)}
+                                className="bg-transparent text-sm font-black text-white outline-none border-none focus:ring-0 cursor-pointer appearance-none"
+                            >
+                                <option value="" className="bg-[#151F32]">Ninguna</option>
+                                {pendingAppointments.map(apt => (
+                                    <option key={apt.id} value={apt.id} className="bg-[#151F32]">
+                                        {apt.appointment_date} - {apt.start_time.substring(0, 5)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-4">

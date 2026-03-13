@@ -114,6 +114,9 @@ export function PlanEditor() {
     const [weekOffset, setWeekOffset] = useState(0);
     const [patientPlanType, setPatientPlanType] = useState<string>("sin plan");
     const [patientWeight, setPatientWeight] = useState<number | null>(null);
+    const [todayAppointment, setTodayAppointment] = useState<any>(null);
+    const [pendingAppointments, setPendingAppointments] = useState<any[]>([]);
+    const [selectedAppointmentId, setSelectedAppointmentId] = useState<string>("");
 
     // Macro Goal States
     const [goalKcal, setGoalKcal] = useState(1820);
@@ -269,6 +272,26 @@ export function PlanEditor() {
                     }
 
                     setPatientWeight(Number(weightToLoad));
+
+                    // Fetch appointments
+                    const { data: allApts } = await supabase
+                        .from("appointments")
+                        .select("*")
+                        .eq("patient_id", selectedPatientId)
+                        .order("appointment_date", { ascending: false });
+
+                    const todayD = new Date();
+                    const yyyy = todayD.getFullYear();
+                    const mm = String(todayD.getMonth() + 1).padStart(2, '0');
+                    const dd = String(todayD.getDate()).padStart(2, '0');
+                    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+                    const pending = allApts?.filter(a => a.status !== 'cancelada' && a.status !== 'completada' && a.status !== 'completado' && a.status !== 'canceled') || [];
+                    const activeToday = pending.find(a => a.appointment_date === todayStr);
+                    
+                    setPendingAppointments(pending);
+                    setTodayAppointment(activeToday || null);
+                    if (activeToday) setSelectedAppointmentId(activeToday.id);
                 }
             } catch (err) {
                 console.error("Error fetching patient data:", err);
@@ -673,7 +696,8 @@ export function PlanEditor() {
                         protein_g: Number(meal.protein_g) || 0,
                         carbs_g: Number(meal.carbs_g) || 0,
                         fats_g: Number(meal.fats_g) || 0,
-                        items: meal.items || []
+                        items: meal.items || [],
+                        appointment_id: selectedAppointmentId || null
                     };
                 });
             });
@@ -690,6 +714,19 @@ export function PlanEditor() {
             if (error) {
                 console.error("Supabase Upsert Error Detail:", error);
                 throw error;
+            }
+
+            if (selectedAppointmentId) {
+                await supabase
+                    .from("appointments")
+                    .update({ status: 'completada' })
+                    .eq("id", selectedAppointmentId);
+                
+                setSelectedAppointmentId("");
+                
+                const channel = new BroadcastChannel('nutrigo_global_sync');
+                channel.postMessage({ type: 'APPOINTMENTS_UPDATED' });
+                channel.close();
             }
 
             toast({
@@ -864,6 +901,26 @@ export function PlanEditor() {
                                             </Button>
                                         </div>
                                     </div>
+                                    {pendingAppointments.length > 0 && (
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Vincular Cita:</span>
+                                            <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-xl border border-white/10 transition-colors">
+                                                <Calendar className="h-4 w-4 text-[#FF7A00]" />
+                                                <select
+                                                    value={selectedAppointmentId}
+                                                    onChange={e => setSelectedAppointmentId(e.target.value)}
+                                                    className="bg-transparent text-sm font-black text-slate-100 outline-none border-none focus:ring-0 cursor-pointer appearance-none"
+                                                >
+                                                    <option value="" className="bg-[#0B1120]">Ninguna</option>
+                                                    {pendingAppointments.map(apt => (
+                                                        <option key={apt.id} value={apt.id} className="bg-[#0B1120]">
+                                                            {apt.appointment_date} - {apt.start_time.substring(0, 5)}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center gap-6">
@@ -1454,7 +1511,13 @@ export function PlanEditor() {
                         </aside>
                     </>
                 ) : (
-                    <FlexiblePlanEditor patientId={selectedPatientId} />
+                    <FlexiblePlanEditor 
+                        patientId={selectedPatientId} 
+                        appointmentId={todayAppointment?.id} 
+                        pendingAppointments={pendingAppointments}
+                        selectedAppointmentId={selectedAppointmentId}
+                        setSelectedAppointmentId={setSelectedAppointmentId}
+                    />
                 )}
             </div>
         </div>
