@@ -28,7 +28,7 @@ export function LandingTestimonials() {
     useEffect(() => {
         const fetchContent = async () => {
             const supabase = createClient();
-            const { data } = await supabase.from('landing_content').select('content').eq('section', 'testimonials').single();
+            const { data } = await supabase.from('landing_content').select('content').eq('section', 'testimonials').maybeSingle();
             if (data?.content) {
                 setContent(prev => ({ ...prev, ...data.content }));
             }

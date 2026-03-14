@@ -36,7 +36,7 @@ export function LandingServices() {
     useEffect(() => {
         const fetchContent = async () => {
             const supabase = createClient();
-            const { data } = await supabase.from('landing_content').select('content').eq('section', 'services').single();
+            const { data } = await supabase.from('landing_content').select('content').eq('section', 'services').maybeSingle();
             if (data?.content) {
                 setContent(prev => ({ ...prev, ...data.content }));
             }

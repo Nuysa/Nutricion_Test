@@ -43,7 +43,7 @@ export function LandingNavbar() {
     useEffect(() => {
         const fetchContent = async () => {
             const supabase = createClient();
-            const { data } = await supabase.from('landing_content').select('content').eq('section', 'navbar').single();
+            const { data } = await supabase.from('landing_content').select('content').eq('section', 'navbar').maybeSingle();
             if (data?.content) {
                 setContent(prev => ({ ...prev, ...data.content }));
             }

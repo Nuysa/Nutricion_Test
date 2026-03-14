@@ -133,7 +133,7 @@ export function PatientHistoryCharts({
     const btnActive = "bg-white/5 border-white/10 text-white shadow-2xl scale-105 relative before:absolute before:bottom-0 before:left-1/2 before:-translate-x-1/2 before:w-8 before:h-1 before:bg-nutrition-500 before:rounded-t-full";
     const btnInactive = "text-slate-500 hover:text-slate-300 hover:bg-white/[0.02]";
 
-    const minSlots = 6;
+    const minSlots = 2; // Reducido de 6 para evitar amontonamiento en móviles
     const totalSlots = Math.max(minSlots, fechasHistorial.length);
     const renderFechas = Array.from({ length: totalSlots }).map((_, i) => fechasHistorial[i] || "");
 
@@ -169,6 +169,7 @@ export function PatientHistoryCharts({
                         font: { size: 9, weight: '800' as const, family: 'var(--font-tech)' },
                         padding: 5,
                         maxRotation: 0,
+                        autoSkip: false,
                         callback: function (value: any, index: number) {
                             if (index >= dataPoints.length) return "";
                             return customLabels ? (Array.isArray(customLabels[index]) ? customLabels[index][0] : customLabels[index]) : dataPoints[index];

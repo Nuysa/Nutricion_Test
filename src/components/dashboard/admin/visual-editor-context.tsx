@@ -31,7 +31,7 @@ export function VisualEditorProvider({ children }: { children: React.ReactNode }
     useEffect(() => {
         const loadTheme = async () => {
             const supabase = createClient();
-            const { data } = await supabase.from('landing_content').select('content').eq('section', 'theme').single();
+            const { data } = await supabase.from('landing_content').select('content').eq('section', 'theme').maybeSingle();
             if (data?.content) {
                 setTheme(prev => ({ ...prev, ...data.content }));
             }

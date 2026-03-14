@@ -50,7 +50,7 @@ export function LandingFooter() {
     useEffect(() => {
         const fetchContent = async () => {
             const supabase = createClient();
-            const { data } = await supabase.from('landing_content').select('content').eq('section', 'footer').single();
+            const { data } = await supabase.from('landing_content').select('content').eq('section', 'footer').maybeSingle();
             if (data?.content) {
                 setContent(prev => ({ ...prev, ...data.content }));
             }

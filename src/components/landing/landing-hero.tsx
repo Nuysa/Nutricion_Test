@@ -48,7 +48,7 @@ export function LandingHero() {
         const fetchContent = async () => {
             const supabase = createClient();
             try {
-                const { data, error } = await supabase.from('landing_content').select('content').eq('section', 'hero').single();
+                const { data, error } = await supabase.from('landing_content').select('content').eq('section', 'hero').maybeSingle();
                 if (data?.content) {
                     setContent(prev => ({
                         ...prev,
