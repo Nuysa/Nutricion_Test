@@ -31,7 +31,7 @@ export function PhotoHistoryCarousel({ photoHistory }: PhotoHistoryCarouselProps
                         <div>
                             <p className="text-[8px] sm:text-[10px] font-black text-nutri-brand uppercase tracking-widest">Última Medición</p>
                             <p className="text-base sm:text-lg font-tech font-black text-white uppercase">
-                                {new Date(photoHistory[0].date + 'T12:00:00').toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })}
+                                {new Date(photoHistory[photoHistory.length - 1].date + 'T12:00:00').toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })}
                             </p>
                         </div>
                     </div>

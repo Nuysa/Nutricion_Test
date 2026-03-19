@@ -440,8 +440,8 @@ export function TrackingDashboard() {
                         };
                     });
 
-                // Combine and sort by date descending
-                const combinedHistory = [...mappedRecords, ...mappedHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                // Combine and sort by date ascending
+                const combinedHistory = [...mappedRecords, ...mappedHistory].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
                 setPhotoHistory(combinedHistory);
 
             } else {
