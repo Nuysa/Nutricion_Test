@@ -42,16 +42,42 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
     const fetchHistory = async () => {
         setLoading(true);
         try {
-            const { data, error } = await supabase
+            // 1. Intentar cargar la historia clínica
+            const { data: history, error: historyError } = await supabase
                 .from("patient_medical_histories")
                 .select("*")
                 .eq("patient_id", patientId)
                 .maybeSingle();
 
-            if (error) throw error;
+            if (historyError) throw historyError;
             
-            setHistoryData(data);
-            setEditedData(data);
+            // 2. Cargar datos del perfil (para obtener el email de registro)
+            const { data: patientProfile, error: profileError } = await supabase
+                .from("patients")
+                .select("profile:profiles!profile_id(email, full_name)")
+                .eq("id", patientId)
+                .single();
+
+            if (profileError) {
+                console.warn("[MedicalHistoryModal] No se pudo cargar el perfil:", profileError);
+            }
+
+            const profileEmail = (patientProfile?.profile as any)?.email || '';
+            const profileName = (patientProfile?.profile as any)?.full_name || patientName;
+
+            // 3. Combinar datos: prioridad a la historia, fallback al perfil
+            const combinedData = history ? {
+                ...history,
+                email: history.email || profileEmail,
+                full_name: history.full_name || profileName
+            } : {
+                patient_id: patientId,
+                full_name: profileName,
+                email: profileEmail
+            };
+
+            setHistoryData(combinedData);
+            setEditedData(combinedData);
         } catch (err: any) {
             console.error("[MedicalHistoryModal] Error:", err);
             toast({
