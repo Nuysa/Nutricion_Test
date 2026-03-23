@@ -120,12 +120,6 @@ const medicalHistorySchema = z.object({
     disliked_tubers: z.array(z.string()).default([]),
     disliked_legumes: z.array(z.string()).default([]),
     disliked_vegetables: z.array(z.string()).default([]),
-<<<<<<< HEAD
-    disliked_fruits: z.array(z.string()).default([]),
-    disliked_meats: z.array(z.string()).default([]),
-    disliked_fats: z.array(z.string()).default([]),
-    disliked_preparations: z.array(z.string()).default([]),
-=======
     disliked_vegetables_other: z.string().optional(),
     disliked_fruits: z.array(z.string()).default([]),
     disliked_fruits_other: z.string().optional(),
@@ -133,7 +127,6 @@ const medicalHistorySchema = z.object({
     disliked_fats: z.array(z.string()).default([]),
     disliked_preparations: z.array(z.string()).default([]),
     disliked_preparations_other: z.string().optional(),
->>>>>>> main
 
     // Step 10: Estilo de Vida y Horarios
     previous_unhealthy_habits: z.array(z.string()).default([]),
@@ -429,24 +422,11 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                 }
             });
 
-<<<<<<< HEAD
-            // Ensure photo URLs are mapped if needed (supporting both old and new naming)
-            dbData.photo_front_url = values.front_photo_url || dbData.photo_front_url;
-            dbData.photo_side1_url = values.side_photo_1_url || dbData.photo_side1_url;
-            dbData.photo_side2_url = values.side_photo_2_url || dbData.photo_side2_url;
-            dbData.photo_back_url = values.back_photo_url || dbData.photo_back_url;
-
-            // Final Cleanup: Ensure we only send fields that exist in the patient_medical_histories table
-            // and have the correct types. 
-            // We use a whitelist approach for maximum safety.
-            const tableColumns = [
-=======
             // Mapeo dinámico basado en el esquema real del usuario
             const finalData: any = {};
             
             // Whitelist de campos que Sí existen en la tabla según el esquema compartido
             const validColumns = [
->>>>>>> main
                 'patient_id', 'full_name', 'dni', 'email', 'age', 'birth_date', 'instagram',
                 'education_level', 'region', 'district', 'occupation', 'job_details',
                 'nutritional_goal', 'previous_nutrition_service', 'previous_experience_rating',
