@@ -510,15 +510,9 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
         if (step === 5) fields.push('activity_level', 'does_exercise');
         if (step === 6) fields.push('appetite_level', 'thirst_level', 'water_intake', 'sleep_quality', 'sleep_hours', 'bowel_movements', 'bowel_frequency', 'urine_status', 'urine_color_index');
         if (step === 7) fields.push('cooks_for_self', 'likes_cooking', 'food_intolerances');
-<<<<<<< HEAD
-        if (step === 8) fields.push('supplements_consumption', 'dairy_consumption');
-        if (step === 9) fields.push('disliked_cereals', 'disliked_tubers', 'disliked_legumes', 'disliked_vegetables', 'disliked_fruits', 'disliked_meats', 'disliked_fats', 'disliked_preparations', 'previous_unhealthy_habits');
-        if (step === 10) fields.push('wake_up_time', 'sleep_time', 'breakfast_time', 'lunch_time', 'dinner_time', 'prep_preference', 'taste_preference');
-=======
         if (step === 8) fields.push('supplements_consumption');
         // Step 9 is NOT mandatory for progression
         if (step === 10) fields.push('wake_up_time', 'sleep_time', 'prep_preference', 'taste_preference');
->>>>>>> main
 
         const isStepValid = await form.trigger(fields);
         if (isStepValid) {
