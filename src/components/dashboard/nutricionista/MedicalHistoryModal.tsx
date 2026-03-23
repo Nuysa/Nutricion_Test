@@ -27,6 +27,7 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
     const [isSaving, setIsSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [historyData, setHistoryData] = useState<any>(null);
+    const [profileInfo, setProfileInfo] = useState<any>(null);
     const [editedData, setEditedData] = useState<any>(null);
     const [uploadingSlots, setUploadingSlots] = useState<Record<string, string>>({});
     const { toast } = useToast();
@@ -62,22 +63,22 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                 console.warn("[MedicalHistoryModal] No se pudo cargar el perfil:", profileError);
             }
 
-            const profileEmail = (patientProfile?.profile as any)?.email || '';
-            const profileName = (patientProfile?.profile as any)?.full_name || patientName;
+            const pEmail = (patientProfile?.profile as any)?.email || '';
+            const pName = (patientProfile?.profile as any)?.full_name || patientName;
+            setProfileInfo({ email: pEmail, full_name: pName });
 
-            // 3. Combinar datos: prioridad a la historia, fallback al perfil
-            const combinedData = history ? {
-                ...history,
-                email: history.email || profileEmail,
-                full_name: history.full_name || profileName
-            } : {
-                patient_id: patientId,
-                full_name: profileName,
-                email: profileEmail
-            };
-
-            setHistoryData(combinedData);
-            setEditedData(combinedData);
+            // 3. Manejar datos: historia real para el estado base
+            setHistoryData(history);
+            
+            if (history) {
+                setEditedData({
+                    ...history,
+                    email: history.email || pEmail,
+                    full_name: history.full_name || pName
+                });
+            } else {
+                setEditedData(null);
+            }
         } catch (err: any) {
             console.error("[MedicalHistoryModal] Error:", err);
             toast({
@@ -303,7 +304,8 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                                     setEditedData({ 
                                         patient_id: patientId,
                                         created_at: new Date().toISOString(),
-                                        full_name: patientName || ''
+                                        full_name: profileInfo?.full_name || patientName || '',
+                                        email: profileInfo?.email || ''
                                     });
                                     setIsEditing(true);
                                 }}
