@@ -15,7 +15,10 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     swcMinify: true,
-    serverComponentsExternalPackages: ["@imgly/background-removal"],
+    transpilePackages: ["@imgly/background-removal"],
+    experimental: {
+        serverComponentsExternalPackages: ["@imgly/background-removal"],
+    },
     images: {
         remotePatterns: [
             {
