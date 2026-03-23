@@ -38,21 +38,21 @@ const medicalHistorySchema = z.object({
     birth_date: z.string().min(1, "Fecha de nacimiento requerida"),
     gender: z.string().min(1, "Género requerido"),
     instagram: z.string().optional(),
-    education_level: z.string().min(1, "Grado de instrucción requerido"),
-    region: z.string().min(1, "Región/Estado requerido"),
-    district: z.string().min(1, "Distrito requerido"),
-    occupation: z.string().min(1, "¿A qué te dedicas? es requerido"),
-    job_details: z.string().min(1, "Ocupación es requerida"),
+    education_level: z.string().optional(),
+    region: z.string().optional(),
+    district: z.string().optional(),
+    occupation: z.string().optional(),
+    job_details: z.string().optional(),
 
     // Step 2: Objetivo y Experiencia
-    nutritional_goal: z.string().min(1, "Objetivo requerido"),
-    previous_nutrition_service: z.string().min(1, "Respuesta requerida"),
+    nutritional_goal: z.string().optional(),
+    previous_nutrition_service: z.string().optional(),
     previous_experience_rating: z.string().optional(),
     time_following_plan: z.string().optional(),
 
     // Step 3: Mediciones
     weight_kg: z.union([z.coerce.number().min(20, "Peso inválido"), z.literal("")]).optional(),
-    height_cm: z.coerce.number().min(50, "Talla inválida"),
+    height_cm: z.union([z.coerce.number().min(50, "Talla inválida"), z.literal("")]).optional(),
     waist_cm: z.union([z.coerce.number().min(30, "Medida de cintura inválida"), z.literal("")]).optional(),
     front_photo_url: z.string().optional(),
     side_photo_1_url: z.string().optional(),
@@ -62,47 +62,48 @@ const medicalHistorySchema = z.object({
     // Step 4: Estado de Salud
     health_conditions: z.array(z.string()).default([]),
     family_history: z.array(z.string()).default([]),
-    takes_medication: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
+    takes_medication: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().optional()),
     medication_names: z.array(z.string()).default([]),
     medication_details: z.string().optional(),
     medication_frequency: z.string().optional(),
     medication_schedule: z.string().optional(),
-    recent_lab_tests: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
+    recent_lab_tests: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().optional()),
     lab_test_documents: z.array(z.string()).default([]),
 
     // Step 5: Actividad y Ejercicio
-    activity_level: z.string().min(1, "Actividad diaria requerida"),
+    activity_level: z.string().optional(),
     work_schedule: z.string().optional(),
-    does_exercise: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
+    does_exercise: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().optional()),
     exercise_start_time: z.string().optional(), 
     exercise_duration: z.string().optional(),
     exercise_per_session: z.string().optional(),
     exercise_types: z.array(z.string()).default([]),
     exercise_days: z.array(z.string()).default([]),
     exercise_time: z.string().optional(),
+    exercise_days_other: z.string().optional(),
     has_calorie_tracker: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().optional()),
     calorie_expenditure_details: z.string().optional(),
 
     // Step 6: Hábitos Fisiológicos
-    appetite_level: z.string().min(1, "Estado de apetito requerido"),
+    appetite_level: z.string().optional(),
     appetite_peak_time: z.array(z.string()).default([]),
-    thirst_level: z.string().min(1, "Estado de sed requerido"),
-    water_intake: z.string().min(1, "Cantidad de agua requerida"),
-    sleep_quality: z.string().min(1, "Estado de sueño requerido"),
-    sleep_hours: z.string().min(1, "Horas de sueño requeridas"),
-    bowel_movements: z.string().min(1, "Estado de deposiciones requerido"),
-    bowel_frequency: z.string().min(1, "Frecuencia de deposiciones requerida"),
-    urine_status: z.string().min(1, "Estado de orina requerido"),
-    urine_color_index: z.coerce.number().min(1, "Color de orina requerido"),
+    thirst_level: z.string().optional(),
+    water_intake: z.string().optional(),
+    sleep_quality: z.string().optional(),
+    sleep_hours: z.string().optional(),
+    bowel_movements: z.string().optional(),
+    bowel_frequency: z.string().optional(),
+    urine_status: z.string().optional(),
+    urine_color_index: z.union([z.coerce.number().min(1), z.literal(0)]).optional(),
 
     // Step 7: Alimentación
     available_instruments: z.array(z.string()).default([]),
     specific_diet_type: z.string().optional(),
-    cooks_for_self: z.string().min(1, "Quién prepara tu comida es requerido"),
-    likes_cooking: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
+    cooks_for_self: z.string().optional(),
+    likes_cooking: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().optional()),
     cooking_preparations: z.string().optional(),
     food_allergies: z.array(z.string()).default([]),
-    food_intolerances: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
+    food_intolerances: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().optional()),
     intolerance_types: z.array(z.string()).default([]),
     intolerance_details: z.string().optional(),
 
@@ -111,23 +112,26 @@ const medicalHistorySchema = z.object({
     dairy_consumption_types: z.array(z.string()).default([]),
     dairy_brands: z.string().optional(),
     dairy_product_photos: z.array(z.string()).default([]),
-    supplements_consumption: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
+    supplements_consumption: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().optional()),
     supplement_types: z.array(z.string()).default([]),
 
-    // Step 9: Aversiones
+    // Step 9: Restricciones
     disliked_cereals: z.array(z.string()).default([]),
     disliked_tubers: z.array(z.string()).default([]),
     disliked_legumes: z.array(z.string()).default([]),
-    disliked_vegetables: z.string().optional(),
-    disliked_fruits: z.string().optional(),
+    disliked_vegetables: z.array(z.string()).default([]),
+    disliked_vegetables_other: z.string().optional(),
+    disliked_fruits: z.array(z.string()).default([]),
+    disliked_fruits_other: z.string().optional(),
     disliked_meats: z.array(z.string()).default([]),
     disliked_fats: z.array(z.string()).default([]),
-    disliked_preparations: z.string().optional(),
+    disliked_preparations: z.array(z.string()).default([]),
+    disliked_preparations_other: z.string().optional(),
 
     // Step 10: Estilo de Vida y Horarios
     previous_unhealthy_habits: z.array(z.string()).default([]),
-    wake_up_time: z.string().min(1, "Hora de despertar requerida"),
-    sleep_time: z.string().min(1, "Hora de dormir requerida"),
+    wake_up_time: z.string().optional(),
+    sleep_time: z.string().optional(),
     breakfast_time: z.string().optional(),
     breakfast_details: z.string().optional(),
     lunch_time: z.string().optional(),
@@ -135,8 +139,8 @@ const medicalHistorySchema = z.object({
     dinner_time: z.string().optional(),
     dinner_details: z.string().optional(),
     snack_details: z.string().optional(),
-    prep_preference: z.string().min(1, "Preferencia de preparación requerida"),
-    taste_preference: z.string().min(1, "Preferencia de sabor requerida"),
+    prep_preference: z.string().optional(),
+    taste_preference: z.string().optional(),
 });
 
 type MedicalHistoryFormValues = z.infer<typeof medicalHistorySchema>;
@@ -158,6 +162,7 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
     const [isEditMode, setIsEditMode] = useState(false);
     const [patientId, setPatientId] = useState<string | null>(externalPatientId || null);
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+    const [showExerciseOther, setShowExerciseOther] = useState(false);
     const totalSteps = 10;
 
     const form = useForm<MedicalHistoryFormValues>({
@@ -207,11 +212,14 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
             available_instruments: [],
             supplement_types: [],
             previous_unhealthy_habits: [],
-            disliked_cereals: [],
-            disliked_tubers: [],
-            disliked_legumes: [],
             disliked_meats: [],
             disliked_fats: [],
+            disliked_vegetables: [],
+            disliked_vegetables_other: "",
+            disliked_fruits: [],
+            disliked_fruits_other: "",
+            disliked_preparations: [],
+            disliked_preparations_other: "",
             front_photo_url: "",
             side_photo_1_url: "",
             side_photo_2_url: "",
@@ -274,7 +282,7 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                                         }
                                     } else if (['previous_nutrition_service', 'takes_medication', 'recent_lab_tests', 'does_exercise', 'likes_cooking', 'supplements_consumption', 'has_calorie_tracker', 'food_intolerances'].includes(key)) {
                                         // If stored as boolean, convert to 'yes'/'no' for the form components
-                                        if (value === true || value === 'si' || value === 'sí') form.setValue(key as any, 'yes');
+                                        if (value === true || value === 'si' || value === 'Sí') form.setValue(key as any, 'yes');
                                         else if (value === false || value === 'no' || value === 'nunca') form.setValue(key as any, 'no');
                                         else form.setValue(key as any, value ?? "");
                                     } else {
@@ -371,7 +379,7 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
             const cleanBool = (v: any) => {
                 if (v === null || v === undefined || v === "") return null;
                 const s = String(v).toLowerCase();
-                if (s === 'yes' || s === 'true' || s === 'si' || s === 'sí' || s.startsWith('yes')) return true;
+                if (s === 'yes' || s === 'true' || s === 'si' || s === 'Sí' || s.startsWith('yes')) return true;
                 if (s === 'no' || s === 'false' || s === 'never' || s === 'nunca') return false;
                 return null;
             };
@@ -391,14 +399,15 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                 'health_conditions', 'family_history', 'exercise_types', 'exercise_days',
                 'appetite_peak_time', 'available_instruments', 'supplement_types',
                 'previous_unhealthy_habits', 'medication_names', 'lab_test_documents',
-                'intolerance_types', 'dairy_consumption_types', 'dairy_product_photos',
+                'intolerance_types', 'dairy_consumption_types', 'dairy_photos',
                 'food_allergies'
             ];
 
             // Fields that are defined as text (standard strings) in the database but are arrays in the form
             const stringJoinedFields = [
                 'disliked_cereals', 'disliked_tubers', 'disliked_legumes',
-                'disliked_meats', 'disliked_fats'
+                'disliked_meats', 'disliked_fats', 'disliked_vegetables',
+                'disliked_fruits', 'disliked_preparations'
             ];
 
             nativeArrayFields.forEach(field => {
@@ -413,39 +422,50 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                 }
             });
 
-            // Final Cleanup: Ensure we only send fields that exist in the patient_medical_histories table
-            // and have the correct types. 
-            // We use a whitelist approach for maximum safety.
-            const tableColumns = [
+            // Mapeo dinámico basado en el esquema real del usuario
+            const finalData: any = {};
+            
+            // Whitelist de campos que Sí existen en la tabla según el esquema compartido
+            const validColumns = [
                 'patient_id', 'full_name', 'dni', 'email', 'age', 'birth_date', 'instagram',
                 'education_level', 'region', 'district', 'occupation', 'job_details',
                 'nutritional_goal', 'previous_nutrition_service', 'previous_experience_rating',
                 'time_following_plan', 'weight_kg', 'height_cm', 'waist_cm', 'health_conditions',
                 'family_history', 'takes_medication', 'medication_names', 'medication_details', 
                 'medication_frequency', 'medication_schedule', 'recent_lab_tests', 'lab_test_documents',
-                'activity_level', 'work_schedule', 'does_exercise', 'exercise_start_time',
-                'exercise_duration', 'exercise_per_session', 'exercise_types', 'exercise_days', 'exercise_time',
+                'activity_level', 'work_schedule', 'does_exercise', 'exercise_duration', 
+                'exercise_types', 'exercise_days', 'exercise_time',
                 'has_calorie_tracker', 'calorie_expenditure_details', 'appetite_level',
                 'appetite_peak_time', 'thirst_level', 'water_intake', 'sleep_quality',
                 'sleep_hours', 'bowel_movements', 'bowel_frequency', 'urine_status',
                 'urine_color_index', 'available_instruments', 'specific_diet_type',
                 'cooks_for_self', 'likes_cooking', 'cooking_preparations', 'food_allergies',
                 'food_intolerances', 'intolerance_types', 'intolerance_details', 'dairy_consumption',
-                'dairy_consumption_types', 'dairy_brands', 'dairy_product_photos', 'supplements_consumption', 
-                'supplement_types', 'disliked_cereals', 'disliked_tubers', 'disliked_legumes', 'disliked_vegetables',
-                'disliked_fruits', 'disliked_meats', 'disliked_fats', 'disliked_preparations',
-                'previous_unhealthy_habits', 'wake_up_time', 'sleep_time', 'breakfast_time',
-                'breakfast_details', 'lunch_time', 'lunch_details', 'dinner_time',
+                'dairy_consumption_types', 'dairy_brands', 'supplements_consumption', 
+                'supplement_types', 'disliked_cereals', 'disliked_tubers', 'disliked_legumes', 
+                'disliked_vegetables', 'disliked_fruits', 'disliked_meats', 'disliked_fats', 
+                'disliked_preparations', 'previous_unhealthy_habits', 'wake_up_time', 'sleep_time', 
+                'breakfast_time', 'breakfast_details', 'lunch_time', 'lunch_details', 'dinner_time',
                 'dinner_details', 'snack_details', 'prep_preference', 'taste_preference',
+                'gender', 'photo_front_url', 'photo_side1_url', 'photo_side2_url', 'photo_back_url',
                 'front_photo_url', 'side_photo_1_url', 'side_photo_2_url', 'back_photo_url'
             ];
 
-            const finalData: any = {};
-            tableColumns.forEach(col => {
+            validColumns.forEach(col => {
                 if (col in dbData) {
                     finalData[col] = dbData[col];
                 }
             });
+
+            // Mapeos manuales para campos que tienen nombres distintos en el formulario vs base de datos
+            if (values.front_photo_url) finalData.photo_front_url = values.front_photo_url;
+            if (values.side_photo_1_url) finalData.photo_side1_url = values.side_photo_1_url;
+            if (values.side_photo_2_url) finalData.photo_side2_url = values.side_photo_2_url;
+            if (values.back_photo_url) finalData.photo_back_url = values.back_photo_url;
+            
+            // Evitamos enviar dairy_photos ya que NO existe en el esquema del usuario
+            delete finalData.dairy_photos;
+            delete finalData.supplement_photos;
 
             // Update medical history
             const medicalHistoryPromise = supabase
@@ -468,14 +488,14 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
             if (historyRes.error) throw historyRes.error;
             if (patientRes.error) throw patientRes.error;
 
-            toast({ title: "¡Éxito!", description: "Tu historia clínica y datos de perfil han sido actualizados.", variant: "success" });
+            toast({ title: "Ã‚Â¡Ã‚Â¡ÃƒÆ’Ã¢â‚¬Â°xito!", description: "Tu Historia Clínica y datos de perfil han sido actualizados.", variant: "success" });
             setHasHistory(true);
             setIsEditMode(false);
             setStep(1); // Reset to step 1 for future edits
             if (onSaveSuccess) onSaveSuccess();
         } catch (error: any) {
             console.error("Error saving medical history:", error);
-            toast({ title: "Error", description: error.message || "Ocurrió un error al guardar.", variant: "destructive" });
+            toast({ title: "Error", description: error.message || "OcurriÃƒÆ’Ã‚Â³ un error al guardar.", variant: "destructive" });
         } finally {
             setLoading(false);
         }
@@ -491,11 +511,14 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
         if (step === 6) fields.push('appetite_level', 'thirst_level', 'water_intake', 'sleep_quality', 'sleep_hours', 'bowel_movements', 'bowel_frequency', 'urine_status', 'urine_color_index');
         if (step === 7) fields.push('cooks_for_self', 'likes_cooking', 'food_intolerances');
         if (step === 8) fields.push('supplements_consumption');
+        // Step 9 is NOT mandatory for progression
         if (step === 10) fields.push('wake_up_time', 'sleep_time', 'prep_preference', 'taste_preference');
 
         const isStepValid = await form.trigger(fields);
         if (isStepValid) {
-            setStep(prev => Math.min(prev + 1, totalSteps));
+            if (step < totalSteps) {
+                setStep(prev => prev + 1);
+            }
         } else {
             toast({ title: "Campos incompletos", description: "Por favor llena todos los campos requeridos del paso actual.", variant: "destructive" });
         }
@@ -617,7 +640,7 @@ function MedicalHistorySummary({ values, onEdit, hideWrapper = false }: { values
 
     const getYesNo = (val: any) => {
         const s = String(val).toLowerCase();
-        if (s === 'yes' || s === 'true' || s === 'si' || s === 'sí' || s.startsWith('yes')) return 'Sí';
+        if (s === 'yes' || s === 'true' || s === 'si' || s === 'Sí' || s.startsWith('yes')) return 'Sí';
         if (s === 'no' || s === 'false' || s === 'never' || s === 'nunca') return 'No';
         return val || 'No registrado';
     };
@@ -659,10 +682,10 @@ function MedicalHistorySummary({ values, onEdit, hideWrapper = false }: { values
                         <SummaryItem label="Edad" value={`${values.age} años`} />
                         <SummaryItem label="Nacimiento" value={values.birth_date} />
                         <SummaryItem label="Instagram" value={values.instagram} />
-                        <SummaryItem label="Educación" value={values.education_level} />
+                        <SummaryItem label="EducaciÃƒÆ’Ã‚Â³n" value={values.education_level} />
                         <SummaryItem label="Región" value={values.region} />
                         <SummaryItem label="Distrito" value={values.district} />
-                        <SummaryItem label="Ocupación" value={values.occupation} />
+                        <SummaryItem label="OcupaciÃƒÆ’Ã‚Â³n" value={values.occupation} />
                         <SummaryItem label="Horario Laboral" value={values.job_details} />
                     </div>
                 </section>
@@ -749,15 +772,15 @@ function MedicalHistorySummary({ values, onEdit, hideWrapper = false }: { values
                 {/* 06: Hábitos */}
                 <section className="space-y-8">
                     <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
-                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 06 // HÁBITOS FISIOLÓGICOS
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 06 // HÃƒÆ’Ã‚Â­Ã‚ÂBITOS FISIOLÃƒÆ’Ã‚Â­Ã¢â€šÂ¬Ã…â€œGICOS
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <SummaryItem label="Apetito" value={values.appetite_level} />
                         <SummaryItem label="Horario Apetito" value={formatList(values.appetite_peak_time)} />
                         <SummaryItem label="Sed" value={values.thirst_level} />
                         <SummaryItem label="Cantidad Agua" value={values.water_intake} />
-                        <SummaryItem label="Calidad Sueño" value={values.sleep_quality} />
-                        <SummaryItem label="Horas Sueño" value={values.sleep_hours} />
+                        <SummaryItem label="Calidad sueño" value={values.sleep_quality} />
+                        <SummaryItem label="Horas sueño" value={values.sleep_hours} />
                         <SummaryItem label="Deposiciones" value={values.bowel_movements} />
                         <SummaryItem label="Frecuencia" value={values.bowel_frequency} />
                         <SummaryItem label="Estado Orina" value={values.urine_status} />
@@ -790,7 +813,7 @@ function MedicalHistorySummary({ values, onEdit, hideWrapper = false }: { values
                 {/* 08: Lácteos */}
                 <section className="space-y-8">
                     <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
-                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 08 // LÁCTEOS Y SUPLEMENTACIÓN
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 08 // LÃƒÆ’Ã‚Â­Ã‚ÂCTEOS Y SUPLEMENTACIÃƒÆ’Ã‚Â­Ã¢â€šÂ¬Ã…â€œN
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <SummaryItem label="Consumo Lácteos" value={values.dairy_consumption} />
@@ -803,7 +826,7 @@ function MedicalHistorySummary({ values, onEdit, hideWrapper = false }: { values
                 {/* 09: Aversiones */}
                 <section className="space-y-8">
                     <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
-                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 09 // AVERSIONES Y ESTILO DE VIDA
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 09 // AVERSIONES Y Estilo de Vida
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <SummaryItem label="Cereales No" value={formatList(values.disliked_cereals)} />
@@ -866,7 +889,7 @@ function getStepTitle(step: number) {
         "Hábitos Fisiológicos",
         "Alimentación y Cocina",
         "Lácteos y Suplementación",
-        "Aversiones Alimentarias",
+        "Restricciones Alimentarias",
         "Lifestyle y Horarios"
     ];
     return titles[step - 1];
@@ -961,7 +984,7 @@ function GoalExperience({ form }: { form: any }) {
         "Reducir grasa corporal, peso y medidas",
         "Aumento de la masa muscular",
         "Recomposición Corporal (Aumento de músculo y reducir grasa)",
-        "Mejorar tu salud y alimentación (diabetes, hígado graso, resistencia a la insulina, SOP, hipotiroidismo, anemía)"
+        "Mejorar tu salud y Alimentación (diabetes, hígado graso, resistencia a la insulina, SOP, hipotiroidismo, anemía)"
     ];
 
     const prevServices = [
@@ -1208,15 +1231,15 @@ function HealthStatus({ form, patientId }: { form: any, patientId: string }) {
         "No padezco ninguna enfermedad",
         "Diabetes mellitus",
         "Dislipidemia (colesterol o trigliceridos altos)",
-        "Hígado graso",
+        "HÃƒÆ’Ã‚Â­gado graso",
         "Enfermedad cardiovascular",
-        "Hipertensión arterial (HTA)",
+        "HipertensiÃƒÆ’Ã‚Â³n arterial (HTA)",
         "Obesidad",
         "Anemia",
         "Hipotiroidismo",
         "Resistencia a la insulina",
         "Sindrome de ovario poliquistico",
-        "Estreñimiento",
+        "EstreÃƒÆ’Ã‚Â±imiento",
         "Gastritis / Reflujo"
     ];
 
@@ -1224,16 +1247,16 @@ function HealthStatus({ form, patientId }: { form: any, patientId: string }) {
         "Ninguno",
         "Diabetes mellitus",
         "Dislipidemia (colesterol o trigliceridos altos)",
-        "Hígado graso",
+        "HÃƒÆ’Ã‚Â­gado graso",
         "Enfermedad cardiovascular",
-        "Hipertensión arterial (HTA)",
+        "HipertensiÃƒÆ’Ã‚Â³n arterial (HTA)",
         "Obesidad",
-        "Migraña",
+        "MigraÃƒÆ’Ã‚Â±a",
         "Anemia",
         "Hipotiroidismo",
         "Resistencia a la insulina",
         "Sindrome de ovario poliquistico",
-        "Estreñimiento",
+        "EstreÃƒÆ’Ã‚Â±imiento",
         "Gastritis / Reflujo"
     ];
 
@@ -1259,12 +1282,12 @@ function HealthStatus({ form, patientId }: { form: any, patientId: string }) {
 
             const current = form.getValues(fieldName) || [];
             form.setValue(fieldName, [...current, publicUrl]);
-            toast({ title: "Documento subido con éxito", variant: "default" });
+            toast({ title: "Documento subido con ÃƒÆ’Ã‚Â©xito", variant: "default" });
         } catch (error: any) {
             console.error("Document upload error:", error);
             let msg = error.message || "Error desconocido";
             if (msg.includes("Bucket not found")) {
-                msg = "ERROR: El bucket 'lab-results' no existe en Supabase. Debes crearlo como almacenamiento público.";
+                msg = "ERROR: El bucket 'lab-results' no existe en Supabase. Debes crearlo como almacenamiento pÃƒÆ’Ã‚Âºblico.";
             }
             toast({ title: "Error al subir documento", description: msg, variant: "destructive" });
         } finally {
@@ -1555,7 +1578,28 @@ function ActivityExercise({ form }: { form: any }) {
                                             >{day}</div>
                                         )} />
                                     ))}
+                                    <FormField key="Otros" control={form.control} name="exercise_days" render={({ field }) => (
+                                        <div
+                                            onClick={() => {
+                                                const current = field.value || [];
+                                                field.onChange(current.includes("Otros") ? current.filter((v: string) => v !== "Otros") : [...current, "Otros"]);
+                                            }}
+                                            className={cn(
+                                                "px-4 h-12 rounded-xl border flex items-center justify-center font-black cursor-pointer transition-all shadow-lg",
+                                                field.value?.includes("Otros") ? "bg-nutri-brand border-nutri-brand text-white shadow-lg shadow-nutri-brand/20 scale-105" : "bg-white/5 border-white/10 text-slate-500 hover:border-white/20"
+                                            )}
+                                        >Otros</div>
+                                    )} />
                                 </div>
+                                {form.watch("exercise_days")?.includes("Otros") && (
+                                    <FormField control={form.control} name="exercise_days_other" render={({ field }) => (
+                                        <FormItem className="mt-4 animate-in fade-in slide-in-from-top-2">
+                                            <FormControl>
+                                                <Input {...field} placeholder="Especificar otros días..." className="h-12 bg-white/5 border-white/10 rounded-xl" />
+                                            </FormControl>
+                                        </FormItem>
+                                    )} />
+                                )}
                             </FormItem>
                         )} />
                     </div>
@@ -1660,14 +1704,14 @@ function Habits({ form }: { form: any }) {
                         <FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="sleep_quality" render={({ field }) => (
-                    <FormItem><FormLabel>Calidad de Sueño</FormLabel>
+                    <FormItem><FormLabel>Calidad de sueño</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl"><SelectValue placeholder="Seleccionar calidad" /></SelectTrigger></FormControl>
                             <SelectContent className="bg-[#151F32] border-white/10 text-white">
                                 <SelectItem value="reparador">Reparador</SelectItem>
                                 <SelectItem value="no_reparador">No reparador</SelectItem>
                                 <SelectItem value="insomnio">Sufro de Insomnio</SelectItem>
-                                <SelectItem value="interrumpido">Sueño interrumpido</SelectItem>
+                                <SelectItem value="interrumpido">sueño interrumpido</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage /></FormItem>
@@ -1708,7 +1752,7 @@ function Habits({ form }: { form: any }) {
             <div className="p-8 bg-white/5 rounded-[2.5rem] border border-white/10">
                 <FormField control={form.control} name="urine_color_index" render={({ field }) => (
                     <FormItem>
-                        <FormLabel className="text-lg font-black text-white uppercase tracking-tighter block mb-6">Indicar que número coincide con el color de tu orina</FormLabel>
+                        <FormLabel className="text-lg font-black text-white uppercase tracking-tighter block mb-6">Indicar qué número coincide con el color de tu orina</FormLabel>
                         <FormControl>
                             <div className="flex flex-col gap-6">
                                 <div className="flex justify-between items-center gap-2">
@@ -1744,7 +1788,7 @@ function Habits({ form }: { form: any }) {
 }
 
 function DietCooking({ form }: { form: any }) {
-    const instruments = ["Refrigeradora", "Congeladora", "Microondas", "Horno", "Cocina", "Balanza de alimentos", "cuchara medidora", "ninguna"];
+    const instruments = ["Balanza gramera de alimentos", "Taza medidora", "Cuchara medidora", "Ninguna"];
     const dietTypes = [
         "No", 
         "Vegetariano: ovovegetariano (consumes huevo)", 
@@ -1780,7 +1824,7 @@ function DietCooking({ form }: { form: any }) {
 
             <FormField control={form.control} name="specific_diet_type" render={({ field }) => (
                 <FormItem className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5">
-                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter mb-6 block">¿Presentas algún tipo de alimentación especial?</FormLabel>
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter mb-6 block">¿Presentas algún tipo de Alimentación especial?</FormLabel>
                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {dietTypes.map((type: string) => (
                             <div key={type} className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer group">
@@ -1794,7 +1838,24 @@ function DietCooking({ form }: { form: any }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <FormField control={form.control} name="cooks_for_self" render={({ field }) => (
-                    <FormItem><FormLabel>¿Quién cocina o prepara tus comidas?</FormLabel><FormControl><Input {...field} placeholder="Yo, mi madre, delivery, etc." className="h-12 rounded-xl bg-white/5 border-white/10 text-white font-bold" /></FormControl><FormMessage /></FormItem>
+                    <FormItem>
+                        <FormLabel>¿Quién cocina o prepara tus comidas?</FormLabel>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+                            {["yo mismo", "pareja", "mama", "hermana", "abuela", "en restaurante", "en concesionario"].map((opt) => (
+                                <div
+                                    key={opt}
+                                    onClick={() => field.onChange(opt)}
+                                    className={cn(
+                                        "p-4 rounded-xl border flex items-center justify-center font-bold cursor-pointer transition-all text-[10px] uppercase tracking-widest text-center",
+                                        field.value === opt ? "bg-nutri-brand border-nutri-brand text-white shadow-lg shadow-nutri-brand/20" : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20"
+                                    )}
+                                >
+                                    {opt}
+                                </div>
+                            ))}
+                        </div>
+                        <FormMessage />
+                    </FormItem>
                 )} />
                 <FormField control={form.control} name="likes_cooking" render={({ field }) => (
                     <FormItem><FormLabel>¿Te agrada cocinar?</FormLabel>
@@ -1823,7 +1884,24 @@ function DietCooking({ form }: { form: any }) {
                                 </FormItem>
                             )} />
                         ))}
+                        <FormField key="Otros" control={form.control} name="food_allergies" render={({ field }) => (
+                            <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer group">
+                                <FormControl><Checkbox checked={field.value?.includes("Otros")} onCheckedChange={(checked: boolean) => {
+                                    const current = field.value || [];
+                                    const filtered = current.filter((v: string) => v !== "Ninguna");
+                                    return checked ? field.onChange([...filtered, "Otros"]) : field.onChange(filtered.filter((v: string) => v !== "Otros"));
+                                }} /></FormControl>
+                                <Label className="text-slate-300 font-bold group-hover:text-white cursor-pointer uppercase text-xs tracking-widest">Otros</Label>
+                            </FormItem>
+                        )} />
                     </div>
+                    {form.watch("food_allergies")?.includes("Otros") && (
+                        <FormField control={form.control} name="food_allergies_other" render={({ field }) => (
+                            <FormItem className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <FormControl><Input {...field} placeholder="Especificar otras alergias..." className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl>
+                            </FormItem>
+                        )} />
+                    )}
                 </FormItem>
             )} />
 
@@ -1842,7 +1920,7 @@ function DietCooking({ form }: { form: any }) {
                     <div className="p-8 bg-nutri-brand/5 rounded-[2.5rem] border border-nutri-brand/10 space-y-8 animate-in fade-in slide-in-from-top-4">
                         <FormField control={form.control} name="intolerance_types" render={() => (
                             <FormItem>
-                                <FormLabel className="text-sm font-black uppercase tracking-widest text-slate-500">¿A qué eres intolerante? (Selección múltiple)</FormLabel>
+                                <FormLabel className="text-sm font-black uppercase tracking-widest text-slate-500">¿A qué eres intolerante? (selección múltiple)</FormLabel>
                                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
                                     {intoleranceOptions.map(opt => (
                                         <FormField key={opt} control={form.control} name="intolerance_types" render={({ field }) => (
@@ -1896,8 +1974,8 @@ function DairySupplements({ form }: { form: any }) {
                 .from('progress-photos')
                 .getPublicUrl(fileName);
 
-            const current = form.getValues('dairy_product_photos') || [];
-            form.setValue('dairy_product_photos', [...current, publicUrl]);
+            const current = form.getValues('dairy_photos') || [];
+            form.setValue('dairy_photos', [...current, publicUrl]);
             toast({ title: "Foto de producto subida" });
         } catch (error: any) {
             toast({ title: "Error al subir", description: error.message, variant: "destructive" });
@@ -1910,7 +1988,7 @@ function DairySupplements({ form }: { form: any }) {
         <div className="space-y-12">
             <FormField control={form.control} name="dairy_consumption" render={({ field }) => (
                 <FormItem className="p-8 bg-white/5 rounded-[2.5rem] border border-white/10">
-                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter mb-6 block">¿Consumes lácteos regularmente?</FormLabel>
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter mb-6 block">¿Consumes Lácteos regularmente?</FormLabel>
                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-10">
                         <div className="flex items-center space-x-3"><RadioGroupItem value="yes" id="dairy-yes" /><Label htmlFor="dairy-yes" className="text-white text-lg cursor-pointer">Sí</Label></div>
                         <div className="flex items-center space-x-3"><RadioGroupItem value="no" id="dairy-no" /><Label htmlFor="dairy-no" className="text-white text-lg cursor-pointer">No</Label></div>
@@ -1922,7 +2000,7 @@ function DairySupplements({ form }: { form: any }) {
                 <div className="p-8 bg-nutri-brand/5 rounded-[2.5rem] border border-nutri-brand/10 space-y-10 animate-in fade-in slide-in-from-top-4">
                     <FormField control={form.control} name="dairy_consumption_types" render={() => (
                         <FormItem>
-                            <FormLabel className="text-sm font-black uppercase tracking-widest text-slate-500 mb-6 block">¿Qué lácteos consumes? (Selección múltiple)</FormLabel>
+                            <FormLabel className="text-sm font-black uppercase tracking-widest text-slate-500 mb-6 block">¿qué Lácteos consumes? (selección múltiple)</FormLabel>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 {dairyTypes.map(opt => (
                                     <FormField key={opt} control={form.control} name="dairy_consumption_types" render={({ field }) => (
@@ -1941,18 +2019,18 @@ function DairySupplements({ form }: { form: any }) {
 
                     <div className="space-y-6">
                         <FormField control={form.control} name="dairy_brands" render={({ field }) => (
-                            <FormItem><FormLabel>Especifica la marca y tipo de los lácteos</FormLabel><FormControl><Input {...field} placeholder="Ej: Gloria Light, Laive Bio, etc." className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                            <FormItem><FormLabel>Especifica la marca y tipo de los Lácteos</FormLabel><FormControl><Input {...field} placeholder="Ej: Gloria Light, Laive Bio, etc." className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                         )} />
                         
                         <div className="space-y-4">
                             <Label className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Sube fotos de tus productos (opcional)</Label>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {(form.watch('dairy_product_photos') || []).map((url: string, idx: number) => (
+                                {(form.watch('dairy_photos') || []).map((url: string, idx: number) => (
                                     <div key={idx} className="relative aspect-square rounded-xl bg-white/5 border border-white/10 overflow-hidden group">
                                         <img src={url} className="w-full h-full object-cover" />
                                         <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
-                                            const current = form.getValues('dairy_product_photos');
-                                            form.setValue('dairy_product_photos', current.filter((_: any, i: number) => i !== idx));
+                                            const current = form.getValues('dairy_photos');
+                                            form.setValue('dairy_photos', current.filter((_: any, i: number) => i !== idx));
                                         }}><X className="h-3 w-3" /></Button>
                                     </div>
                                 ))}
@@ -1979,7 +2057,7 @@ function DairySupplements({ form }: { form: any }) {
             {form.watch('supplements_consumption') === 'yes' && (
                 <FormField control={form.control} name="supplement_types" render={() => (
                     <FormItem className="p-8 bg-nutri-brand/5 rounded-[2.5rem] border border-nutri-brand/10 animate-in fade-in slide-in-from-top-4">
-                        <FormLabel className="text-xs font-black uppercase tracking-widest text-slate-500 block mb-6">Suplementos que consumes (Selección múltiple)</FormLabel>
+                        <FormLabel className="text-xs font-black uppercase tracking-widest text-slate-500 block mb-6">Suplementos que consumes (selección múltiple)</FormLabel>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             {supplements.map((item) => (
                                 <FormField key={item} control={form.control} name="supplement_types" render={({ field }) => (
@@ -2011,7 +2089,7 @@ function Dislikes({ form }: { form: any }) {
         <div className="space-y-12">
             <FormField control={form.control} name="disliked_vegetables" render={() => (
                 <FormItem>
-                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">Vegetales que no te agradan</FormLabel>
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">Restricciones Alimentarias</FormLabel>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-6">
                         {options.veg.map(opt => (
                             <FormField key={opt} control={form.control} name="disliked_vegetables" render={({ field }) => (
@@ -2025,6 +2103,13 @@ function Dislikes({ form }: { form: any }) {
                             )} />
                         ))}
                     </div>
+                    {form.watch("disliked_vegetables")?.includes("Otros") && (
+                        <FormField control={form.control} name="disliked_vegetables_other" render={({ field }) => (
+                            <FormItem className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <FormControl><Input {...field} placeholder="Especificar otros vegetales..." className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl>
+                            </FormItem>
+                        )} />
+                    )}
                 </FormItem>
             )} />
 
@@ -2044,6 +2129,13 @@ function Dislikes({ form }: { form: any }) {
                             )} />
                         ))}
                     </div>
+                    {form.watch("disliked_fruits")?.includes("Otros") && (
+                        <FormField control={form.control} name="disliked_fruits_other" render={({ field }) => (
+                            <FormItem className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <FormControl><Input {...field} placeholder="Especificar otras frutas..." className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl>
+                            </FormItem>
+                        )} />
+                    )}
                 </FormItem>
             )} />
 
@@ -2063,6 +2155,13 @@ function Dislikes({ form }: { form: any }) {
                             )} />
                         ))}
                     </div>
+                    {form.watch("disliked_preparations")?.includes("Otros") && (
+                        <FormField control={form.control} name="disliked_preparations_other" render={({ field }) => (
+                            <FormItem className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <FormControl><Input {...field} placeholder="Especificar otras preparaciones..." className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl>
+                            </FormItem>
+                        )} />
+                    )}
                 </FormItem>
             )} />
         </div>
@@ -2076,7 +2175,7 @@ function Lifestyle({ form }: { form: any }) {
         <div className="space-y-12">
             <FormField control={form.control} name="previous_unhealthy_habits" render={() => (
                 <FormItem>
-                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">¿Qué hábitos no saludables sueles o solías tener?</FormLabel>
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">¿qué Hábitos no saludables sueles o solías tener?</FormLabel>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
                         {habits.map((item) => (
                             <FormField key={item} control={form.control} name="previous_unhealthy_habits" render={({ field }) => (
@@ -2109,7 +2208,7 @@ function Lifestyle({ form }: { form: any }) {
                         <FormItem><FormLabel>Hora Desayuno</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name="breakfast_details" render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>¿Qué sueles desayunar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Avena con frutas" className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>¿qué sueles desayunar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Avena con frutas" className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                     )} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -2117,7 +2216,7 @@ function Lifestyle({ form }: { form: any }) {
                         <FormItem><FormLabel>Hora Almuerzo</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name="lunch_details" render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>¿Qué sueles almorzar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Pollo con arroz" className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>¿qué sueles almorzar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Pollo con arroz" className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                     )} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -2125,7 +2224,7 @@ function Lifestyle({ form }: { form: any }) {
                         <FormItem><FormLabel>Hora Cena</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name="dinner_details" render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>¿Qué sueles cenar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Sopa o ensalada" className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>¿qué sueles cenar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Sopa o ensalada" className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                     )} />
                 </div>
             </div>
@@ -2151,3 +2250,12 @@ function Lifestyle({ form }: { form: any }) {
         </div>
     );
 }
+
+
+
+
+
+
+
+
+
