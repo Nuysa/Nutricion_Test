@@ -543,7 +543,7 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
 
                         {step === 2 && <GoalExperience form={form} />}
                         {step === 3 && <Measurements form={form} patientId={patientId!} setIsUploadingPhoto={setIsUploadingPhoto} />}
-                        {step === 4 && <HealthStatus form={form} />}
+                        {step === 4 && <HealthStatus form={form} patientId={patientId!} />}
                         {step === 5 && <ActivityExercise form={form} />}
                         {step === 6 && <Habits form={form} />}
                         {step === 7 && <DietCooking form={form} />}
@@ -1005,10 +1005,30 @@ function GoalExperience({ form }: { form: any }) {
             {(form.watch('previous_nutrition_service') === 'yes_pro' || form.watch('previous_nutrition_service') === 'yes_non_pro') && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-nutri-brand/5 rounded-[2rem] border border-nutri-brand/10 animate-in fade-in slide-in-from-top-4 duration-500">
                     <FormField control={form.control} name="previous_experience_rating" render={({ field }) => (
-                        <FormItem><FormLabel>¿Cómo calificarías esa experiencia?</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>¿Cómo calificarías esa experiencia?</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                    <SelectItem value="Buenas experiencia">Buenas experiencia</SelectItem>
+                                    <SelectItem value="mala experiencia">mala experiencia</SelectItem>
+                                    <SelectItem value="ni buena ni mala experiencia">ni buena ni mala experiencia</SelectItem>
+                                    <SelectItem value="no tuve resultados">no tuve resultados</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="time_following_plan" render={({ field }) => (
-                        <FormItem><FormLabel>¿Por cuánto tiempo has seguido el plan?</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>¿Por cuánto tiempo has seguido el plan?</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                                <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                    <SelectItem value="1 mes">1 mes</SelectItem>
+                                    <SelectItem value="2 meses">2 meses</SelectItem>
+                                    <SelectItem value="3 meses">3 meses</SelectItem>
+                                    <SelectItem value="actualmente no estoy siguiendo ningun plan">actualmente no estoy siguiendo ningun plan</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage /></FormItem>
                     )} />
                 </div>
             )}
@@ -1059,7 +1079,8 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
                 worker.postMessage({ file, typeId });
             });
 
-            const processedFile = new File([processedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: "image/jpeg" });
+            const fileBaseName = file.name.split('.').slice(0, -1).join('.') || 'foto';
+            const processedFile = new File([processedBlob], `${fileBaseName}.jpg`, { type: "image/jpeg" });
 
             setStatusText("Subiendo a la nube...");
             const fileExt = "jpg";
@@ -1078,7 +1099,11 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
             form.setValue(typeId, publicUrl);
             toast({ title: "Foto subida y procesada correctamente", variant: "default" });
         } catch (error: any) {
-            toast({ title: "Error al subir foto", description: error.message, variant: "destructive" });
+            console.error("Upload error:", error);
+            const msg = error.message.includes("Bucket not found") 
+                ? "El almacenamiento 'progress-photos' no está configurado en Supabase." 
+                : error.message;
+            toast({ title: "Error al subir foto", description: msg, variant: "destructive" });
         } finally {
             setUploading(null);
             setIsUploadingPhoto(false);
@@ -1157,7 +1182,7 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
     );
 }
 
-function HealthStatus({ form }: { form: any }) {
+function HealthStatus({ form, patientId }: { form: any, patientId: string }) {
     const { toast } = useToast();
     const supabase = createClient();
     const [uploading, setUploading] = useState<string | null>(null);
@@ -1202,8 +1227,8 @@ function HealthStatus({ form }: { form: any }) {
         setUploading(fieldName);
         try {
             const file = files[0];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${form.getValues('patient_id') || 'unknown'}/doc_${Date.now()}.${fileExt}`;
+            const fileExt = file.name.split('.').pop() || 'file';
+            const fileName = `${patientId || 'unknown'}/doc_${Date.now()}.${fileExt}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('lab-results')
@@ -1217,9 +1242,14 @@ function HealthStatus({ form }: { form: any }) {
 
             const current = form.getValues(fieldName) || [];
             form.setValue(fieldName, [...current, publicUrl]);
-            toast({ title: "Documento subido con éxito" });
+            toast({ title: "Documento subido con éxito", variant: "default" });
         } catch (error: any) {
-            toast({ title: "Error al subir", description: error.message, variant: "destructive" });
+            console.error("Document upload error:", error);
+            let msg = error.message || "Error desconocido";
+            if (msg.includes("Bucket not found")) {
+                msg = "ERROR: El bucket 'lab-results' no existe en Supabase. Debes crearlo como almacenamiento público.";
+            }
+            toast({ title: "Error al subir documento", description: msg, variant: "destructive" });
         } finally {
             setUploading(null);
         }
