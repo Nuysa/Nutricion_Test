@@ -50,7 +50,7 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
                     </div>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto bg-transparent custom-scrollbar">
+                <div id="medical-history-scroll-container" className="flex-1 overflow-y-auto bg-transparent custom-scrollbar">
                     <div className="p-4 sm:p-8 lg:p-12">
                         <MedicalHistoryForm 
                             key={key}

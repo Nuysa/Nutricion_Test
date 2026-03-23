@@ -319,8 +319,21 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
     }, [watchedBirthDate, form]);
 
     useEffect(() => {
-        const scrollContainer = document.querySelector('.overflow-y-auto') || window;
-        scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        const scrollToTop = () => {
+            const modalContainer = document.getElementById('medical-history-scroll-container');
+            if (modalContainer) {
+                modalContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+            const scrollableDiv = document.querySelector('.overflow-y-auto');
+            if (scrollableDiv) {
+                scrollableDiv.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        };
+        const timer = setTimeout(scrollToTop, 100);
+        return () => clearTimeout(timer);
     }, [step]);
 
     const onError = (errors: any) => {
@@ -483,9 +496,6 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
         const isStepValid = await form.trigger(fields);
         if (isStepValid) {
             setStep(prev => Math.min(prev + 1, totalSteps));
-            // Scroll to top of the modal or window
-            const scrollContainer = document.querySelector('.overflow-y-auto') || window;
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
             toast({ title: "Campos incompletos", description: "Por favor llena todos los campos requeridos del paso actual.", variant: "destructive" });
         }
