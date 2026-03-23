@@ -125,7 +125,7 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
         setUploadingSlots(prev => ({ ...prev, [field]: "Procesando..." }));
         try {
             await new Promise(resolve => setTimeout(resolve, 150));
-            const worker = new Worker(new URL('../../../lib/workers/bg-removal.worker.ts', import.meta.url));
+            const worker = new Worker(new URL('../../../lib/workers/bg-removal.worker.ts', import.meta.url), { type: 'module' });
 
             const processedBlob = await new Promise<Blob>((resolve, reject) => {
                 worker.onmessage = (event) => {
