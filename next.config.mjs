@@ -16,8 +16,13 @@ const withPWA = withPWAInit({
 const nextConfig = {
     swcMinify: true,
     transpilePackages: ["@imgly/background-removal"],
-    experimental: {
-        serverComponentsExternalPackages: ["@imgly/background-removal"],
+    webpack: (config) => {
+        config.module.rules.push({
+            test: /\.mjs$/,
+            include: /node_modules/,
+            type: 'javascript/auto',
+        });
+        return config;
     },
     images: {
         remotePatterns: [
