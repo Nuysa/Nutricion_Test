@@ -118,11 +118,11 @@ const medicalHistorySchema = z.object({
     disliked_cereals: z.array(z.string()).default([]),
     disliked_tubers: z.array(z.string()).default([]),
     disliked_legumes: z.array(z.string()).default([]),
-    disliked_vegetables: z.string().optional(),
-    disliked_fruits: z.string().optional(),
+    disliked_vegetables: z.array(z.string()).default([]),
+    disliked_fruits: z.array(z.string()).default([]),
     disliked_meats: z.array(z.string()).default([]),
     disliked_fats: z.array(z.string()).default([]),
-    disliked_preparations: z.string().optional(),
+    disliked_preparations: z.array(z.string()).default([]),
 
     // Step 10: Estilo de Vida y Horarios
     previous_unhealthy_habits: z.array(z.string()).default([]),
@@ -413,6 +413,12 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                 }
             });
 
+            // Ensure photo URLs are mapped if needed (supporting both old and new naming)
+            dbData.photo_front_url = values.front_photo_url || dbData.photo_front_url;
+            dbData.photo_side1_url = values.side_photo_1_url || dbData.photo_side1_url;
+            dbData.photo_side2_url = values.side_photo_2_url || dbData.photo_side2_url;
+            dbData.photo_back_url = values.back_photo_url || dbData.photo_back_url;
+
             // Final Cleanup: Ensure we only send fields that exist in the patient_medical_histories table
             // and have the correct types. 
             // We use a whitelist approach for maximum safety.
@@ -490,8 +496,9 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
         if (step === 5) fields.push('activity_level', 'does_exercise');
         if (step === 6) fields.push('appetite_level', 'thirst_level', 'water_intake', 'sleep_quality', 'sleep_hours', 'bowel_movements', 'bowel_frequency', 'urine_status', 'urine_color_index');
         if (step === 7) fields.push('cooks_for_self', 'likes_cooking', 'food_intolerances');
-        if (step === 8) fields.push('supplements_consumption');
-        if (step === 10) fields.push('wake_up_time', 'sleep_time', 'prep_preference', 'taste_preference');
+        if (step === 8) fields.push('supplements_consumption', 'dairy_consumption');
+        if (step === 9) fields.push('disliked_cereals', 'disliked_tubers', 'disliked_legumes', 'disliked_vegetables', 'disliked_fruits', 'disliked_meats', 'disliked_fats', 'disliked_preparations', 'previous_unhealthy_habits');
+        if (step === 10) fields.push('wake_up_time', 'sleep_time', 'breakfast_time', 'lunch_time', 'dinner_time', 'prep_preference', 'taste_preference');
 
         const isStepValid = await form.trigger(fields);
         if (isStepValid) {
@@ -2016,10 +2023,15 @@ function Dislikes({ form }: { form: any }) {
                         {options.veg.map(opt => (
                             <FormField key={opt} control={form.control} name="disliked_vegetables" render={({ field }) => (
                                 <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
-                                    <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
-                                        const current = field.value || [];
-                                        return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
-                                    }} /></FormControl>
+                                    <FormControl>
+                                        <Checkbox 
+                                            checked={field.value?.includes(opt)} 
+                                            onCheckedChange={(checked) => {
+                                                const current = field.value || [];
+                                                return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
+                                            }} 
+                                        />
+                                    </FormControl>
                                     <Label className="text-slate-300 font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
                                 </FormItem>
                             )} />
@@ -2035,10 +2047,15 @@ function Dislikes({ form }: { form: any }) {
                         {options.fruit.map(opt => (
                             <FormField key={opt} control={form.control} name="disliked_fruits" render={({ field }) => (
                                 <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
-                                    <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
-                                        const current = field.value || [];
-                                        return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
-                                    }} /></FormControl>
+                                    <FormControl>
+                                        <Checkbox 
+                                            checked={field.value?.includes(opt)} 
+                                            onCheckedChange={(checked) => {
+                                                const current = field.value || [];
+                                                return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
+                                            }} 
+                                        />
+                                    </FormControl>
                                     <Label className="text-slate-300 font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
                                 </FormItem>
                             )} />
@@ -2054,10 +2071,15 @@ function Dislikes({ form }: { form: any }) {
                         {options.prep.map(opt => (
                             <FormField key={opt} control={form.control} name="disliked_preparations" render={({ field }) => (
                                 <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
-                                    <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
-                                        const current = field.value || [];
-                                        return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
-                                    }} /></FormControl>
+                                    <FormControl>
+                                        <Checkbox 
+                                            checked={field.value?.includes(opt)} 
+                                            onCheckedChange={(checked) => {
+                                                const current = field.value || [];
+                                                return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
+                                            }} 
+                                        />
+                                    </FormControl>
                                     <Label className="text-slate-300 font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
                                 </FormItem>
                             )} />
