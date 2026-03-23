@@ -1,0 +1,97 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# scratch/debug scripts
+/*.mjs
+/*.js
+!next.config.js
+!postcss.config.js
+!tailwind.config.js
+!playwright.config.ts
+/scripts/*.js
+/scripts/*.mjs
+/check-*.mjs
+/check-*.js
+/check_*.mjs
+/check_*.js
+/fix-*.mjs
+/fix-*.js
+/fix_*.mjs
+/fix_*.js
+/test-*.mjs
+/test-*.js
+/test_*.mjs
+/test_*.js
+/probe-*.mjs
+/seed-*.mjs
+/verify-*.mjs
+/write_*.mjs
+/revert-*.mjs
+/eval-*.mts
+/fetch-*.mjs
+/query.mjs
+/dump-*.js
+/run-sql-*.mjs
+/apply_migration.mjs
+/apply_fix.mjs
+/inspect-*.mjs
+/confirm_*.mjs
+/print_*.mjs
+/get_*.mjs
+
+# scratch output/data files (root level)
+/*.txt
+/*.json
+!package.json
+!package-lock.json
+!components.json
+!tsconfig.json
+/*.sql
+!update_schema.sql
+/*.log
+
+# scratch directories
+/tmp/
+/test-results/
+/playwright-report/
+
+# plan file (optional, remove if you want to track it)
+/plan_maestro.md
+/plan\ _maestro.md
+
+# schema dump
+/schema_dump.sql
+/tmp_migration.sql
+/recreate_users*.sql

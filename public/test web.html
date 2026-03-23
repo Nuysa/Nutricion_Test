@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NuySa | Sincroniza tu Biología v7.7</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        tech: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        nutri: {
+                            base: '#0B1120', 
+                            panel: '#151F32', 
+                            lime: '#A3E635', 
+                            peach: '#FB923C', 
+                            mint: '#A7F3D0',
+                            brand: '#FF7A00' /* Color naranja extraído de tu logo */
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #0B1120; color: #e2e8f0; scroll-behavior: smooth; overflow-x: hidden; }
+        
+        .organic-grid {
+            background-image: radial-gradient(rgba(163, 230, 53, 0.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+        }
+
+        .bio-panel {
+            background: rgba(21, 31, 50, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(163, 230, 53, 0.15);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .bio-cut { clip-path: polygon(0 0, 92% 0, 100% 15%, 100% 100%, 8% 100%, 0 85%); }
+        
+        .cartel-base {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 30;
+        }
+
+        @media (min-width: 768px) {
+            .pos-proteina { top: -5%; left: -20%; transform: translate(-20px, -20px) scale(0.9); }
+            .pos-proteina.cartel-active { opacity: 1; transform: translate(0, 0) scale(1); pointer-events: auto; }
+
+            .pos-carbo { top: 50%; right: -45%; transform: translate(20px, -50%) scale(0.9); }
+            .pos-carbo.cartel-active { opacity: 1; transform: translate(0, -50%) scale(1); pointer-events: auto; }
+
+            .pos-lipido { bottom: -5%; left: -20%; transform: translate(-20px, 20px) scale(0.9); }
+            .pos-lipido.cartel-active { opacity: 1; transform: translate(0, 0) scale(1); pointer-events: auto; }
+        }
+
+        @media (max-width: 767px) {
+            .pos-proteina, .pos-carbo, .pos-lipido {
+                bottom: -5%; left: 50%; transform: translate(-50%, 20px) scale(0.95); width: 90%; max-width: 320px;
+            }
+            .cartel-active { opacity: 1; transform: translate(-50%, 0) scale(1); pointer-events: auto; }
+        }
+
+        .dashed-border-custom {
+            border-left: 3px dashed #A3E635;
+            padding-left: 1rem;
+        }
+        
+        .fade-list {
+            transition: opacity 0.25s ease-in-out;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-nutri-brand selection:text-nutri-base">
+
+    <div class="fixed top-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full bg-nutri-brand/10 blur-[130px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-[-20%] right-[-5%] w-[600px] h-[600px] rounded-full bg-nutri-brand/5 blur-[150px] pointer-events-none z-0"></div>
+
+    <div class="fixed top-0 w-full h-10 z-[60] bg-gradient-to-r from-nutri-brand to-nutri-mint text-nutri-base flex items-center justify-center font-tech font-black text-xs md:text-sm tracking-[0.2em] uppercase shadow-[0_0_15px_rgba(163,230,53,0.3)]">
+        ¡Bienvenido(a) a NUYSA!
+    </div>
+
+    <nav class="fixed w-full top-10 bg-nutri-base/90 backdrop-blur-xl z-50 border-b border-white/5 shadow-2xl">
+        <div class="max-w-screen-2xl mx-auto px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <a href="#inicio" class="flex-shrink-0 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+                    <img src="./logo Nuysa.png" alt="Logo NuySa" class="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,122,0,0.3)]">
+                    <span class="font-tech font-bold text-3xl tracking-tight text-white">Nuy<span class="text-nutri-brand">Sa</span></span>
+                </a>
+                
+                <div class="hidden xl:flex space-x-2 items-center font-tech font-semibold text-[12px] text-slate-300 tracking-widest uppercase">
+                    <a href="#inicio" class="px-4 py-2 rounded-full bg-white/5 text-white transition-all">Inicio</a>
+                    <a href="#nosotros" class="px-4 py-2 rounded-full hover:bg-white/5 hover:text-white transition-all">Sobre Nosotros</a>
+                    <a href="#servicios" class="px-4 py-2 rounded-full hover:bg-white/5 hover:text-white transition-all">Servicios</a>
+                    <a href="#planes" class="px-4 py-2 rounded-full hover:bg-white/5 hover:text-white transition-all">Planes</a>
+                    <a href="#testimonios" class="px-4 py-2 rounded-full hover:bg-white/5 hover:text-white transition-all">Testimonios</a>
+                    <a href="#contacto" class="px-4 py-2 rounded-full hover:bg-white/5 hover:text-white transition-all">Contacto</a>
+                </div>
+                
+                <div class="hidden lg:block">
+                    <a href="/login" class="flex items-center gap-2 font-tech font-bold tracking-wider text-xs bg-nutri-panel border border-white/10 text-white px-6 py-2.5 rounded-full hover:bg-nutri-brand hover:text-nutri-base hover:border-nutri-brand transition-all">
+                        <i class="fa-solid fa-user text-sm"></i> Iniciar sesión / Registrarse
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section id="inicio" class="relative pt-40 pb-20 lg:pt-48 lg:pb-32 min-h-screen flex items-center">
+        <div class="absolute inset-0 organic-grid z-0 opacity-40"></div>
+
+        <div class="max-w-screen-2xl mx-auto px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-12 relative z-10 w-full">
+            
+            <div class="lg:w-5/12 flex flex-col items-start text-left z-20">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-nutri-brand/30 bg-nutri-brand/5 text-nutri-brand text-[15px] font-tech font-bold mb-6 tracking-widest uppercase">
+                    VE A TU PROPIO RITMO
+                </div>
+                <h1 class="text-5xl lg:text-7xl font-tech font-extrabold text-white leading-tight mb-8 tracking-tighter">
+                    Listo para iniciar <br>
+                    tu <span class="text-nutri-brand">cambio?</span>
+                </h1>
+                <p class="text-base text-slate-300 mb-10 max-w-md font-sans leading-relaxed dashed-border-custom">
+                    Recetas faciles y deliciosas. <br> «Reto 30 días» en un mes, nuevos hábitos se quedarán contigo. <br> Hidratación y bienestar total.
+                </p>
+            </div>
+            
+            <div class="lg:w-7/12 relative w-full flex justify-center mt-12 lg:mt-0 py-8 md:py-16">
+                <div class="relative w-full max-w-[450px] aspect-square flex items-center justify-center">
+                    
+                    <div class="absolute -inset-4 border border-nutri-brand/20 rounded-full border-dashed pointer-events-none z-0"></div>
+
+                    <div class="relative z-10 w-[85%] h-[85%] rounded-full overflow-hidden border-2 border-nutri-brand/40 shadow-[0_0_60px_rgba(163,230,53,0.1)] bg-nutri-base flex items-center justify-center pointer-events-none">
+                        <video 
+                            id="bioVideo"
+                            class="w-full h-full object-cover opacity-95 scale-[1.15]" 
+                            autoplay 
+                            loop 
+                            muted 
+                            playsinline>
+                            <source src="plato-nuysa.mp4" type="video/mp4">
+                            Tu navegador no soporta el formato de video.
+                        </video>
+                    </div>
+
+                    <div id="cartelProteina" class="cartel-base pos-proteina bg-nutri-panel border border-white/10 p-5 rounded-xl w-[260px] shadow-2xl">
+                        <div class="flex items-center gap-2 pb-2 mb-2">
+                            <i class="fa-solid fa-drumstick-bite text-lg text-nutri-brand"></i>
+                            <h4 class="font-tech font-bold text-sm text-white uppercase tracking-wider">SECCIÓN: <span class="text-nutri-brand">PROTEÍNAS</span></h4>
+                        </div>
+                        <p class="text-xs text-slate-300 font-sans leading-relaxed">
+                            <strong class="text-white">Función:</strong> Construyen y reparan músculos. Esenciales para el sistema inmunológico.
+                        </p>
+                    </div>
+
+                    <div id="cartelCarbo" class="cartel-base pos-carbo bg-nutri-panel border border-white/10 p-5 rounded-xl w-[260px] shadow-2xl">
+                        <div class="flex items-center gap-2 pb-2 mb-2">
+                            <i class="fa-solid fa-wheat-awn text-lg text-nutri-brand"></i>
+                            <h4 class="font-tech font-bold text-sm text-white uppercase tracking-wider">SECCIÓN: <span class="text-nutri-brand">CARBOHIDRATOS</span></h4>
+                        </div>
+                        <p class="text-xs text-slate-300 font-sans leading-relaxed">
+                            <strong class="text-white">Función:</strong> Principal fuente de energía. Abastecen el cerebro y los músculos.
+                        </p>
+                    </div>
+
+                    <div id="cartelLipido" class="cartel-base pos-lipido bg-nutri-panel border border-white/10 p-5 rounded-xl w-[260px] shadow-2xl">
+                        <div class="flex items-center gap-2 pb-2 mb-2">
+                            <i class="fa-solid fa-droplet text-lg text-nutri-brand"></i>
+                            <h4 class="font-tech font-bold text-sm text-white uppercase tracking-wider">SECCIÓN: <span class="text-nutri-brand">LÍPIDOS</span></h4>
+                        </div>
+                        <p class="text-xs text-slate-300 font-sans leading-relaxed">
+                            <strong class="text-white">Función:</strong> Reserva de alta densidad. Protegen órganos vitales y absorben vitaminas.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="nosotros" class="scroll-mt-32 py-24 relative z-10 bg-nutri-base/50 border-y border-white/5">
+        <div class="max-w-screen-2xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-16 relative">
+                <h3 class="text-4xl lg:text-5xl font-tech font-black text-white leading-tight">Sobre Nosotros</h3>
+            </div>
+            <div class="bio-panel bio-cut p-10 md:p-14 border border-nutri-brand/20 relative overflow-hidden">
+                <div class="flex flex-col lg:flex-row gap-14 items-center relative z-10">
+                    <div class="lg:w-2/5">
+                        <div class="relative rounded-[2.5rem] overflow-hidden bio-cut border-2 border-white/10 shadow-2xl transform hover:scale-[1.02] transition-transform">
+                            <div class="absolute inset-0 bg-nutri-brand/10 mix-blend-color z-10"></div>
+                            <img src="./delia.jpg" alt="Especialista en Nutrición" class="w-full h-auto object-cover opacity-80">
+                        </div>
+                    </div>
+                    <div class="lg:w-3/5">
+                        <h3 class="text-4xl md:text-5xl font-tech font-bold text-white mb-6 leading-tight">Acerca de <span class="text-nutri-brand">NuySa.</span></h3>
+                        <p style="margin-bottom: 6px;" class="text-base text-slate-300 font-sans leading-relaxed mb-8">
+                            Es un espacio creado por profesionales en nutrición humana, donde te escuchamos con atención, te acompañamos con <strong> empatía y te guiamos hacia una versión más saludable y consciente de ti. </strong> Trabajamos con alimentos reales y hábitos sostenibles, adaptados a tu estilo de vida.
+                        </p> <br>
+
+                        <h3 class="text-4xl md:text-5xl font-tech font-bold text-white mb-6 leading-tight">Acerca del <span class="text-nutri-brand">nutricionista.</span></h3>
+                        <p style="margin-bottom: 6px;" class="text-base text-slate-300 font-sans leading-relaxed mb-8">
+                            ¡Saludos! Soy Delia o Emilia como gustes llamarme. Soy Licenciada en Bromatología Y Nutrición Humana, dedicada a promover <strong>la salud y bienestar</strong> a través de una alimentación consciente y personalizada.  Cuento con conocimiento en cineantropometría y certificación internacional ISAK I y formación continua que me permite estar actualizada en salud y nutrición clínica.
+                        </p> <br> 
+                        <p class="text-base text-slate-300 font-sans leading-relaxed mb-8">Hoy, como nutricionista, puedo acompañar a muchas personas en su camino hacia el bienestar. Lo que muchos no saben es que son ellos quienes también me sostienen; me inspiran a seguir formándome, a crecer profesionalmente, y a aplicar todo lo aprendido en mi propio cuerpo y vida. En cada consulta, en cada historia, hay un espacio sagrado que respeto profundamente.​​ </p>
+                        <br> <p class="text-base text-slate-300 font-sans leading-relaxed mb-8"><strong>¿Qué me inspiro a estudiar nutrición? </strong>
+                        <br>Mi camino en la nutrición nació de mi amor por lo natural. Desde pequeña, crecí rodeada de la sabiduría de mi madre y el uso de plantas medicinales que sanaban el cuerpo de forma sencilla y amorosa. Ese vínculo, junto con el apoyo de personas cercanas, me motivo a estudiar esta ciencia, creando un enfoque donde los alimentos se convierten en aliados para transformar la salud y bienestar.​ Y cuando a esto le sumas movimiento, la meditación o alguna actividad física, los resultados son aún más profundos y duraderos.
+                        </p> <br>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="servicios" class="scroll-mt-32 py-24 relative z-10 border-y border-white/5">
+        <div class="max-w-screen-2xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-16 relative">
+                <h3 class="text-4xl lg:text-5xl font-tech font-black text-white leading-tight">Esto es lo que puedo hacer por ti</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-nutri-panel border border-white/5 rounded-3xl p-8 hover:-translate-y-2 hover:border-nutri-brand/50 transition-all duration-300">
+                    <div class="w-full h-81 bg-nutri-base border border-nutri-brand/30 rounded-xl flex items-center justify-center text-2xl mb-6 shadow-lg overflow-hidden">
+                        <img src="./nutricion_clinica.png" alt="Nutrición Clínica" class="w-full h-full object-cover opacity-80">
+                    </div>
+                    <h4 class="text-2xl font-tech font-bold text-white mb-4">Nutrición Clínica</h4>
+                    <p class="text-slate-400 font-sans text-sm leading-relaxed">Te ayudo a manejar y mejorar condiciones como: diabetes, resistencia a la insulina, colesterol alto, hígado graso, etc.</p>
+                </div>
+                <div class="bg-nutri-panel border border-white/5 rounded-3xl p-8 hover:-translate-y-2 hover:border-nutri-brand/50 transition-all duration-300">
+                    <div class="w-full h-81 bg-nutri-base border border-nutri-brand/30 rounded-xl flex items-center justify-center text-2xl mb-6 shadow-lg overflow-hidden">
+                        <img src="./delia1.png" alt="Asesoría Nutricional" class="w-full h-full object-cover opacity-80">
+                    </div>
+                    <h4 class="text-2xl font-tech font-bold text-white mb-4">Asesoría Nutricional</h4>
+                    <p class="text-slate-400 font-sans text-sm leading-relaxed">Acompañamiento personalizado para comer simple, saludable y sostenible.</p>
+                </div>
+                <div class="bg-nutri-panel border border-white/5 rounded-3xl p-8 hover:-translate-y-2 hover:border-nutri-brand/50 transition-all duration-300">
+                    <div class="w-full h-81 bg-nutri-base border border-nutri-brand/30 rounded-xl flex items-center justify-center text-2xl mb-6 shadow-lg overflow-hidden">
+                        <img src="./nutricion_para_objetivos_fisicos.png" alt="Nutrición para objetivos físicos" class="w-full h-full object-cover opacity-80">
+                    </div>
+                    <h4 class="text-2xl font-tech font-bold text-white mb-4">Nutrición para objetivos físicos</h4>
+                    <p class="text-slate-400 font-sans text-sm leading-relaxed">Si buscas perder grasa, bajar de peso, reducir medidas, ganar masa muscular o lograr una recomposición corporal, te guiaremos paso a paso para lograrlo de manera consciente y adaptada a tu estilo de vida.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="planes" class="scroll-mt-32 py-24 relative z-10 bg-nutri-base/30 border-y border-white/5">
+        <div class="max-w-screen-2xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-10 relative">
+                <h3 class="text-4xl lg:text-5xl font-tech font-black text-white leading-tight mb-4">Nuestros Planes</h3>
+                <p class="text-slate-400 font-sans max-w-2xl mx-auto">Invierte en Salud, selecciona el plan que mejor se adapte a tus necesidades y comienza a transformar tu bienestar hoy mismo.</p>
+            </div>
+            
+            <div class="flex justify-center mb-6 relative z-20">
+                <div class="bg-nutri-panel/80 backdrop-blur-md border border-white/10 rounded-full p-1.5 flex items-center shadow-2xl w-fit mx-auto">
+                    <button id="btn-global-flexible" class="px-6 md:px-8 py-3 rounded-full font-tech font-bold text-sm transition-all duration-300 bg-nutri-brand text-nutri-base shadow-[0_0_15px_rgba(163,230,53,0.4)]">
+                        Servicio flexible
+                    </button>
+                    <button id="btn-global-menu" class="px-6 md:px-8 py-3 rounded-full font-tech font-bold text-sm transition-all duration-300 text-slate-400 hover:text-white">
+                        Servicio con menú semanal
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center max-w-screen-2xl mx-auto mb-12 h-20 md:h-16 flex items-center justify-center">
+                <p id="plan-description" class="text-slate-300 font-sans text-sm md:text-base leading-relaxed transition-opacity duration-300">
+                    Esta flexibilidad te ayuda a mantener una alimentación equilibrada incluso en salidas sociales, viajes o días con poco tiempo para cocinar.<strong>Ideal para quienes buscan resultados sostenibles sin la rigidez de un menú fijo, pero con la seguridad de tener una estructura y control de porciones claros.</strong>
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <div class="bio-panel bio-cut p-8 md:p-10 flex flex-col justify-between hover:border-nutri-brand/50 transition-all duration-300 transform hover:-translate-y-2">
+                    <div>
+                        <div class="flex items-center bg-black/40 rounded-full p-1 mb-5 w-fit border border-white/10">
+                            <button id="c1-virtual" class="px-4 py-1.5 text-[11px] uppercase tracking-widest font-tech font-bold rounded-full bg-nutri-brand text-nutri-base transition-all duration-300">Virtual</button>
+                            <button id="c1-presencial" class="px-4 py-1.5 text-[11px] uppercase tracking-widest font-tech font-bold rounded-full text-slate-400 hover:text-white transition-all duration-300">Presencial</button>
+                        </div>
+                        
+                        <h4 class="text-2xl font-tech font-bold text-white mb-2">PLAN MENSUAL</h4>
+                        <div class="flex items-baseline gap-2 mb-6">
+                            <span id="precio-1" class="text-4xl font-extrabold text-nutri-brand transition-all duration-300">S/ 149</span>
+                        </div>
+                        
+                        <ul id="features-1" class="space-y-4 mb-8 fade-list">
+                            </ul>
+                    </div>
+                    <a id="btn-link-1" href="#" target="_blank" class="block w-full py-3 px-6 text-center rounded-xl bg-transparent border border-nutri-brand text-nutri-brand font-tech font-bold hover:bg-nutri-brand hover:text-nutri-base transition-colors mt-auto">Reservar aqui</a>
+                </div>
+
+                <div class="bg-nutri-brand p-1 rounded-3xl relative transform md:-translate-y-4 shadow-[0_0_40px_rgba(163,230,53,0.2)]">
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-nutri-panel border border-nutri-brand text-nutri-brand text-xs font-tech font-bold px-4 py-1.5 rounded-full uppercase tracking-wider z-20">
+                        Recomendado
+                    </div>
+                    <div class="bg-nutri-panel rounded-[1.4rem] p-8 md:p-10 h-full flex flex-col justify-between relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                            <i class="fa-solid fa-bolt text-8xl text-nutri-brand"></i>
+                        </div>
+                        <div class="relative z-10">
+                            <div class="flex items-center bg-black/50 rounded-full p-1 mb-5 w-fit border border-nutri-brand/30">
+                                <button id="c2-virtual" class="px-4 py-1.5 text-[11px] uppercase tracking-widest font-tech font-bold rounded-full bg-nutri-brand text-nutri-base transition-all duration-300 shadow-[0_0_10px_rgba(163,230,53,0.3)]">Virtual</button>
+                                <button id="c2-presencial" class="px-4 py-1.5 text-[11px] uppercase tracking-widest font-tech font-bold rounded-full text-slate-400 hover:text-white transition-all duration-300">Presencial</button>
+                            </div>
+
+                            <h4 class="text-2xl font-tech font-bold text-white mb-2">PLAN BIMESTRAL</h4>
+                            <div class="flex items-baseline gap-2 mb-6">
+                                <span id="precio-2" class="text-5xl font-extrabold text-nutri-brand transition-all duration-300">S/ 259</span>
+                            </div>
+                            
+                            <ul id="features-2" class="space-y-4 mb-8 fade-list">
+                                </ul>
+                        </div>
+                        <a id="btn-link-2" href="#" target="_blank" class="block w-full py-4 px-6 text-center rounded-xl bg-nutri-brand text-nutri-base font-tech font-extrabold hover:bg-white transition-colors relative z-10 shadow-[0_0_15px_rgba(163,230,53,0.3)] mt-auto">Reservar aqui</a>
+                    </div>
+                </div>
+
+                <div class="bio-panel bio-cut p-8 md:p-10 flex flex-col justify-between hover:border-nutri-brand/50 transition-all duration-300 transform hover:-translate-y-2">
+                    <div>
+                        <div class="flex items-center bg-black/40 rounded-full p-1 mb-5 w-fit border border-white/10">
+                            <button id="c3-virtual" class="px-4 py-1.5 text-[11px] uppercase tracking-widest font-tech font-bold rounded-full bg-nutri-brand text-nutri-base transition-all duration-300">Virtual</button>
+                            <button id="c3-presencial" class="px-4 py-1.5 text-[11px] uppercase tracking-widest font-tech font-bold rounded-full text-slate-400 hover:text-white transition-all duration-300">Presencial</button>
+                        </div>
+
+                        <h4 class="text-2xl font-tech font-bold text-white mb-2">PLAN TRIMESTRAL</h4>
+                        <div class="flex items-baseline gap-2 mb-6">
+                            <span id="precio-3" class="text-4xl font-extrabold text-nutri-brand transition-all duration-300">S/ 400</span>
+                        </div>
+                        
+                        <ul id="features-3" class="space-y-4 mb-8 fade-list">
+                            </ul>
+                    </div>
+                    <a id="btn-link-3" href="#" target="_blank" class="block w-full py-3 px-6 text-center rounded-xl bg-transparent border border-nutri-brand text-nutri-brand font-tech font-bold hover:bg-nutri-brand hover:text-nutri-base transition-colors mt-auto">Reserva aqui</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="testimonios" class="scroll-mt-32 py-24 relative z-10 border-y border-white/5">
+        <div class="max-w-screen-2xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-nutri-brand font-tech font-bold tracking-widest uppercase text-xs mb-3">Resultados del Sistema</h2>
+                <h3 class="text-4xl lg:text-5xl font-tech font-black text-white mb-5 leading-tight">Casos de Éxito</h3>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-nutri-base border border-white/10 p-8 rounded-3xl relative hover:border-nutri-brand/30 transition-all duration-300">
+                    <i class="fa-solid fa-quote-right text-4xl text-nutri-brand/20 absolute top-8 right-8"></i>
+                    <div class="flex items-center gap-4 mb-6">
+
+                        <div>
+                            <h4 class="text-white font-bold font-tech">Sandra Alejandro</h4>
+                        </div>
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed">"Emilia es quien me ayudo a lograr mis objetivos, lograr un cuerpo sano y me impulsó a retomar mi gusto por el ejercicio."</p>
+                </div>
+                
+                <div class="bg-nutri-base border border-white/10 p-8 rounded-3xl relative hover:border-nutri-brand/30 transition-all duration-300">
+                    <i class="fa-solid fa-quote-right text-4xl text-nutri-brand/20 absolute top-8 right-8"></i>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div>
+                            <h4 class="text-white font-bold font-tech">Yomira Santibañez</h4>
+                        </div>
+                    </div>
+                    <p class="text-slate-300 text-sm leading-relaxed">"Me resultó muy fácil llevar el plan de alimentación por que seguia comiendo mis comidas normales pero en porciones adecuadas, note cambios en mi cuerpo y me encantaron. Recomendadisimo!"</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="contacto" class="scroll-mt-32 relative z-10 pt-20 pb-10 border-t border-white/10 overflow-hidden bg-nutri-base">
+        <div class="absolute inset-0 organic-grid opacity-20 pointer-events-none z-0"></div>
+        <div class="max-w-screen-2xl mx-auto px-6 lg:px-8 relative z-10">
+            
+            <div class="bg-gradient-to-r from-nutri-panel to-nutri-base border border-white/10 rounded-[2rem] p-10 md:p-14 flex flex-col md:flex-row justify-between items-center gap-10 mb-16 shadow-2xl">
+                <div>
+                    <h3 class="text-3xl md:text-4xl font-tech font-bold text-white mb-3 tracking-tight">¿No sabes que plan elegir?</h3>
+                    <p class="text-slate-400 max-w-xl leading-relaxed">Cuéntanos cuáles son tus objetivos nutricionales por WhatsApp, será el punto de partida perfecto para tu cambio físico y de hábitos.</p>
+                </div>
+                <a href="https://wa.me/51946759718?text=Hola!,%20quisiera%20informaci%C3%B3n%20sobre%20" target="_blank" class="bg-nutri-brand text-nutri-base px-8 py-4 rounded-full font-tech font-bold text-lg flex items-center gap-3 transition-transform transform hover:scale-105 shrink-0 shadow-[0_0_20px_rgba(163,230,53,0.3)]">
+                    <i class="fa-brands fa-whatsapp text-2xl"></i> Escríbenos
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-slate-400 font-sans text-sm">
+                <div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <img src="./logo Nuysa.png" alt="Logo NuySa" class="h-10 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,122,0,0.3)]">
+                        <span class="font-tech font-bold text-2xl tracking-tight text-white">Nuy<span class="text-nutri-brand">Sa</span></span>
+                    </div>
+                    <p class="leading-relaxed text-slate-500 max-w-sm">Tu aliado en nutrición y bienestar. Un espacio donde te acompañamos a mejorar síntomas, malestares y tu estado físico a través de una alimentación balanceada, práctica y consciente.</p>
+                </div>
+                
+                <div>
+                    <h4 class="text-white font-tech font-bold mb-6 tracking-widest uppercase text-xs">Canales de comunicación</h4>
+                    <p class="mb-3 flex items-center gap-3 hover:text-nutri-brand transition-colors cursor-pointer"><i class="fa-solid fa-phone-volume text-nutri-brand/50"></i> (+51) 946759718</p>
+                    <p class="flex items-center gap-3 hover:text-nutri-brand transition-colors cursor-pointer"><i class="fa-solid fa-envelope text-nutri-brand/50"></i> nuysa.nutricion@gmail.com</p>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-tech font-bold mb-6 tracking-widest uppercase text-xs">Redes Sociales</h4>
+                    <div class="flex gap-4">
+			            <a href="https://www.facebook.com/profile.php?id=61580140231722&rdid=izoNdPPLRpTxrY8S&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1G1HHvWDTX%2F#" target="_blank" class="w-12 h-12 border border-white/10 bg-nutri-panel rounded-full flex items-center justify-center hover:bg-nutri-brand hover:text-nutri-base transition-all text-xl"><i class="fa-brands fa-facebook"></i></a>
+                        <a href="https://www.instagram.com/nuysa.nutricion/?igsh=OGUzdWE3OHY5azg3#" target="_blank" class="w-12 h-12 border border-white/10 bg-nutri-panel rounded-full flex items-center justify-center hover:bg-nutri-brand hover:text-nutri-base transition-all text-xl"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="https://www.tiktok.com/@nuysanutricion?_t=ZS-8zNIKw9r7U0&_r=1" target="_blank" class="w-12 h-12 border border-white/10 bg-nutri-panel rounded-full flex items-center justify-center hover:bg-nutri-brand hover:text-nutri-base transition-all text-xl"><i class="fa-brands fa-tiktok"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-16 pt-8 border-t border-white/5 text-center text-xs font-tech tracking-widest text-slate-600 flex flex-col sm:flex-row justify-between items-center gap-5">
+                <p>&copy; 2026 NUYSA_ORG v7.7. ALL_RIGHTS_RESERVED.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- 1. Lógica del Video y Carteles ---
+            const video = document.getElementById('bioVideo');
+            const cartelProteina = document.getElementById('cartelProteina');
+            const cartelCarbo = document.getElementById('cartelCarbo');
+            const cartelLipido = document.getElementById('cartelLipido');
+
+            const hideAllCartels = () => {
+                cartelProteina.classList.remove('cartel-active');
+                cartelCarbo.classList.remove('cartel-active');
+                cartelLipido.classList.remove('cartel-active');
+            };
+
+            video.addEventListener('timeupdate', () => {
+                const currentTime = video.currentTime;
+                const totalDuration = video.duration;
+                if (!totalDuration || isNaN(totalDuration)) return; 
+                
+                hideAllCartels();
+                const tercio = totalDuration / 3;
+
+                if (currentTime >= 0 && currentTime < tercio) {
+                    cartelProteina.classList.add('cartel-active');
+                } else if (currentTime >= tercio && currentTime < (tercio * 2)) {
+                    cartelCarbo.classList.add('cartel-active');
+                } else if (currentTime >= (tercio * 2)) {
+                    cartelLipido.classList.add('cartel-active');
+                }
+            });
+
+            // --- 2. Lógica de Precios, Textos Dinámicos y Enlaces ---
+            
+            let globalMode = 'flexible'; 
+            let c1Mode = 'virtual';     
+            let c2Mode = 'virtual';
+            let c3Mode = 'virtual';
+
+            const tablaPrecios = {
+                card1: {
+                    flexible: { virtual: '149', presencial: '199' },
+                    menu:     { virtual: '180', presencial: '249' }
+                },
+                card2: {
+                    flexible: { virtual: '259', presencial: '349' },
+                    menu:     { virtual: '300', presencial: '430' }
+                },
+                card3: {
+                    flexible: { virtual: '400', presencial: '489' },
+                    menu:     { virtual: '449', presencial: '620' }
+                }
+            };
+
+            // BASE DE DATOS DE BENEFICIOS (24 LISTAS EN TOTAL)
+            const featuresData = {
+                flexible: {
+                    card1: {
+                        virtual: [
+                            "2 planes personalizados",
+                            "Guía de intercambio de alimentos.",
+                            "Seguimiento vía Web, Gmail o WhatsApp.",
+                            "Reunión vía Google Meet (45 min).",
+                            "Suplementación específica, si lo requiere."
+                        ],
+                        presencial: [
+                            "2 planes personalizados",
+                            "Guía de intercambio de alimentos.",
+                            "Evaluación física (Medición ISAK I).",
+                            "Consulta en consultorio (60 min).",
+                            "Suplementación específica, si lo requiere."
+                        ]
+                    },
+                    card2: {
+                        virtual: [
+                            "4 planes personalizados",
+                            "Guía de intercambio de alimentos.",
+                            "Seguimiento vía Web, Gmail o WhatsApp.",
+                            "Reunión vía Google Meet (45 min).",
+                            "Suplementación específica, si lo requiere.",
+                            "Productos recomendados."
+                        ],
+                        presencial: [
+                            "4 planes personalizados",
+                            "Guía de intercambio de alimentos.",
+                            "Seguimiento vía Web, Gmail o WhatsApp.",
+                            "Evaluación física (Medición ISAK I).",
+                            "Consulta en consultorio (60 min).",
+                            "Suplementación específica, si lo requiere.",
+                            "Productos recomendados."
+                        ]
+                    },
+                    card3: {
+                        virtual: [
+                            "6 planes personalizados",
+                            "Guía de intercambio de alimentos.",
+                            "Seguimiento vía Web, Gmail o WhatsApp.",
+                            "Reunión vía Google Meet (45 min).",
+                            "Suplementación específica, si lo requiere.",
+                            "Productos recomendados."
+                        ],
+                        presencial: [
+                            "6 planes personalizados",
+                            "Guía de intercambio de alimentos.",
+                            "Seguimiento vía Web, Gmail o WhatsApp.",
+                            "Evaluación física (Medición ISAK I).",
+                            "Consulta en consultorio (60 min).",
+                            "Suplementación específica, si lo requiere.",
+                            "Productos recomendados."
+                        ]
+                    }
+                },
+                menu: {
+                    card1: {
+                        virtual: [
+                            "2 planes personalizados",
+                            "Plan personalizado con 7 menús completos.",
+                            "Seguimiento vía Web, Gmail o WhatsApp.",
+                            "Recetas fáciles y detalladas.",
+                            "Suplementación específica si lo requiere.",
+                            "Reunión vía Google Meet (50-60 min).",
+                            "Productos recomendados."
+                        ],
+                        presencial: [
+                            "2 planes personalizados",
+                            "Plan personalizado con 7 menús completos.",
+                            "Seguimiento vía Web, Gmail o WhatsApp.",
+                            "Evaluación física (Medición ISAK I).",
+                            "Recetas fáciles y detalladas.",
+                            "Suplementación específica si lo requiere.",
+                            "Consulta en consultorio (50-60 min).",
+                            "Productos recomendados."
+                        ]
+                    },
+                    card2: {
+                        virtual: [
+                            "4 planes personalizados",
+                            "Plan personalizado con 7 menús completos.",
+                            "Seguimiento vía Web, Gmail o WhatsApp.",
+                            "Recetas fáciles y detalladas.",
+                            "Suplementación específica si lo requiere.",
+                            "Reunión vía Google Meet (50-60 min).",
+                            "Productos recomendados."
+                        ],
+                        presencial: [
+                            "4 planes personalizados",
+                            "Plan personalizado con 7 menús completos.",
+                            "Seguimiento vía Web, Gmail o WhatsApp.",
+                            "Evaluación física (Medición ISAK I).",
+                            "Recetas fáciles y detalladas.",
+                            "Suplementación específica si lo requiere.",
+                            "Consulta en consultorio (50-60 min).",
+                            "Productos recomendados."
+                        ]
+                    },
+                    card3: {
+                        virtual: [
+                            "6 planes personalizados",
+                            "Plan personalizado con 7 menús completos.",
+                            "Seguimiento vía Web, Gmail o WhatsApp.",
+                            "Recetas fáciles y detalladas.",
+                            "Suplementación específica si lo requiere.",
+                            "Reunión vía Google Meet (50-60 min).",
+                            "Productos recomendados."
+                        ],
+                        presencial: [
+                            "6 planes personalizados",
+                            "Plan personalizado con 7 menús completos.",
+                            "Seguimiento vía Web, Gmail o WhatsApp.",
+                            "Evaluación física (Medición ISAK I).",
+                            "Recetas fáciles y detalladas.",
+                            "Suplementación específica si lo requiere.",
+                            "Consulta en consultorio (50-60 min).",
+                            "Productos recomendados."
+                        ]
+                    }
+                }
+            };
+
+            const linksData = {
+                flexible: {
+                    card1: { virtual: 'https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20flexible,%20plan%20mensual,%20de%20manera%20virtual.%20', presencial: 'https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20flexible,%20plan%20mensual,%20de%20manera%20presencial.%20' },
+                    card2: { virtual: 'https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20flexible,%20plan%20bimestral,%20de%20manera%20virtual.%20', presencial: 'https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20flexible,%20plan%20bimestral,%20de%20manera%20presencial.%20' },
+                    card3: { virtual: 'https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20flexible,%20plan%20trimestral,%20de%20manera%20virtual.%20', presencial: 'https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20flexible,%20plan%20trimestral,%20de%20manera%20presencial.%20' }
+                },
+                menu: {
+                    card1: { virtual: 'https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20men%C3%BA%20semanal,%20plan%20mensual,%20de%20manera%20virtual.%20', presencial: 'https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20men%C3%BA%20semanal,%20plan%20mensual,%20de%20manera%20presencial.%20' },
+                    card2: { virtual: 'https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20men%C3%BA%20semanal,%20plan%20bimestral,%20de%20manera%20virtual.%20', presencial: 'https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20men%C3%BA%20semanal,%20plan%20bimestral,%20de%20manera%20presencial.%20' },
+                    card3: { virtual: 'https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20men%C3%BA%20semanal,%20plan%20trimestral,%20de%20manera%20virtual.%20', presencial: 'https://wa.me/51946759718?text=Hola!,%20quisiera%20reservar%20el%20Servicio%20men%C3%BA%20semanal,%20plan%20trimestral,%20de%20manera%20presencial.%20' }
+                }
+            };
+
+            const descFlexible = "Esta flexibilidad te ayuda a mantener una alimentación equilibrada incluso en salidas sociales, viajes o días con poco tiempo para cocinar.<strong>Ideal para quienes buscan resultados sostenibles sin la rigidez de un menú fijo, pero con la seguridad de tener una estructura y control de porciones claros.";
+            const descMenu = "<strong>Este tipo de plan es ideal para quienes prefieren seguir instrucciones claras y detalladas, desean evitar elecciones poco saludables o necesitan una alimentación más controlada por razones de salud. </strong> También ahorra tiempo en la planificación de compras y reduce el estrés de decidir qué cocinar cada día.";
+            const planDescription = document.getElementById('plan-description');
+
+            // Funciones Auxiliares
+            const getLiHtml = (text, isHighlightedCard, index) => {
+                const isFirstItem = index === 0;
+                const textClasses = isFirstItem 
+                    ? 'text-white text-xl font-bold' 
+                    : (isHighlightedCard ? 'text-slate-200 font-medium text-sm' : 'text-slate-300 text-sm');
+                const iconMargin = isFirstItem ? 'mt-1.5' : 'mt-1';
+
+                return `
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-check text-nutri-brand ${iconMargin}"></i>
+                        <span class="${textClasses} font-sans">${text}</span>
+                    </li>
+                `;
+            };
+
+            // Función para renderizar UNA sola tarjeta (Evita que parpadeen todas a la vez)
+            const renderCardFeature = (cardNumber, isHighlightedCard) => {
+                const list = document.getElementById(`features-${cardNumber}`);
+                const mode = cardNumber === 1 ? c1Mode : (cardNumber === 2 ? c2Mode : c3Mode);
+                const data = featuresData[globalMode][`card${cardNumber}`][mode];
+
+                list.style.opacity = 0;
+                setTimeout(() => {
+                    list.innerHTML = data.map((text, i) => getLiHtml(text, isHighlightedCard, i)).join('');
+                    list.style.opacity = 1;
+                }, 250); 
+            };
+
+            // Función para renderizar TODAS las tarjetas (Para el botón global)
+            const renderAllFeatures = () => {
+                renderCardFeature(1, false);
+                renderCardFeature(2, true);
+                renderCardFeature(3, false);
+            };
+
+            const renderPrecios = () => {
+                document.getElementById('precio-1').innerText = 'S/ ' + tablaPrecios.card1[globalMode][c1Mode];
+                document.getElementById('precio-2').innerText = 'S/ ' + tablaPrecios.card2[globalMode][c2Mode];
+                document.getElementById('precio-3').innerText = 'S/ ' + tablaPrecios.card3[globalMode][c3Mode];
+            };
+
+            const updateButtonLinks = () => {
+                document.getElementById('btn-link-1').href = linksData[globalMode].card1[c1Mode];
+                document.getElementById('btn-link-2').href = linksData[globalMode].card2[c2Mode];
+                document.getElementById('btn-link-3').href = linksData[globalMode].card3[c3Mode];
+            };
+
+            const updateLocalButtonStyles = (btnActivo, btnInactivo, isHighlighted = false) => {
+                const baseClasses = ['bg-nutri-brand', 'text-nutri-base'];
+                const shadowClass = isHighlighted ? 'shadow-[0_0_10px_rgba(163,230,53,0.3)]' : ''; 
+                
+                btnActivo.classList.add(...baseClasses);
+                if(shadowClass) btnActivo.classList.add(shadowClass);
+                btnActivo.classList.remove('text-slate-400', 'hover:text-white');
+                
+                btnInactivo.classList.remove(...baseClasses);
+                if(shadowClass) btnInactivo.classList.remove(shadowClass);
+                btnInactivo.classList.add('text-slate-400', 'hover:text-white');
+            };
+
+            const changeDescriptionText = (newText) => {
+                planDescription.style.opacity = 0; 
+                setTimeout(() => {
+                    planDescription.innerHTML = newText; 
+                    planDescription.style.opacity = 1; 
+                }, 300); 
+            };
+
+            // --- Eventos Globales ---
+            const btnGlobalFlexible = document.getElementById('btn-global-flexible');
+            const btnGlobalMenu = document.getElementById('btn-global-menu');
+
+            btnGlobalFlexible.addEventListener('click', () => {
+                if (globalMode === 'flexible') return; 
+                globalMode = 'flexible';
+                
+                btnGlobalFlexible.classList.add('bg-nutri-brand', 'text-nutri-base', 'shadow-[0_0_15px_rgba(163,230,53,0.4)]');
+                btnGlobalFlexible.classList.remove('text-slate-400', 'hover:text-white');
+                btnGlobalMenu.classList.remove('bg-nutri-brand', 'text-nutri-base', 'shadow-[0_0_15px_rgba(163,230,53,0.4)]');
+                btnGlobalMenu.classList.add('text-slate-400', 'hover:text-white');
+                
+                changeDescriptionText(descFlexible); 
+                renderPrecios();
+                renderAllFeatures(); 
+                updateButtonLinks();
+            });
+
+            btnGlobalMenu.addEventListener('click', () => {
+                if (globalMode === 'menu') return; 
+                globalMode = 'menu';
+                
+                btnGlobalMenu.classList.add('bg-nutri-brand', 'text-nutri-base', 'shadow-[0_0_15px_rgba(163,230,53,0.4)]');
+                btnGlobalMenu.classList.remove('text-slate-400', 'hover:text-white');
+                btnGlobalFlexible.classList.remove('bg-nutri-brand', 'text-nutri-base', 'shadow-[0_0_15px_rgba(163,230,53,0.4)]');
+                btnGlobalFlexible.classList.add('text-slate-400', 'hover:text-white');
+                
+                changeDescriptionText(descMenu); 
+                renderPrecios();
+                renderAllFeatures(); 
+                updateButtonLinks();
+            });
+
+            // --- Eventos Locales (Tarjeta 1) ---
+            const c1Virtual = document.getElementById('c1-virtual');
+            const c1Presencial = document.getElementById('c1-presencial');
+            c1Virtual.addEventListener('click', () => { c1Mode = 'virtual'; updateLocalButtonStyles(c1Virtual, c1Presencial); renderPrecios(); updateButtonLinks(); renderCardFeature(1, false); });
+            c1Presencial.addEventListener('click', () => { c1Mode = 'presencial'; updateLocalButtonStyles(c1Presencial, c1Virtual); renderPrecios(); updateButtonLinks(); renderCardFeature(1, false); });
+
+            // --- Eventos Locales (Tarjeta 2 - Highlighted) ---
+            const c2Virtual = document.getElementById('c2-virtual');
+            const c2Presencial = document.getElementById('c2-presencial');
+            c2Virtual.addEventListener('click', () => { c2Mode = 'virtual'; updateLocalButtonStyles(c2Virtual, c2Presencial, true); renderPrecios(); updateButtonLinks(); renderCardFeature(2, true); });
+            c2Presencial.addEventListener('click', () => { c2Mode = 'presencial'; updateLocalButtonStyles(c2Presencial, c2Virtual, true); renderPrecios(); updateButtonLinks(); renderCardFeature(2, true); });
+
+            // --- Eventos Locales (Tarjeta 3) ---
+            const c3Virtual = document.getElementById('c3-virtual');
+            const c3Presencial = document.getElementById('c3-presencial');
+            c3Virtual.addEventListener('click', () => { c3Mode = 'virtual'; updateLocalButtonStyles(c3Virtual, c3Presencial); renderPrecios(); updateButtonLinks(); renderCardFeature(3, false); });
+            c3Presencial.addEventListener('click', () => { c3Mode = 'presencial'; updateLocalButtonStyles(c3Presencial, c3Virtual); renderPrecios(); updateButtonLinks(); renderCardFeature(3, false); });
+
+            // Iniciar renderizado por defecto
+            renderAllFeatures();
+            updateButtonLinks(); 
+        });
+    </script>
+</body>
+</html>

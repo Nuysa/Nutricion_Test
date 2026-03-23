@@ -1,0 +1,2608 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import {
+    Users, UserCheck, Link2, DatabaseZap, Calendar,
+    Link as LinkIcon, Search, Check, X, UserPlus,
+    Bell, UserCheck as UserCheckIcon, Clock, Settings, ArrowRight,
+    Plus, Trash2, DatabaseZap as DbIcon, Mail, Edit3, Save, Loader2,
+    BarChart3, TrendingUp, Target, DollarSign, Activity, AlertTriangle,
+    Shield, ShieldPlus, User, FileText, ChevronRight, Play, Layers, Filter, LayoutGrid, LayoutList, LayoutTemplate, Stethoscope,
+    ChevronDown, ChevronUp, ShieldCheck
+} from "lucide-react";
+import { VariablesConfig } from "@/components/dashboard/admin/variables-config";
+import { TableEditor } from "@/components/dashboard/admin/table-editor";
+import { VisualLandingEditor } from "@/components/dashboard/admin/visual-landing-editor";
+import { FoodDatabase } from "@/components/dashboard/admin/food-database";
+import { AuthCMSEditor } from "@/components/dashboard/admin/auth-cms-editor";
+import { VisualAuthEditor } from "@/components/dashboard/admin/visual-auth-editor";
+import { MessagingService, GlobalProfile } from "@/lib/messaging-service";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { PlansSection } from "@/components/landing/plans-section";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter
+} from "@/components/ui/dialog";
+
+const getAppointmentStatus = (status: string, date: string, time: string) => {
+    const lowerStatus = (status || '').toLowerCase();
+    const normalizedTime = time.includes(':') ? time : '00:00';
+    const aptDate = new Date(`${date}T${normalizedTime}`);
+    const now = new Date();
+    
+    if (['programada', 'scheduled', 'programado'].includes(lowerStatus)) {
+        if (now > aptDate) return { label: 'no confirmado', className: "bg-red-500/10 text-red-500" };
+        return { label: 'programada', className: "bg-blue-500/10 text-blue-500" };
+    }
+    
+    if (['completada', 'completed', 'atendida'].includes(lowerStatus)) {
+        return { label: 'completada', className: "bg-green-500/10 text-green-500" };
+    }
+    
+    if (['confirmada', 'confirmed'].includes(lowerStatus)) {
+        return { label: 'confirmada', className: "bg-emerald-500/10 text-emerald-500" };
+    }
+
+    if (['cancelada', 'cancelled', 'cancelado'].includes(lowerStatus)) {
+        return { label: 'cancelada', className: "bg-slate-500/10 text-slate-500" };
+    }
+
+    return { label: status, className: "bg-slate-500/10 text-slate-500" };
+};
+
+export function AdminStaffDashboardContent({ initialTab = "overview" }: { initialTab?: any }) {
+    const { toast } = useToast();
+    const [activeTab, setActiveTab] = useState<"overview" | "verification" | "assignments" | "plan_assignments" | "subscriptions" | "metrics" | "calendar" | "settings" | "visualization" | "landing_cms" | "auth_cms" | "plans_management" | "food_database" | "users_management">(initialTab);
+    const [plansEditMode, setPlansEditMode] = useState(true);
+
+    const [profiles, setProfiles] = useState<GlobalProfile[]>([]);
+    const [assignments, setAssignments] = useState<Record<string, string[]>>({});
+    const [subscriptions, setSubscriptions] = useState<any[]>([]);
+    const [offers, setOffers] = useState<any[]>([]);
+    const [currentAdminRole, setCurrentAdminRole] = useState<string>("");
+    const [currentAdminId, setCurrentAdminId] = useState<string>("");
+    const [searchTerm, setSearchTerm] = useState("");
+    const [verifSearch, setVerifSearch] = useState("");
+    const [assignPSearch, setAssignPSearch] = useState("");
+    const [assignNSearch, setAssignNSearch] = useState("");
+    const [assignPlanSearch, setAssignPlanSearch] = useState("");
+    const [planHistory, setPlanHistory] = useState<any[]>([]);
+    const [selectedPlanPatientId, setSelectedPlanPatientId] = useState<string | null>(null);
+    const [selectedPlanType, setSelectedPlanType] = useState<string>("plan flexible");
+    const [selectedPlanMeasurements, setSelectedPlanMeasurements] = useState<number>(2);
+    const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+    const [selectedNutriId, setSelectedNutriId] = useState<string | null>(null);
+
+    const [loading, setLoading] = useState(true);
+
+    // Agenda states
+    const [isAgendaDialogOpen, setIsAgendaDialogOpen] = useState(false);
+    const [agendaNutriId, setAgendaNutriId] = useState("");
+    const [agendaPatientId, setAgendaPatientId] = useState("");
+    const [agendaDate, setAgendaDate] = useState("");
+    const [agendaTime, setAgendaTime] = useState("");
+    const [agendaModality, setAgendaModality] = useState<"virtual" | "presencia">("virtual");
+
+    // Offer edit states
+    const [editingOffer, setEditingOffer] = useState<any>(null);
+    const [newOfferName, setNewOfferName] = useState("");
+    const [newOfferPrice, setNewOfferPrice] = useState("");
+    const [newOfferDescription, setNewOfferDescription] = useState("");
+    const [newOfferPriceOffer, setNewOfferPriceOffer] = useState("");
+    const [newOfferOfferReason, setNewOfferOfferReason] = useState("");
+    const [newOfferFeatures, setNewOfferFeatures] = useState("");
+    const [newOfferHighlight, setNewOfferHighlight] = useState("");
+    const [isCreateOfferDialogOpen, setIsCreateOfferDialogOpen] = useState(false);
+    const [offerSearch, setOfferSearch] = useState("");
+    const [subReviewSearch, setSubReviewSearch] = useState("");
+    const [selectedPatientPlan, setSelectedPatientPlan] = useState<GlobalProfile | null>(null);
+    const [newPlanType, setNewPlanType] = useState("");
+
+    // Delete Plan States
+    const [isDeletePlanDialogOpen, setIsDeletePlanDialogOpen] = useState(false);
+    const [planToDelete, setPlanToDelete] = useState<string | null>(null);
+
+    // Create User States
+    const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState(false);
+    const [newUserEmail, setNewUserEmail] = useState("");
+    const [newUserPassword, setNewUserPassword] = useState("");
+    const [newUserFullName, setNewUserFullName] = useState("");
+    const [newUserRole, setNewUserRole] = useState<"staff" | "administrador">("staff");
+    const [isCreatingUser, setIsCreatingUser] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [profileToDelete, setProfileToDelete] = useState<{ id: string, name: string } | null>(null);
+    const [isDeletingProfile, setIsDeletingProfile] = useState(false);
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+        administrador: true,
+        staff: true,
+        nutricionista: true,
+        paciente: true
+    });
+
+
+    // Enhanced Calendar States
+    const [allAppointments, setAllAppointments] = useState<any[]>([]);
+    const [selectedCalDate, setSelectedCalDate] = useState<Date>(new Date());
+    const [occupiedSlots, setOccupiedSlots] = useState<string[]>([]);
+    const [calMonth, setCalMonth] = useState(new Date().getMonth());
+    const [calYear, setCalYear] = useState(new Date().getFullYear());
+    const [agendaView, setAgendaView] = useState<"nutricionistas" | "historial">("nutricionistas");
+    const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
+
+    const timeSlots = [
+        "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+        "12:00", "12:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
+    ];
+
+    const loadData = async (isSilent = false) => {
+        // If it's a silent update, don't show the full page loader
+        if (!isSilent) setLoading(true);
+
+        try {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase.from("profiles").select("id, role").eq("user_id", user.id).single();
+                if (profile) {
+                    setCurrentAdminRole(profile.role);
+                    setCurrentAdminId(profile.id);
+                }
+            }
+
+            const [fetchedProfiles, fetchedAssignments, fetchedSubs, fetchedOffers, fetchedAppointments] = await Promise.all([
+                MessagingService.getProfiles(),
+                MessagingService.getAssignments(),
+                MessagingService.getAllSubscriptions(),
+                MessagingService.getSubscriptionOffers(),
+                MessagingService.getAllAppointments()
+            ]);
+            setProfiles(fetchedProfiles || []);
+            setAssignments(fetchedAssignments || {});
+            setSubscriptions(fetchedSubs || []);
+            setOffers(fetchedOffers || []);
+            setAllAppointments(fetchedAppointments || []);
+            console.log(`[Dashboard] Data loaded. Assignments: ${Object.keys(fetchedAssignments).length}`);
+        } catch (error) {
+            console.error("Error loading admin data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getOccupiedSlots = (dateStr: string, nutriId: string) => {
+        if (!nutriId) return [];
+        const dayAppts = allAppointments.filter(a => {
+            return a.date === dateStr && a.nutritionistId === nutriId && a.status !== 'cancelada';
+        });
+
+        const occupied = new Set<string>();
+        dayAppts.forEach(a => {
+            const time = a.startTime.substring(0, 5);
+            occupied.add(time);
+
+            // Assume 30 min slots, so mark the next slot as potentially busy if we want to mimic the nutritionist logic 
+            // (Nutri logic seems to mark the slot and the NEXT 30 min slot as occupied?)
+            // Looking at page.tsx line 94: occupied.add(`${nextH}:${nextM}`);
+            // Let's stick to literal slots for now or mimic it exactly.
+            const [h, m] = time.split(":").map(Number);
+            const totalMin = h * 60 + m + 30;
+            const nextH = Math.floor(totalMin / 60).toString().padStart(2, '0');
+            const nextM = (totalMin % 60).toString().padStart(2, '0');
+            occupied.add(`${nextH}:${nextM}`);
+        });
+
+        return Array.from(occupied);
+    };
+
+    const isSlotPast = (slotTime: string, dateStr: string) => {
+        const now = new Date();
+        const [h, m] = slotTime.split(":").map(Number);
+        const targetDate = new Date(dateStr + 'T' + slotTime);
+        return targetDate < now;
+    };
+
+    useEffect(() => {
+        if (agendaDate && agendaNutriId) {
+            setOccupiedSlots(getOccupiedSlots(agendaDate, agendaNutriId));
+        }
+    }, [agendaDate, agendaNutriId, allAppointments]);
+
+    useEffect(() => {
+        loadData();
+
+        // 1. Supabase Realtime Subscription (For DB changes)
+        const supabase = createClient();
+        const realtimeSync = supabase
+            .channel('admin_global_changes')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'profiles' },
+                () => {
+                    console.log("Realtime: Profiles changed, refreshing...");
+                    loadData(true);
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'patients' },
+                () => {
+                    console.log("Realtime: Patients (Assignments) changed, refreshing...");
+                    loadData(true);
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'subscriptions' },
+                () => {
+                    console.log("Realtime: Subscriptions changed, refreshing...");
+                    loadData(true);
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'subscriptions' },
+                () => {
+                    if (activeTab === 'plan_assignments' && selectedPlanPatientId) {
+                        void refreshPlanHistory(selectedPlanPatientId);
+                    }
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'appointments' },
+                () => {
+                    console.log("Realtime: Appointments changed, refreshing...");
+                    loadData(true);
+                }
+            )
+            .subscribe();
+
+        // 2. Local Sync Channel (For cross-tab same-browser actions)
+        const channel = new BroadcastChannel('nutrigo_global_sync');
+        channel.onmessage = () => {
+            console.log("Broadcast: Refreshing data...");
+            void loadData(true);
+        };
+
+        // 3. Fallback Poller (Just in case, every 1 minute)
+        const poller = setInterval(() => {
+            void loadData(true);
+        }, 60000);
+
+        return () => {
+            supabase.removeChannel(realtimeSync);
+            channel.close();
+            clearInterval(poller);
+        };
+    }, []);
+
+    const handleVerify = async (id: string, status: "Activo" | "Rechazado") => {
+        try {
+            await MessagingService.verifyProfile(id, status);
+            toast({
+                title: status === "Activo" ? "Nutricionista Verificado" : "Registro Rechazado",
+                description: `El usuario ahora tiene el estado: ${status}`,
+                variant: "success"
+            });
+            loadData();
+        } catch (error: any) {
+            toast({
+                title: "Error de Servidor",
+                description: error.message || "No se pudo actualizar el estado.",
+                variant: "destructive"
+            });
+        }
+    };
+
+    const handleAssign = async () => {
+        if (!selectedPatientId || !selectedNutriId) {
+            toast({ title: "Error", description: "Selecciona un paciente y un nutricionista", variant: "destructive" });
+            return;
+        }
+        await MessagingService.assignPatientToNutritionist(selectedPatientId, selectedNutriId);
+        setSelectedPatientId(null);
+        setSelectedNutriId(null);
+        toast({
+            title: "Paciente Asignado",
+            description: "La relación ha sido guardada en Supabase.",
+            variant: "success"
+        });
+        loadData();
+    };
+
+    const refreshPlanHistory = async (pid: string) => {
+        const history = await MessagingService.getPatientPlanHistory(pid);
+        setPlanHistory(history);
+    };
+
+    useEffect(() => {
+        if (activeTab === "plan_assignments" && selectedPlanPatientId) {
+            refreshPlanHistory(selectedPlanPatientId);
+        }
+    }, [activeTab, selectedPlanPatientId]);
+
+    const handleAssignPlan = async () => {
+        if (!selectedPlanPatientId || !selectedPlanType) return;
+        try {
+            await MessagingService.assignPlanToPatient(selectedPlanPatientId, selectedPlanType, selectedPlanMeasurements);
+            toast({ title: "Plan Asignado Correctamente", variant: "success" });
+            loadData(true);
+            if (selectedPlanPatientId) refreshPlanHistory(selectedPlanPatientId);
+        } catch (e: any) {
+            toast({ title: "Error", description: e.message, variant: "destructive" });
+        }
+    };
+
+    const confirmDeletePlan = (sid: string) => {
+        setPlanToDelete(sid);
+        setIsDeletePlanDialogOpen(true);
+    };
+
+    const executeDeletePlan = async () => {
+        if (!planToDelete) return;
+        try {
+            await MessagingService.deleteSubscription(planToDelete);
+            toast({ title: "Registro Eliminado", variant: "success" });
+            loadData(true);
+            if (selectedPlanPatientId) refreshPlanHistory(selectedPlanPatientId);
+        } catch (e: any) {
+            toast({ title: "Error", description: e.message, variant: "destructive" });
+        } finally {
+            setIsDeletePlanDialogOpen(false);
+            setPlanToDelete(null);
+        }
+    };
+
+    const handleUnassign = async (pid: string, nid: string) => {
+        try {
+            await MessagingService.unassignPatientFromNutritionist(pid, nid);
+            toast({
+                title: "Asignación Removida",
+                description: "La relación ha sido eliminada.",
+                variant: "success"
+            });
+            loadData();
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: "No se pudo eliminar la relación: " + (error.message || "Desconocido"),
+                variant: "destructive"
+            });
+        }
+    };
+
+    const handleCreateAppointment = async () => {
+        if (!agendaNutriId || !agendaPatientId || !agendaDate || !agendaTime) {
+            toast({ title: "Error", description: "Completa todos los campos de la cita", variant: "destructive" });
+            return;
+        }
+        try {
+            const supabase = createClient();
+            const { error } = await supabase.from("appointments").upsert({
+                id: editingAppointmentId || undefined,
+                patient_id: agendaPatientId,
+                nutritionist_id: agendaNutriId,
+                scheduled_by: currentAdminId,
+                appointment_date: agendaDate,
+                start_time: agendaTime,
+                end_time: (() => {
+                    const [h, m] = agendaTime.split(":").map(Number);
+                    const total = h * 60 + m + 30;
+                    return `${Math.floor(total / 60).toString().padStart(2, '0')}:${(total % 60).toString().padStart(2, '0')}:00`;
+                })(),
+                modality: agendaModality,
+                status: "programada"
+            });
+            if (error) throw error;
+
+            toast({ title: editingAppointmentId ? "Cita Actualizada" : "Cita Programada", description: "La cita ha sido registrada con éxito.", variant: "success" });
+            setIsAgendaDialogOpen(false);
+            setEditingAppointmentId(null);
+            setAgendaNutriId("");
+            setAgendaPatientId("");
+            setAgendaDate("");
+            setAgendaTime("");
+        } catch (error: any) {
+            toast({ title: "Error al agendar", description: error.message, variant: "destructive" });
+        }
+    };
+
+    const handleDeleteAppointment = async (id: string) => {
+        try {
+            await MessagingService.deleteAppointment(id);
+            toast({ title: "Cita Eliminada", variant: "success" });
+            loadData(true);
+        } catch (error: any) {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        }
+    };
+
+    const handleUpdateOffer = async () => {
+        if (!editingOffer) return;
+        try {
+            const supabase = createClient();
+            const { error } = await supabase
+                .from("subscription_plans")
+                .update({
+                    name_es: newOfferName,
+                    price_pen: parseFloat(newOfferPrice),
+                    description_es: newOfferDescription,
+                    included_measurements: 2 // Default or add a field in the UI
+                })
+                .eq("id", editingOffer.id);
+
+            if (error) throw error;
+            toast({ title: "Plan Actualizado", variant: "success" });
+            setEditingOffer(null);
+            loadData();
+        } catch (error: any) {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        }
+    };
+
+    const handleCreateOffer = async () => {
+        try {
+            const supabase = createClient();
+            const { error } = await supabase
+                .from("subscription_plans")
+                .insert([{
+                    name_es: newOfferName,
+                    price_pen: parseFloat(newOfferPrice),
+                    description_es: newOfferDescription,
+                    duration_months: 1, // Default or add field
+                    included_measurements: 2, // Default
+                    is_active: true
+                }]);
+
+            if (error) throw error;
+            toast({ title: "Plan Creado Successfully", variant: "success" });
+            setIsCreateOfferDialogOpen(false);
+            setNewOfferName("");
+            setNewOfferPrice("");
+            setNewOfferPriceOffer("");
+            setNewOfferOfferReason("");
+            setNewOfferDescription("");
+            loadData();
+        } catch (error: any) {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        }
+    };
+
+
+    const handleSaveSettings = async () => {
+        toast({
+            title: "Configuración Actualizada",
+            description: "Los parámetros clínicos han sido guardados en la base de datos global.",
+            variant: "success"
+        });
+    };
+
+    const handleDeleteProfile = (id: string, name: string) => {
+        setProfileToDelete({ id, name });
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!profileToDelete) return;
+
+        setIsDeletingProfile(true);
+        try {
+            await MessagingService.deleteProfile(profileToDelete.id);
+            toast({
+                title: "Perfil Eliminado",
+                description: `El usuario ${profileToDelete.name} ha sido removido exitosamente.`,
+                variant: "success"
+            });
+            setIsDeleteDialogOpen(false);
+            setProfileToDelete(null);
+            loadData(true);
+        } catch (error: any) {
+            toast({
+                title: "Error al Eliminar",
+                description: error.message || "No se pudo eliminar el usuario.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsDeletingProfile(false);
+        }
+    };
+
+    const handleCreateUser = async () => {
+        if (!newUserEmail || !newUserPassword || !newUserFullName) {
+            toast({ title: "Error", description: "Completa todos los campos", variant: "destructive" });
+            return;
+        }
+
+        setIsCreatingUser(true);
+        console.log("[AdminDashboard] Creating user:", { email: newUserEmail, fullName: newUserFullName, role: newUserRole });
+        try {
+            const response = await fetch("/api/admin/create-user", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: newUserEmail,
+                    password: newUserPassword,
+                    fullName: newUserFullName,
+                    role: newUserRole
+                })
+            });
+
+            const result = await response.json();
+            console.log("[AdminDashboard] Server response:", result);
+
+            if (!response.ok) {
+                throw new Error(result.error || "Error al crear usuario");
+            }
+
+            toast({ title: "Usuario Creado", description: "El usuario ha sido registrado exitosamente.", variant: "success" });
+            setIsCreateUserDialogOpen(false);
+            // Reset fields
+            setNewUserEmail("");
+            setNewUserPassword("");
+            setNewUserFullName("");
+            loadData(true);
+        } catch (error: any) {
+            console.error("[AdminDashboard] Creation error:", error);
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        } finally {
+            setIsCreatingUser(false);
+        }
+    };
+
+
+    const nutritionists = profiles.filter(p => p.role === "nutricionista");
+    const patients = profiles.filter(p => p.role === "paciente");
+    const pendingNutris = nutritionists.filter(p =>
+        ((p as any).status !== "Activo" && (p as any).status !== "Rechazado") &&
+        (p.name || "").toLowerCase().includes(verifSearch.toLowerCase())
+    );
+    const filteredPatientsForAssign = patients.filter(p =>
+        (p.name || "").toLowerCase().includes(assignPSearch.toLowerCase())
+    );
+
+    const activeNutris = nutritionists.filter(p =>
+        (p as any).status === "Activo" &&
+        (p.name || "").toLowerCase().includes(assignNSearch.toLowerCase())
+    );
+
+    const globalNextAppt = [...allAppointments]
+        .filter(a => {
+            const now = new Date();
+            const aptDate = new Date(a.date + 'T' + (a.startTime || '00:00'));
+            return aptDate > now && a.status !== 'cancelada';
+        })
+        .sort((a, b) => (a.date + 'T' + a.startTime).localeCompare(b.date + 'T' + b.startTime))[0];
+
+    const todayStr = (() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    })();
+    const todayAppts = allAppointments.filter(a => a.date === todayStr && a.status !== 'cancelada');
+
+    return (
+        <div className={cn(
+            activeTab === "landing_cms" ? "space-y-0 pb-0 -m-4 lg:-m-6" : "space-y-8 pb-10"
+        )}>
+            {/* Header */}
+            {activeTab !== "landing_cms" && activeTab !== "plans_management" && activeTab !== "auth_cms" && (
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-4xl font-black text-white tracking-tight uppercase">
+                            {activeTab === "settings" ? "Configuración Variables" :
+                                activeTab === "visualization" ? "Configuración de Tablas" : "Panel Administrador"}
+                        </h1>
+                        <p className="text-slate-400 font-tech font-black uppercase tracking-widest text-[10px] mt-1 opacity-60">Sincronizado con Supabase en tiempo real.</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <Button variant="outline" className="rounded-2xl font-black text-[10px] uppercase tracking-widest border-white/10 bg-white/5 text-white hover:bg-white/10">
+                            <Bell className="h-4 w-4 mr-2" /> Notificaciones
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {loading ? (
+                <div className="py-20 text-center space-y-4">
+                    <div className="h-10 w-10 border-4 border-nutrition-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-slate-400 font-bold">Cargando datos desde Supabase...</p>
+                </div>
+            ) : (
+                <div className={cn(
+                    "grid grid-cols-1 gap-6 lg:gap-8 items-start",
+                    (activeTab !== "settings" && activeTab !== "visualization" && activeTab !== "landing_cms" && activeTab !== "auth_cms" && activeTab !== "plans_management" && activeTab !== "food_database") ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1"
+                )}>
+                    {/* Panel Lateral Interno */}
+                    {activeTab !== "settings" && activeTab !== "visualization" && activeTab !== "landing_cms" && activeTab !== "auth_cms" && activeTab !== "plans_management" && activeTab !== "food_database" && (
+                        <div className="flex lg:flex-col gap-2 bg-white/[0.03] p-2 lg:p-4 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 sticky top-20 lg:top-24 overflow-x-auto lg:overflow-x-visible no-scrollbar z-20 backdrop-blur-md">
+                            {/* Administración label removed as per user request */}
+                            {[
+                                { id: "overview", label: "Resumen", fullLabel: "Resumen General", icon: Users },
+                                { id: "verification", label: "Verif.", fullLabel: "Verificaciones", icon: UserCheck, badge: pendingNutris.length },
+                                { id: "assignments", label: "Asig. Nutri", fullLabel: "Asignación de Nutricionista", icon: UserCheckIcon },
+                                { id: "plan_assignments", label: "Asig. Plan", fullLabel: "Asignación de Plan", icon: LayoutGrid },
+                                { id: "subscriptions", label: "Planes", fullLabel: "Suscripciones Pro", icon: DatabaseZap },
+                                { id: "calendar", label: "Agenda", fullLabel: "Agenda Global", icon: Calendar },
+                                ...(currentAdminRole === "administrador" ? [{ id: "users_management", label: "Usuarios", fullLabel: "Usuarios", icon: ShieldPlus }] : []),
+                            ].map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id as any)}
+                                    className={cn(
+                                        "flex items-center gap-3 lg:gap-4 px-4 lg:px-6 py-3 lg:py-4 rounded-xl lg:rounded-2xl text-[10px] lg:text-[11px] font-black uppercase tracking-widest transition-all group relative overflow-hidden whitespace-nowrap",
+                                        activeTab === tab.id
+                                            ? "bg-nutrition-500 text-white shadow-lg shadow-nutrition-500/20"
+                                            : "text-slate-400 hover:bg-white/5 hover:text-white"
+                                    )}
+                                >
+                                    <tab.icon className={cn(
+                                        "h-4 w-4 relative z-10",
+                                        activeTab === tab.id ? "text-white" : "text-slate-500 group-hover:text-white"
+                                    )} />
+                                    <span className="relative z-10 block lg:hidden">{tab.label}</span>
+                                    <span className="relative z-10 hidden lg:block">{tab.fullLabel}</span>
+                                    {tab.badge ? (
+                                        <span className="bg-red-500 text-white text-[9px] h-4 w-4 lg:h-5 lg:w-5 rounded-full flex items-center justify-center font-black relative z-10 shadow-lg">
+                                            {tab.badge}
+                                        </span>
+                                    ) : null}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+
+                    {/* Contenido Dinámico */}
+                    <div className="flex-1 min-w-0">
+                        {activeTab === "overview" && (
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <Card className="col-span-2">
+                                    <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 px-10 py-8 border-b border-white/5">
+                                        <CardTitle className="font-black text-2xl uppercase tracking-tight text-white">Directorio Global</CardTitle>
+                                        <div className="relative w-full md:w-80">
+                                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                                            <Input
+                                                placeholder="Buscar usuario o email..."
+                                                className="pl-12 rounded-2xl border-white/5 bg-white/5 h-12 text-white placeholder:text-slate-600 focus:ring-nutrition-500/50"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-4">
+                                            {[
+                                                { title: "Administradores", role: "administrador", icon: Shield },
+                                                { title: "Staff", role: "staff", icon: ShieldPlus },
+                                                { title: "Nutricionistas", role: "nutricionista", icon: Stethoscope },
+                                                { title: "Pacientes", role: "paciente", icon: User }
+                                            ].map((group) => {
+                                                const groupProfiles = profiles.filter(p =>
+                                                    p.role === group.role &&
+                                                    (p.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+                                                );
+
+                                                if (groupProfiles.length === 0) return null;
+
+                                                const isExpanded = expandedGroups[group.role];
+
+                                                return (
+                                                    <div key={group.role} className="space-y-4">
+                                                        <button
+                                                            onClick={() => setExpandedGroups(prev => ({ ...prev, [group.role]: !prev[group.role] }))}
+                                                            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-all group/header"
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="h-8 w-8 rounded-xl bg-nutrition-500/10 flex items-center justify-center">
+                                                                    <group.icon className="h-4 w-4 text-nutrition-500" />
+                                                                </div>
+                                                                <h3 className="font-black text-xs uppercase tracking-widest text-white">
+                                                                    {group.title} <span className="ml-2 text-nutrition-500/50">({groupProfiles.length})</span>
+                                                                </h3>
+                                                            </div>
+                                                            {isExpanded ? (
+                                                                <ChevronUp className="h-4 w-4 text-slate-500 group-hover/header:text-white transition-colors" />
+                                                            ) : (
+                                                                <ChevronDown className="h-4 w-4 text-slate-500 group-hover/header:text-white transition-colors" />
+                                                            )}
+                                                        </button>
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                            {groupProfiles.map(profile => (
+                                                                <div key={profile.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-2xl sm:rounded-3xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all group gap-4 sm:gap-0">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <Avatar className="h-10 w-10 sm:h-12 sm:w-12 border-2 border-white/10 shadow-md">
+                                                                            <AvatarFallback className="bg-nutrition-500 text-white font-black text-xs sm:text-base">
+                                                                                {(profile.name || "?").split(" ").map(n => n[0]).join("")}
+                                                                            </AvatarFallback>
+                                                                        </Avatar>
+                                                                        <div className="min-w-0">
+                                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                                <h4 className="font-black text-white leading-none text-sm sm:text-base truncate max-w-[120px] sm:max-w-none">{profile.name}</h4>
+                                                                                <Badge variant="outline" className={cn(
+                                                                                    "h-4 text-[7px] sm:text-[8px] font-black uppercase border-none px-1.5",
+                                                                                    (profile as any).status === "Activo" ? "bg-green-500/10 text-green-500" : "bg-amber-500/10 text-amber-500"
+                                                                                )}>
+                                                                                    {(profile as any).status || "Pendiente"}
+                                                                                </Badge>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                                                                <Mail className="h-3 w-3 text-slate-500" />
+                                                                                <p className="text-[10px] sm:text-xs font-medium text-slate-400 truncate max-w-[150px] sm:max-w-none">
+                                                                                    {(currentAdminRole === 'administrador' || profile.role !== 'administrador')
+                                                                                        ? (profile.email || "Sin correo")
+                                                                                        : "• • • • • • • • • •"}
+                                                                                </p>
+                                                                                {profile.role === 'paciente' && (
+                                                                                    <Badge className={cn(
+                                                                                        "text-[7px] sm:text-[8px] font-black uppercase border-none px-1.5 h-4",
+                                                                                        profile.planType === 'plan flexible' ? "bg-purple-500/10 text-purple-400" :
+                                                                                            profile.planType === 'plan menu semanal' ? "bg-blue-500/10 text-blue-400" :
+                                                                                                "bg-slate-500/10 text-slate-500"
+                                                                                    )}>
+                                                                                        {profile.planType || 'Sin Plan'}
+                                                                                    </Badge>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1 w-full sm:w-auto justify-end border-t border-white/5 sm:border-none pt-2 sm:pt-0">
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                                                            onClick={() => handleDeleteProfile(profile.id, profile.name)}
+                                                                        >
+                                                                            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl text-slate-500 hover:text-nutrition-500 hover:bg-nutrition-500/10 transition-all"
+                                                                            onClick={() => {
+                                                                                if (profile.role === 'paciente') {
+                                                                                    setSelectedPatientPlan(profile);
+                                                                                    setNewPlanType(profile.planType || "sin plan");
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                            {profiles.length === 0 && (
+                                                <p className="text-center py-20 text-slate-500 font-bold italic">No se encontraron perfiles en la base de datos.</p>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Delete Confirmation Dialog */}
+                                <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                                    <DialogContent className="rounded-[2.5rem] max-w-sm border-white/5 bg-nutri-base/95 backdrop-blur-2xl p-8">
+                                        <div className="flex flex-col items-center text-center space-y-6">
+                                            <div className="h-20 w-20 rounded-[2rem] bg-red-500/10 flex items-center justify-center p-4 border border-red-500/20">
+                                                <AlertTriangle className="h-10 w-10 text-red-500 animate-pulse" />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <DialogTitle className="text-2xl font-black text-white uppercase italic tracking-tight">Confirmar Eliminación</DialogTitle>
+                                                <DialogDescription className="text-slate-400 font-medium">
+                                                    ¿Estás seguro de que deseas eliminar permanentemente a <span className="text-white font-bold">{profileToDelete?.name}</span>? Esta acción no se puede deshacer.
+                                                </DialogDescription>
+                                            </div>
+
+                                            <div className="flex flex-col w-full gap-3 pt-4">
+                                                <Button
+                                                    variant="destructive"
+                                                    className="h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                                    onClick={handleConfirmDelete}
+                                                    disabled={isDeletingProfile}
+                                                >
+                                                    {isDeletingProfile ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                                                    Eliminar Usuario
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] text-slate-500 hover:text-white hover:bg-white/5 transition-all"
+                                                    onClick={() => setIsDeleteDialogOpen(false)}
+                                                    disabled={isDeletingProfile}
+                                                >
+                                                    Cancelar
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+
+                                {/* Plan Type Dialog */}
+                                <Dialog open={!!selectedPatientPlan} onOpenChange={(open) => !open && setSelectedPatientPlan(null)}>
+                                    <DialogContent className="rounded-[2.5rem] max-w-sm">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-2xl font-black">Plan de {selectedPatientPlan?.name}</DialogTitle>
+                                            <DialogDescription>Cambia la etiqueta del plan nutricional para este paciente.</DialogDescription>
+                                        </DialogHeader>
+                                        <div className="space-y-6 py-6">
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo de Plan</label>
+                                                <div className="grid grid-cols-1 gap-2">
+                                                    {['sin plan', 'plan flexible', 'plan menu semanal'].map(type => (
+                                                        <button
+                                                            key={type}
+                                                            onClick={() => setNewPlanType(type)}
+                                                            className={cn(
+                                                                "w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center justify-between font-bold text-sm capitalize",
+                                                                newPlanType === type ? "border-nutrition-600 bg-nutrition-50 text-nutrition-700" : "border-slate-100 hover:border-slate-200"
+                                                            )}
+                                                        >
+                                                            {type}
+                                                            {newPlanType === type && <Check className="h-4 w-4" />}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button
+                                                className="w-full rounded-2xl bg-nutrition-600 text-white font-black h-12"
+                                                onClick={async () => {
+                                                    if (!selectedPatientPlan) return;
+                                                    try {
+                                                        await MessagingService.updatePatientPlanType(selectedPatientPlan.id, newPlanType);
+                                                        toast({ title: "Plan Actualizado", variant: "success" });
+                                                        setSelectedPatientPlan(null);
+                                                        loadData(true);
+                                                    } catch (e: any) {
+                                                        toast({ title: "Error", description: e.message, variant: "destructive" });
+                                                    }
+                                                }}
+                                            >
+                                                Guardar Cambios
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+
+                                <div className="space-y-6">
+                                    <Card className="rounded-[2.5rem] bg-slate-900 text-white overflow-hidden relative">
+                                        <div className="absolute top-0 right-0 p-6 opacity-10">
+                                            <Shield className="h-24 w-24" />
+                                        </div>
+                                        <CardHeader>
+                                            <CardTitle className="text-3xl font-black">{profiles.length}</CardTitle>
+                                            <CardDescription className="text-slate-400 font-bold uppercase tracking-widest text-xs">Usuarios en Supabase</CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                                                <div>
+                                                    <p className="text-xs font-bold text-slate-400">Nutricionistas</p>
+                                                    <p className="text-xl font-black">{nutritionists.length}</p>
+                                                </div>
+                                                <ArrowRight className="h-5 w-5 text-nutrition-400" />
+                                                <div>
+                                                    <p className="text-xs font-bold text-slate-400">Pacientes</p>
+                                                    <p className="text-xl font-black">{patients.length}</p>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="rounded-[2.5rem] border-slate-100 shadow-lg">
+                                        <CardHeader className="pb-2">
+                                            <CardTitle className="text-sm font-black text-slate-400 uppercase tracking-widest leading-none flex items-center gap-2">
+                                                <Clock className="h-4 w-4" /> Database Sync
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            <div className="flex gap-3">
+                                                <div className="h-8 w-8 rounded-full bg-green-50 flex items-center justify-center shrink-0">
+                                                    <Check className="h-4 w-4 text-green-500" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-slate-700">Conectado a PostgreSQL</p>
+                                                    <p className="text-[10px] text-slate-400">Estado: Online</p>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === "verification" && (
+                            <div className="space-y-6">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <h2 className="text-2xl font-black text-slate-800">Verificación de Especialistas</h2>
+                                    <div className="relative w-64">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                        <Input
+                                            placeholder="Buscar especialista..."
+                                            className="pl-10 rounded-2xl border-slate-200 bg-white h-10 ring-nutrition-100"
+                                            value={verifSearch}
+                                            onChange={(e) => setVerifSearch(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <ScrollArea className="h-[600px] pr-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {pendingNutris.length > 0 ? (
+                                            pendingNutris.map(nutri => (
+                                                <Card key={nutri.id} className="rounded-[2rem] border-slate-100 shadow-lg overflow-hidden flex flex-col">
+                                                    <div className="h-20 bg-gradient-to-r from-nutrition-500 to-nutrition-600 relative">
+                                                        <Badge className="absolute top-4 right-4 bg-white/20 backdrop-blur-md border-none text-[10px] font-black uppercase text-white">
+                                                            Pendiente
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="px-6 pb-6 flex-1 flex flex-col items-center -mt-10 text-center">
+                                                        <Avatar className="h-20 w-20 border-4 border-white shadow-xl mb-4">
+                                                            <AvatarFallback className="bg-nutrition-50 text-nutrition-600 text-xl font-black">
+                                                                {(nutri.name || "?").split(" ").map(n => n[0]).join("")}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <h3 className="font-black text-lg text-slate-800 leading-none">{nutri.name}</h3>
+                                                        <p className="text-sm text-slate-400 font-medium mb-4">Especialista Registrado</p>
+
+                                                        <div className="w-full bg-slate-50 rounded-2xl p-4 mb-6 text-left space-y-2">
+                                                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">Documentos</p>
+                                                            <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                                                                <span>Título Profesional</span>
+                                                                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Subido</Badge>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mt-auto w-full grid grid-cols-2 gap-3">
+                                                            <Button
+                                                                variant="outline"
+                                                                className="rounded-xl font-black border-slate-100 text-red-500 hover:bg-red-50"
+                                                                onClick={() => handleVerify(nutri.id, "Rechazado")}
+                                                            >
+                                                                <X className="h-4 w-4 mr-2" /> Rechazar
+                                                            </Button>
+                                                            <Button
+                                                                className="rounded-xl font-black bg-nutrition-600 hover:bg-nutrition-700 text-white"
+                                                                onClick={() => handleVerify(nutri.id, "Activo")}
+                                                            >
+                                                                <Check className="h-4 w-4 mr-2" /> Verificar
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </Card>
+                                            ))
+                                        ) : (
+                                            <div className="col-span-full py-20 text-center space-y-4">
+                                                <div className="h-20 w-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
+                                                    <UserCheck className="h-10 w-10 text-slate-300" />
+                                                </div>
+                                                <p className="text-slate-400 font-black text-lg">No hay solicitudes pendientes.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </ScrollArea>
+                            </div>
+                        )}
+
+                        {activeTab === "assignments" && (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <Card className="rounded-[2.5rem] border-white/10 bg-white/[0.03] backdrop-blur-md shadow-2xl overflow-hidden">
+                                    <CardHeader className="border-b border-white/5">
+                                        <CardTitle className="font-black text-xl text-white uppercase tracking-tight">Asignar Especialista</CardTitle>
+                                        <CardDescription className="font-bold text-slate-400 text-xs uppercase tracking-widest opacity-60">Vincula un paciente con su nutricionista asignado.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="p-0">
+                                        <div className="p-10 space-y-8">
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">1. Selecciona Paciente</p>
+                                                    <div className="relative w-40">
+                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                                                        <Input
+                                                            placeholder="Filtrar..."
+                                                            className="pl-9 h-9 text-[10px] rounded-xl border-white/5 bg-white/5 text-white placeholder:text-slate-600 focus:ring-nutrition-500/50"
+                                                            value={assignPSearch}
+                                                            onChange={(e) => setAssignPSearch(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <ScrollArea className="h-56 border-white/5 rounded-[1.5rem] p-2 bg-white/[0.02]">
+                                                    <div className="space-y-1">
+                                                        {filteredPatientsForAssign.map(p => (
+                                                            <button
+                                                                key={p.id}
+                                                                onClick={() => setSelectedPatientId(p.id)}
+                                                                className={cn(
+                                                                    "w-full text-left p-4 rounded-xl flex items-center justify-between group transition-all",
+                                                                    selectedPatientId === p.id ? "bg-nutrition-500 text-white shadow-lg shadow-nutrition-500/20" : "hover:bg-white/5"
+                                                                )}
+                                                            >
+                                                                <span className={cn("text-xs font-black uppercase tracking-widest", selectedPatientId === p.id ? "text-white" : "text-slate-300")}>{p.name}</span>
+                                                                <Badge variant="outline" className={cn(
+                                                                    "text-[8px] font-black uppercase border-none px-2 py-0.5",
+                                                                    assignments[p.id]?.length > 0
+                                                                        ? (selectedPatientId === p.id ? "bg-white/20 text-white" : "bg-green-500/10 text-green-500")
+                                                                        : (selectedPatientId === p.id ? "bg-white/10 text-white/50" : "bg-slate-500/10 text-slate-500")
+                                                                )}>
+                                                                    {assignments[p.id]?.length > 0 ? "Asignado" : "Pendiente"}
+                                                                </Badge>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </ScrollArea>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">2. Selecciona Nutricionista</p>
+                                                    <div className="relative w-40">
+                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                                                        <Input
+                                                            placeholder="Filtrar..."
+                                                            className="pl-9 h-9 text-[10px] rounded-xl border-white/5 bg-white/5 text-white placeholder:text-slate-600 focus:ring-nutrition-500/50"
+                                                            value={assignNSearch}
+                                                            onChange={(e) => setAssignNSearch(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <ScrollArea className="h-56 border-white/5 rounded-[1.5rem] p-2 bg-white/[0.02]">
+                                                    <div className="space-y-1">
+                                                        {activeNutris.map(n => (
+                                                            <button
+                                                                key={n.id}
+                                                                onClick={() => setSelectedNutriId(n.id)}
+                                                                className={cn(
+                                                                    "w-full text-left p-4 rounded-xl flex items-center gap-4 transition-all group",
+                                                                    selectedNutriId === n.id ? "bg-nutrition-500 text-white shadow-lg shadow-nutrition-500/20" : "hover:bg-white/5"
+                                                                )}
+                                                            >
+                                                                <Avatar className="h-8 w-8 border-2 border-white/10">
+                                                                    <AvatarFallback className={cn(
+                                                                        "text-[10px] font-black",
+                                                                        selectedNutriId === n.id ? "bg-white/20 text-white" : "bg-nutrition-500 text-white"
+                                                                    )}>
+                                                                        {n.name[0]}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <span className={cn("text-xs font-black uppercase tracking-widest", selectedNutriId === n.id ? "text-white" : "text-slate-300")}>{n.name}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </ScrollArea>
+                                            </div>
+
+                                            <Button
+                                                onClick={handleAssign}
+                                                disabled={!selectedPatientId || !selectedNutriId}
+                                                className="w-full rounded-2xl bg-nutrition-600 hover:bg-nutrition-700 text-white font-black h-14 uppercase tracking-[0.2em] text-[11px] disabled:opacity-20 transition-all shadow-lg shadow-nutrition-600/20"
+                                            >
+                                                Confirmar Asignación
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card className="rounded-[2.5rem] border-white/10 bg-white/[0.03] backdrop-blur-md shadow-2xl overflow-hidden flex flex-col">
+                                    <CardHeader className="border-b border-white/5">
+                                        <div className="flex items-center justify-between">
+                                            <CardTitle className="font-black text-xl text-white uppercase tracking-tight">Estado de Asignaciones</CardTitle>
+                                            <Badge className="bg-white/5 text-slate-400 border-white/5 font-black uppercase text-[10px] px-3 py-1 rounded-lg">
+                                                {Object.keys(assignments).length} Total
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="flex-1 p-10 overflow-hidden">
+                                        <ScrollArea className="h-[600px] pr-4">
+                                            <div className="space-y-4">
+                                                {Object.entries(assignments).flatMap(([pid, nids]) => {
+                                                    const p = profiles.find(x => x.id === pid);
+                                                    if (!p) return [];
+                                                    return nids.map(nid => {
+                                                        const n = profiles.find(x => x.id === nid);
+                                                        if (!n) return null;
+                                                        return (
+                                                            <div key={`${pid}-${nid}`} className="p-6 rounded-[2rem] border border-white/5 flex items-center justify-between bg-white/[0.02] hover:bg-white/[0.05] hover:border-nutrition-500/20 transition-all group">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="space-y-1">
+                                                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Paciente</p>
+                                                                        <p className="text-sm font-black text-white">{p.name}</p>
+                                                                    </div>
+                                                                    <div className="h-8 w-8 rounded-full bg-nutrition-500/10 flex items-center justify-center mx-2">
+                                                                        <ArrowRight className="h-4 w-4 text-nutrition-500" />
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Especialista</p>
+                                                                        <p className="text-sm font-black text-nutrition-400">{n.name}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-10 w-10 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                                                    onClick={() => handleUnassign(pid, nid)}
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        );
+                                                    });
+                                                })}
+                                            </div>
+                                        </ScrollArea>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        )}
+
+                        {activeTab === "plan_assignments" && (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <Card className="rounded-[2.5rem] border-white/10 bg-white/[0.03] backdrop-blur-md shadow-2xl overflow-hidden">
+                                    <CardHeader className="border-b border-white/5">
+                                        <CardTitle className="font-black text-xl text-white uppercase tracking-tight">Asignación de Plan</CardTitle>
+                                        <CardDescription className="font-bold text-slate-400 text-xs uppercase tracking-widest opacity-60">Define el protocolo nutricional para cada paciente.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="p-10 space-y-8">
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">1. Selecciona Paciente</p>
+                                                <div className="relative w-40">
+                                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                                                    <Input
+                                                        placeholder="Filtrar..."
+                                                        className="pl-9 h-9 text-[10px] rounded-xl border-white/5 bg-white/5 text-white focus:ring-nutrition-500/50"
+                                                        value={assignPlanSearch}
+                                                        onChange={(e) => setAssignPlanSearch(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <ScrollArea className="h-56 border-white/5 rounded-[1.5rem] p-2 bg-white/[0.02]">
+                                                <div className="space-y-1">
+                                                    {patients.filter(p => (p.name || "").toLowerCase().includes(assignPlanSearch.toLowerCase())).map(p => (
+                                                        <button
+                                                            key={p.id}
+                                                            onClick={() => setSelectedPlanPatientId(p.id)}
+                                                            className={cn(
+                                                                "w-full text-left p-4 rounded-xl flex items-center justify-between group transition-all",
+                                                                selectedPlanPatientId === p.id ? "bg-nutrition-500 text-white shadow-lg shadow-nutrition-500/20" : "hover:bg-white/5"
+                                                            )}
+                                                        >
+                                                            <span className={cn("text-xs font-black uppercase tracking-widest", selectedPlanPatientId === p.id ? "text-white" : "text-slate-300")}>{p.name}</span>
+                                                            <Badge variant="outline" className={cn(
+                                                                "text-[8px] font-black uppercase border-none px-2 py-0.5",
+                                                                p.planType && p.planType !== 'sin plan' ? "bg-green-500/10 text-green-500" : "bg-slate-500/10 text-slate-500"
+                                                            )}>
+                                                                {p.planType || 'Sin Plan'}
+                                                            </Badge>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </ScrollArea>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">2. Protocolo a Activar</p>
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {['plan flexible', 'plan menu semanal', 'sin plan'].map(type => (
+                                                    <button
+                                                        key={type}
+                                                        onClick={() => setSelectedPlanType(type)}
+                                                        className={cn(
+                                                            "w-full text-left p-5 rounded-2xl border transition-all flex items-center justify-between group",
+                                                            selectedPlanType === type ? "bg-nutrition-500/10 border-nutrition-500/50" : "bg-white/[0.02] border-white/5 hover:bg-white/5"
+                                                        )}
+                                                    >
+                                                        <span className={cn("text-xs font-black uppercase tracking-widest", selectedPlanType === type ? "text-nutrition-400" : "text-slate-500")}>
+                                                            {type}
+                                                        </span>
+                                                        <div className={cn(
+                                                            "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all",
+                                                            selectedPlanType === type ? "border-nutrition-500 bg-nutrition-500" : "border-white/10"
+                                                        )}>
+                                                            {selectedPlanType === type && <Check className="h-3 w-3 text-white" />}
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {selectedPlanType !== 'sin plan' && (
+                                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">3. Cantidad de Mediciones</p>
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    {[2, 4, 6].map(count => (
+                                                        <button
+                                                            key={count}
+                                                            onClick={() => setSelectedPlanMeasurements(count)}
+                                                            className={cn(
+                                                                "p-4 rounded-xl border text-[10px] font-black uppercase tracking-tighter transition-all flex flex-col items-center gap-1",
+                                                                selectedPlanMeasurements === count
+                                                                    ? "bg-nutrition-500/10 border-nutrition-500/50 text-nutrition-400 shadow-lg shadow-nutrition-500/10"
+                                                                    : "bg-white/[0.02] border-white/5 text-slate-500 hover:bg-white/5"
+                                                            )}
+                                                        >
+                                                            <span>{count}</span>
+                                                            <span className="text-[8px] opacity-60">Mediciones</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <Button
+                                            onClick={handleAssignPlan}
+                                            disabled={!selectedPlanPatientId}
+                                            className="w-full rounded-2xl bg-white text-black hover:bg-nutrition-50 font-black h-16 uppercase tracking-[0.3em] text-[11px] disabled:opacity-20 transition-all shadow-xl"
+                                        >
+                                            Asignar Plan
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+
+                                <Card className="rounded-[2.5rem] border-white/10 bg-white/[0.03] backdrop-blur-md shadow-2xl overflow-hidden flex flex-col">
+                                    <CardHeader className="border-b border-white/5">
+                                        <div className="flex items-center justify-between">
+                                            <CardTitle className="font-black text-xl text-white uppercase tracking-tight">Historial de Planes</CardTitle>
+                                            <Badge className="bg-white/5 text-slate-400 border-white/5 font-black uppercase text-[10px] px-3 py-1 rounded-lg">
+                                                {planHistory.length} Registros
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="flex-1 p-0 overflow-hidden">
+                                        <ScrollArea className="h-[700px]">
+                                            {planHistory.length > 0 ? (
+                                                <div className="divide-y divide-white/5">
+                                                    {planHistory.map((entry, i) => (
+                                                        <div key={i} className="p-8 hover:bg-white/[0.02] transition-all">
+                                                            <div className="flex justify-between items-start mb-4">
+                                                                <div className="space-y-1">
+                                                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Protocolo Activado</p>
+                                                                    <h4 className="text-sm font-black text-white uppercase">{entry.plan?.name_es || "Asignación Manual"}</h4>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    {entry.plan?.included_measurements && (
+                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">
+                                                                            {entry.plan.included_measurements} Mediciones
+                                                                        </span>
+                                                                    )}
+                                                                    <Badge className="bg-green-500/10 text-green-500 border-none font-black uppercase text-[8px] tracking-widest px-2">
+                                                                        {entry.status}
+                                                                    </Badge>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-6 w-6 rounded-lg text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                                                        onClick={() => confirmDeletePlan(entry.id)}
+                                                                    >
+                                                                        <Trash2 className="h-3 w-3" />
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-6">
+                                                                <div className="flex items-center gap-2 text-slate-400">
+                                                                    <Calendar className="h-3 w-3" />
+                                                                    <span className="text-[10px] font-bold">{new Date(entry.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 text-slate-400">
+                                                                    <Clock className="h-3 w-3" />
+                                                                    <span className="text-[10px] font-bold">{new Date(entry.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                                </div>
+                                                                {entry.metadata?.measurements_limit && (
+                                                                    <div className="flex items-center gap-2 text-nutrition-400">
+                                                                        <Activity className="h-3 w-3" />
+                                                                        <span className="text-[10px] font-black">{entry.metadata.measurements_limit} Mediciones</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="p-20 text-center space-y-4">
+                                                    <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center mx-auto border border-white/5">
+                                                        <Activity className="h-8 w-8 text-slate-700" />
+                                                    </div>
+                                                    <p className="text-slate-500 font-black uppercase tracking-widest text-[10px] italic">No se registran activaciones previas para este paciente.</p>
+                                                </div>
+                                            )}
+                                        </ScrollArea>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Delete Plan Confirmation Dialog */}
+                                <Dialog open={isDeletePlanDialogOpen} onOpenChange={setIsDeletePlanDialogOpen}>
+                                    <DialogContent className="rounded-[2.5rem] max-w-sm border-white/5 bg-nutri-base/95 backdrop-blur-2xl p-8">
+                                        <div className="flex flex-col items-center text-center space-y-6">
+                                            <div className="h-20 w-20 rounded-[2rem] bg-red-500/10 flex items-center justify-center p-4 border border-red-500/20">
+                                                <AlertTriangle className="h-10 w-10 text-red-500 animate-pulse" />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <DialogTitle className="text-2xl font-black text-white uppercase italic tracking-tight">Confirmar Eliminación</DialogTitle>
+                                                <DialogDescription className="text-slate-400 font-medium">
+                                                    ¿Estás seguro de eliminar este registro de plan? Esta acción no se puede deshacer.
+                                                </DialogDescription>
+                                            </div>
+
+                                            <div className="flex flex-col w-full gap-3 pt-4">
+                                                <Button
+                                                    variant="destructive"
+                                                    className="h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                                    onClick={executeDeletePlan}
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-2" /> Eliminar Plan
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] text-slate-500 hover:text-white hover:bg-white/5 transition-all"
+                                                    onClick={() => setIsDeletePlanDialogOpen(false)}
+                                                >
+                                                    Cancelar
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                        )}
+
+                        {activeTab === "calendar" && (
+                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div className="lg:col-span-2 space-y-1">
+                                        <h2 className="text-3xl font-black text-white uppercase italic tracking-tight flex items-center gap-3">
+                                            <div className="h-8 w-1.5 bg-nutri-brand rounded-full" />
+                                            Agenda Global
+                                        </h2>
+                                        <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px] ml-4">Gestión centralizada de especialidades y consultas.</p>
+                                    </div>
+                                    <div className="flex items-center justify-end gap-4">
+                                        <Card className="hidden md:flex bg-white/5 border-white/5 px-6 py-3 rounded-2xl items-center gap-6">
+                                            <div className="flex flex-col">
+                                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Total Citas</span>
+                                                <span className="text-xl font-black text-white">{allAppointments.filter(a => a.date === todayStr && a.status !== 'cancelada').length}</span>
+                                            </div>
+                                            <div className="h-8 w-px bg-white/10" />
+                                            <div className="flex flex-col">
+                                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Atendidas</span>
+                                                <span className="text-xl font-black text-green-400">{allAppointments.filter(a => a.date === todayStr && a.status === 'completada').length}</span>
+                                            </div>
+                                        </Card>
+                                        <Dialog open={isAgendaDialogOpen} onOpenChange={(open) => {
+                                            if (open && !agendaDate) {
+                                                setAgendaDate(todayStr);
+                                            }
+                                            if (!open) {
+                                                setEditingAppointmentId(null);
+                                                setAgendaNutriId("");
+                                                setAgendaPatientId("");
+                                                setAgendaDate("");
+                                                setAgendaTime("");
+                                            }
+                                            setIsAgendaDialogOpen(open);
+                                        }}>
+                                            <DialogTrigger asChild>
+                                                <Button className="w-full md:w-auto bg-nutri-brand hover:bg-white text-nutri-base font-black px-10 py-7 rounded-2xl transition-all shadow-[0_10px_30px_rgba(255,122,0,0.3)] hover:scale-105 active:scale-95 uppercase tracking-widest text-xs">
+                                                    <Plus className="h-5 w-5 mr-2" /> Agendar Cita
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="rounded-[2.5rem] w-[95vw] max-w-6xl p-0 overflow-hidden border-none bg-slate-950/95 backdrop-blur-3xl text-white font-tech shadow-[0_0_60px_rgba(0,0,0,0.7)] flex flex-col h-[95vh] sm:h-auto sm:max-h-[90vh]">
+                                                <ScrollArea className="flex-1">
+                                                    <div className="flex flex-col lg:flex-row min-h-full">
+                                                        {/* Config Sidebar */}
+                                                        <div className="w-full lg:w-72 bg-gradient-to-b from-white/[0.03] to-transparent border-b lg:border-b-0 lg:border-r border-white/5 p-6 lg:p-8 space-y-6 flex flex-col shrink-0">
+                                                            <div className="space-y-1">
+                                                                <h3 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3">
+                                                                    <div className="h-5 w-1.5 bg-nutri-brand rounded-full shadow-[0_0_15px_rgba(255,122,0,0.5)]" />
+                                                                    Agendar
+                                                                </h3>
+                                                                <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[7px] ml-4">Configuración</p>
+                                                            </div>
+
+                                                            <div className="space-y-5 flex-1">
+                                                                <div className="space-y-2.5">
+                                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                                        <div className="p-1 rounded-lg bg-nutri-brand/10 text-nutri-brand">
+                                                                            <Stethoscope className="h-2.5 w-2.5" />
+                                                                        </div>
+                                                                        Nutricionista
+                                                                    </label>
+                                                                    <div className="relative group">
+                                                                        <select
+                                                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-xs font-bold text-white outline-none focus:border-nutri-brand/50 focus:bg-white/10 transition-all appearance-none cursor-pointer"
+                                                                            value={agendaNutriId}
+                                                                            onChange={(e) => {
+                                                                                setAgendaNutriId(e.target.value);
+                                                                                setAgendaPatientId("");
+                                                                            }}
+                                                                        >
+                                                                            <option value="" className="bg-slate-900">Seleccionar...</option>
+                                                                            {activeNutris.map(n => <option key={n.id} value={n.id} className="bg-slate-900">{n.name}</option>)}
+                                                                        </select>
+                                                                        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500 rotate-90 pointer-events-none group-hover:text-nutri-brand transition-colors" />
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="space-y-2.5">
+                                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                                        <div className="p-1 rounded-lg bg-nutri-brand/10 text-nutri-brand">
+                                                                            <User className="h-2.5 w-2.5" />
+                                                                        </div>
+                                                                        Paciente
+                                                                    </label>
+                                                                    <div className="relative group">
+                                                                        <select
+                                                                            disabled={!agendaNutriId}
+                                                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-xs font-bold text-white outline-none focus:border-nutri-brand/50 focus:bg-white/10 transition-all appearance-none cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed"
+                                                                            value={agendaPatientId}
+                                                                            onChange={(e) => setAgendaPatientId(e.target.value)}
+                                                                        >
+                                                                            <option value="" className="bg-slate-900">Seleccionar...</option>
+                                                                            {Object.entries(assignments)
+                                                                                .filter(([_, nids]) => nids.includes(agendaNutriId))
+                                                                                .map(([pid, _]) => {
+                                                                                    const p = patients.find(x => x.id === pid);
+                                                                                    return <option key={pid} value={p?.patientId || pid} className="bg-slate-900">{p?.name}</option>;
+                                                                                })
+                                                                            }
+                                                                        </select>
+                                                                        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500 rotate-90 pointer-events-none group-hover:text-nutri-brand transition-colors" />
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="space-y-2.5 pt-1">
+                                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                                        <div className="p-1 rounded-lg bg-nutri-brand/10 text-nutri-brand">
+                                                                            <Filter className="h-2.5 w-2.5" />
+                                                                        </div>
+                                                                        Modalidad
+                                                                    </label>
+                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                        {[
+                                                                            { id: 'virtual', label: 'Virtual', icon: Play },
+                                                                            { id: 'presencia', label: 'Presencial', icon: Target }
+                                                                        ].map(type => (
+                                                                            <button
+                                                                                key={type.id}
+                                                                                onClick={() => setAgendaModality(type.id as any)}
+                                                                                className={cn(
+                                                                                    "relative flex flex-col items-center gap-2 p-3 rounded-[1.25rem] border transition-all duration-300 group overflow-hidden",
+                                                                                    agendaModality === type.id 
+                                                                                        ? "bg-nutri-brand border-none text-nutri-base shadow-[0_10px_20px_rgba(255,122,0,0.3)] scale-[1.02]" 
+                                                                                        : "bg-white/5 border-white/10 text-slate-500 hover:bg-white/[0.08]"
+                                                                                )}
+                                                                            >
+                                                                                <type.icon className={cn("h-4 w-4 transition-transform duration-500", agendaModality === type.id ? "scale-110" : "group-hover:scale-110")} />
+                                                                                <span className="text-[9px] font-black uppercase tracking-widest">{type.label}</span>
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="rounded-2xl bg-nutri-brand/10 p-3 border border-nutri-brand/20">
+                                                                <p className="text-[7px] font-black text-nutri-brand uppercase tracking-[0.2em] leading-relaxed">
+                                                                    Duración: 30 minutos por turno.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Calendar & Selection Content */}
+                                                        <div className="flex-1 p-6 lg:p-10 flex flex-col bg-slate-950/20 min-w-0">
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10">
+                                                                {/* Date Picker */}
+                                                                <div className="space-y-4 lg:space-y-6 flex flex-col">
+                                                                    <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.25em] flex items-center gap-2">
+                                                                        <Calendar className="h-3.5 w-3.5 text-nutri-brand" /> 1. Fecha
+                                                                    </h4>
+                                                                    
+                                                                    <div className="h-[410px] bg-white/[0.03] border border-white/10 rounded-[2rem] p-5 lg:p-7 shadow-2xl relative overflow-hidden group">
+                                                                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-nutri-brand to-transparent opacity-30" />
+                                                                        
+                                                                        <div className="flex items-center justify-between mb-4 lg:mb-6">
+                                                                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all" 
+                                                                                onClick={() => {
+                                                                                    const newMonth = calMonth === 0 ? 11 : calMonth - 1;
+                                                                                    const newYear = calMonth === 0 ? calYear - 1 : calYear;
+                                                                                    setCalMonth(newMonth);
+                                                                                    setCalYear(newYear);
+                                                                                }}>
+                                                                                <ChevronRight className="h-4 w-4 rotate-180" />
+                                                                            </Button>
+                                                                            <div className="text-center">
+                                                                                <span className="text-xs font-black text-white uppercase tracking-[0.2em] italic">
+                                                                                    {["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"][calMonth]}
+                                                                                </span>
+                                                                                <div className="text-[9px] font-black text-nutri-brand tracking-[0.3em] mt-0.5">{calYear}</div>
+                                                                            </div>
+                                                                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                                                                                onClick={() => {
+                                                                                    const newMonth = calMonth === 11 ? 0 : calMonth + 1;
+                                                                                    const newYear = calMonth === 11 ? calYear + 1 : calYear;
+                                                                                    setCalMonth(newMonth);
+                                                                                    setCalYear(newYear);
+                                                                                }}>
+                                                                                <ChevronRight className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </div>
+
+                                                                        <div className="grid grid-cols-7 gap-1 lg:gap-2 mb-3 text-center">
+                                                                            {["L", "M", "X", "J", "V", "S", "D"].map(d => (
+                                                                                <div key={d} className="text-[9px] font-black text-slate-600 uppercase py-1 tracking-widest">{d}</div>
+                                                                            ))}
+                                                                        </div>
+                                                                        <div className="grid grid-cols-7 gap-1 lg:gap-2">
+                                                                            {(() => {
+                                                                                const firstDay = new Date(calYear, calMonth, 1).getDay();
+                                                                                const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+                                                                                const offset = firstDay === 0 ? 6 : firstDay - 1;
+                                                                                const cells = [];
+                                                                                for (let i = 0; i < offset; i++) cells.push(<div key={`empty-${i}`} />);
+                                                                                for (let d = 1; d <= daysInMonth; d++) {
+                                                                                    const dayDate = new Date(calYear, calMonth, d);
+                                                                                    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                                                                    const isSelected = agendaDate === dateStr;
+                                                                                    const isToday = todayStr === dateStr;
+                                                                                    const isDisabled = dayDate < new Date(new Date().setHours(0,0,0,0));
+                                                                                    
+                                                                                    cells.push(
+                                                                                        <button
+                                                                                            key={d}
+                                                                                            disabled={isDisabled}
+                                                                                            onClick={() => setAgendaDate(dateStr)}
+                                                                                            className={cn(
+                                                                                                "h-8 w-8 lg:h-9 lg:w-9 rounded-xl text-[10px] font-black transition-all flex items-center justify-center relative group/day mx-auto",
+                                                                                                isSelected ? "bg-nutri-brand text-nutri-base shadow-[0_5px_15px_rgba(255,122,0,0.4)] scale-110 z-10" :
+                                                                                                isToday ? "border-2 border-nutri-brand/50 text-nutri-brand hover:bg-nutri-brand/10 shadow-[0_0_10px_rgba(255,122,0,0.1)]" :
+                                                                                                isDisabled ? "opacity-10 cursor-not-allowed" :
+                                                                                                "text-slate-400 hover:bg-white/10 hover:text-white"
+                                                                                            )}
+                                                                                        >
+                                                                                            {d}
+                                                                                            {!isSelected && !isDisabled && <div className="absolute inset-0 rounded-xl bg-nutri-brand/5 scale-0 group-hover/day:scale-100 transition-transform duration-300" />}
+                                                                                        </button>
+                                                                                    );
+                                                                                }
+                                                                                return cells;
+                                                                            })()}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Time Picker */}
+                                                                <div className="space-y-4 lg:space-y-6 flex flex-col min-h-0">
+                                                                    <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.25em] flex items-center gap-2">
+                                                                        <Clock className="h-3.5 w-3.5 text-nutri-brand" /> 2. Hora
+                                                                    </h4>
+
+                                                                    {!agendaNutriId || !agendaDate ? (
+                                                                        <div className="h-[410px] flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-white/5 rounded-[2rem] bg-white/[0.01]">
+                                                                            <div className="h-14 w-14 rounded-full bg-white/5 flex items-center justify-center mb-4 animate-pulse">
+                                                                                <ArrowRight className="h-8 w-8 text-slate-700 -rotate-45" />
+                                                                            </div>
+                                                                            <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] leading-relaxed max-w-[150px]">
+                                                                                Completa los datos para ver horarios
+                                                                            </p>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="h-[410px] flex flex-col bg-white/[0.03] border border-white/10 rounded-[2rem] p-6 shadow-2xl relative">
+                                                                            <div className="flex items-center justify-between mb-6">
+                                                                                <div className="flex flex-col">
+                                                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none">Turnos</span>
+                                                                                    <span className="text-sm font-black text-white italic">{agendaDate.split('-').reverse().join('/')}</span>
+                                                                                </div>
+                                                                                <Badge className="bg-nutri-brand/20 text-nutri-brand border-none px-3 py-1 rounded-full font-black text-[9px]">
+                                                                                    {timeSlots.length - occupiedSlots.length} Libres
+                                                                                </Badge>
+                                                                            </div>
+
+                                                                            <ScrollArea className="flex-1 pr-3 -mr-3">
+                                                                                <div className="grid grid-cols-2 gap-3 pb-2">
+                                                                                    {timeSlots.map(time => {
+                                                                                        const isReserved = occupiedSlots.includes(time);
+                                                                                        const isPastOrToday = isSlotPast(time, agendaDate);
+                                                                                        const isSelected = agendaTime === time;
+                                                                                        const [h] = time.split(':');
+
+                                                                                        return (
+                                                                                            <button
+                                                                                                key={time}
+                                                                                                disabled={isReserved || isPastOrToday}
+                                                                                                onClick={() => setAgendaTime(time)}
+                                                                                                className={cn(
+                                                                                                    "p-3.5 rounded-xl text-xs font-black transition-all border group relative overflow-hidden flex items-center justify-between",
+                                                                                                    isSelected 
+                                                                                                        ? "bg-white text-nutri-base border-white shadow-[0_10px_20px_rgba(255,255,255,0.1)] scale-[1.03] z-10" 
+                                                                                                        : (isReserved || isPastOrToday) 
+                                                                                                            ? "bg-white/[0.01] border-white/5 text-slate-700 cursor-not-allowed grayscale" 
+                                                                                                            : "bg-white/5 border-white/5 text-slate-300 hover:border-nutri-brand/40 hover:bg-nutri-brand/10"
+                                                                                                )}
+                                                                                            >
+                                                                                                <div className="flex flex-col items-start">
+                                                                                                    <span className="leading-none">{time}</span>
+                                                                                                    <span className={cn(
+                                                                                                        "text-[7px] font-bold uppercase tracking-widest mt-1",
+                                                                                                        isSelected ? "text-slate-500" : "text-slate-600"
+                                                                                                    )}>
+                                                                                                        {parseInt(h) < 12 ? 'MAÑANA' : 'TARDE'}
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                                {isReserved ? (
+                                                                                                    <Badge className="bg-red-500/10 text-red-500 border-none text-[7px] tracking-widest px-1.5 py-0">OCUPADO</Badge>
+                                                                                                ) : (
+                                                                                                    <div className={cn("h-1.5 w-1.5 rounded-full", isSelected ? "bg-nutri-brand" : "bg-green-500/50")} />
+                                                                                                )}
+                                                                                            </button>
+                                                                                        );
+                                                                                    })}
+                                                                                </div>
+                                                                            </ScrollArea>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </ScrollArea>
+
+                                                <DialogFooter className="p-6 border-t border-white/10 bg-slate-950/50 backdrop-blur-xl flex flex-row shrink-0 gap-4">
+                                                    <div className="hidden lg:flex items-center gap-3 flex-1">
+                                                        <div className="h-9 w-9 rounded-xl bg-white/5 flex items-center justify-center">
+                                                            <ShieldCheck className="h-4 w-4 text-green-500" />
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[9px] font-black text-white uppercase tracking-widest leading-none">Cita Protegida</span>
+                                                            <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sincronización Cloud</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center gap-3 w-full lg:w-auto">
+                                                        <Button
+                                                            variant="ghost"
+                                                            onClick={() => setIsAgendaDialogOpen(false)}
+                                                            className="h-14 lg:h-16 px-8 rounded-2xl text-slate-400 font-black uppercase text-[10px] tracking-widest border border-white/5 hover:bg-white/5"
+                                                        >
+                                                            Cancelar
+                                                        </Button>
+                                                        <Button
+                                                            className="flex-1 lg:flex-none h-14 lg:h-16 px-10 bg-nutri-brand text-nutri-base hover:bg-white transition-all font-black uppercase tracking-[0.3em] text-[11px] rounded-2xl shadow-[0_10px_30px_rgba(255,122,0,0.3)] hover:scale-[1.03] active:scale-95 disabled:opacity-20 group"
+                                                            disabled={!agendaNutriId || !agendaPatientId || !agendaDate || !agendaTime}
+                                                            onClick={handleCreateAppointment}
+                                                        >
+                                                            Confirmar Cita <ArrowRight className="h-4 w-4 ml-3 group-hover:translate-x-1.5 transition-transform" />
+                                                        </Button>
+                                                    </div>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                </div>
+
+                                    <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+                                    <div className="xl:col-span-3 space-y-6">
+                                        {/* Toggle View */}
+                                        <div className="flex bg-white/5 p-1 rounded-2xl w-fit border border-white/5">
+                                            <button
+                                                onClick={() => setAgendaView("nutricionistas")}
+                                                className={cn(
+                                                    "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                                    agendaView === "nutricionistas" ? "bg-nutri-brand text-nutri-base shadow-lg shadow-nutri-brand/20" : "text-slate-500 hover:text-white"
+                                                )}
+                                            >
+                                                Nutricionistas
+                                            </button>
+                                            <button
+                                                onClick={() => setAgendaView("historial")}
+                                                className={cn(
+                                                    "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                                    agendaView === "historial" ? "bg-nutri-brand text-nutri-base shadow-lg shadow-nutri-brand/20" : "text-slate-500 hover:text-white"
+                                                )}
+                                            >
+                                                Historial
+                                            </button>
+                                        </div>
+
+                                        {agendaView === "nutricionistas" ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                                {activeNutris.map(n => {
+                                                    const count = Object.values(assignments).filter(nids => nids.includes(n.id)).length;
+                                                    const apptsToday = allAppointments.filter(a => 
+                                                        a.nutritionistId === n.id && 
+                                                        a.date === todayStr
+                                                    ).length;
+
+                                                    return (
+                                                        <Card key={n.id} className="relative bg-slate-900/40 border border-white/5 group hover:border-nutri-brand/30 transition-all duration-500 rounded-[2.5rem] overflow-hidden cursor-pointer"
+                                                            onClick={() => {
+                                                                setAgendaNutriId(n.id);
+                                                                setIsAgendaDialogOpen(true);
+                                                            }}
+                                                        >
+                                                            <div className="absolute inset-0 bg-gradient-to-br from-nutri-brand/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                                                            <div className="p-8 flex flex-col items-center text-center space-y-6 relative">
+                                                                <div className="relative">
+                                                                    <div className="absolute inset-0 bg-nutri-brand/20 blur-2xl rounded-full scale-0 group-hover:scale-110 transition-transform duration-700" />
+                                                                    <Avatar className="h-24 w-24 border-2 border-white/10 shadow-2xl relative">
+                                                                        <AvatarFallback className="bg-white/5 text-white font-black text-3xl uppercase italic">
+                                                                            {n.name[0]}
+                                                                        </AvatarFallback>
+                                                                    </Avatar>
+                                                                    <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-green-500 border-4 border-slate-950 rounded-full shadow-lg" />
+                                                                </div>
+                                                                
+                                                                <div>
+                                                                    <h4 className="font-black text-white text-xl tracking-tight uppercase italic group-hover:text-nutri-brand transition-colors">{n.name}</h4>
+                                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mt-2">{count} Pacientes Activos</p>
+                                                                </div>
+
+                                                                <div className="w-full flex items-center justify-between bg-white/[0.03] p-4 rounded-2xl border border-white/5 group-hover:border-white/10 transition-colors">
+                                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Citas Hoy</span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="h-1.5 w-1.5 rounded-full bg-nutri-brand animate-pulse" />
+                                                                        <span className="text-lg font-black text-white">{apptsToday}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </Card>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            /* Historial View */
+                                            <Card className="bg-slate-900/40 border-white/5 rounded-[2.5rem] overflow-hidden border">
+                                                <CardHeader className="border-b border-white/5 py-8 px-10">
+                                                    <div className="flex items-center justify-between">
+                                                        <CardTitle className="font-black text-xl text-white uppercase tracking-tight">Historial de Citas</CardTitle>
+                                                        <Badge className="bg-white/5 text-slate-400 border-white/5 font-black uppercase text-[10px] px-3 py-1 rounded-lg">
+                                                            {allAppointments.length} Registros
+                                                        </Badge>
+                                                    </div>
+                                                </CardHeader>
+                                                <CardContent className="p-0">
+                                                    <ScrollArea className="h-[600px]">
+                                                        <div className="divide-y divide-white/5">
+                                                            {[...allAppointments]
+                                                                .sort((a,b) => (b.date + 'T' + b.startTime).localeCompare(a.date + 'T' + a.startTime))
+                                                                .map((apt) => (
+                                                                <div key={apt.id} className="p-8 hover:bg-white/[0.02] transition-all group">
+                                                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                                                        <div className="flex items-center gap-5">
+                                                                            <Avatar className="h-12 w-12 border-2 border-white/10 shadow-xl">
+                                                                                <AvatarFallback className="bg-nutri-brand text-nutri-base font-black uppercase">
+                                                                                    {apt.patientName?.[0] || 'P'}
+                                                                                </AvatarFallback>
+                                                                            </Avatar>
+                                                                            <div className="space-y-1">
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <h4 className="font-black text-white text-base uppercase tracking-tight italic">{apt.patientName}</h4>
+                                                                                    {(() => {
+                                                                                        const { label, className } = getAppointmentStatus(apt.status, apt.date, apt.startTime);
+                                                                                        return (
+                                                                                            <Badge className={cn("text-[8px] font-black uppercase border-none px-2 py-0.5", className)}>
+                                                                                                {label}
+                                                                                            </Badge>
+                                                                                        );
+                                                                                    })()}
+                                                                                </div>
+                                                                                <div className="flex items-center gap-2 text-slate-400">
+                                                                                    <span className="text-[10px] font-bold uppercase tracking-widest">Con: <span className="text-nutri-brand/80">{apt.nutritionistName}</span></span>
+                                                                                    <div className="h-1 w-1 rounded-full bg-slate-700" />
+                                                                                    <span className="text-[10px] font-bold uppercase tracking-widest">{apt.type}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        <div className="flex items-center justify-between md:justify-end gap-10 w-full md:w-auto border-t md:border-none border-white/5 pt-4 md:pt-0">
+                                                                            <div className="flex items-center gap-6">
+                                                                                <div className="flex flex-col">
+                                                                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Fecha</span>
+                                                                                    <span className="text-[11px] font-black text-white italic">{apt.date?.split('-').reverse().join('/')}</span>
+                                                                                </div>
+                                                                                <div className="flex flex-col">
+                                                                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Hora</span>
+                                                                                    <span className="text-[11px] font-black text-white italic">{apt.startTime?.substring(0, 5)}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                            
+                                                                            <div className="flex items-center gap-2">
+                                                                                <Button 
+                                                                                    variant="ghost" 
+                                                                                    size="icon" 
+                                                                                    className="h-10 w-10 rounded-xl text-slate-500 hover:text-nutri-brand hover:bg-nutri-brand/10 transition-all font-tech"
+                                                                                    onClick={() => {
+                                                                                        setEditingAppointmentId(apt.id);
+                                                                                        setAgendaNutriId(apt.nutritionistId);
+                                                                                        setAgendaPatientId(apt.patientId);
+                                                                                        setAgendaDate(apt.date);
+                                                                                        setAgendaTime(apt.startTime);
+                                                                                        setAgendaModality(apt.type as any);
+                                                                                        setIsAgendaDialogOpen(true);
+                                                                                    }}
+                                                                                >
+                                                                                    <Edit3 className="h-4 w-4" />
+                                                                                </Button>
+                                                                                <Button 
+                                                                                    variant="ghost" 
+                                                                                    size="icon" 
+                                                                                    className="h-10 w-10 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all font-tech"
+                                                                                    onClick={() => handleDeleteAppointment(apt.id)}
+                                                                                >
+                                                                                    <Trash2 className="h-4 w-4" />
+                                                                                </Button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </ScrollArea>
+                                                </CardContent>
+                                            </Card>
+                                        )}
+                                    </div>
+
+                                        <div className="space-y-8">
+                                            {/* Global Today's Appointments List */}
+                                            <Card className="rounded-[2.5rem] border-white/10 bg-slate-950/60 backdrop-blur-3xl shadow-[0_30px_100px_rgba(0,0,0,0.6)] overflow-hidden border flex flex-col h-[650px] sticky top-24">
+                                                <div className="px-8 py-10 pb-8 relative shrink-0">
+                                                    <div className="absolute top-0 right-0 p-8">
+                                                        <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 rotate-12 group-hover:rotate-0 transition-all duration-500 shadow-xl">
+                                                            <div className="h-7 w-7 text-nutri-brand font-black text-xl flex items-center justify-center italic">!</div>
+                                                        </div>
+                                                    </div>
+                                                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Agenda Hoy</h3>
+                                                    <div className="flex flex-col gap-1 mt-2">
+                                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">
+                                                            {new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                        </p>
+                                                        <div className="flex items-center gap-2 mt-4">
+                                                            <Badge className="bg-nutri-brand/20 text-nutri-brand border-none font-black text-[9px] px-3 py-1 uppercase tracking-widest">
+                                                                {todayAppts.length} Globales
+                                                            </Badge>
+                                                            <div className="h-1 w-1 rounded-full bg-slate-700" />
+                                                            <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Sincronizado</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="px-6 py-4 flex-1 overflow-hidden">
+                                                    {todayAppts.length === 0 ? (
+                                                        <div className="h-full flex flex-col items-center justify-center text-center py-20 px-8 border-2 border-dashed border-white/5 rounded-[2.5rem] bg-white/[0.01]">
+                                                            <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center mb-6 opacity-40">
+                                                                <Clock className="h-8 w-8 text-slate-500" />
+                                                            </div>
+                                                            <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] max-w-[150px] mx-auto leading-relaxed">Sin consultas programadas para este momento</p>
+                                                        </div>
+                                                    ) : (
+                                                        <ScrollArea className="h-full pr-4">
+                                                            <div className="space-y-4 pb-10">
+                                                                {[...todayAppts]
+                                                                    .sort((a,b) => a.startTime.localeCompare(b.startTime))
+                                                                    .map((apt) => (
+                                                                    <div key={apt.id} className="relative group p-5 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300">
+                                                                        <div className="flex items-center gap-3 mb-4">
+                                                                            <div className="h-10 w-10 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center font-black text-xs text-white shrink-0">
+                                                                                {apt.patientName[0]}
+                                                                            </div>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <p className="text-xs font-black text-white uppercase tracking-tight break-words">{apt.patientName}</p>
+                                                                                <div className="flex items-center gap-2 mt-0.5">
+                                                                                    <span className="text-[9px] font-bold text-slate-500 uppercase">Con: {apt.nutritionistName}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="flex flex-col gap-3">
+                                                                            <div className="flex items-center justify-between gap-4">
+                                                                                <div className="flex items-center gap-2 min-w-0">
+                                                                                <div className="flex items-center gap-3 font-tech">
+                                                                                    <div className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 flex items-center gap-2">
+                                                                                        <span className="text-[10px] font-black text-white">
+                                                                                            {apt.startTime.substring(0, 5)} - {apt.type === "virtual" ? 'VIRTUAL' : 'PRESENCIAL'}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="flex items-center justify-start">
+                                                                                {(() => {
+                                                                                    const { label, className } = getAppointmentStatus(apt.status, apt.date, apt.startTime);
+                                                                                    return (
+                                                                                        <Badge className={cn("text-[8px] font-black uppercase border-none px-2.5 py-1 rounded-lg", className)}>
+                                                                                            {label}
+                                                                                        </Badge>
+                                                                                    );
+                                                                                })()}
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        {/* Indicator bar */}
+                                                                        <div className={cn(
+                                                                            "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 rounded-r-full",
+                                                                            apt.type === "virtual" ? "bg-sky-500" : "bg-orange-500"
+                                                                        )} />
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </ScrollArea>
+                                                    )}
+                                                </div>
+                                            </Card>
+                                         </div>
+                                    </div>
+                                </div>
+
+                        )}
+                        {activeTab === "metrics" && (
+                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {/* Metric 1: Usuarios */}
+                                    <Card className="rounded-[2rem] border-none shadow-xl shadow-slate-200/50 overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer">
+                                        <div className="p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white h-full relative">
+                                            <div className="absolute top-4 right-4 bg-white/10 p-2 rounded-xl backdrop-blur-md">
+                                                <Users className="h-5 w-5 text-white" />
+                                            </div>
+                                            <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Crecimiento</p>
+                                            <h3 className="text-3xl font-black">{profiles.length}</h3>
+                                            <p className="text-[10px] font-bold text-green-400 mt-2 flex items-center gap-1">
+                                                <TrendingUp className="h-3 w-3" /> +12% vs mes anterior
+                                            </p>
+                                        </div>
+                                    </Card>
+
+                                    {/* Metric 2: Citas */}
+                                    <Card className="rounded-[2rem] border-none shadow-xl shadow-slate-200/50 overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer">
+                                        <div className="p-6 bg-white h-full relative">
+                                            <div className="absolute top-4 right-4 bg-nutrition-50 p-2 rounded-xl text-nutrition-600">
+                                                <Calendar className="h-5 w-5" />
+                                            </div>
+                                            <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Citas Activas</p>
+                                            <h3 className="text-3xl font-black text-slate-800">
+                                                {allAppointments.filter(a => (a.status === 'scheduled' || a.status === 'programada')).length}
+                                            </h3>
+                                            <p className="text-[10px] font-bold text-slate-400 mt-2">Próximas 72 horas</p>
+                                        </div>
+                                    </Card>
+
+                                    {/* Metric 3: Suscripciones */}
+                                    <Card className="rounded-[2rem] border-none shadow-xl shadow-slate-200/50 overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer">
+                                        <div className="p-6 bg-white h-full relative">
+                                            <div className="absolute top-4 right-4 bg-amber-50 p-2 rounded-xl text-amber-600">
+                                                <Activity className="h-5 w-5" />
+                                            </div>
+                                            <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Sub. Activas</p>
+                                            <h3 className="text-3xl font-black text-slate-800">
+                                                {subscriptions.filter(s => s.status === 'active').length}
+                                            </h3>
+                                            <p className="text-[10px] font-bold text-slate-400 mt-2">Tasa de retención: 94%</p>
+                                        </div>
+                                    </Card>
+
+                                    {/* Metric 4: Revenue (Simulated) */}
+                                    <Card className="rounded-[2rem] border-none shadow-xl shadow-slate-200/50 overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer">
+                                        <div className="p-6 bg-white h-full relative">
+                                            <div className="absolute top-4 right-4 bg-green-50 p-2 rounded-xl text-green-600">
+                                                <DollarSign className="h-5 w-5" />
+                                            </div>
+                                            <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Ingresos (Est.)</p>
+                                            <h3 className="text-3xl font-black text-slate-800">$2.4k</h3>
+                                            <p className="text-[10px] font-bold text-green-500 mt-2">Mes de Febrero</p>
+                                        </div>
+                                    </Card>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                    {/* Distributions Chart visual */}
+                                    <Card className="lg:col-span-2 rounded-[2.5rem] border-slate-100 shadow-2xl p-8">
+                                        <div className="flex items-center justify-between mb-8">
+                                            <div>
+                                                <CardTitle className="text-2xl font-black flex items-center gap-2">
+                                                    <Activity className="h-6 w-6 text-nutrition-600" /> Rendimiento de Especialistas
+                                                </CardTitle>
+                                                <CardDescription>Distribución de carga de trabajo por nutricionista.</CardDescription>
+                                            </div>
+                                            <Badge className="bg-slate-100 text-slate-600 border-none font-bold px-4 py-1.5 rounded-xl">Mensual</Badge>
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            {nutritionists.filter(n => (n as any).status === 'Activo').slice(0, 5).map((nutri) => {
+                                                const patientCount = allAppointments.filter(a => a.nutritionistId === nutri.id && a.status === 'scheduled').length;
+                                                const percentage = Math.min(100, (patientCount / 10) * 100); // 10 as dummy cap
+                                                return (
+                                                    <div key={nutri.id} className="space-y-2">
+                                                        <div className="flex justify-between items-end">
+                                                            <div className="flex items-center gap-3">
+                                                                <Avatar className="h-10 w-10">
+                                                                    <AvatarFallback className="bg-slate-100 text-[10px] font-black">
+                                                                        {nutri.name[0]}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <div>
+                                                                    <p className="text-sm font-black text-slate-800 leading-none">{nutri.name}</p>
+                                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Nivel: Senior</p>
+                                                                </div>
+                                                            </div>
+                                                            <p className="text-xs font-black text-nutrition-600">{patientCount} Citas / Sem</p>
+                                                        </div>
+                                                        <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
+                                                            <div
+                                                                className="h-full bg-nutrition-600 rounded-full transition-all duration-1000"
+                                                                style={{ width: `${percentage}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                            {nutritionists.length === 0 && <p className="text-slate-400 font-bold text-center py-4">No hay especialistas activos.</p>}
+                                        </div>
+                                    </Card>
+
+                                    {/* Quick Insights */}
+                                    <div className="space-y-6">
+                                        <Card className="rounded-[2.5rem] border-none bg-gradient-to-br from-nutrition-600 to-nutrition-700 text-white p-8 shadow-2xl shadow-nutrition-200 relative overflow-hidden">
+                                            <div className="absolute -bottom-10 -right-10 opacity-10">
+                                                <Target className="h-40 w-40" />
+                                            </div>
+                                            <h4 className="text-xl font-black mb-2">Meta Mensual</h4>
+                                            <p className="text-nutrition-100 text-sm font-medium mb-6">Estamos al 85% de la meta de nuevos registros.</p>
+                                            <div className="space-y-4 relative z-10">
+                                                <div className="flex items-center justify-between text-xs font-black">
+                                                    <span>Progreso</span>
+                                                    <span>172 / 200</span>
+                                                </div>
+                                                <div className="h-3 w-full bg-white/20 rounded-full backdrop-blur-sm">
+                                                    <div className="h-full bg-white rounded-full w-[85%]" />
+                                                </div>
+                                            </div>
+                                        </Card>
+
+                                        <Card className="rounded-[2.5rem] border-slate-100 shadow-xl p-8 space-y-4">
+                                            <h4 className="font-black text-slate-800">Alertas de Sistema</h4>
+                                            <div className="space-y-3">
+                                                {pendingNutris.length > 0 && (
+                                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-red-50 text-red-600 border border-red-100">
+                                                        <X className="h-4 w-4" />
+                                                        <p className="text-[10px] font-bold">{pendingNutris.length} Verificaciones pendientes de revisión.</p>
+                                                    </div>
+                                                )}
+                                                {profiles.filter(p => p.role === 'paciente').length > Object.keys(assignments).length && (
+                                                    <div className="flex items-center gap-3 p-3 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100">
+                                                        <Bell className="h-4 w-4" />
+                                                        <p className="text-[10px] font-bold">
+                                                            {profiles.filter(p => p.role === 'paciente').length - Object.keys(assignments).length} Pacientes sin nutricionista asignado.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                                <div className="flex items-center gap-3 p-3 rounded-2xl bg-green-50 text-green-600 border border-green-100">
+                                                    <Check className="h-4 w-4" />
+                                                    <p className="text-[10px] font-bold">Sincronización con Supabase: Estable.</p>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {activeTab === "subscriptions" && (
+                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                                    {/* Assign New Section */}
+                                    <Card className="rounded-[2.5rem] border-slate-100 shadow-xl overflow-hidden col-span-1 lg:col-span-1">
+                                        <CardHeader className="bg-slate-50/50">
+                                            <CardTitle className="font-black text-xl">Solicitar Cambio de Plan</CardTitle>
+                                            <CardDescription>Propone un nuevo plan para un paciente.</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="p-6 space-y-6">
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-sm font-black text-slate-800">1. Paciente</p>
+                                                    <Input
+                                                        placeholder="Filtrar..."
+                                                        className="h-7 w-32 text-xs rounded-lg"
+                                                        value={searchTerm}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                    />
+                                                </div>
+                                                <ScrollArea className="h-40 border rounded-2xl p-2 bg-slate-50/30">
+                                                    <div className="space-y-1">
+                                                        {patients.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).map(p => (
+                                                            <button
+                                                                key={p.id}
+                                                                onClick={selectedPatientId === p.id ? () => setSelectedPatientId(null) : () => setSelectedPatientId(p.id)}
+                                                                className={cn(
+                                                                    "w-full text-left p-2 rounded-xl flex items-center gap-2 text-sm font-bold transition-all",
+                                                                    selectedPatientId === p.id ? "bg-nutrition-600 text-white" : "hover:bg-white"
+                                                                )}
+                                                            >
+                                                                <Avatar className="h-6 w-6"><AvatarFallback className="text-[10px]">{p.name[0]}</AvatarFallback></Avatar>
+                                                                {p.name}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </ScrollArea>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <p className="text-sm font-black text-slate-800">2. Plan Sugerido</p>
+                                                <div className="grid grid-cols-1 gap-2">
+                                                    {offers.map(o => (
+                                                        <button
+                                                            key={o.id}
+                                                            onClick={selectedNutriId === o.id ? () => setSelectedNutriId(null) : () => setSelectedNutriId(o.id)}
+                                                            className={cn(
+                                                                "w-full text-left p-3 rounded-xl flex items-center justify-between text-sm font-black transition-all border",
+                                                                selectedNutriId === o.id ? "bg-slate-900 text-white border-transparent" : "bg-white hover:border-slate-300"
+                                                            )}
+                                                        >
+                                                            <span>{o.name}</span>
+                                                            <span className="text-xs">${o.price}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <Button
+                                                className="w-full rounded-2xl bg-nutrition-600 text-white font-black h-12"
+                                                disabled={!selectedPatientId || !selectedNutriId}
+                                                onClick={async () => {
+                                                    try {
+                                                        await MessagingService.requestSubscription(selectedPatientId!, selectedNutriId!);
+                                                        toast({ title: "Solicitud Enviada", variant: "success" });
+                                                        setSelectedPatientId(null);
+                                                        setSelectedNutriId(null);
+                                                        loadData();
+                                                    } catch (e: any) {
+                                                        toast({ title: "Error", description: e.message, variant: "destructive" });
+                                                    }
+                                                }}
+                                            >
+                                                Enviar Propuesta
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Pending Requests Section */}
+                                    <Card className="rounded-[2.5rem] border-slate-100 shadow-xl overflow-hidden col-span-1 lg:col-span-1">
+                                        <CardHeader className="bg-slate-50/50">
+                                            <div className="flex items-center justify-between">
+                                                <CardTitle className="font-black text-xl">Revisión Subscripciones</CardTitle>
+                                                <Badge className="bg-amber-100 text-amber-700 font-black border-none">Pendientes</Badge>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="p-6">
+                                            <div className="mb-4 relative">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                                <Input
+                                                    placeholder="Buscar por paciente..."
+                                                    className="pl-10 rounded-xl"
+                                                    value={subReviewSearch}
+                                                    onChange={(e) => setSubReviewSearch(e.target.value)}
+                                                />
+                                            </div>
+                                            <ScrollArea className="h-[430px] pr-4">
+                                                <div className="space-y-4">
+                                                    {subscriptions.filter(s =>
+                                                        s.patient?.profile?.full_name.toLowerCase().includes(subReviewSearch.toLowerCase()) ||
+                                                        (s.plan?.name_es || "").toLowerCase().includes(subReviewSearch.toLowerCase())
+                                                    ).map(sub => (
+                                                        <div key={sub.id} className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-3">
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <p className="font-black text-slate-800 text-sm leading-none">{sub.patient?.profile?.full_name}</p>
+                                                                    <p className="text-[10px] font-black text-nutrition-600 mt-1 uppercase">{sub.plan?.name_es || "Plan Activo"}</p>
+                                                                </div>
+                                                                <Badge className={cn(
+                                                                    "border-none rounded-lg text-[10px] font-black uppercase",
+                                                                    sub.status === 'activa' ? "bg-green-100 text-green-700" :
+                                                                        sub.status === 'pendiente' ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
+                                                                )}>
+                                                                    {sub.status === 'activa' ? 'Activa' : sub.status === 'pendiente' ? 'Pendiente' : 'Rechazada'}
+                                                                </Badge>
+                                                            </div>
+
+                                                            {sub.status === 'pendiente' && currentAdminRole === 'administrador' && (
+                                                                <div className="flex gap-2">
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        className="flex-1 rounded-xl text-red-500 font-bold"
+                                                                        onClick={() => MessagingService.handleSubscriptionStatus(sub.id, 'cancelada').then(() => loadData(false))}
+                                                                    >
+                                                                        X
+                                                                    </Button>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        className="flex-1 rounded-xl bg-nutrition-600 text-white font-bold"
+                                                                        onClick={() => MessagingService.handleSubscriptionStatus(sub.id, 'activa').then(() => loadData(false))}
+                                                                    >
+                                                                        Aprobar
+                                                                    </Button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </ScrollArea>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                {/* Offer Edit Dialog */}
+                                <Dialog open={!!editingOffer} onOpenChange={(open) => !open && setEditingOffer(null)}>
+                                    <DialogContent className="rounded-[2.5rem] max-w-md">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-2xl font-black">Editar Plan: {editingOffer?.name}</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="space-y-4 py-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Nombre del Plan</label>
+                                                <Input className="rounded-xl font-bold" value={newOfferName} onChange={(e) => setNewOfferName(e.target.value)} />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Precio Regular ($)</label>
+                                                    <Input type="number" className="rounded-xl font-bold" value={newOfferPrice} onChange={(e) => setNewOfferPrice(e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-black text-nutrition-600 uppercase tracking-widest">Precio Oferta ($)</label>
+                                                    <Input type="number" placeholder="Opcional" className="rounded-xl font-bold border-nutrition-200" value={newOfferPriceOffer} onChange={(e) => setNewOfferPriceOffer(e.target.value)} />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Beneficios (Uno por línea)</label>
+                                                <textarea
+                                                    className="w-full h-24 p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium outline-none"
+                                                    placeholder="Ej: Dieta personalizada&#10;Seguimiento semanal"
+                                                    value={newOfferFeatures}
+                                                    onChange={(e) => setNewOfferFeatures(e.target.value)}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Resaltado (Short Badge)</label>
+                                                <Input placeholder="Ej: Plan más popular" className="rounded-xl font-bold" value={newOfferHighlight} onChange={(e) => setNewOfferHighlight(e.target.value)} />
+                                            </div>
+
+                                            {newOfferPriceOffer && (
+                                                <div className="p-4 rounded-2xl bg-nutrition-50 border border-nutrition-100 space-y-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-black text-nutrition-600 uppercase tracking-widest leading-none">Detalles de la Oferta</label>
+                                                        <Input placeholder="Motivo: Ej: Black Friday" className="rounded-xl font-bold bg-white" value={newOfferOfferReason} onChange={(e) => setNewOfferOfferReason(e.target.value)} />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <textarea
+                                                            placeholder="Descripción de la oferta específica..."
+                                                            className="w-full h-20 p-3 rounded-xl border border-slate-200 bg-white text-sm font-medium outline-none"
+                                                            value={newOfferDescription}
+                                                            onChange={(e) => setNewOfferDescription(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <DialogFooter>
+                                            <Button className="w-full rounded-xl bg-slate-900 font-black h-12" onClick={handleUpdateOffer}>
+                                                <Save className="h-4 w-4 mr-2" /> Guardar Cambios
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+
+                                {/* Create Offer Dialog */}
+                                <Dialog open={isCreateOfferDialogOpen} onOpenChange={setIsCreateOfferDialogOpen}>
+                                    <DialogContent className="rounded-[2.5rem] max-w-md">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-2xl font-black">Crear Nuevo Plan</DialogTitle>
+                                            <DialogDescription>Define un nuevo plan de suscripción para los pacientes.</DialogDescription>
+                                        </DialogHeader>
+                                        <div className="space-y-4 py-4">
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Nombre del Plan</label>
+                                                <Input className="rounded-xl font-bold" placeholder="Plan Personalizado..." value={newOfferName} onChange={(e) => setNewOfferName(e.target.value)} />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Precio Regular ($)</label>
+                                                    <Input type="number" className="rounded-xl font-bold" value={newOfferPrice} onChange={(e) => setNewOfferPrice(e.target.value)} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-xs font-black text-nutrition-600 uppercase tracking-widest">Precio Oferta ($)</label>
+                                                    <Input type="number" placeholder="Opcional" className="rounded-xl font-bold border-nutrition-200" value={newOfferPriceOffer} onChange={(e) => setNewOfferPriceOffer(e.target.value)} />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Beneficios (Uno por línea)</label>
+                                                <textarea
+                                                    className="w-full h-24 p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-medium outline-none"
+                                                    placeholder="Ej: Acceso a dietas VIP&#10;Seguimiento 24/7"
+                                                    value={newOfferFeatures}
+                                                    onChange={(e) => setNewOfferFeatures(e.target.value)}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Resaltado (Short Badge)</label>
+                                                <Input placeholder="Ej: Oferta de lanzamiento" className="rounded-xl font-bold" value={newOfferHighlight} onChange={(e) => setNewOfferHighlight(e.target.value)} />
+                                            </div>
+
+                                            {newOfferPriceOffer && (
+                                                <div className="p-4 rounded-2xl bg-nutrition-50 border border-nutrition-100 space-y-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-black text-nutrition-600 uppercase tracking-widest leading-none">Detalles de la Oferta</label>
+                                                        <Input placeholder="Motivo: Ej: Inauguración" className="rounded-xl font-bold bg-white" value={newOfferOfferReason} onChange={(e) => setNewOfferOfferReason(e.target.value)} />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <textarea
+                                                            placeholder="Descripción de la oferta específica..."
+                                                            className="w-full h-20 p-3 rounded-xl border border-slate-200 bg-white text-sm font-medium outline-none"
+                                                            value={newOfferDescription}
+                                                            onChange={(e) => setNewOfferDescription(e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <DialogFooter>
+                                            <Button className="w-full rounded-xl bg-nutrition-600 font-black h-12 text-white" onClick={handleCreateOffer}>
+                                                <Plus className="h-4 w-4 mr-2" /> Crear Plan
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                        )}
+                        {activeTab === "users_management" && (
+                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                    <div className="space-y-1">
+                                        <h2 className="text-3xl font-black text-white uppercase italic tracking-tight">Sistema de Gestión de Usuarios</h2>
+                                        <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">Administra el acceso del personal y directivos.</p>
+                                    </div>
+                                    <Button
+                                        onClick={() => setIsCreateUserDialogOpen(true)}
+                                        className="bg-nutri-brand hover:bg-white text-nutri-base font-black px-8 py-6 rounded-2xl transition-all shadow-xl shadow-nutri-brand/20 uppercase tracking-widest text-xs"
+                                    >
+                                        <ShieldPlus className="h-4 w-4 mr-2" /> Nuevo Usuario Administrativo
+                                    </Button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {/* List of Staff/Admins */}
+                                    {profiles.filter(p => p.role === "staff" || p.role === "administrador").sort((a, b) => a.role === 'administrador' ? -1 : 1).map(user => (
+                                        <Card key={user.id} className="nutri-panel border-none group hover:scale-[1.02] transition-transform overflow-hidden">
+                                            <div className="p-6 space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <Avatar className="h-14 w-14 border-2 border-white/10 shadow-2xl">
+                                                            <AvatarFallback className="bg-white/5 text-white font-black text-lg">
+                                                                {user.name?.[0] || 'U'}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <h3 className="font-black text-white text-lg tracking-tight uppercase italic">{user.name}</h3>
+                                                            <Badge className={cn(
+                                                                "p-0 bg-transparent font-black uppercase text-[9px] tracking-widest border-none",
+                                                                user.role === 'administrador' ? "text-red-400" : "text-nutri-brand"
+                                                            )}>
+                                                                {user.role}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-white/5 p-2 rounded-xl group-hover:bg-nutri-brand group-hover:text-nutri-base transition-colors">
+                                                        {user.role === 'administrador' ? <Shield className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-3 pt-4 border-t border-white/5">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email</span>
+                                                        <span className="text-xs text-white font-bold">{user.email || 'N/A'}</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Estado de Cuenta</span>
+                                                        <Badge className="bg-green-500/10 text-green-400 font-black text-[8px] uppercase border-none px-2 h-5 flex items-center gap-1">
+                                                            <div className="h-1 w-1 bg-green-400 rounded-full animate-pulse" /> Activo
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex gap-2 pt-2">
+                                                    <Button variant="outline" className="flex-1 rounded-xl h-10 text-[10px] font-black uppercase border-white/5 bg-white/5 text-slate-400 hover:text-white" disabled>
+                                                        Logs
+                                                    </Button>
+                                                    <Button variant="outline" className="flex-1 rounded-xl h-10 text-[10px] font-black uppercase border-white/5 bg-white/5 text-slate-400 hover:text-red-400 hover:border-red-400/20"
+                                                        onClick={() => handleDeleteProfile(user.id, user.name)}>
+                                                        Eliminar
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    ))}
+                                </div>
+
+                                {/* Dialog for Creating User */}
+                                <Dialog open={isCreateUserDialogOpen} onOpenChange={setIsCreateUserDialogOpen}>
+                                    <DialogContent className="rounded-[2.5rem] max-w-md bg-nutri-base border-white/10 text-white p-0 overflow-hidden font-tech">
+                                        <div className="p-8 space-y-6">
+                                            <div className="space-y-2">
+                                                <h3 className="text-2xl font-black italic uppercase tracking-tighter flex items-center gap-3">
+                                                    <div className="h-2 w-8 bg-nutri-brand" />
+                                                    Nuevo Acceso
+                                                </h3>
+                                                <p className="text-slate-500 font-bold uppercase tracking-widest text-[9px]">Registra personal con privilegios administrativos.</p>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre Completo</label>
+                                                    <Input
+                                                        className="h-12 bg-white/5 border-white/10 rounded-xl font-bold placeholder:text-slate-700"
+                                                        placeholder="Ej: Staff Nutrition"
+                                                        value={newUserFullName}
+                                                        onChange={(e) => setNewUserFullName(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo Electrónico</label>
+                                                    <Input
+                                                        className="h-12 bg-white/5 border-white/10 rounded-xl font-bold placeholder:text-slate-700"
+                                                        placeholder="admin@nuysa.com"
+                                                        value={newUserEmail}
+                                                        onChange={(e) => setNewUserEmail(e.target.value)}
+                                                        type="email"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contraseña Temporal</label>
+                                                    <Input
+                                                        className="h-12 bg-white/5 border-white/10 rounded-xl font-bold placeholder:text-slate-700"
+                                                        type="password"
+                                                        placeholder="Mínimo 6 caracteres"
+                                                        value={newUserPassword}
+                                                        onChange={(e) => setNewUserPassword(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Rol Designado</label>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setNewUserRole("staff")}
+                                                            className={cn(
+                                                                "p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2",
+                                                                newUserRole === 'staff' ? "border-nutri-brand bg-nutri-brand/10 text-white" : "border-white/5 bg-white/5 text-slate-500 hover:border-white/10"
+                                                            )}
+                                                        >
+                                                            <Users className="h-5 w-5" />
+                                                            <span className="text-[10px] font-black uppercase">Staff</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setNewUserRole("administrador")}
+                                                            className={cn(
+                                                                "p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2",
+                                                                newUserRole === 'administrador' ? "border-red-500/50 bg-red-500/10 text-white" : "border-white/5 bg-white/5 text-slate-500 hover:border-white/10"
+                                                            )}
+                                                        >
+                                                            <Shield className="h-5 w-5" />
+                                                            <span className="text-[10px] font-black uppercase">Admin Root</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <Button
+                                                className="w-full h-14 bg-white text-nutri-base hover:bg-nutri-brand hover:text-white font-black uppercase tracking-widest text-xs rounded-2xl transition-all shadow-2xl"
+                                                onClick={handleCreateUser}
+                                                disabled={isCreatingUser}
+                                            >
+                                                {isCreatingUser ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirmar Registros"}
+                                            </Button>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                        )}
+
+                        {activeTab === "settings" && currentAdminRole === 'administrador' && (
+                            <VariablesConfig />
+                        )}
+                        {activeTab === "visualization" && currentAdminRole === 'administrador' && (
+                            <TableEditor />
+                        )}
+                        {activeTab === "landing_cms" && currentAdminRole === 'administrador' && (
+                            <VisualLandingEditor />
+                        )}
+                        {activeTab === "auth_cms" && currentAdminRole === 'administrador' && (
+                            <VisualAuthEditor />
+                        )}
+                        {activeTab === "plans_management" && currentAdminRole === 'administrador' && (
+                            <div className="-m-4 lg:-m-6 bg-nutri-base overflow-hidden relative">
+                                {/* Toolbar de Gestión de Planes */}
+                                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-nutri-panel/90 backdrop-blur-xl border border-white/10 rounded-2xl p-2 px-6 flex items-center gap-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10">
+                                    <div className="flex items-center gap-3 border-r border-white/10 pr-6">
+                                        <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
+                                        <span className="text-white font-tech font-bold text-sm tracking-widest uppercase">Editor Activo</span>
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={() => setPlansEditMode(!plansEditMode)}
+                                            className={cn(
+                                                "px-4 py-2 rounded-xl text-xs font-tech font-bold transition-all flex items-center gap-2 border",
+                                                plansEditMode
+                                                    ? "bg-white/10 text-white border-white/20"
+                                                    : "bg-nutri-brand/20 text-nutri-brand border-nutri-brand/30"
+                                            )}
+                                        >
+                                            {plansEditMode ? "Modo Edición" : "Vista Previa"}
+                                        </button>
+
+                                        <button
+                                            onClick={() => window.open('/', '_blank')}
+                                            className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-tech font-bold transition-all flex items-center gap-2 border border-white/5"
+                                        >
+                                            <ArrowRight className="h-3 w-3 rotate-[-45deg]" /> Ver Landing
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                // Disparamos el evento para que PlansSection guarde en Supabase
+                                                window.dispatchEvent(new CustomEvent('publish-landing-plans'));
+
+                                                const btn = document.getElementById('save-feedback');
+                                                if (btn) {
+                                                    const originalText = btn.innerText;
+                                                    btn.innerText = "Publicando...";
+                                                    // El componente PlansSection mostrará su propio toast al terminar
+                                                    setTimeout(() => {
+                                                        if (btn) btn.innerText = originalText;
+                                                    }, 2000);
+                                                }
+                                            }}
+                                            id="save-feedback"
+                                            className="px-6 py-2 bg-nutri-brand text-nutri-base rounded-xl text-xs font-tech font-bold transition-all shadow-[0_0_20px_rgba(255,122,0,0.3)] hover:scale-105 active:scale-95"
+                                        >
+                                            Publicar Cambios
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="h-[90vh] overflow-y-auto overflow-x-hidden w-full scrollbar-hide">
+                                    <PlansSection isEditable={plansEditMode} mode="admin_cms" />
+                                </div>
+                            </div>
+                        )}
+                        {activeTab === "food_database" && currentAdminRole === 'administrador' && (
+                            <FoodDatabase />
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function AdminStaffDashboard() {
+    return <AdminStaffDashboardContent />;
+}
+
