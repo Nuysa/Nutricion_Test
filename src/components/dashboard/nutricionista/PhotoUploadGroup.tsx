@@ -30,6 +30,11 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
         const file = e.target.files?.[0];
         if (!file) return;
 
+        if (!patientId) {
+            toast({ title: "Error", description: "Cargando ID del paciente... Por favor intenta en un momento.", variant: "destructive" });
+            return;
+        }
+
         setUploadingSlots(prev => ({ ...prev, [typeId]: "Procesando silueta..." }));
         if (setIsUploadingPhoto) setIsUploadingPhoto(true);
         
@@ -39,10 +44,13 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
 
             const worker = new Worker(new URL('../../../lib/workers/bg-removal.worker.ts', import.meta.url), { type: 'module' });
 
-            const processedBlob = await new Promise<Blob>((resolve, reject) => {
+            const { processedBlob, isFallback } = await new Promise<{ processedBlob: Blob, isFallback: boolean }>((resolve, reject) => {
                 worker.onmessage = (event) => {
                     if (event.data.success) {
-                        resolve(event.data.blob);
+                        resolve({ 
+                            processedBlob: event.data.blob, 
+                            isFallback: !!event.data.isFallback 
+                        });
                     } else {
                         reject(new Error(event.data.error));
                     }
@@ -55,7 +63,8 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                 worker.postMessage({ file, typeId });
             });
 
-            const processedFile = new File([processedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: "image/jpeg" });
+            const fileBaseName = file.name.split('.').slice(0, -1).join('.') || 'foto';
+            const processedFile = new File([processedBlob], `${fileBaseName}.jpg`, { type: "image/jpeg" });
 
             setUploadingSlots(prev => ({ ...prev, [typeId]: "Subiendo..." }));
             const fileExt = "jpg";
@@ -73,7 +82,16 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
 
             // Uso de actualización funcional para evitar condiciones de carrera entre cargas simultáneas
             setExtraData((prev: any) => ({ ...prev, [typeId]: publicUrl }));
-            toast({ title: "Foto subida y procesada" });
+            
+            if (isFallback) {
+                toast({ 
+                    title: "Foto cargada (Sin procesar)", 
+                    description: "No se pudo quitar el fondo por problemas de red, se guardó la original.",
+                    variant: "default" 
+                });
+            } else {
+                toast({ title: "Foto subida y procesada correctamente" });
+            }
         } catch (error: any) {
             toast({ title: "Error al subir foto", description: error.message, variant: "destructive" });
         } finally {

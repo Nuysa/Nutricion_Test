@@ -1,27 +1,33 @@
 self.onmessage = async (event: MessageEvent) => {
     const { file, typeId } = event.data;
     try {
-        const { removeBackground } = await import("@imgly/background-removal");
-        // Ejecutamos el procesamiento intensivo en el Web Worker para no bloquear la UI principal
-        const blob = await removeBackground(file);
+        const bgReduction = await import("@imgly/background-removal");
+        const removeBackground = bgReduction.removeBackground;
+
+        // Intentamos detectar la URL base del sitio para rutas locales
+        // self.location.origin nos da el dominio + puerto (ej: http://localhost:4000)
+        const baseUrl = self.location.origin || "";
+
+        const config: any = {
+            model: 'small',
+            publicPath: baseUrl ? `${baseUrl}/bg-removal-assets/` : '/bg-removal-assets/',
+            progress: (res: any) => {
+                // progreso opcional
+            }
+        };
+
+        const blob = await removeBackground(file, config);
         
         // --- APLICAR FONDO BLANCO ---
-        // Convertimos el blob resaltado a ImageBitmap para poder operarlo en canvas
         const imgBitmap = await createImageBitmap(blob);
-        
-        // Usamos OffscreenCanvas (disponible en Workers) para añadir el fondo
         const canvas = new OffscreenCanvas(imgBitmap.width, imgBitmap.height);
         const ctx = canvas.getContext('2d');
         
         if (ctx) {
-            // Rellenamos de blanco
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, imgBitmap.width, imgBitmap.height);
-            
-            // Dibujamos la silueta procesada encima
             ctx.drawImage(imgBitmap, 0, 0);
             
-            // Convertimos de nuevo a blob (usamos JPEG para asegurar fondo sólido y menor peso)
             const whiteBgBlob = await canvas.convertToBlob({ 
                 type: 'image/jpeg',
                 quality: 0.92
@@ -34,6 +40,15 @@ self.onmessage = async (event: MessageEvent) => {
             self.postMessage({ success: true, blob, typeId });
         }
     } catch (error: any) {
-        self.postMessage({ success: false, error: error.message || "Error al procesar la imagen", typeId });
+        console.error("ia-worker-fallback:", error);
+        
+        // --- FALLBACK: Si la IA falla, enviamos el archivo original ---
+        self.postMessage({ 
+            success: true, 
+            blob: file, 
+            isFallback: true,
+            error: error.message,
+            typeId 
+        });
     }
 };

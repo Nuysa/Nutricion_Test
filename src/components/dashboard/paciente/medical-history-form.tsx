@@ -24,7 +24,7 @@ import {
 import {
     ChevronRight, ChevronLeft, Save, HeartPulse, User, Ruler, Activity,
     Moon, Utensils, Camera, AlertCircle, Sparkles, CheckCircle2, Clock,
-    Loader2, Upload, X, Plus
+    Loader2, Upload, X, Plus, Download
 } from "lucide-react";
 import { removeBackground } from "@imgly/background-removal";
 import { cn } from "@/lib/utils";
@@ -1053,6 +1053,11 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
         const file = e.target.files?.[0];
         if (!file) return;
 
+        if (!patientId) {
+            toast({ title: "Error", description: "Cargando datos del paciente... Intenta de nuevo en un segundo.", variant: "destructive" });
+            return;
+        }
+
         setUploading(typeId);
         setIsUploadingPhoto(true);
         setStatusText("Procesando silueta con IA...");
@@ -1063,10 +1068,13 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
 
             const worker = new Worker(new URL('../../../lib/workers/bg-removal.worker.ts', import.meta.url), { type: 'module' });
 
-            const processedBlob = await new Promise<Blob>((resolve, reject) => {
+            const { processedBlob, isFallback } = await new Promise<{ processedBlob: Blob, isFallback: boolean }>((resolve, reject) => {
                 worker.onmessage = (event) => {
                     if (event.data.success) {
-                        resolve(event.data.blob);
+                        resolve({ 
+                            processedBlob: event.data.blob, 
+                            isFallback: !!event.data.isFallback 
+                        });
                     } else {
                         reject(new Error(event.data.error));
                     }
@@ -1097,7 +1105,16 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
                 .getPublicUrl(fileName);
 
             form.setValue(typeId, publicUrl);
-            toast({ title: "Foto subida y procesada correctamente", variant: "default" });
+            
+            if (isFallback) {
+                toast({ 
+                    title: "Foto cargada (Sin procesar)", 
+                    description: "No se pudo quitar el fondo por problemas de red, se guardó la original.",
+                    variant: "default" 
+                });
+            } else {
+                toast({ title: "Foto subida y procesada correctamente", variant: "default" });
+            }
         } catch (error: any) {
             console.error("Upload error:", error);
             const msg = error.message.includes("Bucket not found") 
@@ -1401,12 +1418,19 @@ function HealthStatus({ form, patientId }: { form: any, patientId: string }) {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {(form.watch('lab_test_documents') || []).map((url: string, idx: number) => (
-                            <div key={idx} className="relative aspect-video rounded-xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center">
-                                <span className="text-[10px] text-slate-500 font-bold uppercase">Documento {idx + 1}</span>
-                                <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-6 w-6 rounded-full" onClick={() => {
-                                    const current = form.getValues('lab_test_documents');
-                                    form.setValue('lab_test_documents', current.filter((_: any, i: number) => i !== idx));
-                                }}><X className="h-3 w-3" /></Button>
+                            <div key={idx} className="relative aspect-video rounded-xl bg-white/5 border border-white/10 overflow-hidden flex flex-col items-center justify-center gap-2 p-2">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase truncate w-full text-center">Documento {idx + 1}</span>
+                                <div className="flex gap-2">
+                                    <Button asChild size="sm" variant="outline" className="h-7 px-3 bg-white/5 border-white/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all text-[10px] font-black uppercase">
+                                        <a href={url} target="_blank" rel="noopener noreferrer">
+                                            <Download className="h-3 w-3 mr-1.5" /> Descargar
+                                        </a>
+                                    </Button>
+                                    <Button size="icon" variant="destructive" className="h-7 w-7 rounded-lg" onClick={() => {
+                                        const current = form.getValues('lab_test_documents');
+                                        form.setValue('lab_test_documents', current.filter((_: any, i: number) => i !== idx));
+                                    }}><X className="h-3 w-3" /></Button>
+                                </div>
                             </div>
                         ))}
                         <label className="aspect-video flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/10 bg-white/5 cursor-pointer hover:border-emerald-500/50 transition-all">

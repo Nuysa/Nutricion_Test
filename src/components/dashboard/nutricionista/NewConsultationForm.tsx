@@ -30,7 +30,7 @@ export function NewConsultationForm({
     const [isUploadingPhoto, setIsUploadingPhoto] = React.useState(false);
 
     // Auto-calculate IMC
-    const currentWeight = parseFloat(editValues.weight?.toString().replace(',', '.') || '0');
+    const currentWeight = parseFloat((editValues.weight || '0').toString().replace(',', '.'));
     const imc = (currentWeight > 0 && patientHeight > 0)
         ? (currentWeight / ((patientHeight / 100) * (patientHeight / 100))).toFixed(1)
         : "--";
