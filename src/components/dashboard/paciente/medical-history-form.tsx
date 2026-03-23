@@ -24,7 +24,7 @@ import {
 import {
     ChevronRight, ChevronLeft, Save, HeartPulse, User, Ruler, Activity,
     Moon, Utensils, Camera, AlertCircle, Sparkles, CheckCircle2, Clock,
-    Loader2, Upload, X
+    Loader2, Upload, X, Plus
 } from "lucide-react";
 import { removeBackground } from "@imgly/background-removal";
 import { cn } from "@/lib/utils";
@@ -63,15 +63,20 @@ const medicalHistorySchema = z.object({
     health_conditions: z.array(z.string()).default([]),
     family_history: z.array(z.string()).default([]),
     takes_medication: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
+    medication_names: z.array(z.string()).default([]),
     medication_details: z.string().optional(),
     medication_frequency: z.string().optional(),
+    medication_schedule: z.string().optional(),
     recent_lab_tests: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
+    lab_test_documents: z.array(z.string()).default([]),
 
     // Step 5: Actividad y Ejercicio
     activity_level: z.string().min(1, "Actividad diaria requerida"),
     work_schedule: z.string().optional(),
     does_exercise: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
+    exercise_start_time: z.string().optional(), 
     exercise_duration: z.string().optional(),
+    exercise_per_session: z.string().optional(),
     exercise_types: z.array(z.string()).default([]),
     exercise_days: z.array(z.string()).default([]),
     exercise_time: z.string().optional(),
@@ -96,13 +101,16 @@ const medicalHistorySchema = z.object({
     cooks_for_self: z.string().min(1, "Quién prepara tu comida es requerido"),
     likes_cooking: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
     cooking_preparations: z.string().optional(),
-    food_allergies: z.string().optional(),
+    food_allergies: z.array(z.string()).default([]),
     food_intolerances: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
+    intolerance_types: z.array(z.string()).default([]),
     intolerance_details: z.string().optional(),
 
     // Step 8: Lácteos y Suplementos
-    dairy_consumption: z.string().min(1, "Respuesta requerida"),
+    dairy_consumption: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().optional()),
+    dairy_consumption_types: z.array(z.string()).default([]),
     dairy_brands: z.string().optional(),
+    dairy_product_photos: z.array(z.string()).default([]),
     supplements_consumption: z.preprocess((v) => typeof v === 'boolean' ? (v ? "yes" : "no") : v, z.string().min(1, "Respuesta requerida")),
     supplement_types: z.array(z.string()).default([]),
 
@@ -224,12 +232,15 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                     currentProfile = profile;
                 } else {
                     // Si tenemos un PatientId externo, necesitamos su perfil
-                    const { data: patientData } = await supabase.from('patients').select('profile:profiles!profile_id(id, full_name, email)').eq('id', currentPatientId).single();
-                    currentProfile = (patientData?.profile as any);
+                    const { data: patientData, error: pError } = await supabase.from('patients').select('profile:profiles!profile_id(id, full_name, email)').eq('id', currentPatientId).single();
+                    if (pError) throw pError;
+                    
+                    const profileData = patientData?.profile;
+                    currentProfile = Array.isArray(profileData) ? profileData[0] : profileData;
                 }
 
                 if (currentProfile) {
-                    form.setValue('full_name', currentProfile.full_name);
+                    form.setValue('full_name', currentProfile.full_name || "");
                     form.setValue('email', currentProfile.email || "");
 
                     if (!currentPatientId) {
@@ -307,6 +318,11 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
         }
     }, [watchedBirthDate, form]);
 
+    useEffect(() => {
+        const scrollContainer = document.querySelector('.overflow-y-auto') || window;
+        scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [step]);
+
     const onError = (errors: any) => {
         console.error("Form Validation Errors:", errors);
         const errorDetails = Object.entries(errors).map(([field, err]: [string, any]) => `${field}: ${err.message}`).filter(Boolean);
@@ -361,7 +377,9 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
             const nativeArrayFields = [
                 'health_conditions', 'family_history', 'exercise_types', 'exercise_days',
                 'appetite_peak_time', 'available_instruments', 'supplement_types',
-                'previous_unhealthy_habits'
+                'previous_unhealthy_habits', 'medication_names', 'lab_test_documents',
+                'intolerance_types', 'dairy_consumption_types', 'dairy_product_photos',
+                'food_allergies'
             ];
 
             // Fields that are defined as text (standard strings) in the database but are arrays in the form
@@ -390,17 +408,18 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                 'education_level', 'region', 'district', 'occupation', 'job_details',
                 'nutritional_goal', 'previous_nutrition_service', 'previous_experience_rating',
                 'time_following_plan', 'weight_kg', 'height_cm', 'waist_cm', 'health_conditions',
-                'family_history', 'takes_medication', 'medication_details', 'medication_frequency',
-                'recent_lab_tests', 'activity_level', 'work_schedule', 'does_exercise',
-                'exercise_duration', 'exercise_types', 'exercise_days', 'exercise_time',
+                'family_history', 'takes_medication', 'medication_names', 'medication_details', 
+                'medication_frequency', 'medication_schedule', 'recent_lab_tests', 'lab_test_documents',
+                'activity_level', 'work_schedule', 'does_exercise', 'exercise_start_time',
+                'exercise_duration', 'exercise_per_session', 'exercise_types', 'exercise_days', 'exercise_time',
                 'has_calorie_tracker', 'calorie_expenditure_details', 'appetite_level',
                 'appetite_peak_time', 'thirst_level', 'water_intake', 'sleep_quality',
                 'sleep_hours', 'bowel_movements', 'bowel_frequency', 'urine_status',
                 'urine_color_index', 'available_instruments', 'specific_diet_type',
                 'cooks_for_self', 'likes_cooking', 'cooking_preparations', 'food_allergies',
-                'food_intolerances', 'intolerance_details', 'dairy_consumption',
-                'dairy_brands', 'supplements_consumption', 'supplement_types',
-                'disliked_cereals', 'disliked_tubers', 'disliked_legumes', 'disliked_vegetables',
+                'food_intolerances', 'intolerance_types', 'intolerance_details', 'dairy_consumption',
+                'dairy_consumption_types', 'dairy_brands', 'dairy_product_photos', 'supplements_consumption', 
+                'supplement_types', 'disliked_cereals', 'disliked_tubers', 'disliked_legumes', 'disliked_vegetables',
                 'disliked_fruits', 'disliked_meats', 'disliked_fats', 'disliked_preparations',
                 'previous_unhealthy_habits', 'wake_up_time', 'sleep_time', 'breakfast_time',
                 'breakfast_details', 'lunch_time', 'lunch_details', 'dinner_time',
@@ -458,12 +477,18 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
         if (step === 5) fields.push('activity_level', 'does_exercise');
         if (step === 6) fields.push('appetite_level', 'thirst_level', 'water_intake', 'sleep_quality', 'sleep_hours', 'bowel_movements', 'bowel_frequency', 'urine_status', 'urine_color_index');
         if (step === 7) fields.push('cooks_for_self', 'likes_cooking', 'food_intolerances');
-        if (step === 8) fields.push('dairy_consumption', 'supplements_consumption');
+        if (step === 8) fields.push('supplements_consumption');
         if (step === 10) fields.push('wake_up_time', 'sleep_time', 'prep_preference', 'taste_preference');
 
         const isStepValid = await form.trigger(fields);
-        if (isStepValid) setStep(prev => Math.min(prev + 1, totalSteps));
-        else toast({ title: "Campos incompletos", description: "Por favor llena todos los campos requeridos del paso actual.", variant: "destructive" });
+        if (isStepValid) {
+            setStep(prev => Math.min(prev + 1, totalSteps));
+            // Scroll to top of the modal or window
+            const scrollContainer = document.querySelector('.overflow-y-auto') || window;
+            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            toast({ title: "Campos incompletos", description: "Por favor llena todos los campos requeridos del paso actual.", variant: "destructive" });
+        }
     };
 
     const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
@@ -1123,26 +1148,96 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
 }
 
 function HealthStatus({ form }: { form: any }) {
-    const conditions = ["Anemia", "Hipotiriodismo", "Gastritis", "Estreñimiento", "SOP", "Osteoporosis", "Grasa en la sangre", "Presión alta", "Glucosa alta"];
+    const { toast } = useToast();
+    const supabase = createClient();
+    const [uploading, setUploading] = useState<string | null>(null);
+
+    const conditions = [
+        "No padezco ninguna enfermedad",
+        "Diabetes mellitus",
+        "Dislipidemia (colesterol o trigliceridos altos)",
+        "Hígado graso",
+        "Enfermedad cardiovascular",
+        "Hipertensión arterial (HTA)",
+        "Obesidad",
+        "Anemia",
+        "Hipotiroidismo",
+        "Resistencia a la insulina",
+        "Sindrome de ovario poliquistico",
+        "Estreñimiento",
+        "Gastritis / Reflujo"
+    ];
+
+    const familyOptions = [
+        "Ninguno",
+        "Diabetes mellitus",
+        "Dislipidemia (colesterol o trigliceridos altos)",
+        "Hígado graso",
+        "Enfermedad cardiovascular",
+        "Hipertensión arterial (HTA)",
+        "Obesidad",
+        "Migraña",
+        "Anemia",
+        "Hipotiroidismo",
+        "Resistencia a la insulina",
+        "Sindrome de ovario poliquistico",
+        "Estreñimiento",
+        "Gastritis / Reflujo"
+    ];
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setUploading(fieldName);
+        try {
+            const file = files[0];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${form.getValues('patient_id') || 'unknown'}/doc_${Date.now()}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('lab-results')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('lab-results')
+                .getPublicUrl(fileName);
+
+            const current = form.getValues(fieldName) || [];
+            form.setValue(fieldName, [...current, publicUrl]);
+            toast({ title: "Documento subido con éxito" });
+        } catch (error: any) {
+            toast({ title: "Error al subir", description: error.message, variant: "destructive" });
+        } finally {
+            setUploading(null);
+        }
+    };
+
     return (
-        <div className="space-y-10">
+        <div className="space-y-12">
             <FormField control={form.control} name="health_conditions" render={() => (
                 <FormItem>
-                    <FormLabel className="text-lg font-bold text-white uppercase tracking-widest">¿Presentas algunas de estas condiciones?</FormLabel>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">¿Presentas algunas de estas condiciones?</FormLabel>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-6">
                         {conditions.map((item) => (
                             <FormField key={item} control={form.control} name="health_conditions" render={({ field }) => (
-                                <FormItem className="flex items-center space-x-3 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
+                                <FormItem className="flex items-center space-x-3 space-y-0 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-nutri-brand/30 transition-all cursor-pointer group">
                                     <FormControl>
                                         <Checkbox
                                             checked={field.value?.includes(item)}
                                             onCheckedChange={(checked: boolean) => {
                                                 const current = (field.value as string[]) || [];
-                                                return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
+                                                if (item === "No padezco ninguna enfermedad") {
+                                                    return checked ? field.onChange([item]) : field.onChange([]);
+                                                }
+                                                const withoutNone = current.filter(v => v !== "No padezco ninguna enfermedad");
+                                                return checked ? field.onChange([...withoutNone, item]) : field.onChange(withoutNone.filter(v => v !== item));
                                             }}
                                         />
                                     </FormControl>
-                                    <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
+                                    <FormLabel className="font-bold text-slate-300 group-hover:text-white cursor-pointer transition-colors leading-tight">{item}</FormLabel>
                                 </FormItem>
                             )} />
                         ))}
@@ -1152,21 +1247,25 @@ function HealthStatus({ form }: { form: any }) {
 
             <FormField control={form.control} name="family_history" render={() => (
                 <FormItem>
-                    <FormLabel className="text-lg font-bold text-white uppercase tracking-widest">Antecedentes Familiares (Padre, madre, abuelos)</FormLabel>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                        {["Diabetes", "Hipertensión", "Cáncer", "Obesidad", "Enfermedades del corazón"].map((item) => (
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">Antecedentes Familiares (Padre, madre, abuelos)</FormLabel>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-6">
+                        {familyOptions.map((item) => (
                             <FormField key={item} control={form.control} name="family_history" render={({ field }) => (
-                                <FormItem className="flex items-center space-x-3 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
+                                <FormItem className="flex items-center space-x-3 space-y-0 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-nutri-brand/30 transition-all cursor-pointer group">
                                     <FormControl>
                                         <Checkbox
                                             checked={field.value?.includes(item)}
                                             onCheckedChange={(checked: boolean) => {
                                                 const current = (field.value as string[]) || [];
-                                                return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
+                                                if (item === "Ninguno") {
+                                                    return checked ? field.onChange([item]) : field.onChange([]);
+                                                }
+                                                const withoutNone = current.filter(v => v !== "Ninguno");
+                                                return checked ? field.onChange([...withoutNone, item]) : field.onChange(withoutNone.filter(v => v !== item));
                                             }}
                                         />
                                     </FormControl>
-                                    <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
+                                    <FormLabel className="font-bold text-slate-300 group-hover:text-white cursor-pointer transition-colors leading-tight">{item}</FormLabel>
                                 </FormItem>
                             )} />
                         ))}
@@ -1176,31 +1275,105 @@ function HealthStatus({ form }: { form: any }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <FormField control={form.control} name="takes_medication" render={({ field }) => (
-                    <FormItem><FormLabel>¿Consumes algún medicamento?</FormLabel>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8">
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="med-yes" /><Label htmlFor="med-yes" className="text-white">Sí</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="med-no" /><Label htmlFor="med-no" className="text-white">No</Label></div>
+                    <FormItem className="p-6 bg-white/5 rounded-3xl border border-white/5">
+                        <FormLabel className="text-lg font-bold">¿Consumes algún medicamento?</FormLabel>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex gap-8 mt-4">
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="med-yes" /><Label htmlFor="med-yes" className="text-white cursor-pointer">Sí</Label></div>
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="med-no" /><Label htmlFor="med-no" className="text-white cursor-pointer">No</Label></div>
                         </RadioGroup>
-                        <FormMessage /></FormItem>
+                        <FormMessage />
+                    </FormItem>
                 )} />
                 <FormField control={form.control} name="recent_lab_tests" render={({ field }) => (
-                    <FormItem><FormLabel>¿Te haz realizado exámenes de laboratorio (3 meses)?</FormLabel>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8">
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="lab-yes" /><Label htmlFor="lab-yes" className="text-white">Sí</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="lab-no" /><Label htmlFor="lab-no" className="text-white">No</Label></div>
+                    <FormItem className="p-6 bg-white/5 rounded-3xl border border-white/5">
+                        <FormLabel className="text-lg font-bold">¿Te haz realizado exámenes de laboratorio (3 meses)?</FormLabel>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex gap-8 mt-4">
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="lab-yes" /><Label htmlFor="lab-yes" className="text-white cursor-pointer">Sí</Label></div>
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="lab-no" /><Label htmlFor="lab-no" className="text-white cursor-pointer">No</Label></div>
                         </RadioGroup>
-                        <FormMessage /></FormItem>
+                        <FormMessage />
+                    </FormItem>
                 )} />
             </div>
 
             {form.watch('takes_medication') === 'yes' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-white/5 rounded-3xl border border-white/5">
+                <div className="space-y-8 p-8 bg-nutri-brand/5 rounded-[2.5rem] border border-nutri-brand/10 animate-in fade-in slide-in-from-top-4">
+                    <FormField control={form.control} name="medication_names" render={() => (
+                        <FormItem>
+                            <FormLabel className="text-white font-black uppercase tracking-widest text-xs">Tipo de medicamento (Selección múltiple)</FormLabel>
+                            <div className="grid grid-cols-1 gap-3 mt-4">
+                                {[
+                                    "Antiacidos: omeprazol, esomeprazol, pantoprazol, u otros para la gastritis.",
+                                    "Antidiabeticos: Metformina, insulina y otros.",
+                                    "Anticonceptivos y hormonas femeninas.",
+                                    "Antibioticos: para hongos, bacterias o parasitos.",
+                                    "Estatinas: para bajar el colesterol o trigliceridos.",
+                                    "Para el acne.",
+                                    "Para tratar la obesidad."
+                                ].map((item) => (
+                                    <FormField key={item} control={form.control} name="medication_names" render={({ field }) => (
+                                        <FormItem className="flex items-center space-x-3 space-y-0 bg-white/5 p-4 rounded-xl border border-white/10">
+                                            <FormControl><Checkbox checked={field.value?.includes(item)} onCheckedChange={(checked) => {
+                                                const current = field.value || [];
+                                                return checked ? field.onChange([...current, item]) : field.onChange(current.filter((v: string) => v !== item));
+                                            }} /></FormControl>
+                                            <FormLabel className="text-slate-300 font-medium cursor-pointer leading-tight">{item}</FormLabel>
+                                        </FormItem>
+                                    )} />
+                                ))}
+                            </div>
+                        </FormItem>
+                    )} />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <FormField control={form.control} name="medication_frequency" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Frecuencia de consumo</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl><SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl"><SelectValue placeholder="Seleccionar frecuencia" /></SelectTrigger></FormControl>
+                                    <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                        <SelectItem value="con_comida">Con la comida</SelectItem>
+                                        <SelectItem value="ayunas">En ayunas</SelectItem>
+                                        <SelectItem value="antes_dormir">Antes de dormir</SelectItem>
+                                        <SelectItem value="cada_8_horas">Cada 8 horas</SelectItem>
+                                        <SelectItem value="cada_12_horas">Cada 12 horas</SelectItem>
+                                        <SelectItem value="cada_24_horas">Una vez al día (cada 24h)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="medication_schedule" render={({ field }) => (
+                            <FormItem><FormLabel>Horario específico (HH:mm)</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    </div>
                     <FormField control={form.control} name="medication_details" render={({ field }) => (
-                        <FormItem><FormLabel>¿Qué tipo de medicamento?</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Otros detalles o nombres de medicamentos</FormLabel><FormControl><Textarea {...field} className="bg-white/5 border-white/10 rounded-xl" /></FormControl><FormMessage /></FormItem>
                     )} />
-                    <FormField control={form.control} name="medication_frequency" render={({ field }) => (
-                        <FormItem><FormLabel>¿Frecuencia y horarios?</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-                    )} />
+                </div>
+            )}
+
+            {form.watch('recent_lab_tests') === 'yes' && (
+                <div className="p-8 bg-emerald-500/5 rounded-[2.5rem] border border-emerald-500/10 space-y-6">
+                    <div className="flex items-center gap-3">
+                        <Upload className="h-6 w-6 text-emerald-500" />
+                        <h4 className="font-tech font-bold text-white uppercase tracking-widest text-sm">Cargar Exámenes de Laboratorio</h4>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {(form.watch('lab_test_documents') || []).map((url: string, idx: number) => (
+                            <div key={idx} className="relative aspect-video rounded-xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center">
+                                <span className="text-[10px] text-slate-500 font-bold uppercase">Documento {idx + 1}</span>
+                                <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-6 w-6 rounded-full" onClick={() => {
+                                    const current = form.getValues('lab_test_documents');
+                                    form.setValue('lab_test_documents', current.filter((_: any, i: number) => i !== idx));
+                                }}><X className="h-3 w-3" /></Button>
+                            </div>
+                        ))}
+                        <label className="aspect-video flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/10 bg-white/5 cursor-pointer hover:border-emerald-500/50 transition-all">
+                            {uploading === 'lab_test_documents' ? <Loader2 className="h-6 w-6 animate-spin text-emerald-500" /> : <><Plus className="h-6 w-6 text-emerald-500 mb-2" /><span className="text-[10px] font-black uppercase text-slate-500">Subir Documento</span></>}
+                            <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, 'lab_test_documents')} />
+                        </label>
+                    </div>
                 </div>
             )}
         </div>
@@ -1208,69 +1381,76 @@ function HealthStatus({ form }: { form: any }) {
 }
 
 function ActivityExercise({ form }: { form: any }) {
-    const days = ["L", "M", "Mi", "J", "V", "S", "D"];
+    const startOptions = [
+        "Recientemente (hace pocos dias)",
+        "1 mes",
+        "2 meses",
+        "mas de 3 meses",
+        "mas de 1 año"
+    ];
+
+    const durOptions = [
+        "menos de 1 hora",
+        "1 hora",
+        "2 horas",
+        "mas de 3 horas"
+    ];
+
+    const exeTypes = [
+        "Entrenamiento con pesas",
+        "Aeróbicos de baja intensidad: baile, full body, etc.",
+        "Aeróbicos de alta intensidad: HIIT, Power training, funcional",
+        "Crossfit",
+        "Natación",
+        "Ciclismo",
+        "Correr",
+        "Yoga",
+        "Pilates"
+    ];
+
     return (
-        <div className="space-y-10">
-            <FormField control={form.control} name="activity_level" render={({ field }) => (
-                <FormItem><FormLabel className="text-lg font-bold text-white uppercase tracking-widest">¿Cómo es tu actividad diaria?</FormLabel>
-                    <FormControl>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-1 gap-4 mt-4">
-                            <div className="flex items-center space-x-3 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-nutri-brand/30 transition-all cursor-pointer">
-                                <RadioGroupItem value="moderada" id="act-moderada" />
-                                <Label htmlFor="act-moderada" className="text-white font-medium cursor-pointer">Moderada (camino 9000 pasos)</Label>
-                            </div>
-                            <div className="flex items-center space-x-3 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-nutri-brand/30 transition-all cursor-pointer">
-                                <RadioGroupItem value="leve" id="act-leve" />
-                                <Label htmlFor="act-leve" className="text-white font-medium cursor-pointer">Leve (camino 6000 pasos)</Label>
-                            </div>
-                            <div className="flex items-center space-x-3 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-nutri-brand/30 transition-all cursor-pointer">
-                                <RadioGroupItem value="sedentaria" id="act-sedentaria" />
-                                <Label htmlFor="act-sedentaria" className="text-white font-medium cursor-pointer">Sedentaria (menor o igual 3000 pasos)</Label>
-                            </div>
-                        </RadioGroup>
-                    </FormControl>
-                    <FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="work_schedule" render={({ field }) => (
-                <FormItem><FormLabel>Horario de trabajo (Días y horas) (Opcional)</FormLabel><FormControl><Input {...field} placeholder="L-V 8am-6pm" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-            )} />
+        <div className="space-y-12">
             <FormField control={form.control} name="does_exercise" render={({ field }) => (
-                <FormItem><FormLabel className="text-lg font-bold text-white uppercase tracking-widest">¿Actualmente realizas ejercicio?</FormLabel>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
-                        <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="exe-yes" /><Label htmlFor="exe-yes" className="text-white">Sí</Label></div>
-                        <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="exe-no" /><Label htmlFor="exe-no" className="text-white">No</Label></div>
+                <FormItem className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5">
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter block mb-4">¿Haces ejercicio?</FormLabel>
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex gap-10 mt-2">
+                        <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="exe-yes" /><Label htmlFor="exe-yes" className="text-white text-lg font-bold cursor-pointer">Sí</Label></div>
+                        <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="exe-no" /><Label htmlFor="exe-no" className="text-white text-lg font-bold cursor-pointer">No</Label></div>
                     </RadioGroup>
-                    <FormMessage /></FormItem>
+                    <FormMessage />
+                </FormItem>
             )} />
 
             {form.watch('does_exercise') === 'yes' && (
-                <div className="space-y-8 animate-in fade-in slide-in-from-top-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField control={form.control} name="exercise_duration" render={({ field }) => (
-                            <FormItem><FormLabel>¿Cuánto tiempo de ejercicio realizas?</FormLabel><FormControl><Input {...field} placeholder="Ej: 1 hora" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="exercise_time" render={({ field }) => (
-                            <FormItem><FormLabel>¿A qué hora sueles entrenar?</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-                        )} />
-                    </div>
+                <div className="space-y-10 animate-in fade-in slide-in-from-top-4">
+                    <FormField control={form.control} name="exercise_duration" render={({ field }) => (
+                        <FormItem><FormLabel>¿Cuánto tiempo realizas la actividad física?</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-2xl"><SelectValue placeholder="Seleccionar duración" /></SelectTrigger></FormControl>
+                                <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                    {durOptions.map((opt: string) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage /></FormItem>
+                    )} />
 
                     <FormField control={form.control} name="exercise_types" render={() => (
                         <FormItem>
-                            <FormLabel className="text-sm font-bold text-slate-400">¿Qué tipo de ejercicio realizas?</FormLabel>
-                            <div className="flex flex-wrap gap-3 mt-3">
-                                {["Pesas", "Funcional", "Crossfit", "Natación", "Ciclismo", "Correr", "Yoga", "Pilates"].map((item) => (
+                            <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">¿Tipos de ejercicios que realizas de manera frecuente?</FormLabel>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-6">
+                                {exeTypes.map((item: string) => (
                                     <FormField key={item} control={form.control} name="exercise_types" render={({ field }) => (
-                                        <FormItem className="flex items-center space-x-2 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
+                                        <FormItem className="flex items-center space-x-3 space-y-0 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-nutri-brand/30 transition-all cursor-pointer group">
                                             <FormControl>
                                                 <Checkbox
                                                     checked={field.value?.includes(item)}
                                                     onCheckedChange={(checked: boolean) => {
                                                         const current = (field.value as string[]) || [];
-                                                        return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
+                                                        return checked ? field.onChange([...current, item]) : field.onChange(current.filter((v: string) => v !== item));
                                                     }}
                                                 />
                                             </FormControl>
-                                            <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
+                                            <FormLabel className="font-bold text-slate-300 group-hover:text-white cursor-pointer transition-colors leading-tight">{item}</FormLabel>
                                         </FormItem>
                                     )} />
                                 ))}
@@ -1278,258 +1458,255 @@ function ActivityExercise({ form }: { form: any }) {
                         </FormItem>
                     )} />
 
-                    <FormField control={form.control} name="exercise_days" render={() => (
-                        <FormItem>
-                            <FormLabel className="text-sm font-bold text-slate-400">¿Qué días sueles entrenar?</FormLabel>
-                            <div className="flex gap-2 mt-3">
-                                {["L", "Ma", "Mi", "J", "V", "S", "D"].map((item) => (
-                                    <FormField key={item} control={form.control} name="exercise_days" render={({ field }) => (
-                                        <FormItem className="flex-1 space-y-0">
-                                            <FormControl>
-                                                <div
-                                                    onClick={() => {
-                                                        const current = (field.value as string[]) || [];
-                                                        const exists = current.includes(item);
-                                                        field.onChange(exists ? current.filter(v => v !== item) : [...current, item]);
-                                                    }}
-                                                    className={cn(
-                                                        "h-12 rounded-xl border flex items-center justify-center font-black cursor-pointer transition-all",
-                                                        field.value?.includes(item) ? "bg-nutri-brand border-nutri-brand text-white" : "bg-white/5 border-white/10 text-slate-500"
-                                                    )}
-                                                >
-                                                    {item}
-                                                </div>
-                                            </FormControl>
-                                        </FormItem>
-                                    )} />
-                                ))}
-                            </div>
-                        </FormItem>
+                    <FormField control={form.control} name="time_practicing" render={({ field }) => (
+                        <FormItem><FormLabel>¿Hace cuánto tiempo iniciaste a realizar actividad física?</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-2xl text-white"><SelectValue placeholder="Seleccionar tiempo" /></SelectTrigger></FormControl>
+                                <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                    {startOptions.map((opt: string) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage /></FormItem>
                     )} />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <FormField control={form.control} name="has_calorie_tracker" render={({ field }) => (
-                            <FormItem><FormLabel>¿Cuentas con un contador de calorías?</FormLabel>
-                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="cal-yes" /><Label htmlFor="cal-yes" className="text-white">Sí</Label></div>
-                                    <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="cal-no" /><Label htmlFor="cal-no" className="text-white">No</Label></div>
-                                </RadioGroup>
-                                <FormMessage /></FormItem>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-4">
+                        <FormField control={form.control} name="exercise_time" render={({ field }) => (
+                            <FormItem><FormLabel>¿A qué hora sueles entrenar?</FormLabel><FormControl><Input type="time" {...field} className="h-14 bg-white/5 border-white/10 rounded-2xl text-white font-bold" /></FormControl><FormMessage /></FormItem>
                         )} />
-                        <FormField control={form.control} name="calorie_expenditure_details" render={({ field }) => (
-                            <FormItem><FormLabel>Detalle de gasto calórico (Opcional)</FormLabel><FormControl><Input {...field} placeholder="Ej: 500 kcal por sesión" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        <FormField control={form.control} name="exercise_days" render={() => (
+                            <FormItem>
+                                <FormLabel>¿Qué días sueles entrenar?</FormLabel>
+                                <div className="flex flex-wrap gap-2 mt-4">
+                                    {["L", "Ma", "Mi", "J", "V", "S", "D"].map((day: string) => (
+                                        <FormField key={day} control={form.control} name="exercise_days" render={({ field }) => (
+                                            <div
+                                                onClick={() => {
+                                                    const current = field.value || [];
+                                                    field.onChange(current.includes(day) ? current.filter((v: string) => v !== day) : [...current, day]);
+                                                }}
+                                                className={cn(
+                                                    "w-12 h-12 rounded-xl border flex items-center justify-center font-black cursor-pointer transition-all shadow-lg",
+                                                    field.value?.includes(day) ? "bg-nutri-brand border-nutri-brand text-white shadow-lg shadow-nutri-brand/20 scale-110" : "bg-white/5 border-white/10 text-slate-500 hover:border-white/20"
+                                                )}
+                                            >{day}</div>
+                                        )} />
+                                    ))}
+                                </div>
+                            </FormItem>
                         )} />
                     </div>
                 </div>
             )}
-        </div>
-    );
-}
 
-function Habits({ form }: { form: any }) {
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <FormField control={form.control} name="appetite_level" render={({ field }) => (
-                <FormItem><FormLabel>¿Cómo está tu apetito?</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                        <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                            <SelectItem value="bajo">Bajo</SelectItem>
-                            <SelectItem value="normal">Normal</SelectItem>
-                            <SelectItem value="aumentado">Aumentado</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage /></FormItem>
-            )} />
-
-            <FormField control={form.control} name="appetite_peak_time" render={() => (
-                <FormItem className="col-span-full">
-                    <FormLabel className="text-sm font-bold text-slate-400">¿En qué momento del día sientes más hambre?</FormLabel>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-                        {["Mañana", "Tarde", "Noche", "Todo el día", "Madrugada"].map((item) => (
-                            <FormField key={item} control={form.control} name="appetite_peak_time" render={({ field }) => (
-                                <FormItem className="flex items-center space-x-2 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
-                                    <FormControl>
-                                        <Checkbox
-                                            checked={field.value?.includes(item)}
-                                            onCheckedChange={(checked: boolean) => {
-                                                const current = (field.value as string[]) || [];
-                                                return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
-                                            }}
-                                        />
-                                    </FormControl>
-                                    <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
-                                </FormItem>
-                            )} />
-                        ))}
-                    </div>
-                </FormItem>
-            )} />
-            <FormField control={form.control} name="thirst_level" render={({ field }) => (
-                <FormItem><FormLabel>¿Cómo está tu sed?</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                        <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                            <SelectItem value="bajo">Bajo</SelectItem>
-                            <SelectItem value="normal">Normal</SelectItem>
-                            <SelectItem value="aumentado">Aumentado</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="water_intake" render={({ field }) => (
-                <FormItem><FormLabel>¿Qué cantidad de agua consumes en el día?</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar cantidad" /></SelectTrigger></FormControl>
-                        <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                            <SelectItem value="250-500">1-2 vasos de agua (250-500mL)</SelectItem>
-                            <SelectItem value="750-1000">3-4 vasos de agua (750mL-1L)</SelectItem>
-                            <SelectItem value="1250-1500">5-6 vasos de agua (1250-1500mL)</SelectItem>
-                            <SelectItem value="1750-2000">7-8 vasos de agua (1750 mL-2L)</SelectItem>
-                            <SelectItem value="2250-2500">9-10 vasos de agua (2250mL-2500mL)</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="sleep_quality" render={({ field }) => (
-                <FormItem><FormLabel>¿Cómo está actualmente tu sueño?</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar estado" /></SelectTrigger></FormControl>
-                        <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                            <SelectItem value="disminuido">Disminuido</SelectItem>
-                            <SelectItem value="normal">Normal</SelectItem>
-                            <SelectItem value="aumentado">Aumentado</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="sleep_hours" render={({ field }) => (
-                <FormItem><FormLabel>¿Cuántas horas duermes usualmente?</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar horas" /></SelectTrigger></FormControl>
-                        <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                            <SelectItem value="less_5">Menos de 5 horas</SelectItem>
-                            <SelectItem value="5">5 horas</SelectItem>
-                            <SelectItem value="6">6 horas</SelectItem>
-                            <SelectItem value="7">7 horas</SelectItem>
-                            <SelectItem value="8">8 horas</SelectItem>
-                            <SelectItem value="9_plus">9 a más horas</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="bowel_movements" render={({ field }) => (
-                <FormItem><FormLabel>¿Cómo están tus deposiciones?</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar estado" /></SelectTrigger></FormControl>
-                        <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                            <SelectItem value="disminuido">Disminuido</SelectItem>
-                            <SelectItem value="normal">Normal</SelectItem>
-                            <SelectItem value="aumentado">Aumentado</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="bowel_frequency" render={({ field }) => (
-                <FormItem><FormLabel>¿Con qué frecuencia realizas deposiciones?</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar frecuencia" /></SelectTrigger></FormControl>
-                        <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                            <SelectItem value="1_dia">1 vez en el día</SelectItem>
-                            <SelectItem value="2_dia">2 veces en el día</SelectItem>
-                            <SelectItem value="3_dia">3 veces en el día</SelectItem>
-                            <SelectItem value="cada_2_dias">Cada 2 días</SelectItem>
-                            <SelectItem value="cada_3_dias">Cada 3 días</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="urine_status" render={({ field }) => (
-                <FormItem><FormLabel>¿Cómo está tu orina?</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar estado" /></SelectTrigger></FormControl>
-                        <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                            <SelectItem value="disminuido">Disminuido</SelectItem>
-                            <SelectItem value="normal">Normal</SelectItem>
-                            <SelectItem value="aumentado">Aumentado</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="urine_color_index" render={({ field }) => (
-                <FormItem className="col-span-full bg-white/5 p-8 rounded-[2rem] border border-white/5">
-                    <FormLabel className="text-lg mb-6 block">Índice de color de orina (1-8)</FormLabel>
+            <FormField control={form.control} name="activity_level" render={({ field }) => (
+                <FormItem className="pt-10 border-t border-white/20">
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">¿Cómo es tu actividad diaria (Trabajo/Estudios)?</FormLabel>
                     <FormControl>
-                        <RadioGroup
-                            onValueChange={(val) => field.onChange(parseInt(val))}
-                            defaultValue={field.value?.toString()}
-                            className="flex flex-wrap items-center justify-between gap-4"
-                        >
-                            {[
-                                { id: 1, color: "#FDF5E6" },
-                                { id: 2, color: "#FBE7A1" },
-                                { id: 3, color: "#F9D94A" },
-                                { id: 4, color: "#FAD02C" },
-                                { id: 5, color: "#F2C029" },
-                                { id: 6, color: "#EAAC14" },
-                                { id: 7, color: "#D99101" },
-                                { id: 8, color: "#7C7601" }
-                            ].map((item) => (
-                                <div key={item.id} className="flex flex-col items-center gap-3">
-                                    <RadioGroupItem value={item.id.toString()} id={`u-${item.id}`} className="sr-only" />
-                                    <Label
-                                        htmlFor={`u-${item.id}`}
-                                        className={cn(
-                                            "w-12 h-12 rounded-full cursor-pointer border-4 transition-all hover:scale-110",
-                                            field.value === item.id ? "border-nutri-brand scale-110 ring-4 ring-nutri-brand/20" : "border-white/10"
-                                        )}
-                                        style={{ backgroundColor: item.color }}
-                                    />
-                                    <span className="text-xs font-bold text-slate-500">{item.id}</span>
-                                </div>
-                            ))}
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="grid grid-cols-1 gap-4 mt-6">
+                            <div className="flex items-center space-x-3 bg-white/5 p-5 rounded-2xl border border-white/5 hover:border-nutri-brand/30 transition-all cursor-pointer group">
+                                <RadioGroupItem value="moderada" id="act-moderada" />
+                                <Label htmlFor="act-moderada" className="text-white font-bold cursor-pointer group-hover:text-nutri-brand">Moderada (camino 9000 pasos)</Label>
+                            </div>
+                            <div className="flex items-center space-x-3 bg-white/5 p-5 rounded-2xl border border-white/5 hover:border-nutri-brand/30 transition-all cursor-pointer group">
+                                <RadioGroupItem value="leve" id="act-leve" />
+                                <Label htmlFor="act-leve" className="text-white font-bold cursor-pointer group-hover:text-nutri-brand">Leve (camino 6000 pasos)</Label>
+                            </div>
+                            <div className="flex items-center space-x-3 bg-white/5 p-5 rounded-2xl border border-white/5 hover:border-nutri-brand/30 transition-all cursor-pointer group">
+                                <RadioGroupItem value="sedentaria" id="act-sedentaria" />
+                                <Label htmlFor="act-sedentaria" className="text-white font-bold cursor-pointer group-hover:text-nutri-brand">Sedentaria (menor o igual 3000 pasos)</Label>
+                            </div>
                         </RadioGroup>
                     </FormControl>
                     <FormMessage />
                 </FormItem>
             )} />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
-                <FormField control={form.control} name="disliked_vegetables" render={({ field }) => (
-                    <FormItem><FormLabel>Vegetales que no te agradan</FormLabel><FormControl><Input {...field} placeholder="Ej: Cebolla, Brócoli" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="disliked_fruits" render={({ field }) => (
-                    <FormItem><FormLabel>Frutas que no te agradan</FormLabel><FormControl><Input {...field} placeholder="Ej: Papaya, Melón" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-                )} />
-            </div>
-
-            <FormField control={form.control} name="disliked_preparations" render={({ field }) => (
-                <FormItem><FormLabel>Preparaciones que no te agradan</FormLabel><FormControl><Input {...field} placeholder="Ej: Guisos, Ensaladas crudas" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+            <FormField control={form.control} name="work_schedule" render={({ field }) => (
+                <FormItem><FormLabel>Horario de trabajo (Días y horas) (Opcional)</FormLabel><FormControl><Input {...field} placeholder="Días y rango horario" className="h-12 rounded-xl bg-white/5 border-white/10 text-white font-bold" /></FormControl><FormMessage /></FormItem>
             )} />
         </div>
     );
 }
 
-function DietCooking({ form }: { form: any }) {
+function Habits({ form }: { form: any }) {
     return (
-        <div className="space-y-10">
+        <div className="space-y-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <FormField control={form.control} name="appetite_level" render={({ field }) => (
+                    <FormItem><FormLabel className="text-lg font-bold">Estado de apetito</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger className="h-14 bg-white/5 border-white/10 rounded-2xl"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                            <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                <SelectItem value="muy_alto">Muy Alto</SelectItem>
+                                <SelectItem value="alto">Alto</SelectItem>
+                                <SelectItem value="normal">Normal</SelectItem>
+                                <SelectItem value="bajo">Bajo</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="appetite_peak_time" render={() => (
+                    <FormItem>
+                        <FormLabel className="text-lg font-bold">¿En qué momento del día sientes más hambre?</FormLabel>
+                        <div className="flex flex-wrap gap-3 mt-4">
+                            {["Mañana", "Tarde", "Noche", "Madrugada", "Todo el día"].map((time: string) => (
+                                <FormField key={time} control={form.control} name="appetite_peak_time" render={({ field }) => (
+                                    <div 
+                                        onClick={() => {
+                                            const current = field.value || [];
+                                            field.onChange(current.includes(time) ? current.filter((v: string) => v !== time) : [...current, time]);
+                                        }}
+                                        className={cn(
+                                            "px-6 py-3 rounded-xl border font-bold cursor-pointer transition-all",
+                                            field.value?.includes(time) ? "bg-nutri-brand border-nutri-brand text-white" : "bg-white/5 border-white/10 text-slate-400"
+                                        )}
+                                    >{time}</div>
+                                )} />
+                            ))}
+                        </div>
+                    </FormItem>
+                )} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <FormField control={form.control} name="thirst_level" render={({ field }) => (
+                    <FormItem><FormLabel>Nivel de Sed</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                            <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                <SelectItem value="normal">Normal</SelectItem>
+                                <SelectItem value="aumentada">Aumentada</SelectItem>
+                                <SelectItem value="disminuida">Disminuida</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="water_intake" render={({ field }) => (
+                    <FormItem><FormLabel>¿Cuánta agua consumes al día?</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl"><SelectValue placeholder="Seleccionar cantidad" /></SelectTrigger></FormControl>
+                            <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                <SelectItem value="menos_1">Menos de 1 litro</SelectItem>
+                                <SelectItem value="1_litro">1 litro</SelectItem>
+                                <SelectItem value="1_5_litros">1.5 litros</SelectItem>
+                                <SelectItem value="2_litros">2 litros</SelectItem>
+                                <SelectItem value="mas_2">Más de 2 litros</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="sleep_quality" render={({ field }) => (
+                    <FormItem><FormLabel>Calidad de Sueño</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl"><SelectValue placeholder="Seleccionar calidad" /></SelectTrigger></FormControl>
+                            <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                <SelectItem value="reparador">Reparador</SelectItem>
+                                <SelectItem value="no_reparador">No reparador</SelectItem>
+                                <SelectItem value="insomnio">Sufro de Insomnio</SelectItem>
+                                <SelectItem value="interrumpido">Sueño interrumpido</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage /></FormItem>
+                )} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <FormField control={form.control} name="sleep_hours" render={({ field }) => (
+                    <FormItem><FormLabel>Horas de sueño diarias</FormLabel><FormControl><Input {...field} placeholder="Ej: 7 u 8 horas" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="bowel_movements" render={({ field }) => (
+                    <FormItem><FormLabel>Estado de deposiciones</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                            <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                <SelectItem value="normal">Normal</SelectItem>
+                                <SelectItem value="estreñimiento">Estreñimiento</SelectItem>
+                                <SelectItem value="diarrea">Diarrea</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="bowel_frequency" render={({ field }) => (
+                    <FormItem><FormLabel>Frecuencia de deposiciones</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
+                            <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                <SelectItem value="diario">Diario</SelectItem>
+                                <SelectItem value="interdiario">Interdiario</SelectItem>
+                                <SelectItem value="2_veces_semana">2 veces por semana</SelectItem>
+                                <SelectItem value="más_semana">1 vez o más por semana</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage /></FormItem>
+                )} />
+            </div>
+
+            <div className="p-8 bg-white/5 rounded-[2.5rem] border border-white/10">
+                <FormField control={form.control} name="urine_color_index" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel className="text-lg font-black text-white uppercase tracking-tighter block mb-6">Indicar que número coincide con el color de tu orina</FormLabel>
+                        <FormControl>
+                            <div className="flex flex-col gap-6">
+                                <div className="flex justify-between items-center gap-2">
+                                    {[1, 2, 3, 4, 5, 6, 7, 8].map((idx: number) => {
+                                        const colors: Record<number, string> = {
+                                            1: "#FDF5E6", 2: "#FBE7A1", 3: "#F9D94A", 4: "#FAD02C", 5: "#F2C029", 6: "#EAAC14", 7: "#D99101", 8: "#7C7601"
+                                        };
+                                        return (
+                                            <div 
+                                                key={idx}
+                                                onClick={() => field.onChange(idx)}
+                                                className={cn(
+                                                    "flex-1 h-14 rounded-lg cursor-pointer transition-all border-2 flex items-center justify-center font-black",
+                                                    field.value === idx ? "scale-110 border-white shadow-xl shadow-white/20 z-10" : "border-transparent opacity-60 hover:opacity-100"
+                                                )}
+                                                style={{ backgroundColor: colors[idx], color: idx > 4 ? 'white' : 'black' }}
+                                            >{idx}</div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">
+                                    <span>Hidratado</span>
+                                    <span>Deshidratado</span>
+                                </div>
+                            </div>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+            </div>
+        </div>
+    );
+}
+
+function DietCooking({ form }: { form: any }) {
+    const instruments = ["Refrigeradora", "Congeladora", "Microondas", "Horno", "Cocina", "Balanza de alimentos", "cuchara medidora", "ninguna"];
+    const dietTypes = [
+        "No", 
+        "Vegetariano: ovovegetariano (consumes huevo)", 
+        "Vegetariano: lactovegetariano (consumes lacteos)", 
+        "Ovolacteovegetariano (consumes lacteos y huevos)", 
+        "Vegana"
+    ];
+    const allergyOptions = ["Ninguna", "Mani", "Naranja", "Pescado", "Huevos", "Mariscos", "Fresa"];
+    const intoleranceOptions = ["Lactosa", "Gluten", "Otros"];
+
+    return (
+        <div className="space-y-12">
             <FormField control={form.control} name="available_instruments" render={() => (
                 <FormItem>
-                    <FormLabel className="text-lg font-bold text-white uppercase tracking-widest">¿Cuentas con algunos de estos instrumentos?</FormLabel>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-                        {["Balanza de alimentos", "Balanza corporal", "Cinta métrica", "Air fryer", "Licuadora"].map((item) => (
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">¿Cuentas con algunos de estos instrumentos?</FormLabel>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
+                        {instruments.map((item: string) => (
                             <FormField key={item} control={form.control} name="available_instruments" render={({ field }) => (
-                                <FormItem className="flex items-center space-x-3 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
-                                    <FormControl>
-                                        <Checkbox
-                                            checked={field.value?.includes(item)}
-                                            onCheckedChange={(checked: boolean) => {
-                                                const current = (field.value as string[]) || [];
-                                                return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
-                                            }}
-                                        />
-                                    </FormControl>
-                                    <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
+                                <FormItem className="flex items-center space-x-3 space-y-0 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-nutri-brand/30 transition-all cursor-pointer">
+                                    <FormControl><Checkbox checked={field.value?.includes(item)} onCheckedChange={(checked: boolean) => {
+                                        const current = field.value || [];
+                                        if (item === "ninguna") return checked ? field.onChange(["ninguna"]) : field.onChange([]);
+                                        const withoutNone = current.filter((v: string) => v !== "ninguna");
+                                        return checked ? field.onChange([...withoutNone, item]) : field.onChange(withoutNone.filter((v: string) => v !== item));
+                                    }} /></FormControl>
+                                    <FormLabel className="font-bold text-slate-300 cursor-pointer">{item}</FormLabel>
                                 </FormItem>
                             )} />
                         ))}
@@ -1537,114 +1714,217 @@ function DietCooking({ form }: { form: any }) {
                 </FormItem>
             )} />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FormField control={form.control} name="specific_diet_type" render={({ field }) => (
-                    <FormItem><FormLabel>¿Tienes algún tipo de alimentación específica?</FormLabel><FormControl><Input {...field} placeholder="Ej: Vegano, Keto, etc." className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="cooks_for_self" render={({ field }) => (
-                    <FormItem><FormLabel>¿Quién prepara tu comida?</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                            <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                                <SelectItem value="yo_mismo">Yo mism@</SelectItem>
-                                <SelectItem value="pareja">Pareja</SelectItem>
-                                <SelectItem value="mama">Mamá</SelectItem>
-                                <SelectItem value="restaurante">Restaurante</SelectItem>
-                                <SelectItem value="otros">Otros</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage /></FormItem>
-                )} />
-            </div>
-
-            <FormField control={form.control} name="likes_cooking" render={({ field }) => (
-                <FormItem><FormLabel>¿Te gusta cocinar?</FormLabel>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
-                        <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="cook-yes" /><Label htmlFor="cook-yes" className="text-white">Sí</Label></div>
-                        <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="cook-no" /><Label htmlFor="cook-no" className="text-white">No</Label></div>
+            <FormField control={form.control} name="specific_diet_type" render={({ field }) => (
+                <FormItem className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5">
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter mb-6 block">¿Presentas algún tipo de alimentación especial?</FormLabel>
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {dietTypes.map((type: string) => (
+                            <div key={type} className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer group">
+                                <RadioGroupItem value={type} id={type} />
+                                <Label htmlFor={type} className="text-white font-medium cursor-pointer leading-tight group-hover:text-nutri-brand transition-colors">{type}</Label>
+                            </div>
+                        ))}
                     </RadioGroup>
-                    <FormMessage /></FormItem>
+                </FormItem>
             )} />
 
-            {form.watch('likes_cooking') === 'yes' && (
-                <FormField control={form.control} name="cooking_preparations" render={({ field }) => (
-                    <FormItem><FormLabel>¿Qué preparaciones sueles realizar?</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <FormField control={form.control} name="cooks_for_self" render={({ field }) => (
+                    <FormItem><FormLabel>¿Quién cocina o prepara tus comidas?</FormLabel><FormControl><Input {...field} placeholder="Yo, mi madre, delivery, etc." className="h-12 rounded-xl bg-white/5 border-white/10 text-white font-bold" /></FormControl><FormMessage /></FormItem>
                 )} />
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
-                <FormField control={form.control} name="food_allergies" render={({ field }) => (
-                    <FormItem><FormLabel>¿Tienes alergia a algún alimento?</FormLabel><FormControl><Input {...field} placeholder="Ej: Maní, Mariscos" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="food_intolerances" render={({ field }) => (
-                    <FormItem><FormLabel>¿Eres intolerante a algún alimento?</FormLabel>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="int-yes" /><Label htmlFor="int-yes" className="text-white">Sí</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="int-no" /><Label htmlFor="int-no" className="text-white">No</Label></div>
+                <FormField control={form.control} name="likes_cooking" render={({ field }) => (
+                    <FormItem><FormLabel>¿Te agrada cocinar?</FormLabel>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-4">
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="cook-yes" /><Label htmlFor="cook-yes" className="text-white cursor-pointer">Sí</Label></div>
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="cook-no" /><Label htmlFor="cook-no" className="text-white cursor-pointer">No</Label></div>
                         </RadioGroup>
                         <FormMessage /></FormItem>
                 )} />
             </div>
 
-            {form.watch('food_intolerances') === 'yes' && (
-                <FormField control={form.control} name="intolerance_details" render={({ field }) => (
-                    <FormItem><FormLabel>Especifica a qué eres intolerante</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+            <FormField control={form.control} name="food_allergies" render={() => (
+                <FormItem>
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">¿Presentas alguna alergia alimentaria?</FormLabel>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
+                        {allergyOptions.map((opt: string) => (
+                            <FormField key={opt} control={form.control} name="food_allergies" render={({ field }) => (
+                                <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer group">
+                                    <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked: boolean) => {
+                                        const current = field.value || [];
+                                        if (opt === "Ninguna") return checked ? field.onChange(["Ninguna"]) : field.onChange([]);
+                                        const filtered = current.filter((v: string) => v !== "Ninguna");
+                                        return checked ? field.onChange([...filtered, opt]) : field.onChange(filtered.filter((v: string) => v !== opt));
+                                    }} /></FormControl>
+                                    <Label className="text-slate-300 font-bold group-hover:text-white cursor-pointer uppercase text-xs tracking-widest">{opt}</Label>
+                                </FormItem>
+                            )} />
+                        ))}
+                    </div>
+                </FormItem>
+            )} />
+
+            <div className="space-y-6">
+                <FormField control={form.control} name="food_intolerances" render={({ field }) => (
+                    <FormItem className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5">
+                        <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">¿Eres intolerante a algún alimento?</FormLabel>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-10 mt-6">
+                            <div className="flex items-center space-x-3"><RadioGroupItem value="yes" id="int-yes" /><Label htmlFor="int-yes" className="text-white text-lg cursor-pointer">Sí</Label></div>
+                            <div className="flex items-center space-x-3"><RadioGroupItem value="no" id="int-no" /><Label htmlFor="int-no" className="text-white text-lg cursor-pointer">No</Label></div>
+                        </RadioGroup>
+                    </FormItem>
                 )} />
-            )}
+
+                {form.watch('food_intolerances') === 'yes' && (
+                    <div className="p-8 bg-nutri-brand/5 rounded-[2.5rem] border border-nutri-brand/10 space-y-8 animate-in fade-in slide-in-from-top-4">
+                        <FormField control={form.control} name="intolerance_types" render={() => (
+                            <FormItem>
+                                <FormLabel className="text-sm font-black uppercase tracking-widest text-slate-500">¿A qué eres intolerante? (Selección múltiple)</FormLabel>
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
+                                    {intoleranceOptions.map(opt => (
+                                        <FormField key={opt} control={form.control} name="intolerance_types" render={({ field }) => (
+                                            <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
+                                                <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
+                                                    const current = field.value || [];
+                                                    return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
+                                                }} /></FormControl>
+                                                <Label className="text-slate-300 font-bold cursor-pointer uppercase text-[10px] tracking-widest">{opt}</Label>
+                                            </FormItem>
+                                        )} />
+                                    ))}
+                                </div>
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="intolerance_details" render={({ field }) => (
+                            <FormItem><FormLabel>Especificar más detalles (en caso de elegir otros)</FormLabel><FormControl><Textarea {...field} className="bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                        )} />
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
 
 function DairySupplements({ form }: { form: any }) {
+    const { toast } = useToast();
+    const supabase = createClient();
+    const [uploading, setUploading] = useState<string | null>(null);
+
+    const dairyTypes = ["Leche de Vaca", "Leche de Soya", "Leche de Almendras", "Yogurt Natural", "Yogurt Griego", "Queso Fresco", "Queso Paria", "Otros"];
+    const supplements = ["Suplementos de proteina", "Suplementos de vitaminas y minerales", "Creatina", "Colageno", "otros"];
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setUploading('dairy');
+        try {
+            const file = files[0];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${form.getValues('patient_id')}/product_${Date.now()}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('progress-photos')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('progress-photos')
+                .getPublicUrl(fileName);
+
+            const current = form.getValues('dairy_product_photos') || [];
+            form.setValue('dairy_product_photos', [...current, publicUrl]);
+            toast({ title: "Foto de producto subida" });
+        } catch (error: any) {
+            toast({ title: "Error al subir", description: error.message, variant: "destructive" });
+        } finally {
+            setUploading(null);
+        }
+    };
+
     return (
-        <div className="space-y-10">
+        <div className="space-y-12">
             <FormField control={form.control} name="dairy_consumption" render={({ field }) => (
-                <FormItem><FormLabel>¿Qué lácteo consumes?</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                        <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                            <SelectItem value="ninguno">Ninguno</SelectItem>
-                            <SelectItem value="leche">Leche</SelectItem>
-                            <SelectItem value="yogurt">Yogurt</SelectItem>
-                            <SelectItem value="queso">Queso</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage /></FormItem>
+                <FormItem className="p-8 bg-white/5 rounded-[2.5rem] border border-white/10">
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter mb-6 block">¿Consumes lácteos regularmente?</FormLabel>
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-10">
+                        <div className="flex items-center space-x-3"><RadioGroupItem value="yes" id="dairy-yes" /><Label htmlFor="dairy-yes" className="text-white text-lg cursor-pointer">Sí</Label></div>
+                        <div className="flex items-center space-x-3"><RadioGroupItem value="no" id="dairy-no" /><Label htmlFor="dairy-no" className="text-white text-lg cursor-pointer">No</Label></div>
+                    </RadioGroup>
+                </FormItem>
             )} />
 
-            {form.watch('dairy_consumption') !== 'ninguno' && (
-                <FormField control={form.control} name="dairy_brands" render={({ field }) => (
-                    <FormItem><FormLabel>Especifica la marca y tipo de los lácteos</FormLabel><FormControl><Input {...field} placeholder="Ej: Gloria Light, Laive Sin Lactosa" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-                )} />
+            {form.watch('dairy_consumption') === 'yes' && (
+                <div className="p-8 bg-nutri-brand/5 rounded-[2.5rem] border border-nutri-brand/10 space-y-10 animate-in fade-in slide-in-from-top-4">
+                    <FormField control={form.control} name="dairy_consumption_types" render={() => (
+                        <FormItem>
+                            <FormLabel className="text-sm font-black uppercase tracking-widest text-slate-500 mb-6 block">¿Qué lácteos consumes? (Selección múltiple)</FormLabel>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {dairyTypes.map(opt => (
+                                    <FormField key={opt} control={form.control} name="dairy_consumption_types" render={({ field }) => (
+                                        <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer group">
+                                            <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
+                                                const current = field.value || [];
+                                                return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
+                                            }} /></FormControl>
+                                            <Label className="text-slate-300 group-hover:text-white font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
+                                        </FormItem>
+                                    )} />
+                                ))}
+                            </div>
+                        </FormItem>
+                    )} />
+
+                    <div className="space-y-6">
+                        <FormField control={form.control} name="dairy_brands" render={({ field }) => (
+                            <FormItem><FormLabel>Especifica la marca y tipo de los lácteos</FormLabel><FormControl><Input {...field} placeholder="Ej: Gloria Light, Laive Bio, etc." className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                        )} />
+                        
+                        <div className="space-y-4">
+                            <Label className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Sube fotos de tus productos (opcional)</Label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {(form.watch('dairy_product_photos') || []).map((url: string, idx: number) => (
+                                    <div key={idx} className="relative aspect-square rounded-xl bg-white/5 border border-white/10 overflow-hidden group">
+                                        <img src={url} className="w-full h-full object-cover" />
+                                        <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
+                                            const current = form.getValues('dairy_product_photos');
+                                            form.setValue('dairy_product_photos', current.filter((_: any, i: number) => i !== idx));
+                                        }}><X className="h-3 w-3" /></Button>
+                                    </div>
+                                ))}
+                                <label className="aspect-square flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/10 bg-white/5 cursor-pointer hover:border-nutri-brand/50 transition-all">
+                                    {uploading === 'dairy' ? <Loader2 className="h-6 w-6 animate-spin text-nutri-brand" /> : <Plus className="h-6 w-6 text-nutri-brand" />}
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
 
             <FormField control={form.control} name="supplements_consumption" render={({ field }) => (
-                <FormItem><FormLabel>¿Consumes suplementos?</FormLabel>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
-                        <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="sup-yes" /><Label htmlFor="sup-yes" className="text-white">Sí</Label></div>
-                        <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="sup-no" /><Label htmlFor="sup-no" className="text-white">No</Label></div>
+                <FormItem className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5">
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">¿Consumes suplementos vitamínicos?</FormLabel>
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-10 mt-6">
+                        <div className="flex items-center space-x-3"><RadioGroupItem value="yes" id="sup-yes" /><Label htmlFor="sup-yes" className="text-white text-lg cursor-pointer">Sí</Label></div>
+                        <div className="flex items-center space-x-3"><RadioGroupItem value="no" id="sup-no" /><Label htmlFor="sup-no" className="text-white text-lg cursor-pointer">No</Label></div>
                     </RadioGroup>
-                    <FormMessage /></FormItem>
+                </FormItem>
             )} />
 
             {form.watch('supplements_consumption') === 'yes' && (
                 <FormField control={form.control} name="supplement_types" render={() => (
-                    <FormItem>
-                        <FormLabel className="text-sm font-bold text-slate-400">¿Qué tipo de suplemento consumes?</FormLabel>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-                            {["Whey Protein", "Creatina", "Multivitamínico", "Magnesio", "Omega 3", "Colágeno", "Pre-entreno", "BCAA"].map((item) => (
+                    <FormItem className="p-8 bg-nutri-brand/5 rounded-[2.5rem] border border-nutri-brand/10 animate-in fade-in slide-in-from-top-4">
+                        <FormLabel className="text-xs font-black uppercase tracking-widest text-slate-500 block mb-6">Suplementos que consumes (Selección múltiple)</FormLabel>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {supplements.map((item) => (
                                 <FormField key={item} control={form.control} name="supplement_types" render={({ field }) => (
-                                    <FormItem className="flex items-center space-x-2 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value?.includes(item)}
-                                                onCheckedChange={(checked: boolean) => {
-                                                    const current = (field.value as string[]) || [];
-                                                    return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
-                                                }}
-                                            />
-                                        </FormControl>
-                                        <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
+                                    <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer group">
+                                        <FormControl><Checkbox checked={field.value?.includes(item)} onCheckedChange={(checked) => {
+                                            const current = field.value || [];
+                                            return checked ? field.onChange([...current, item]) : field.onChange(current.filter((v: string) => v !== item));
+                                        }} /></FormControl>
+                                        <FormLabel className="text-slate-300 font-bold group-hover:text-white cursor-pointer text-[10px] tracking-widest leading-tight">{item}</FormLabel>
                                     </FormItem>
                                 )} />
                             ))}
@@ -1657,97 +1937,26 @@ function DairySupplements({ form }: { form: any }) {
 }
 
 function Dislikes({ form }: { form: any }) {
-    const categories = [
-        {
-            name: 'disliked_cereals',
-            label: '¿Qué cereales NO TE AGRADAN?',
-            options: ['Avena', 'Quinua', 'Pan', 'Trigo', 'Arroz', 'Fideos', 'Choclo', 'Me gustan todos los cereales']
-        },
-        {
-            name: 'disliked_tubers',
-            label: '¿Qué tubérculos NO TE AGRADAN?',
-            options: ['Papa', 'Camote', 'Yuca', 'Olluco', 'Me gustan todos los tubérculos']
-        },
-        {
-            name: 'disliked_legumes',
-            label: '¿Qué Menestras NO TE AGRADAN?',
-            options: ['Garbanzos', 'Pallares', 'Frejoles', 'Habas', 'Lentejas', 'Me gustan todas las menestras']
-        },
-        {
-            name: 'disliked_meats',
-            label: '¿Qué carnes o derivados NO TE AGRADAN?',
-            options: ['Res', 'Pollo', 'Pescado', 'Pavita', 'Hígado', 'Mondongo', 'Corazón', 'No consumo Carnes']
-        },
-        {
-            name: 'disliked_fats',
-            label: '¿Qué grasas NO TE AGRADAN?',
-            options: ['Aceite de oliva', 'Palta', 'Aceituna', 'Almendras', 'Nueces', 'Pecanas', 'Maní', 'Linaza', 'Chía', 'Me gustan todas las grasas']
-        }
-    ];
+    const options = {
+        veg: ["Cebolla", "Brócoli", "Tomate", "Pepino", "Zanahoria", "Lechuga", "Espinaca", "Ajo", "Betarraga", "Otros"],
+        fruit: ["Papaya", "Melón", "Sandía", "Plátano", "Manzana", "Naranja", "Fresa", "Mango", "Piña", "Otros"],
+        prep: ["Guisos", "Ensaladas crudas", "Sopas", "Frituras", "Ceviches", "Pastas", "Otros"]
+    };
 
     return (
         <div className="space-y-12">
-            {categories.map((cat) => (
-                <FormField key={cat.name} control={form.control} name={cat.name as any} render={({ field }) => (
-                    <FormItem className="space-y-4">
-                        <FormLabel className="text-lg font-bold text-white uppercase tracking-wider">{cat.label}</FormLabel>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {cat.options.map((option) => (
-                                <div key={option} className="flex items-center space-x-3 bg-white/5 p-3 rounded-xl border border-white/5 hover:border-nutri-brand/30 transition-all">
-                                    <FormControl>
-                                        <Checkbox
-                                            checked={(field.value as string[] || []).includes(option)}
-                                            onCheckedChange={(checked: boolean) => {
-                                                const current = field.value as string[] || [];
-                                                return checked
-                                                    ? field.onChange([...current, option])
-                                                    : field.onChange(current.filter((v: string) => v !== option));
-                                            }}
-                                        />
-                                    </FormControl>
-                                    <Label className="text-xs text-white cursor-pointer leading-tight">{option}</Label>
-                                </div>
-                            ))}
-                        </div>
-                    </FormItem>
-                )} />
-            ))}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-white/5">
-                <FormField control={form.control} name="disliked_vegetables" render={({ field }) => (
-                    <FormItem><FormLabel>¿QUÉ VEGETALES NO TE AGRADAN?</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="disliked_fruits" render={({ field }) => (
-                    <FormItem><FormLabel>¿QUÉ FRUTAS NO TE AGRADAN?</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="disliked_preparations" render={({ field }) => (
-                    <FormItem className="col-span-full"><FormLabel>¿QUÉ PREPARACIONES NO TE AGRADAN?</FormLabel><FormControl><Input {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-                )} />
-            </div>
-        </div>
-    );
-}
-
-function Lifestyle({ form }: { form: any }) {
-    return (
-        <div className="space-y-10">
-            <FormField control={form.control} name="previous_unhealthy_habits" render={() => (
+            <FormField control={form.control} name="disliked_vegetables" render={() => (
                 <FormItem>
-                    <FormLabel className="text-lg font-bold text-white uppercase tracking-widest">¿Qué hábitos no saludables consumías antes?</FormLabel>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
-                        {["Gaseosas", "Dulces/Postres", "Alcohol", "Tabaco", "Comida rápida", "Frituras", "Exceso de sal", "Picoteo"].map((item) => (
-                            <FormField key={item} control={form.control} name="previous_unhealthy_habits" render={({ field }) => (
-                                <FormItem className="flex items-center space-x-2 space-y-0 bg-white/5 p-3 rounded-xl border border-white/5">
-                                    <FormControl>
-                                        <Checkbox
-                                            checked={field.value?.includes(item)}
-                                            onCheckedChange={(checked: boolean) => {
-                                                const current = (field.value as string[]) || [];
-                                                return checked ? field.onChange([...current, item]) : field.onChange(current.filter((value: string) => value !== item));
-                                            }}
-                                        />
-                                    </FormControl>
-                                    <FormLabel className="font-medium text-slate-300 cursor-pointer">{item}</FormLabel>
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">Vegetales que no te agradan</FormLabel>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-6">
+                        {options.veg.map(opt => (
+                            <FormField key={opt} control={form.control} name="disliked_vegetables" render={({ field }) => (
+                                <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
+                                    <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
+                                    }} /></FormControl>
+                                    <Label className="text-slate-300 font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
                                 </FormItem>
                             )} />
                         ))}
@@ -1755,66 +1964,124 @@ function Lifestyle({ form }: { form: any }) {
                 </FormItem>
             )} />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-white/5">
+            <FormField control={form.control} name="disliked_fruits" render={() => (
+                <FormItem>
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">Frutas que no te agradan</FormLabel>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-6">
+                        {options.fruit.map(opt => (
+                            <FormField key={opt} control={form.control} name="disliked_fruits" render={({ field }) => (
+                                <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
+                                    <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
+                                    }} /></FormControl>
+                                    <Label className="text-slate-300 font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
+                                </FormItem>
+                            )} />
+                        ))}
+                    </div>
+                </FormItem>
+            )} />
+
+            <FormField control={form.control} name="disliked_preparations" render={() => (
+                <FormItem>
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">Preparaciones que no te agradan</FormLabel>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+                        {options.prep.map(opt => (
+                            <FormField key={opt} control={form.control} name="disliked_preparations" render={({ field }) => (
+                                <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
+                                    <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
+                                    }} /></FormControl>
+                                    <Label className="text-slate-300 font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
+                                </FormItem>
+                            )} />
+                        ))}
+                    </div>
+                </FormItem>
+            )} />
+        </div>
+    );
+}
+
+function Lifestyle({ form }: { form: any }) {
+    const habits = ["Gaseosas", "Dulces/Postres", "Alcohol", "Tabaco", "Comida rápida", "Frituras", "Exceso de sal", "Picoteo", "Pocas frutas", "Pocas verduras"];
+
+    return (
+        <div className="space-y-12">
+            <FormField control={form.control} name="previous_unhealthy_habits" render={() => (
+                <FormItem>
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">¿Qué hábitos no saludables sueles o solías tener?</FormLabel>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+                        {habits.map((item) => (
+                            <FormField key={item} control={form.control} name="previous_unhealthy_habits" render={({ field }) => (
+                                <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer group">
+                                    <FormControl><Checkbox checked={field.value?.includes(item)} onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        return checked ? field.onChange([...current, item]) : field.onChange(current.filter((v: string) => v !== item));
+                                    }} /></FormControl>
+                                    <Label className="text-slate-300 group-hover:text-white font-bold cursor-pointer text-[10px] tracking-widest">{item}</Label>
+                                </FormItem>
+                            )} />
+                        ))}
+                    </div>
+                </FormItem>
+            )} />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-10 border-t border-white/5">
                 <FormField control={form.control} name="wake_up_time" render={({ field }) => (
-                    <FormItem><FormLabel>Hora despertar</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Hora despertar</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                 )} />
                 <FormField control={form.control} name="sleep_time" render={({ field }) => (
-                    <FormItem><FormLabel>Hora dormir</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Hora dormir</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                 )} />
             </div>
 
-            <div className="space-y-6 pt-6 border-t border-white/5">
-                <h4 className="font-bold text-slate-400 uppercase tracking-widest text-xs">Detalle de Comidas Diarias</h4>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-8 pt-10 border-t border-white/5">
+                <h4 className="text-sm font-black text-slate-500 uppercase tracking-widest">Detalle de Comidas Diarias</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <FormField control={form.control} name="breakfast_time" render={({ field }) => (
-                        <FormItem><FormLabel>Hora Desayuno</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Hora Desayuno</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name="breakfast_details" render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>¿Qué sueles desayunar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Avena con frutas" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>¿Qué sueles desayunar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Avena con frutas" className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                     )} />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <FormField control={form.control} name="lunch_time" render={({ field }) => (
-                        <FormItem><FormLabel>Hora Almuerzo</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Hora Almuerzo</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name="lunch_details" render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>¿Qué sueles almorzar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Pollo con arroz y ensalada" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>¿Qué sueles almorzar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Pollo con arroz" className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                     )} />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <FormField control={form.control} name="dinner_time" render={({ field }) => (
-                        <FormItem><FormLabel>Hora Cena</FormLabel><FormControl><Input type="time" {...field} className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Hora Cena</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name="dinner_details" render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>¿Qué sueles cenar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Sopa de verduras" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>¿Qué sueles cenar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Sopa o ensalada" className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
                     )} />
                 </div>
-
-                <FormField control={form.control} name="snack_details" render={({ field }) => (
-                    <FormItem><FormLabel>Detalles de Media Mañana / Media Tarde</FormLabel><FormControl><Input {...field} placeholder="Ej: Fruta, frutos secos" className="h-12 rounded-xl bg-white/5 border-white/10 text-white" /></FormControl><FormMessage /></FormItem>
-                )} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-8 border-t border-white/5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-10 border-t border-white/5">
                 <FormField control={form.control} name="prep_preference" render={({ field }) => (
-                    <FormItem><FormLabel>Preferencia preparación</FormLabel>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="faciles" id="p-e" /><Label htmlFor="p-e" className="text-white cursor-pointer">Fáciles</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="dificiles" id="p-h" /><Label htmlFor="p-h" className="text-white cursor-pointer">Difíciles</Label></div>
+                    <FormItem><FormLabel>Preferencia de preparación</FormLabel>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-4">
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="faciles" id="p-f" /><Label htmlFor="p-f" className="text-white cursor-pointer">Fáciles</Label></div>
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="dificiles" id="p-d" /><Label htmlFor="p-d" className="text-white cursor-pointer">Complejas</Label></div>
                         </RadioGroup>
-                        <FormMessage /></FormItem>
+                    </FormItem>
                 )} />
                 <FormField control={form.control} name="taste_preference" render={({ field }) => (
-                    <FormItem><FormLabel>Preferencia sabor</FormLabel>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-2">
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="dulces" id="t-s" /><Label htmlFor="t-s" className="text-white cursor-pointer">Dulces</Label></div>
-                            <div className="flex items-center space-x-2"><RadioGroupItem value="salados" id="t-a" /><Label htmlFor="t-a" className="text-white cursor-pointer">Salados</Label></div>
+                    <FormItem><FormLabel>Preferencia de sabor</FormLabel>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-4">
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="dulces" id="t-d" /><Label htmlFor="t-d" className="text-white cursor-pointer">Dulces</Label></div>
+                            <div className="flex items-center space-x-2"><RadioGroupItem value="salados" id="t-s" /><Label htmlFor="t-s" className="text-white cursor-pointer">Salados</Label></div>
                         </RadioGroup>
-                        <FormMessage /></FormItem>
+                    </FormItem>
                 )} />
             </div>
         </div>
