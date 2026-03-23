@@ -34,7 +34,7 @@ export function MedicalHistoryModal({ isOpen, onClose, patientId, patientName }:
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="w-[95vw] max-w-6xl rounded-3xl p-0 border-white/10 shadow-3xl bg-[#0B1120] text-white overflow-hidden h-[92vh] flex flex-col z-[9999] ring-1 ring-white/5">
+            <DialogContent className="w-[95vw] max-w-6xl rounded-3xl p-0 border-white/10 shadow-3xl bg-[#0B1120] text-white overflow-hidden h-[92vh] flex flex-col z-50 ring-1 ring-white/5">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-nutri-brand/5 blur-[120px] rounded-full pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full pointer-events-none" />
 
