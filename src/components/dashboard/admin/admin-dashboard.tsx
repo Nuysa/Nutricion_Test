@@ -630,7 +630,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                         <div className="flex lg:flex-col gap-2 bg-white/[0.03] p-2 lg:p-4 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 sticky top-20 lg:top-24 overflow-x-auto lg:overflow-x-visible no-scrollbar z-20 backdrop-blur-md">
                             {/* Administración label removed as per user request */}
                             {[
-                                { id: "overview", label: "Resumen", fullLabel: "Resumen General", icon: Users },
+                                { id: "overview", label: "Resumen", fullLabel: "Gestión de Pacientes", onClick: () => window.location.href = "/dashboard/administrador/patients", icon: Users },
                                 { id: "verification", label: "Verif.", fullLabel: "Verificaciones", icon: UserCheck, badge: pendingNutris.length },
                                 { id: "assignments", label: "Asig. Nutri", fullLabel: "Asignación de Nutricionista", icon: UserCheckIcon },
                                 { id: "plan_assignments", label: "Asig. Plan", fullLabel: "Asignación de Plan", icon: LayoutGrid },
@@ -1483,8 +1483,8 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                                                 onClick={() => setAgendaModality(type.id as any)}
                                                                                 className={cn(
                                                                                     "relative flex flex-col items-center gap-2 p-3 rounded-[1.25rem] border transition-all duration-300 group overflow-hidden",
-                                                                                    agendaModality === type.id 
-                                                                                        ? "bg-nutri-brand border-none text-nutri-base shadow-[0_10px_20px_rgba(255,122,0,0.3)] scale-[1.02]" 
+                                                                                    agendaModality === type.id
+                                                                                        ? "bg-nutri-brand border-none text-nutri-base shadow-[0_10px_20px_rgba(255,122,0,0.3)] scale-[1.02]"
                                                                                         : "bg-white/5 border-white/10 text-slate-500 hover:bg-white/[0.08]"
                                                                                 )}
                                                                             >
@@ -1511,12 +1511,12 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                                     <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.25em] flex items-center gap-2">
                                                                         <Calendar className="h-3.5 w-3.5 text-nutri-brand" /> 1. Fecha
                                                                     </h4>
-                                                                    
+
                                                                     <div className="h-[410px] bg-white/[0.03] border border-white/10 rounded-[2rem] p-5 lg:p-7 shadow-2xl relative overflow-hidden group">
                                                                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-nutri-brand to-transparent opacity-30" />
-                                                                        
+
                                                                         <div className="flex items-center justify-between mb-4 lg:mb-6">
-                                                                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all" 
+                                                                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
                                                                                 onClick={() => {
                                                                                     const newMonth = calMonth === 0 ? 11 : calMonth - 1;
                                                                                     const newYear = calMonth === 0 ? calYear - 1 : calYear;
@@ -1560,7 +1560,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                                                     const isSelected = agendaDate === dateStr;
                                                                                     const isToday = todayStr === dateStr;
                                                                                     const isDisabled = dayDate < new Date(new Date().setHours(0,0,0,0));
-                                                                                    
+
                                                                                     cells.push(
                                                                                         <button
                                                                                             key={d}
@@ -1627,10 +1627,10 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                                                                 onClick={() => setAgendaTime(time)}
                                                                                                 className={cn(
                                                                                                     "p-3.5 rounded-xl text-xs font-black transition-all border group relative overflow-hidden flex items-center justify-between",
-                                                                                                    isSelected 
-                                                                                                        ? "bg-white text-nutri-base border-white shadow-[0_10px_20px_rgba(255,255,255,0.1)] scale-[1.03] z-10" 
-                                                                                                        : (isReserved || isPastOrToday) 
-                                                                                                            ? "bg-white/[0.01] border-white/5 text-slate-700 cursor-not-allowed grayscale" 
+                                                                                                    isSelected
+                                                                                                        ? "bg-white text-nutri-base border-white shadow-[0_10px_20px_rgba(255,255,255,0.1)] scale-[1.03] z-10"
+                                                                                                        : (isReserved || isPastOrToday)
+                                                                                                            ? "bg-white/[0.01] border-white/5 text-slate-700 cursor-not-allowed grayscale"
                                                                                                             : "bg-white/5 border-white/5 text-slate-300 hover:border-nutri-brand/40 hover:bg-nutri-brand/10"
                                                                                                 )}
                                                                                             >
@@ -1671,7 +1671,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                             <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest mt-1">Sincronización Cloud</span>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     <div className="flex items-center gap-3 w-full lg:w-auto">
                                                         <Button
                                                             variant="ghost"
@@ -1722,8 +1722,8 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                                 {activeNutris.map(n => {
                                                     const count = Object.values(assignments).filter(nids => nids.includes(n.id)).length;
-                                                    const apptsToday = allAppointments.filter(a => 
-                                                        a.nutritionistId === n.id && 
+                                                    const apptsToday = allAppointments.filter(a =>
+                                                        a.nutritionistId === n.id &&
                                                         a.date === todayStr
                                                     ).length;
 
@@ -1745,7 +1745,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                                     </Avatar>
                                                                     <div className="absolute -bottom-1 -right-1 h-7 w-7 bg-green-500 border-4 border-slate-950 rounded-full shadow-lg" />
                                                                 </div>
-                                                                
+
                                                                 <div>
                                                                     <h4 className="font-black text-white text-xl tracking-tight uppercase italic group-hover:text-nutri-brand transition-colors">{n.name}</h4>
                                                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mt-2">{count} Pacientes Activos</p>
@@ -1807,7 +1807,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                        
+
                                                                         <div className="flex items-center justify-between md:justify-end gap-10 w-full md:w-auto border-t md:border-none border-white/5 pt-4 md:pt-0">
                                                                             <div className="flex items-center gap-6">
                                                                                 <div className="flex flex-col">
@@ -1819,11 +1819,11 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                                                     <span className="text-[11px] font-black text-white italic">{apt.startTime?.substring(0, 5)}</span>
                                                                                 </div>
                                                                             </div>
-                                                                            
+
                                                                             <div className="flex items-center gap-2">
-                                                                                <Button 
-                                                                                    variant="ghost" 
-                                                                                    size="icon" 
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    size="icon"
                                                                                     className="h-10 w-10 rounded-xl text-slate-500 hover:text-nutri-brand hover:bg-nutri-brand/10 transition-all font-tech"
                                                                                     onClick={() => {
                                                                                         setEditingAppointmentId(apt.id);
@@ -1837,9 +1837,9 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                                                 >
                                                                                     <Edit3 className="h-4 w-4" />
                                                                                 </Button>
-                                                                                <Button 
-                                                                                    variant="ghost" 
-                                                                                    size="icon" 
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    size="icon"
                                                                                     className="h-10 w-10 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all font-tech"
                                                                                     onClick={() => handleDeleteAppointment(apt.id)}
                                                                                 >
@@ -1931,7 +1931,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                                                 })()}
                                                                             </div>
                                                                         </div>
-                                                                        
+
                                                                         {/* Indicator bar */}
                                                                         <div className={cn(
                                                                             "absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 rounded-r-full",
@@ -1987,7 +1987,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                 <Activity className="h-5 w-5" />
                                             </div>
                                             <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Sub. Activas</p>
-                                            <h3 className="text-3xl font-black text-slate-800">
+                                            <h3 className="3xl font-black text-slate-800">
                                                 {subscriptions.filter(s => s.status === 'active').length}
                                             </h3>
                                             <p className="text-[10px] font-bold text-slate-400 mt-2">Tasa de retención: 94%</p>
@@ -2104,35 +2104,43 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                                     {/* Assign New Section */}
-                                    <Card className="rounded-[2.5rem] border-slate-100 shadow-xl overflow-hidden col-span-1 lg:col-span-1">
-                                        <CardHeader className="bg-slate-50/50">
-                                            <CardTitle className="font-black text-xl">Solicitar Cambio de Plan</CardTitle>
-                                            <CardDescription>Propone un nuevo plan para un paciente.</CardDescription>
+                                    <Card className="rounded-[2.5rem] border-white/5 shadow-2xl overflow-hidden bg-[#151F32]/60 backdrop-blur-xl">
+                                        <CardHeader className="bg-white/5 border-b border-white/5 py-8 px-10">
+                                            <CardTitle className="font-black text-2xl uppercase tracking-tight text-white italic">Solicitar <span className="text-nutri-brand">Cambio de Plan</span></CardTitle>
+                                            <CardDescription className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1 italic">Propone un nuevo plan para un paciente.</CardDescription>
                                         </CardHeader>
-                                        <CardContent className="p-6 space-y-6">
+                                        <CardContent className="p-8 space-y-8">
                                             <div className="space-y-4">
                                                 <div className="flex items-center justify-between">
-                                                    <p className="text-sm font-black text-slate-800">1. Paciente</p>
-                                                    <Input
-                                                        placeholder="Filtrar..."
-                                                        className="h-7 w-32 text-xs rounded-lg"
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                    />
+                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">1. Seleccionar Paciente</p>
+                                                    <div className="relative">
+                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-600" />
+                                                        <Input
+                                                            placeholder="Filtrar..."
+                                                            className="h-9 w-40 pl-9 text-[10px] font-black uppercase tracking-widest rounded-xl bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:ring-nutri-brand/50 italic"
+                                                            value={searchTerm}
+                                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <ScrollArea className="h-40 border rounded-2xl p-2 bg-slate-50/30">
-                                                    <div className="space-y-1">
+                                                <ScrollArea className="h-48 border border-white/5 rounded-[2rem] p-3 bg-black/20">
+                                                    <div className="space-y-2">
                                                         {patients.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())).map(p => (
                                                             <button
                                                                 key={p.id}
                                                                 onClick={selectedPatientId === p.id ? () => setSelectedPatientId(null) : () => setSelectedPatientId(p.id)}
                                                                 className={cn(
-                                                                    "w-full text-left p-2 rounded-xl flex items-center gap-2 text-sm font-bold transition-all",
-                                                                    selectedPatientId === p.id ? "bg-nutrition-600 text-white" : "hover:bg-white"
+                                                                    "w-full text-left p-3 rounded-2xl flex items-center gap-3 text-sm font-black transition-all border border-transparent italic",
+                                                                    selectedPatientId === p.id
+                                                                        ? "bg-nutri-brand text-white shadow-lg shadow-nutri-brand/20"
+                                                                        : "hover:bg-white/5 text-slate-400 hover:text-white"
                                                                 )}
                                                             >
-                                                                <Avatar className="h-6 w-6"><AvatarFallback className="text-[10px]">{p.name[0]}</AvatarFallback></Avatar>
-                                                                {p.name}
+                                                                <Avatar className="h-8 w-8 border-2 border-white/10">
+                                                                    <AvatarFallback className="bg-white/10 text-[10px] font-black">{p.name[0]}</AvatarFallback>
+                                                                </Avatar>
+                                                                <span className="truncate">{p.name}</span>
+                                                                {selectedPatientId === p.id && <Check className="h-4 w-4 ml-auto" />}
                                                             </button>
                                                         ))}
                                                     </div>
@@ -2140,26 +2148,36 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                             </div>
 
                                             <div className="space-y-4">
-                                                <p className="text-sm font-black text-slate-800">2. Plan Sugerido</p>
-                                                <div className="grid grid-cols-1 gap-2">
+                                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">2. Plan Sugerido</p>
+                                                <div className="grid grid-cols-1 gap-3">
                                                     {offers.map(o => (
                                                         <button
                                                             key={o.id}
                                                             onClick={selectedNutriId === o.id ? () => setSelectedNutriId(null) : () => setSelectedNutriId(o.id)}
                                                             className={cn(
-                                                                "w-full text-left p-3 rounded-xl flex items-center justify-between text-sm font-black transition-all border",
-                                                                selectedNutriId === o.id ? "bg-slate-900 text-white border-transparent" : "bg-white hover:border-slate-300"
+                                                                "w-full text-left p-4 rounded-2xl flex items-center justify-between transition-all border italic",
+                                                                selectedNutriId === o.id
+                                                                    ? "bg-white text-nutri-base border-white shadow-xl scale-[1.02]"
+                                                                    : "bg-white/5 border-white/5 text-slate-400 hover:border-white/20 hover:text-white"
                                                             )}
                                                         >
-                                                            <span>{o.name}</span>
-                                                            <span className="text-xs">${o.price}</span>
+                                                            <div className="flex flex-col">
+                                                                <span className="font-black uppercase tracking-tight text-sm">{o.name}</span>
+                                                                <span className={cn("text-[8px] font-black uppercase tracking-widest mt-0.5", selectedNutriId === o.id ? "text-slate-500" : "text-nutri-brand/60")}>Suscripción Premium</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="text-lg font-black tracking-tighter italic">S/ {o.price}</span>
+                                                                <div className={cn("h-5 w-5 rounded-full border-2 flex items-center justify-center", selectedNutriId === o.id ? "border-nutri-brand bg-nutri-brand text-white" : "border-white/10")}>
+                                                                    {selectedNutriId === o.id && <Check className="h-3 w-3" />}
+                                                                </div>
+                                                            </div>
                                                         </button>
                                                     ))}
                                                 </div>
                                             </div>
 
                                             <Button
-                                                className="w-full rounded-2xl bg-nutrition-600 text-white font-black h-12"
+                                                className="w-full rounded-2xl bg-nutri-brand text-white font-black h-16 shadow-lg shadow-nutri-brand/20 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-[0.3em] text-xs"
                                                 disabled={!selectedPatientId || !selectedNutriId}
                                                 onClick={async () => {
                                                     try {
@@ -2173,71 +2191,93 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                                     }
                                                 }}
                                             >
-                                                Enviar Propuesta
+                                                Enviar Propuesta <Plus className="h-4 w-4 ml-3" />
                                             </Button>
                                         </CardContent>
                                     </Card>
 
                                     {/* Pending Requests Section */}
-                                    <Card className="rounded-[2.5rem] border-slate-100 shadow-xl overflow-hidden col-span-1 lg:col-span-1">
-                                        <CardHeader className="bg-slate-50/50">
+                                    <Card className="rounded-[2.5rem] border-white/5 shadow-2xl overflow-hidden bg-[#151F32]/60 backdrop-blur-xl">
+                                        <CardHeader className="bg-white/5 border-b border-white/5 py-8 px-10">
                                             <div className="flex items-center justify-between">
-                                                <CardTitle className="font-black text-xl">Revisión Subscripciones</CardTitle>
-                                                <Badge className="bg-amber-100 text-amber-700 font-black border-none">Pendientes</Badge>
+                                                <div>
+                                                    <CardTitle className="font-black text-2xl uppercase tracking-tight text-white italic">Revisión <span className="text-nutri-brand">Subscripciones</span></CardTitle>
+                                                    <CardDescription className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-1 italic">Historial y estado de pagos.</CardDescription>
+                                                </div>
+                                                <Badge className="bg-nutri-brand/20 text-nutri-brand font-black border-none px-4 py-1.5 rounded-xl uppercase tracking-widest text-[9px] animate-pulse italic">Pendientes</Badge>
                                             </div>
                                         </CardHeader>
-                                        <CardContent className="p-6">
-                                            <div className="mb-4 relative">
-                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                        <CardContent className="p-8">
+                                            <div className="mb-6 relative">
+                                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
                                                 <Input
-                                                    placeholder="Buscar por paciente..."
-                                                    className="pl-10 rounded-xl"
+                                                    placeholder="Buscar por paciente o plan..."
+                                                    className="pl-12 h-14 rounded-2xl bg-white/5 border-white/10 text-white placeholder:text-slate-700 italic font-bold focus:ring-nutri-brand/50"
                                                     value={subReviewSearch}
                                                     onChange={(e) => setSubReviewSearch(e.target.value)}
                                                 />
                                             </div>
-                                            <ScrollArea className="h-[430px] pr-4">
-                                                <div className="space-y-4">
-                                                    {subscriptions.filter(s =>
-                                                        s.patient?.profile?.full_name.toLowerCase().includes(subReviewSearch.toLowerCase()) ||
-                                                        (s.plan?.name_es || "").toLowerCase().includes(subReviewSearch.toLowerCase())
-                                                    ).map(sub => (
-                                                        <div key={sub.id} className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-3">
-                                                            <div className="flex justify-between items-start">
-                                                                <div>
-                                                                    <p className="font-black text-slate-800 text-sm leading-none">{sub.patient?.profile?.full_name}</p>
-                                                                    <p className="text-[10px] font-black text-nutrition-600 mt-1 uppercase">{sub.plan?.name_es || "Plan Activo"}</p>
+                                            <ScrollArea className="h-[480px] pr-4 -mr-4">
+                                                <div className="space-y-4 pb-8">
+                                                    {subscriptions
+                                                        .filter(s => {
+                                                            const pName = profiles.find(p => p.id === s.patient_id)?.name || "";
+                                                            return (pName.toLowerCase().includes(subReviewSearch.toLowerCase()) || (s.plan_type || "").toLowerCase().includes(subReviewSearch.toLowerCase()));
+                                                        })
+                                                        .map(s => {
+                                                            const patient = profiles.find(p => p.id === s.patient_id);
+                                                            return (
+                                                                <div key={s.id} className="p-5 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-nutri-brand/20 transition-all group flex items-center justify-between gap-4">
+                                                                    <div className="flex items-center gap-4">
+                                                                        <Avatar className="h-12 w-12 border-2 border-white/10 shadow-lg">
+                                                                            <AvatarFallback className="bg-slate-800 text-white font-black italic">{patient?.name?.[0] || "?"}</AvatarFallback>
+                                                                        </Avatar>
+                                                                        <div className="flex flex-col">
+                                                                            <span className="font-black text-white text-base uppercase italic tracking-tight">{patient?.name || "Desconocido"}</span>
+                                                                            <span className="text-[10px] font-black text-nutri-brand uppercase tracking-widest">{s.plan_type}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex flex-col items-end gap-2">
+                                                                        <div className="flex gap-2">
+                                                                            <Badge className={cn(
+                                                                                "font-black uppercase tracking-widest text-[8px] border-none px-3 py-1 rounded-lg italic",
+                                                                                s.status === 'active' ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"
+                                                                            )}>
+                                                                                {s.status === 'active' ? "ACTIVA" : "PENDIENTE"}
+                                                                            </Badge>
+                                                                        </div>
+                                                                        <span className="text-xs font-black text-slate-500 italic uppercase">S/ {s.price_paid || '—'}</span>
+                                                                        
+                                                                        {s.status === 'pendiente' && currentAdminRole === 'administrador' && (
+                                                                            <div className="flex gap-2 mt-2">
+                                                                                <Button
+                                                                                    variant="outline"
+                                                                                    size="sm"
+                                                                                    className="h-8 px-3 rounded-xl border-white/5 bg-white/5 text-red-500 hover:bg-red-500/10 font-black text-[10px]"
+                                                                                    onClick={() => MessagingService.handleSubscriptionStatus(s.id, 'cancelada').then(() => loadData(false))}
+                                                                                >
+                                                                                    RECHAZAR
+                                                                                </Button>
+                                                                                <Button
+                                                                                    size="sm"
+                                                                                    className="h-8 px-3 rounded-xl bg-nutri-brand text-white font-black text-[10px]"
+                                                                                    onClick={() => MessagingService.handleSubscriptionStatus(s.id, 'activa').then(() => loadData(false))}
+                                                                                >
+                                                                                    APROBAR
+                                                                                </Button>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
-                                                                <Badge className={cn(
-                                                                    "border-none rounded-lg text-[10px] font-black uppercase",
-                                                                    sub.status === 'activa' ? "bg-green-100 text-green-700" :
-                                                                        sub.status === 'pendiente' ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"
-                                                                )}>
-                                                                    {sub.status === 'activa' ? 'Activa' : sub.status === 'pendiente' ? 'Pendiente' : 'Rechazada'}
-                                                                </Badge>
-                                                            </div>
-
-                                                            {sub.status === 'pendiente' && currentAdminRole === 'administrador' && (
-                                                                <div className="flex gap-2">
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        className="flex-1 rounded-xl text-red-500 font-bold"
-                                                                        onClick={() => MessagingService.handleSubscriptionStatus(sub.id, 'cancelada').then(() => loadData(false))}
-                                                                    >
-                                                                        X
-                                                                    </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        className="flex-1 rounded-xl bg-nutrition-600 text-white font-bold"
-                                                                        onClick={() => MessagingService.handleSubscriptionStatus(sub.id, 'activa').then(() => loadData(false))}
-                                                                    >
-                                                                        Aprobar
-                                                                    </Button>
-                                                                </div>
-                                                            )}
+                                                            );
+                                                        })
+                                                    }
+                                                    {subscriptions.length === 0 && (
+                                                        <div className="py-20 text-center flex flex-col items-center gap-4 opacity-30">
+                                                            <DatabaseZap className="h-12 w-12 text-slate-500" />
+                                                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Sin registros encontrados</p>
                                                         </div>
-                                                    ))}
+                                                    )}
                                                 </div>
                                             </ScrollArea>
                                         </CardContent>

@@ -33,7 +33,7 @@ interface EditAppointmentDialogProps {
     viewYear: number;
     setViewYear: (y: number) => void;
     getOccupiedSlots: (date: string) => string[];
-    isSlotPastOrBuffer: (slot: string, date: string) => boolean;
+    isSlotPastOrBuffer: (slot: string, date: string, currentStatus?: string) => boolean;
     onSave: () => void;
 }
 
@@ -81,7 +81,7 @@ export function EditAppointmentDialog({
                         <div className="flex-1 p-6 sm:p-8 lg:border-r border-white/5 bg-white/[0.02]">
                             <div className="flex items-center justify-between mb-8">
                                 <div>
-                                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Selección de Fecha</h3>
+                                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Selecciona Fecha</h3>
                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Modificar día de la consulta</p>
                                 </div>
                                 <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10">
@@ -89,7 +89,7 @@ export function EditAppointmentDialog({
                                         onClick={prevMonth}>
                                         <ChevronLeft className="h-4 w-4" />
                                     </Button>
-                                    <span className="text-[10px] font-black text-white uppercase tracking-widest min-w-[120px] text-center">{monthNamesFull[viewMonth]} {viewYear}</span>
+                                    <span className="text-[10px] font-black text-white uppercase tracking-widest min-w-[80px] text-center">{monthNamesFull[viewMonth]} {viewYear}</span>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
                                         onClick={nextMonth}>
                                         <ChevronRight className="h-4 w-4" />
@@ -97,9 +97,9 @@ export function EditAppointmentDialog({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-7 gap-1 mb-2 text-center">
-                                {["L", "M", "X", "J", "V", "S", "D"].map(d => (
-                                    <div key={d} className="text-[9px] font-black text-slate-600 uppercase py-2 tracking-widest">{d}</div>
+                            <div className="grid grid-cols-7 gap-1 mb-2">
+                                {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map(d => (
+                                    <div key={d} className="text-center text-[9px] font-black text-slate-600 uppercase py-2 tracking-widest">{d}</div>
                                 ))}
                             </div>
                             <div className="grid grid-cols-7 gap-1">
@@ -113,7 +113,14 @@ export function EditAppointmentDialog({
                                         const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                                         const isSelected = editValues.date === dateStr;
                                         const isToday = nowLocal.toISOString().split('T')[0] === dateStr;
-                                        const isPast = new Date(viewYear, viewMonth, d) < new Date(new Date().setHours(0,0,0,0));
+                                        const todayStart = new Date(new Date().setHours(0,0,0,0));
+                                        const targetDay = new Date(viewYear, viewMonth, d);
+                                        let isPast = false;
+                                        if (editValues.status === "programada") {
+                                            isPast = targetDay < todayStart;
+                                        } else if (editValues.status === "completada") {
+                                            isPast = targetDay > todayStart;
+                                        }
                                         
                                         cells.push(
                                             <button
@@ -121,8 +128,8 @@ export function EditAppointmentDialog({
                                                 disabled={isPast}
                                                 onClick={() => setEditValues({...editValues, date: dateStr})}
                                                 className={cn(
-                                                    "h-10 w-full rounded-xl text-[10px] font-black transition-all flex items-center justify-center relative",
-                                                    isSelected ? "bg-nutrition-500 text-white shadow-xl shadow-nutrition-500/20" : 
+                                                    "h-10 w-full rounded-xl text-xs font-black transition-all flex items-center justify-center relative group",
+                                                    isSelected ? "bg-nutrition-500 text-white shadow-lg shadow-nutrition-500/20" : 
                                                     isToday ? "bg-nutrition-500/10 text-nutrition-400 border border-nutrition-500/20" :
                                                     isPast ? "text-slate-700 cursor-not-allowed opacity-20" : "text-slate-400 hover:bg-white/5 hover:text-white"
                                                 )}
@@ -150,25 +157,26 @@ export function EditAppointmentDialog({
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Estado</label>
-                                        <Select value={editValues.status} onValueChange={(v: any) => setEditValues({ ...editValues, status: v })}>
-                                            <SelectTrigger className="h-10 rounded-xl border-white/10 bg-white/5 text-white text-[10px] font-black uppercase tracking-widest">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-slate-900 border-white/10">
-                                                <SelectItem value="programada" className="text-[10px] font-black uppercase text-blue-400">Programada</SelectItem>
-                                                <SelectItem value="completada" className="text-[10px] font-black uppercase text-green-400">Completada</SelectItem>
-                                                <SelectItem value="cancelada" className="text-[10px] font-black uppercase text-red-400">Cancelada</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Right Side: TIME SLOTS */}
                         <div className="w-full lg:w-[320px] p-6 sm:p-8 bg-slate-900/50 lg:bg-slate-900 border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col lg:h-full">
+                            <div className="mb-6 bg-white/5 p-4 rounded-2xl border border-white/5">
+                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Estado de la Cita</label>
+                                <Select value={editValues.status} onValueChange={(v: any) => setEditValues({ ...editValues, status: v })}>
+                                    <SelectTrigger className="h-10 rounded-xl border-white/10 bg-transparent text-white text-[10px] font-black uppercase tracking-widest">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-slate-900 border-white/10">
+                                        <SelectItem value="programada" className="text-[10px] font-black uppercase text-blue-400">Programar</SelectItem>
+                                        <SelectItem value="completada" className="text-[10px] font-black uppercase text-green-400">Finalizado</SelectItem>
+                                        <SelectItem value="cancelada" className="text-[10px] font-black uppercase text-red-400">Cancelada</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
                             <div className="mb-6">
                                 <h3 className="text-lg font-black text-white uppercase tracking-tight">Horario</h3>
                                 <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mt-1">Disponibilidad para {editValues.date}</p>
@@ -178,8 +186,7 @@ export function EditAppointmentDialog({
                                 <div className="grid grid-cols-2 gap-2 pb-8">
                                     {timeSlots.map(time => {
                                         const isReserved = occupiedSlots.includes(time);
-                                        const isPastDay = new Date(editValues.date + 'T12:00:00') < new Date(new Date().setHours(0,0,0,0));
-                                        const isPastOrBuffer = isPastDay || isSlotPastOrBuffer(time, editValues.date);
+                                        const isPastOrBuffer = isSlotPastOrBuffer(time, editValues.date, editValues.status);
                                         const isSelected = editValues.time === time;
 
                                         return (

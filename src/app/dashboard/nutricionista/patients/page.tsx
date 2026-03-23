@@ -16,6 +16,8 @@ import { usePresence } from "@/components/providers/presence-provider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EditAppointmentDialog } from "@/components/dashboard/nutricionista/calendar/components/EditAppointmentDialog";
+import { useNutritionistCalendar } from "@/components/dashboard/nutricionista/calendar/hooks/useNutritionistCalendar";
 
 const supabase = createClient();
 
@@ -27,18 +29,16 @@ export default function PatientsPage() {
     const [patients, setPatients] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Schedule Dialog State
-    const [showScheduleDialog, setShowScheduleDialog] = useState(false);
-    const [selectedPatient, setSelectedPatient] = useState<any>(null);
-    const [viewMonth, setViewMonth] = useState(new Date().getMonth());
-    const [viewYear, setViewYear] = useState(new Date().getFullYear());
-    const [scheduleValues, setScheduleValues] = useState({
-        date: new Date().toISOString().split('T')[0],
-        time: "",
-        type: "virtual" as "virtual" | "in-person"
-    });
-    const [allAppointments, setAllAppointments] = useState<any[]>([]);
-    const [occupiedSlots, setOccupiedSlots] = useState<string[]>([]);
+    const {
+        isEditDialogOpen, setIsEditDialogOpen,
+        editingAppt, setEditingAppt,
+        viewMonth, setViewMonth,
+        viewYear, setViewYear,
+        editValues, setEditValues,
+        getOccupiedSlots,
+        isSlotPastOrBuffer,
+        loadSupabaseData
+    } = useNutritionistCalendar();
 
     const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     const timeSlots = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"];
@@ -49,14 +49,10 @@ export default function PatientsPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            const { data: profile } = await supabase.from("profiles").select("id, full_name").eq("user_id", user.id).single();
-            if (!profile) {
-                console.error("[PatientsPage] Profile not found");
-                return;
-            }
-            console.log("[PatientsPage] Nutri Profile:", profile.id, profile.full_name);
+            const { data: profile } = await supabase.from("profiles").select("id, full_name, role").eq("user_id", user.id).single();
+            if (!profile) return;
 
-            const { data: assignedPatients, error } = await supabase
+            let query = supabase
                 .from("patients")
                 .select(`
                     id, 
@@ -64,8 +60,14 @@ export default function PatientsPage() {
                     goal_weight, 
                     current_weight,
                     profile:profiles!profile_id(id, full_name, role, status, avatar_url, created_at)
-                `)
-                .eq("nutritionist_id", profile.id);
+                `);
+            
+            // Si no es admin, filtrar solo por sus pacientes asignados
+            if (profile.role !== 'admin') {
+                query = query.eq("nutritionist_id", profile.id);
+            }
+
+            const { data: assignedPatients, error } = await query;
 
             console.log("[PatientsPage] Assigned patients raw:", assignedPatients);
             if (error) throw error;
@@ -96,28 +98,10 @@ export default function PatientsPage() {
         }
     }, []);
 
-    const loadAppointments = useCallback(async () => {
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const { data: profile } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
-            if (!profile) return;
-
-            const { data } = await supabase
-                .from("appointments")
-                .select("appointment_date, start_time")
-                .eq("nutritionist_id", profile.id)
-                .neq("status", "cancelada");
-            
-            if (data) setAllAppointments(data);
-        } catch (err) {
-            console.error("Error loading appointments:", err);
-        }
-    }, []);
 
     useEffect(() => {
         loadPatients();
-        loadAppointments();
+        loadSupabaseData();
 
         const channel = supabase
             .channel('nutritionist_patients_realtime')
@@ -131,7 +115,7 @@ export default function PatientsPage() {
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
                 console.log("Realtime: Appointments table changed, refreshing availability...");
-                loadAppointments();
+                loadSupabaseData();
             })
             .subscribe();
 
@@ -139,48 +123,40 @@ export default function PatientsPage() {
         const bc = new BroadcastChannel('nutrigo_global_sync');
         bc.onmessage = () => {
             loadPatients();
-            loadAppointments();
+            loadSupabaseData();
         };
 
         return () => {
             supabase.removeChannel(channel);
             bc.close();
         };
-    }, [loadPatients]);
+    }, [loadPatients, loadSupabaseData]);
 
-    const getOccupiedSlots = (dateString: string) => {
-        const dayAppts = allAppointments.filter(a => a.appointment_date === dateString);
-        const occupied = new Set<string>();
-        dayAppts.forEach(a => {
-            const time = a.start_time.substring(0, 5);
-            occupied.add(time);
-            const [h, m] = time.split(":").map(Number);
-            const totalMin = h * 60 + m + 30;
-            const nextH = Math.floor(totalMin / 60).toString().padStart(2, '0');
-            const nextM = (totalMin % 60).toString().padStart(2, '0');
-            occupied.add(`${nextH}:${nextM}`);
-        });
-        return Array.from(occupied);
-    };
-
-    useEffect(() => {
-        if (showScheduleDialog && scheduleValues.date) {
-            setOccupiedSlots(getOccupiedSlots(scheduleValues.date));
-        }
-    }, [scheduleValues.date, allAppointments, showScheduleDialog]);
 
     const handleOpenSchedule = (patient: any) => {
-        setSelectedPatient(patient);
-        setScheduleValues({
-            date: new Date().toISOString().split('T')[0],
-            time: "",
-            type: "virtual"
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        
+        setEditingAppt({
+            id: 'new', // Flag for new appointment
+            patient: patient.name,
+            patientId: patient.id
         });
-        setShowScheduleDialog(true);
+
+        setEditValues({
+            date: dateStr,
+            time: "09:00",
+            type: "virtual",
+            status: "programada"
+        });
+
+        setViewMonth(now.getMonth());
+        setViewYear(now.getFullYear());
+        setIsEditDialogOpen(true);
     };
 
     const handleSaveSchedule = async () => {
-        if (!selectedPatient || !scheduleValues.time) {
+        if (!editingAppt || !editValues.time) {
             toast({ title: "Error", description: "Selecciona una hora para la cita", variant: "destructive" });
             return;
         }
@@ -192,46 +168,60 @@ export default function PatientsPage() {
             const { data: profile } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
             if (!profile) return;
 
-            // Calculate end time (30 mins after start time)
-            const [h, m] = scheduleValues.time.split(":").map(Number);
+            const [h, m] = editValues.time.split(":").map(Number);
             const totalStart = h * 60 + m;
             const totalEnd = totalStart + 30;
             const endH = Math.floor(totalEnd / 60).toString().padStart(2, '0');
             const endM = (totalEnd % 60).toString().padStart(2, '0');
             const endTime = `${endH}:${endM}:00`;
-            const startTime = `${scheduleValues.time.padStart(5, '0')}:00`;
+            const startTime = `${editValues.time}:00`;
+
+            const now = new Date();
+            const targetDate = new Date(editValues.date + 'T00:00:00');
+            targetDate.setHours(h, m, 0, 0);
+
+            // Validaciones de negocio estandarizadas
+            if (editValues.status === 'programada') {
+                const minTime = new Date(now.getTime() + 60 * 60 * 1000);
+                if (targetDate < minTime) {
+                    throw new Error("Las citas programadas deben agendarse con al menos 1 hora de anticipación hacia el futuro.");
+                }
+            } else if (editValues.status === 'completada') {
+                if (targetDate > now) {
+                    throw new Error("No puedes marcar como completada una cita que aún no ha ocurrido.");
+                }
+            }
 
             const { error } = await supabase.from("appointments").insert({
-                patient_id: selectedPatient.id,
+                patient_id: editingAppt.patientId,
                 nutritionist_id: profile.id,
-                scheduled_by: profile.id, // Mandatory column
-                modality: scheduleValues.type,
-                appointment_date: scheduleValues.date,
+                scheduled_by: profile.id,
+                modality: editValues.type === 'in-person' ? 'presencial' : 'virtual',
+                appointment_date: editValues.date,
                 start_time: startTime,
                 end_time: endTime,
-                status: "programada"
+                status: editValues.status
             });
 
             if (error) throw error;
 
             toast({
-                title: "Cita agendada",
-                description: `Cita confirmada para ${selectedPatient.name} el ${scheduleValues.date} a las ${scheduleValues.time}.`,
+                title: "Cita guardada",
+                description: `Cita registrada para ${editingAppt.patient} el ${editValues.date} a las ${editValues.time}.`,
                 variant: "success",
             });
 
-            // Sync other tabs/components
             const syncChannel = new BroadcastChannel('nutrigo_global_sync');
             syncChannel.postMessage('sync');
             syncChannel.close();
 
-            setShowScheduleDialog(false);
-            loadAppointments();
+            setIsEditDialogOpen(false);
+            loadSupabaseData();
         } catch (err: any) {
-            console.error("Error scheduling appointment:", err);
+            console.error("Error saving appointment:", err);
             toast({
-                title: "Error al agendar",
-                description: err.message || "No se pudo guardar la cita en Supabase.",
+                title: "Error",
+                description: err.message || "No se pudo guardar la cita.",
                 variant: "destructive",
             });
         }
@@ -396,161 +386,20 @@ export default function PatientsPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-                <DialogContent className="w-[95vw] lg:max-w-4xl p-0 overflow-hidden border-none bg-slate-900/95 backdrop-blur-xl shadow-2xl h-auto max-h-[95vh] lg:h-[90vh] flex flex-col rounded-[2rem] sm:rounded-[2.5rem]">
-                    <DialogHeader className="p-6 sm:p-8 border-b border-white/5 shrink-0">
-                        <DialogTitle className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">Agendar Cita</DialogTitle>
-                        <DialogDescription className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
-                            Programando consulta para <span className="text-nutrition-500">{selectedPatient?.name}</span>
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <ScrollArea className="flex-1 overflow-y-auto">
-                        <div className="flex flex-col lg:flex-row h-full">
-                            {/* Left: Mini Calendar */}
-                            <div className="flex-1 p-6 sm:p-8 lg:border-r border-white/5 bg-white/[0.02]">
-                                <div className="flex items-center justify-between mb-8">
-                                    <div>
-                                        <h3 className="text-lg font-black text-white uppercase tracking-tight">Selecciona Fecha</h3>
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Paso 1: ¿Cuándo será la cita?</p>
-                                    </div>
-                                    <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10" 
-                                            onClick={() => {
-                                                if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
-                                                else setViewMonth(viewMonth - 1);
-                                            }}>
-                                            <ChevronLeft className="h-4 w-4" />
-                                        </Button>
-                                        <span className="text-[10px] font-black text-white uppercase tracking-widest min-w-[80px] text-center">{monthNames[viewMonth]} {viewYear}</span>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
-                                            onClick={() => {
-                                                if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
-                                                else setViewMonth(viewMonth + 1);
-                                            }}>
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-7 gap-1 mb-2">
-                                    {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map(d => (
-                                        <div key={d} className="text-center text-[9px] font-black text-slate-600 uppercase py-2">{d}</div>
-                                    ))}
-                                </div>
-                                <div className="grid grid-cols-7 gap-1">
-                                    {(() => {
-                                        const firstDay = new Date(viewYear, viewMonth, 1).getDay();
-                                        const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-                                        const offset = firstDay === 0 ? 6 : firstDay - 1;
-                                        const cells = [];
-                                        for (let i = 0; i < offset; i++) cells.push(<div key={`empty-${i}`} />);
-                                        for (let d = 1; d <= daysInMonth; d++) {
-                                            const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                                            const isSelected = scheduleValues.date === dateStr;
-                                            const isToday = new Date().toISOString().split('T')[0] === dateStr;
-                                            const isPast = new Date(viewYear, viewMonth, d) < new Date(new Date().setHours(0,0,0,0));
-                                            
-                                            cells.push(
-                                                <button
-                                                    key={d}
-                                                    disabled={isPast}
-                                                    onClick={() => setScheduleValues({...scheduleValues, date: dateStr})}
-                                                    className={cn(
-                                                        "h-10 w-full rounded-xl text-xs font-black transition-all flex items-center justify-center relative group",
-                                                        isSelected ? "bg-nutrition-500 text-white shadow-lg shadow-nutrition-500/20" : 
-                                                        isToday ? "bg-nutrition-500/10 text-nutrition-400 border border-nutrition-500/20" :
-                                                        isPast ? "text-slate-700 cursor-not-allowed opacity-20" : "text-slate-400 hover:bg-white/5 hover:text-white"
-                                                    )}
-                                                >
-                                                    {d}
-                                                    {isSelected && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white animate-in zoom-in" />}
-                                                </button>
-                                            );
-                                        }
-                                        return cells;
-                                    })()}
-                                </div>
-                            </div>
-
-                            {/* Right: Time Selection */}
-                            <div className="w-full lg:w-[320px] p-6 sm:p-8 bg-slate-900/50 lg:bg-slate-900 border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col lg:h-full">
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-black text-white uppercase tracking-tight">Horarios</h3>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Paso 2: Disponibilidad para {scheduleValues.date}</p>
-                                </div>
-
-                                <div className="h-full flex flex-col">
-                                    <div className="grid grid-cols-2 gap-2 pb-8">
-                                        {timeSlots.map(time => {
-                                            const isOccupied = occupiedSlots.includes(time);
-                                            const isSelected = scheduleValues.time === time;
-                                            
-                                            return (
-                                                <button
-                                                    key={time}
-                                                    disabled={isOccupied}
-                                                    onClick={() => setScheduleValues({...scheduleValues, time})}
-                                                    className={cn(
-                                                        "py-3 rounded-xl text-[10px] font-black transition-all border uppercase tracking-widest",
-                                                        isSelected ? "bg-nutrition-500 border-nutrition-500 text-white shadow-lg shadow-white/10" :
-                                                        isOccupied ? "bg-white/[0.02] border-white/5 text-slate-700 cursor-not-allowed" :
-                                                        "bg-white/5 border-white/5 text-slate-400 hover:border-nutrition-500/30 hover:bg-nutrition-500/5 hover:text-nutrition-400"
-                                                    )}
-                                                >
-                                                    {time}
-                                                    {isOccupied && <span className="block text-[7px] opacity-40 mt-0.5">Ocupado</span>}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                <div className="pt-6 mt-6 lg:mt-auto border-t border-white/5 space-y-4">
-                                    <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
-                                        <div>
-                                            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Modalidad</p>
-                                            <Select 
-                                                value={scheduleValues.type} 
-                                                onValueChange={(v: any) => setScheduleValues({...scheduleValues, type: v})}
-                                            >
-                                                <SelectTrigger className="h-6 p-0 border-none bg-transparent text-[10px] font-black text-white uppercase tracking-tighter w-auto">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent className="bg-slate-900 border-white/10">
-                                                    <SelectItem value="virtual" className="text-[10px] font-black uppercase text-white">Virtual</SelectItem>
-                                                    <SelectItem value="in-person" className="text-[10px] font-black uppercase text-white">Presencial</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Cita Seleccionada</p>
-                                            <p className="text-[10px] font-black text-nutrition-400 uppercase tracking-tight">{scheduleValues.time || "--:--"}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </ScrollArea>
-
-                    <DialogFooter className="p-6 sm:p-8 bg-slate-900 border-t border-white/5 flex flex-row gap-3">
-                        <Button
-                            variant="ghost"
-                            onClick={() => setShowScheduleDialog(false)}
-                            className="flex-1 h-12 rounded-xl text-slate-400 font-black uppercase text-[10px] tracking-widest border border-white/5 hover:bg-white/5"
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            onClick={handleSaveSchedule}
-                            disabled={!scheduleValues.time}
-                            className="flex-1 h-12 rounded-xl bg-nutrition-600 hover:bg-nutrition-700 text-white font-black uppercase tracking-[0.2em] text-[10px] shadow-lg shadow-nutrition-600/20 transition-all active:scale-[0.98]"
-                        >
-                            Confirmar Cita
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <EditAppointmentDialog
+                isOpen={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                editingAppt={editingAppt}
+                editValues={editValues}
+                setEditValues={setEditValues}
+                viewMonth={viewMonth}
+                setViewMonth={setViewMonth}
+                viewYear={viewYear}
+                setViewYear={setViewYear}
+                getOccupiedSlots={getOccupiedSlots}
+                isSlotPastOrBuffer={isSlotPastOrBuffer}
+                onSave={handleSaveSchedule}
+            />
         </div>
     );
 }

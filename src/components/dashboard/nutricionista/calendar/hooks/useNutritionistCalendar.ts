@@ -11,7 +11,7 @@ export const monthNamesFull = [
 
 export const timeSlots = [
     "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-    "12:00", "12:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
+    "12:00", "12:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00"
 ];
 
 export function useNutritionistCalendar() {
@@ -169,11 +169,22 @@ export function useNutritionistCalendar() {
         return Array.from(occupied);
     };
 
-    const isSlotPastOrBuffer = (slotTime: string, dateString: string) => {
+    const isSlotPastOrBuffer = (slotTime: string, dateString: string, currentStatus?: string) => {
+        if (currentStatus === 'cancelada') return false;
+        
         const nowInternal = new Date(); 
         const [h, m] = slotTime.split(":").map(Number);
-        const targetDate = new Date(dateString + 'T12:00:00');
+        
+        // Use ISO date part but set specific hours
+        const targetDate = new Date(dateString + 'T00:00:00');
         targetDate.setHours(h, m, 0, 0);
+
+        if (currentStatus === 'completada') {
+            // Completada solo permite presente o pasado
+            return targetDate > nowInternal;
+        }
+
+        // Programada requiere al menos 1 hora de diferencia hacia el futuro
         const bufferTime = new Date(nowInternal.getTime() + 60 * 60 * 1000);
         return targetDate < bufferTime;
     };
@@ -207,13 +218,29 @@ export function useNutritionistCalendar() {
             const startTime = `${editValues.time}:00`;
             const endTime = `${endH}:${endM}:00`;
 
+            const now = new Date();
+            const targetDate = new Date(editValues.date + 'T00:00:00');
+            targetDate.setHours(h, m, 0, 0);
+
+            // Validaciones de negocio
+            if (editValues.status === 'programada') {
+                const minTime = new Date(now.getTime() + 60 * 60 * 1000);
+                if (targetDate < minTime) {
+                    throw new Error("Las citas programadas deben agendarse con al menos 1 hora de anticipación hacia el futuro.");
+                }
+            } else if (editValues.status === 'completada') {
+                if (targetDate > now) {
+                    throw new Error("No puedes marcar como completada una cita que aún no ha ocurrido (horario futuro).");
+                }
+            }
+
             const { error } = await supabase
                 .from("appointments")
                 .update({
                     appointment_date: editValues.date,
                     start_time: startTime,
                     end_time: endTime,
-                    modality: editValues.type,
+                    modality: editValues.type === 'in-person' ? 'presencial' : 'virtual',
                     status: editValues.status
                 })
                 .eq("id", editingAppt.id);
@@ -249,7 +276,7 @@ export function useNutritionistCalendar() {
         loading,
         assignedPatientIds,
         isEditDialogOpen, setIsEditDialogOpen,
-        editingAppt,
+        editingAppt, setEditingAppt,
         viewMonth, setViewMonth,
         viewYear, setViewYear,
         editValues, setEditValues,

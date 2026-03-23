@@ -9,6 +9,7 @@ import { excelMapping } from '../utils/excel-mapping';
 export function useMedicalHistory(patientId: string) {
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [historyData, setHistoryData] = useState<any>(null);
     const [editedData, setEditedData] = useState<any>(null);
@@ -126,6 +127,36 @@ export function useMedicalHistory(patientId: string) {
         }
     };
 
+    const handleDelete = async () => {
+        if (!patientId) return;
+        setIsDeleting(true);
+        try {
+            const { error } = await supabase
+                .from("patient_medical_histories")
+                .delete()
+                .eq("patient_id", patientId);
+
+            if (error) throw error;
+
+            setHistoryData(null);
+            setEditedData(null);
+            setIsEditing(false);
+            toast({
+                title: "Historia Clínica Eliminada",
+                description: "Los datos han sido borrados permanentemente.",
+            });
+            new BroadcastChannel('nutrigo_global_sync').postMessage('sync');
+        } catch (err: any) {
+            toast({
+                title: "Error al eliminar",
+                description: err.message,
+                variant: "destructive",
+            });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const parseExcelDate = (val: any) => {
         if (!val) return null;
         if (val instanceof Date) return val;
@@ -240,6 +271,7 @@ export function useMedicalHistory(patientId: string) {
         setEditedData,
         updateField,
         handleSave,
+        handleDelete,
         handleExcelUpload
     };
 }
