@@ -36,9 +36,11 @@ next-env.d.ts
 # scratch/debug scripts
 /*.mjs
 /*.js
+!next.config.mjs
 !next.config.js
+!postcss.config.mjs
 !postcss.config.js
-!tailwind.config.js
+!tailwind.config.ts
 !playwright.config.ts
 /scripts/*.js
 /scripts/*.mjs
