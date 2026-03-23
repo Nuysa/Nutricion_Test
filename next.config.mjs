@@ -14,7 +14,7 @@ const withPWA = withPWAInit({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    swcMinify: true,
+    swcMinify: false,
     transpilePackages: ["@imgly/background-removal"],
     webpack: (config) => {
         config.module.rules.push({
