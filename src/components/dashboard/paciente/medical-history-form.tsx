@@ -133,7 +133,14 @@ const medicalHistorySchema = z.object({
 
 type MedicalHistoryFormValues = z.infer<typeof medicalHistorySchema>;
 
-export function MedicalHistoryForm() {
+interface MedicalHistoryFormProps {
+    externalPatientId?: string;
+    isNutritionistView?: boolean;
+    hideWrapper?: boolean;
+    onSaveSuccess?: () => void;
+}
+
+export function MedicalHistoryForm({ externalPatientId, isNutritionistView = false, hideWrapper = false, onSaveSuccess }: MedicalHistoryFormProps) {
     const supabase = createClient();
     const { toast } = useToast();
     const [step, setStep] = useState(1);
@@ -141,7 +148,7 @@ export function MedicalHistoryForm() {
     const [initialLoading, setInitialLoading] = useState(true);
     const [hasHistory, setHasHistory] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
-    const [patientId, setPatientId] = useState<string | null>(null);
+    const [patientId, setPatientId] = useState<string | null>(externalPatientId || null);
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
     const totalSteps = 10;
 
@@ -207,23 +214,41 @@ export function MedicalHistoryForm() {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) return;
+                let currentPatientId = externalPatientId || null;
+                let currentProfile: any = null;
 
-                const { data: profile } = await supabase.from('profiles').select('id, full_name, email').eq('user_id', user.id).single();
-                if (profile) {
-                    form.setValue('full_name', profile.full_name);
-                    form.setValue('email', profile.email || "");
+                if (!currentPatientId) {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) return;
+                    const { data: profile } = await supabase.from('profiles').select('id, full_name, email').eq('user_id', user.id).single();
+                    currentProfile = profile;
+                } else {
+                    // Si tenemos un PatientId externo, necesitamos su perfil
+                    const { data: patientData } = await supabase.from('patients').select('profile:profiles!profile_id(id, full_name, email)').eq('id', currentPatientId).single();
+                    currentProfile = (patientData?.profile as any);
+                }
 
-                    const { data: patient } = await supabase.from('patients').select('id, height_cm, current_weight, date_of_birth').eq('profile_id', profile.id).single();
-                    if (patient) {
-                        setPatientId(patient.id);
-                        if (patient.height_cm) form.setValue('height_cm', Number(patient.height_cm));
-                        if (patient.current_weight) form.setValue('weight_kg', Number(patient.current_weight));
-                        if (patient.date_of_birth) form.setValue('birth_date', patient.date_of_birth);
+                if (currentProfile) {
+                    form.setValue('full_name', currentProfile.full_name);
+                    form.setValue('email', currentProfile.email || "");
+
+                    if (!currentPatientId) {
+                        const { data: patient } = await supabase.from('patients').select('id, height_cm, current_weight, date_of_birth').eq('profile_id', currentProfile.id).single();
+                        currentPatientId = patient?.id || null;
+                    }
+
+                    if (currentPatientId) {
+                        setPatientId(currentPatientId);
+                        const { data: patient } = await supabase.from('patients').select('height_cm, current_weight, date_of_birth').eq('id', currentPatientId).single();
+                        
+                        if (patient) {
+                            if (patient.height_cm) form.setValue('height_cm', Number(patient.height_cm));
+                            if (patient.current_weight) form.setValue('weight_kg', Number(patient.current_weight));
+                            if (patient.date_of_birth) form.setValue('birth_date', patient.date_of_birth);
+                        }
 
                         // Check for existing medical history
-                        const { data: history } = await supabase.from('patient_medical_histories').select('*').eq('patient_id', patient.id).single();
+                        const { data: history } = await supabase.from('patient_medical_histories').select('*').eq('patient_id', currentPatientId).single();
                         if (history) {
                             setHasHistory(true);
                             // Pre-fill form with existing data
@@ -261,7 +286,7 @@ export function MedicalHistoryForm() {
             }
         };
         fetchUserData();
-    }, []);
+    }, [externalPatientId]);
 
     const watchedBirthDate = form.watch("birth_date");
 
@@ -415,6 +440,7 @@ export function MedicalHistoryForm() {
             setHasHistory(true);
             setIsEditMode(false);
             setStep(1); // Reset to step 1 for future edits
+            if (onSaveSuccess) onSaveSuccess();
         } catch (error: any) {
             console.error("Error saving medical history:", error);
             toast({ title: "Error", description: error.message || "Ocurrió un error al guardar.", variant: "destructive" });
@@ -444,40 +470,38 @@ export function MedicalHistoryForm() {
 
     if (initialLoading) {
         return (
-            <Card className="rounded-[3rem] shadow-2xl border-white/5 bg-[#151F32] overflow-hidden">
-                <CardContent className="p-20 flex flex-col items-center justify-center space-y-4">
-                    <Sparkles className="h-12 w-12 text-nutri-brand animate-pulse" />
-                    <p className="text-white font-tech tracking-widest uppercase animate-pulse">Cargando Historia...</p>
-                </CardContent>
-            </Card>
+            <div className={cn("flex flex-col items-center justify-center space-y-4", hideWrapper ? "py-10" : "p-20 bg-[#151F32] rounded-[3rem]")}>
+                <Sparkles className="h-12 w-12 text-nutri-brand animate-pulse" />
+                <p className="text-white font-tech tracking-widest uppercase animate-pulse">Cargando Historia...</p>
+            </div>
         );
     }
 
-    if (hasHistory && !isEditMode) {
-        return <MedicalHistorySummary values={form.getValues()} onEdit={() => setIsEditMode(true)} />;
+    if (hasHistory && !isEditMode && !isNutritionistView) {
+        return <MedicalHistorySummary values={form.getValues()} onEdit={() => setIsEditMode(true)} hideWrapper={hideWrapper} />;
     }
 
-    return (
-        <Card className="rounded-[3rem] shadow-2xl border-white/5 bg-[#151F32] overflow-hidden">
-            <CardHeader className="p-8 lg:p-12 border-b border-white/5 relative">
-                <div className="absolute top-0 right-10 w-40 h-full bg-nutri-brand/10 blur-[60px] rounded-full pointer-events-none" />
+    const FormContent = (
+        <>
+            <div className={cn("p-8 lg:p-12 border-b border-white/5 relative", hideWrapper && "pt-0")}>
+                {!hideWrapper && <div className="absolute top-0 right-10 w-40 h-full bg-nutri-brand/10 blur-[60px] rounded-full pointer-events-none" />}
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="text-3xl lg:text-4xl font-black text-white tracking-tighter uppercase mb-2">
-                            {hasHistory ? "Editar tu" : "Completa tu"} <span className="text-nutri-brand">Historia Clínica</span>
+                            {hasHistory ? "Editar" : "Completa la"} <span className="text-nutri-brand">Historia Clínica</span>
                         </CardTitle>
                         <CardDescription className="text-slate-400 font-medium italic">
                             Paso {step} de {totalSteps}: {getStepTitle(step)}
                         </CardDescription>
                     </div>
-                    {hasHistory && (
+                    {hasHistory && !isNutritionistView && (
                         <Button variant="ghost" onClick={() => setIsEditMode(false)} className="text-slate-500 hover:text-white uppercase font-black tracking-widest text-xs">
                             Cancelar Edición
                         </Button>
                     )}
                 </div>
-            </CardHeader>
-            <CardContent className="p-8 lg:p-12">
+            </div>
+            <div className="p-8 lg:p-12">
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit as any, onError)} className="space-y-8">
                         {step === 1 && <PersonalData form={form} />}
@@ -504,13 +528,13 @@ export function MedicalHistoryForm() {
                             </Button>
 
                             <div className="flex items-center gap-4">
-                                {isEditMode && step < totalSteps && (
+                                {(isEditMode || isNutritionistView) && step < totalSteps && (
                                     <Button
                                         type="submit"
                                         disabled={loading || isUploadingPhoto}
                                         className="px-8 h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all text-sm disabled:opacity-50 disabled:hover:scale-100"
                                     >
-                                        {loading ? "Guardando..." : "Guardar Cambios"} <Save className="ml-2 h-4 w-4" />
+                                        {loading ? "Guardando..." : "Guardar Avance"} <Save className="ml-2 h-4 w-4" />
                                     </Button>
                                 )}
 
@@ -529,19 +553,27 @@ export function MedicalHistoryForm() {
                                         disabled={loading || isUploadingPhoto}
                                         className="px-12 h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
                                     >
-                                        {loading ? "Guardando..." : "Guardar Cambios"} <Save className="ml-2 h-5 w-5" />
+                                        {loading ? "Guardando..." : "Finalizar y Guardar"} <Save className="ml-2 h-5 w-5" />
                                     </Button>
                                 )}
                             </div>
                         </div>
                     </form>
                 </Form>
-            </CardContent>
+            </div>
+        </>
+    );
+
+    if (hideWrapper) return <div className="bg-transparent">{FormContent}</div>;
+
+    return (
+        <Card className="rounded-[3rem] shadow-2xl border-white/5 bg-[#151F32] overflow-hidden">
+            {FormContent}
         </Card>
     );
 }
 
-function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => void }) {
+function MedicalHistorySummary({ values, onEdit, hideWrapper = false }: { values: any, onEdit: () => void, hideWrapper?: boolean }) {
     const formatList = (val: any) => {
         if (!val) return 'Ninguno';
         if (Array.isArray(val)) return val.length > 0 ? val.join(', ') : 'Ninguno';
@@ -563,10 +595,10 @@ function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => 
         return colors[index] || "transparent";
     };
 
-    return (
-        <Card className="rounded-[3rem] shadow-2xl border-white/5 bg-[#151F32] overflow-hidden">
-            <CardHeader className="p-8 lg:p-12 border-b border-white/5 relative">
-                <div className="absolute top-0 right-10 w-40 h-full bg-nutri-brand/10 blur-[60px] rounded-full pointer-events-none" />
+    const SummaryContent = (
+        <>
+            <div className={cn("p-8 lg:p-12 border-b border-white/5 relative", hideWrapper && "pt-0")}>
+                {!hideWrapper && <div className="absolute top-0 right-10 w-40 h-full bg-nutri-brand/10 blur-[60px] rounded-full pointer-events-none" />}
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="text-3xl lg:text-4xl font-black text-white tracking-tighter uppercase mb-2">
@@ -576,15 +608,9 @@ function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => 
                             Expediente clínico completo y detallado.
                         </CardDescription>
                     </div>
-                    <Button
-                        onClick={onEdit}
-                        className="h-12 px-8 rounded-xl font-black uppercase tracking-widest bg-nutri-brand text-white hover:scale-105 transition-all shadow-lg shadow-nutri-brand/20"
-                    >
-                        Editar Historia <Sparkles className="ml-2 h-4 w-4" />
-                    </Button>
                 </div>
-            </CardHeader>
-            <CardContent className="p-8 lg:p-12 space-y-20 custom-scrollbar max-h-[70vh] overflow-y-auto">
+            </div>
+            <div className="p-8 lg:p-12 space-y-20 custom-scrollbar max-h-[70vh] overflow-y-auto bg-[#151F32]">
                 {/* 01: Identidad */}
                 <section className="space-y-8">
                     <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
@@ -773,7 +799,15 @@ function MedicalHistorySummary({ values, onEdit }: { values: any, onEdit: () => 
                         <SummaryItem label="Sabor Preferido" value={values.taste_preference} />
                     </div>
                 </section>
-            </CardContent>
+            </div>
+        </>
+    );
+
+    if (hideWrapper) return <div className="bg-[#151F32]">{SummaryContent}</div>;
+
+    return (
+        <Card className="rounded-[3rem] shadow-2xl border-white/5 bg-[#151F32] overflow-hidden">
+            {SummaryContent}
         </Card>
     );
 }
