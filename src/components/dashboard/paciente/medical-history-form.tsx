@@ -1238,7 +1238,7 @@ function HealthStatus({ form, patientId }: { form: any, patientId: string }) {
         "Anemia",
         "Hipotiroidismo",
         "Resistencia a la insulina",
-        "Sindrome de ovario poliquistico",
+        "Síndrome de ovario poliquístico",
         "Estreñimiento",
         "Gastritis / Reflujo"
     ];
@@ -1255,7 +1255,7 @@ function HealthStatus({ form, patientId }: { form: any, patientId: string }) {
         "Anemia",
         "Hipotiroidismo",
         "Resistencia a la insulina",
-        "Sindrome de ovario poliquistico",
+        "Síndrome de ovario poliquístico",
         "Estreñimiento",
         "Gastritis / Reflujo"
     ];
@@ -1383,12 +1383,12 @@ function HealthStatus({ form, patientId }: { form: any, patientId: string }) {
                             <FormLabel className="text-white font-black uppercase tracking-widest text-xs">Tipo de medicamento (Selección múltiple)</FormLabel>
                             <div className="grid grid-cols-1 gap-3 mt-4">
                                 {[
-                                    "Antiacidos: omeprazol, esomeprazol, pantoprazol, u otros para la gastritis.",
-                                    "Antidiabeticos: Metformina, insulina y otros.",
+                                    "Antiácidos: omeprazol, esomeprazol, pantoprazol, u otros para la gastritis.",
+                                    "Antidiabéticos: Metformina, insulina y otros.",
                                     "Anticonceptivos y hormonas femeninas.",
-                                    "Antibioticos: para hongos, bacterias o parasitos.",
-                                    "Estatinas: para bajar el colesterol o trigliceridos.",
-                                    "Para el acne.",
+                                    "Antibióticos: para hongos, bacterias o parásitos.",
+                                    "Estatinas: para bajar el colesterol o triglicéridos.",
+                                    "Para el acné.",
                                     "Para tratar la obesidad."
                                 ].map((item) => (
                                     <FormField key={item} control={form.control} name="medication_names" render={({ field }) => (
