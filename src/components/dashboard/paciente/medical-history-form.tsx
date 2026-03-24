@@ -488,14 +488,14 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
             if (historyRes.error) throw historyRes.error;
             if (patientRes.error) throw patientRes.error;
 
-            toast({ title: "Ã‚Â¡Ã‚Â¡ÃƒÆ’Ã¢â‚¬Â°xito!", description: "Tu Historia Clínica y datos de perfil han sido actualizados.", variant: "success" });
+            toast({ title: "¡¡Éxito!", description: "Tu Historia Clínica y datos de perfil han sido actualizados.", variant: "success" });
             setHasHistory(true);
             setIsEditMode(false);
             setStep(1); // Reset to step 1 for future edits
             if (onSaveSuccess) onSaveSuccess();
         } catch (error: any) {
             console.error("Error saving medical history:", error);
-            toast({ title: "Error", description: error.message || "OcurriÃƒÆ’Ã‚Â³ un error al guardar.", variant: "destructive" });
+            toast({ title: "Error", description: error.message || "Ocurrió un error al guardar.", variant: "destructive" });
         } finally {
             setLoading(false);
         }
@@ -682,10 +682,10 @@ function MedicalHistorySummary({ values, onEdit, hideWrapper = false }: { values
                         <SummaryItem label="Edad" value={`${values.age} años`} />
                         <SummaryItem label="Nacimiento" value={values.birth_date} />
                         <SummaryItem label="Instagram" value={values.instagram} />
-                        <SummaryItem label="EducaciÃƒÆ’Ã‚Â³n" value={values.education_level} />
+                        <SummaryItem label="Educación" value={values.education_level} />
                         <SummaryItem label="Región" value={values.region} />
                         <SummaryItem label="Distrito" value={values.district} />
-                        <SummaryItem label="OcupaciÃƒÆ’Ã‚Â³n" value={values.occupation} />
+                        <SummaryItem label="Ocupación" value={values.occupation} />
                         <SummaryItem label="Horario Laboral" value={values.job_details} />
                     </div>
                 </section>
@@ -772,7 +772,7 @@ function MedicalHistorySummary({ values, onEdit, hideWrapper = false }: { values
                 {/* 06: Hábitos */}
                 <section className="space-y-8">
                     <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
-                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 06 // HÃƒÆ’Ã‚Â­Ã‚ÂBITOS FISIOLÃƒÆ’Ã‚Â­Ã¢â€šÂ¬Ã…â€œGICOS
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 06 // HÁBITOS FISIOLÓGICOS
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <SummaryItem label="Apetito" value={values.appetite_level} />
@@ -813,7 +813,7 @@ function MedicalHistorySummary({ values, onEdit, hideWrapper = false }: { values
                 {/* 08: Lácteos */}
                 <section className="space-y-8">
                     <h3 className="text-nutri-brand font-tech uppercase tracking-[0.3em] text-xs font-black flex items-center gap-3">
-                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 08 // LÃƒÆ’Ã‚Â­Ã‚ÂCTEOS Y SUPLEMENTACIÃƒÆ’Ã‚Â­Ã¢â€šÂ¬Ã…â€œN
+                        <span className="w-8 h-[1px] bg-nutri-brand/30" /> 08 // LÁCTEOS Y SUPLEMENTACIÓN
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <SummaryItem label="Consumo Lácteos" value={values.dairy_consumption} />
@@ -1231,15 +1231,15 @@ function HealthStatus({ form, patientId }: { form: any, patientId: string }) {
         "No padezco ninguna enfermedad",
         "Diabetes mellitus",
         "Dislipidemia (colesterol o trigliceridos altos)",
-        "HÃƒÆ’Ã‚Â­gado graso",
+        "Hígado graso",
         "Enfermedad cardiovascular",
-        "HipertensiÃƒÆ’Ã‚Â³n arterial (HTA)",
+        "Hipertensión arterial (HTA)",
         "Obesidad",
         "Anemia",
         "Hipotiroidismo",
         "Resistencia a la insulina",
         "Sindrome de ovario poliquistico",
-        "EstreÃƒÆ’Ã‚Â±imiento",
+        "Estreñimiento",
         "Gastritis / Reflujo"
     ];
 
@@ -1247,16 +1247,16 @@ function HealthStatus({ form, patientId }: { form: any, patientId: string }) {
         "Ninguno",
         "Diabetes mellitus",
         "Dislipidemia (colesterol o trigliceridos altos)",
-        "HÃƒÆ’Ã‚Â­gado graso",
+        "Hígado graso",
         "Enfermedad cardiovascular",
-        "HipertensiÃƒÆ’Ã‚Â³n arterial (HTA)",
+        "Hipertensión arterial (HTA)",
         "Obesidad",
-        "MigraÃƒÆ’Ã‚Â±a",
+        "Migraña",
         "Anemia",
         "Hipotiroidismo",
         "Resistencia a la insulina",
         "Sindrome de ovario poliquistico",
-        "EstreÃƒÆ’Ã‚Â±imiento",
+        "Estreñimiento",
         "Gastritis / Reflujo"
     ];
 
@@ -1282,12 +1282,12 @@ function HealthStatus({ form, patientId }: { form: any, patientId: string }) {
 
             const current = form.getValues(fieldName) || [];
             form.setValue(fieldName, [...current, publicUrl]);
-            toast({ title: "Documento subido con ÃƒÆ’Ã‚Â©xito", variant: "default" });
+            toast({ title: "Documento subido con éxito", variant: "default" });
         } catch (error: any) {
             console.error("Document upload error:", error);
             let msg = error.message || "Error desconocido";
             if (msg.includes("Bucket not found")) {
-                msg = "ERROR: El bucket 'lab-results' no existe en Supabase. Debes crearlo como almacenamiento pÃƒÆ’Ã‚Âºblico.";
+                msg = "ERROR: El bucket 'lab-results' no existe en Supabase. Debes crearlo como almacenamiento público.";
             }
             toast({ title: "Error al subir documento", description: msg, variant: "destructive" });
         } finally {
