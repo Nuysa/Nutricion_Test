@@ -263,7 +263,7 @@ export default function NutritionistCalendarPage() {
                     appointment_date: editValues.date,
                     start_time: startTime,
                     end_time: endTime,
-                    modality: editValues.type,
+                    modality: editValues.type === 'in-person' ? 'presencial' : 'virtual',
                     status: editValues.status
                 })
                 .eq("id", editingAppt.id);

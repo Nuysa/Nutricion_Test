@@ -94,7 +94,7 @@ const medicalHistorySchema = z.object({
     bowel_movements: z.string().optional(),
     bowel_frequency: z.string().optional(),
     urine_status: z.string().optional(),
-    urine_color_index: z.union([z.coerce.number().min(1), z.literal(0)]).optional(),
+    urine_color_index: z.coerce.number().optional().nullable(),
 
     // Step 7: Alimentación
     available_instruments: z.array(z.string()).default([]),
@@ -130,17 +130,17 @@ const medicalHistorySchema = z.object({
 
     // Step 10: Estilo de Vida y Horarios
     previous_unhealthy_habits: z.array(z.string()).default([]),
-    wake_up_time: z.string().optional(),
-    sleep_time: z.string().optional(),
-    breakfast_time: z.string().optional(),
-    breakfast_details: z.string().optional(),
-    lunch_time: z.string().optional(),
-    lunch_details: z.string().optional(),
-    dinner_time: z.string().optional(),
-    dinner_details: z.string().optional(),
-    snack_details: z.string().optional(),
-    prep_preference: z.string().optional(),
-    taste_preference: z.string().optional(),
+    wake_up_time: z.string().optional().nullable(),
+    sleep_time: z.string().optional().nullable(),
+    breakfast_time: z.string().optional().nullable(),
+    breakfast_details: z.string().optional().nullable(),
+    lunch_time: z.string().optional().nullable(),
+    lunch_details: z.string().optional().nullable(),
+    dinner_time: z.string().optional().nullable(),
+    dinner_details: z.string().optional().nullable(),
+    snack_details: z.string().optional().nullable(),
+    prep_preference: z.string().optional().nullable(),
+    taste_preference: z.string().optional().nullable(),
 });
 
 type MedicalHistoryFormValues = z.infer<typeof medicalHistorySchema>;
@@ -1952,7 +1952,7 @@ function DairySupplements({ form }: { form: any }) {
     const [uploading, setUploading] = useState<string | null>(null);
 
     const dairyTypes = ["Leche de Vaca", "Leche de Soya", "Leche de Almendras", "Yogurt Natural", "Yogurt Griego", "Queso Fresco", "Queso Paria", "Otros"];
-    const supplements = ["Suplementos de proteina", "Suplementos de vitaminas y minerales", "Creatina", "Colageno", "Otros"];
+    const supplements = ["Suplementos de proteína", "Suplementos de vitaminas y minerales", "Creatina", "Colágeno", "Otros"];
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -2080,20 +2080,21 @@ function DairySupplements({ form }: { form: any }) {
 
 function Dislikes({ form }: { form: any }) {
     const options = {
-        veg: ["Cebolla", "Brócoli", "Tomate", "Pepino", "Zanahoria", "Lechuga", "Espinaca", "Ajo", "Betarraga", "Otros"],
-        fruit: ["Papaya", "Melón", "Sandía", "Plátano", "Manzana", "Naranja", "Fresa", "Mango", "Piña", "Otros"],
-        prep: ["Guisos", "Ensaladas crudas", "Sopas", "Frituras", "Ceviches", "Pastas", "Otros"]
+        veg: ["Todas me agradan", "Cebolla", "Brócoli", "Tomate", "Pepino", "Zanahoria", "Lechuga", "Espinaca", "Ajo", "Betarraga", "Otros"],
+        fruit: ["Todas me agradan", "Papaya", "Melón", "Sandía", "Plátano", "Manzana", "Naranja", "Fresa", "Mango", "Piña", "Otros"],
+        prep: ["Todas me agradan", "Guisos", "Ensaladas crudas", "Sopas", "Frituras", "Ceviches", "Pastas", "Otros"]
     };
 
     return (
         <div className="space-y-12">
             <FormField control={form.control} name="disliked_vegetables" render={() => (
                 <FormItem>
-                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">Restricciones Alimentarias</FormLabel>
+                    <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">Verduras que no te agradan</FormLabel>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-6">
                         {options.veg.map(opt => (
                             <FormField key={opt} control={form.control} name="disliked_vegetables" render={({ field }) => (
                                 <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
+<<<<<<< Updated upstream
                                     <FormControl>
                                         <Checkbox 
                                             checked={field.value?.includes(opt)} 
@@ -2103,6 +2104,14 @@ function Dislikes({ form }: { form: any }) {
                                             }} 
                                         />
                                     </FormControl>
+=======
+                                    <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        if (opt === "Todas me agradan") return checked ? field.onChange(["Todas me agradan"]) : field.onChange([]);
+                                        const filtered = current.filter((v: string) => v !== "Todas me agradan");
+                                        return checked ? field.onChange([...filtered, opt]) : field.onChange(filtered.filter((v: string) => v !== opt));
+                                    }} /></FormControl>
+>>>>>>> Stashed changes
                                     <Label className="text-slate-300 font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
                                 </FormItem>
                             )} />
@@ -2125,6 +2134,7 @@ function Dislikes({ form }: { form: any }) {
                         {options.fruit.map(opt => (
                             <FormField key={opt} control={form.control} name="disliked_fruits" render={({ field }) => (
                                 <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
+<<<<<<< Updated upstream
                                     <FormControl>
                                         <Checkbox 
                                             checked={field.value?.includes(opt)} 
@@ -2134,6 +2144,14 @@ function Dislikes({ form }: { form: any }) {
                                             }} 
                                         />
                                     </FormControl>
+=======
+                                    <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        if (opt === "Todas me agradan") return checked ? field.onChange(["Todas me agradan"]) : field.onChange([]);
+                                        const filtered = current.filter((v: string) => v !== "Todas me agradan");
+                                        return checked ? field.onChange([...filtered, opt]) : field.onChange(filtered.filter((v: string) => v !== opt));
+                                    }} /></FormControl>
+>>>>>>> Stashed changes
                                     <Label className="text-slate-300 font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
                                 </FormItem>
                             )} />
@@ -2156,6 +2174,7 @@ function Dislikes({ form }: { form: any }) {
                         {options.prep.map(opt => (
                             <FormField key={opt} control={form.control} name="disliked_preparations" render={({ field }) => (
                                 <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
+<<<<<<< Updated upstream
                                     <FormControl>
                                         <Checkbox 
                                             checked={field.value?.includes(opt)} 
@@ -2165,6 +2184,14 @@ function Dislikes({ form }: { form: any }) {
                                             }} 
                                         />
                                     </FormControl>
+=======
+                                    <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        if (opt === "Todas me agradan") return checked ? field.onChange(["Todas me agradan"]) : field.onChange([]);
+                                        const filtered = current.filter((v: string) => v !== "Todas me agradan");
+                                        return checked ? field.onChange([...filtered, opt]) : field.onChange(filtered.filter((v: string) => v !== opt));
+                                    }} /></FormControl>
+>>>>>>> Stashed changes
                                     <Label className="text-slate-300 font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
                                 </FormItem>
                             )} />
