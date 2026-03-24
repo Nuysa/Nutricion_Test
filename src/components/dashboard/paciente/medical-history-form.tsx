@@ -1814,7 +1814,7 @@ function DietCooking({ form }: { form: any }) {
                                         const withoutNone = current.filter((v: string) => v !== "Ninguna");
                                         return checked ? field.onChange([...withoutNone, item]) : field.onChange(withoutNone.filter((v: string) => v !== item));
                                     }} /></FormControl>
-                                    <FormLabel className="font-bold text-slate-300 cursor-pointer">{item}</FormLabel>
+                                    <Label htmlFor={item} className="font-bold text-slate-300 cursor-pointer">{item}</Label>
                                 </FormItem>
                             )} />
                         ))}
@@ -1974,8 +1974,8 @@ function DairySupplements({ form }: { form: any }) {
                 .from('progress-photos')
                 .getPublicUrl(fileName);
 
-            const current = form.getValues('dairy_photos') || [];
-            form.setValue('dairy_photos', [...current, publicUrl]);
+            const current = form.getValues('dairy_product_photos') || [];
+            form.setValue('dairy_product_photos', [...current, publicUrl]);
             toast({ title: "Foto de producto subida" });
         } catch (error: any) {
             toast({ title: "Error al subir", description: error.message, variant: "destructive" });
@@ -1989,7 +1989,7 @@ function DairySupplements({ form }: { form: any }) {
             <FormField control={form.control} name="dairy_consumption" render={({ field }) => (
                 <FormItem className="p-8 bg-white/5 rounded-[2.5rem] border border-white/10">
                     <FormLabel className="text-xl font-black text-white uppercase tracking-tighter mb-6 block">¿Consumes Lácteos regularmente?</FormLabel>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-10">
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex gap-10">
                         <div className="flex items-center space-x-3"><RadioGroupItem value="yes" id="dairy-yes" /><Label htmlFor="dairy-yes" className="text-white text-lg cursor-pointer">Sí</Label></div>
                         <div className="flex items-center space-x-3"><RadioGroupItem value="no" id="dairy-no" /><Label htmlFor="dairy-no" className="text-white text-lg cursor-pointer">No</Label></div>
                     </RadioGroup>
@@ -2000,7 +2000,7 @@ function DairySupplements({ form }: { form: any }) {
                 <div className="p-8 bg-nutri-brand/5 rounded-[2.5rem] border border-nutri-brand/10 space-y-10 animate-in fade-in slide-in-from-top-4">
                     <FormField control={form.control} name="dairy_consumption_types" render={() => (
                         <FormItem>
-                            <FormLabel className="text-sm font-black uppercase tracking-widest text-slate-500 mb-6 block">¿qué Lácteos consumes? (selección múltiple)</FormLabel>
+                            <FormLabel className="text-sm font-black uppercase tracking-widest text-slate-500 mb-6 block">¿Qué Lácteos consumes? (selección múltiple)</FormLabel>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 {dairyTypes.map(opt => (
                                     <FormField key={opt} control={form.control} name="dairy_consumption_types" render={({ field }) => (
@@ -2019,18 +2019,18 @@ function DairySupplements({ form }: { form: any }) {
 
                     <div className="space-y-6">
                         <FormField control={form.control} name="dairy_brands" render={({ field }) => (
-                            <FormItem><FormLabel>Especifica la marca y tipo de los Lácteos</FormLabel><FormControl><Input {...field} placeholder="Ej: Gloria Light, Laive Bio, etc." className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                            <FormItem><FormLabel>Especifica la marca y tipo de los Lácteos</FormLabel><FormControl><Input {...field} placeholder="Ej: Gloria Light, Laive Bio, etc." className="h-12 bg-white/5 border-white/10 rounded-xl text-white" /></FormControl></FormItem>
                         )} />
                         
                         <div className="space-y-4">
                             <Label className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Sube fotos de tus productos (opcional)</Label>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {(form.watch('dairy_photos') || []).map((url: string, idx: number) => (
+                                {(form.watch('dairy_product_photos') || []).map((url: string, idx: number) => (
                                     <div key={idx} className="relative aspect-square rounded-xl bg-white/5 border border-white/10 overflow-hidden group">
                                         <img src={url} className="w-full h-full object-cover" />
                                         <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
-                                            const current = form.getValues('dairy_photos');
-                                            form.setValue('dairy_photos', current.filter((_: any, i: number) => i !== idx));
+                                            const current = form.getValues('dairy_product_photos');
+                                            form.setValue('dairy_product_photos', current.filter((_: any, i: number) => i !== idx));
                                         }}><X className="h-3 w-3" /></Button>
                                     </div>
                                 ))}
@@ -2047,7 +2047,7 @@ function DairySupplements({ form }: { form: any }) {
             <FormField control={form.control} name="supplements_consumption" render={({ field }) => (
                 <FormItem className="p-8 bg-white/5 rounded-[2.5rem] border border-white/5">
                     <FormLabel className="text-xl font-black text-white uppercase tracking-tighter">¿Consumes suplementos vitamínicos?</FormLabel>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-10 mt-6">
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex gap-10 mt-6">
                         <div className="flex items-center space-x-3"><RadioGroupItem value="yes" id="sup-yes" /><Label htmlFor="sup-yes" className="text-white text-lg cursor-pointer">Sí</Label></div>
                         <div className="flex items-center space-x-3"><RadioGroupItem value="no" id="sup-no" /><Label htmlFor="sup-no" className="text-white text-lg cursor-pointer">No</Label></div>
                     </RadioGroup>
@@ -2066,7 +2066,7 @@ function DairySupplements({ form }: { form: any }) {
                                             const current = field.value || [];
                                             return checked ? field.onChange([...current, item]) : field.onChange(current.filter((v: string) => v !== item));
                                         }} /></FormControl>
-                                        <FormLabel className="text-slate-300 font-bold group-hover:text-white cursor-pointer text-[10px] tracking-widest leading-tight">{item}</FormLabel>
+                                        <Label className="text-slate-300 group-hover:text-white font-bold cursor-pointer text-[10px] tracking-widest">{item}</Label>
                                     </FormItem>
                                 )} />
                             ))}
@@ -2094,24 +2094,12 @@ function Dislikes({ form }: { form: any }) {
                         {options.veg.map(opt => (
                             <FormField key={opt} control={form.control} name="disliked_vegetables" render={({ field }) => (
                                 <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
-<<<<<<< Updated upstream
-                                    <FormControl>
-                                        <Checkbox 
-                                            checked={field.value?.includes(opt)} 
-                                            onCheckedChange={(checked) => {
-                                                const current = field.value || [];
-                                                return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
-                                            }} 
-                                        />
-                                    </FormControl>
-=======
                                     <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
                                         const current = field.value || [];
                                         if (opt === "Todas me agradan") return checked ? field.onChange(["Todas me agradan"]) : field.onChange([]);
                                         const filtered = current.filter((v: string) => v !== "Todas me agradan");
                                         return checked ? field.onChange([...filtered, opt]) : field.onChange(filtered.filter((v: string) => v !== opt));
                                     }} /></FormControl>
->>>>>>> Stashed changes
                                     <Label className="text-slate-300 font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
                                 </FormItem>
                             )} />
@@ -2120,7 +2108,7 @@ function Dislikes({ form }: { form: any }) {
                     {form.watch("disliked_vegetables")?.includes("Otros") && (
                         <FormField control={form.control} name="disliked_vegetables_other" render={({ field }) => (
                             <FormItem className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                <FormControl><Input {...field} placeholder="Especificar otros vegetales..." className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl>
+                                <FormControl><Input {...field} placeholder="Especificar otros vegetales..." className="h-12 bg-white/5 border-white/10 rounded-xl text-white" /></FormControl>
                             </FormItem>
                         )} />
                     )}
@@ -2134,24 +2122,12 @@ function Dislikes({ form }: { form: any }) {
                         {options.fruit.map(opt => (
                             <FormField key={opt} control={form.control} name="disliked_fruits" render={({ field }) => (
                                 <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
-<<<<<<< Updated upstream
-                                    <FormControl>
-                                        <Checkbox 
-                                            checked={field.value?.includes(opt)} 
-                                            onCheckedChange={(checked) => {
-                                                const current = field.value || [];
-                                                return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
-                                            }} 
-                                        />
-                                    </FormControl>
-=======
                                     <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
                                         const current = field.value || [];
                                         if (opt === "Todas me agradan") return checked ? field.onChange(["Todas me agradan"]) : field.onChange([]);
                                         const filtered = current.filter((v: string) => v !== "Todas me agradan");
                                         return checked ? field.onChange([...filtered, opt]) : field.onChange(filtered.filter((v: string) => v !== opt));
                                     }} /></FormControl>
->>>>>>> Stashed changes
                                     <Label className="text-slate-300 font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
                                 </FormItem>
                             )} />
@@ -2160,7 +2136,7 @@ function Dislikes({ form }: { form: any }) {
                     {form.watch("disliked_fruits")?.includes("Otros") && (
                         <FormField control={form.control} name="disliked_fruits_other" render={({ field }) => (
                             <FormItem className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                <FormControl><Input {...field} placeholder="Especificar otras frutas..." className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl>
+                                <FormControl><Input {...field} placeholder="Especificar otras frutas..." className="h-12 bg-white/5 border-white/10 rounded-xl text-white" /></FormControl>
                             </FormItem>
                         )} />
                     )}
@@ -2174,24 +2150,12 @@ function Dislikes({ form }: { form: any }) {
                         {options.prep.map(opt => (
                             <FormField key={opt} control={form.control} name="disliked_preparations" render={({ field }) => (
                                 <FormItem className="flex items-center space-x-3 bg-white/5 p-4 rounded-xl border border-white/10 hover:border-nutri-brand/30 transition-all cursor-pointer">
-<<<<<<< Updated upstream
-                                    <FormControl>
-                                        <Checkbox 
-                                            checked={field.value?.includes(opt)} 
-                                            onCheckedChange={(checked) => {
-                                                const current = field.value || [];
-                                                return checked ? field.onChange([...current, opt]) : field.onChange(current.filter((v: string) => v !== opt));
-                                            }} 
-                                        />
-                                    </FormControl>
-=======
                                     <FormControl><Checkbox checked={field.value?.includes(opt)} onCheckedChange={(checked) => {
                                         const current = field.value || [];
                                         if (opt === "Todas me agradan") return checked ? field.onChange(["Todas me agradan"]) : field.onChange([]);
                                         const filtered = current.filter((v: string) => v !== "Todas me agradan");
                                         return checked ? field.onChange([...filtered, opt]) : field.onChange(filtered.filter((v: string) => v !== opt));
                                     }} /></FormControl>
->>>>>>> Stashed changes
                                     <Label className="text-slate-300 font-bold cursor-pointer text-[10px] tracking-widest">{opt}</Label>
                                 </FormItem>
                             )} />
@@ -2200,7 +2164,7 @@ function Dislikes({ form }: { form: any }) {
                     {form.watch("disliked_preparations")?.includes("Otros") && (
                         <FormField control={form.control} name="disliked_preparations_other" render={({ field }) => (
                             <FormItem className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                <FormControl><Input {...field} placeholder="Especificar otras preparaciones..." className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl>
+                                <FormControl><Input {...field} placeholder="Especificar otras preparaciones..." className="h-12 bg-white/5 border-white/10 rounded-xl text-white" /></FormControl>
                             </FormItem>
                         )} />
                     )}
@@ -2236,10 +2200,10 @@ function Lifestyle({ form }: { form: any }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-10 border-t border-white/5">
                 <FormField control={form.control} name="wake_up_time" render={({ field }) => (
-                    <FormItem><FormLabel>Hora despertar</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                    <FormItem><FormLabel>Hora despertar</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl text-white" /></FormControl></FormItem>
                 )} />
                 <FormField control={form.control} name="sleep_time" render={({ field }) => (
-                    <FormItem><FormLabel>Hora dormir</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                    <FormItem><FormLabel>Hora dormir</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl text-white" /></FormControl></FormItem>
                 )} />
             </div>
 
@@ -2247,26 +2211,26 @@ function Lifestyle({ form }: { form: any }) {
                 <h4 className="text-sm font-black text-slate-500 uppercase tracking-widest">Detalle de Comidas Diarias</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <FormField control={form.control} name="breakfast_time" render={({ field }) => (
-                        <FormItem><FormLabel>Hora Desayuno</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                        <FormItem><FormLabel>Hora Desayuno</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl text-white" /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name="breakfast_details" render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>¿qué sueles desayunar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Avena con frutas" className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>¿qué sueles desayunar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Avena con frutas" className="h-12 bg-white/5 border-white/10 rounded-xl text-white" /></FormControl></FormItem>
                     )} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <FormField control={form.control} name="lunch_time" render={({ field }) => (
-                        <FormItem><FormLabel>Hora Almuerzo</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                        <FormItem><FormLabel>Hora Almuerzo</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl text-white" /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name="lunch_details" render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>¿qué sueles almorzar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Pollo con arroz" className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>¿qué sueles almorzar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Pollo con arroz" className="h-12 bg-white/5 border-white/10 rounded-xl text-white" /></FormControl></FormItem>
                     )} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <FormField control={form.control} name="dinner_time" render={({ field }) => (
-                        <FormItem><FormLabel>Hora Cena</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                        <FormItem><FormLabel>Hora Cena</FormLabel><FormControl><Input type="time" {...field} className="h-12 bg-white/5 border-white/10 rounded-xl text-white" /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name="dinner_details" render={({ field }) => (
-                        <FormItem className="md:col-span-2"><FormLabel>¿qué sueles cenar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Sopa o ensalada" className="h-12 bg-white/5 border-white/10 rounded-xl" /></FormControl></FormItem>
+                        <FormItem className="md:col-span-2"><FormLabel>¿qué sueles cenar?</FormLabel><FormControl><Input {...field} placeholder="Ej: Sopa o ensalada" className="h-12 bg-white/5 border-white/10 rounded-xl text-white" /></FormControl></FormItem>
                     )} />
                 </div>
             </div>
@@ -2274,7 +2238,7 @@ function Lifestyle({ form }: { form: any }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-10 border-t border-white/5">
                 <FormField control={form.control} name="prep_preference" render={({ field }) => (
                     <FormItem><FormLabel>Preferencia de preparación</FormLabel>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-4">
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex gap-8 mt-4">
                             <div className="flex items-center space-x-2"><RadioGroupItem value="faciles" id="p-f" /><Label htmlFor="p-f" className="text-white cursor-pointer">Fáciles</Label></div>
                             <div className="flex items-center space-x-2"><RadioGroupItem value="dificiles" id="p-d" /><Label htmlFor="p-d" className="text-white cursor-pointer">Complejas</Label></div>
                         </RadioGroup>
@@ -2282,7 +2246,7 @@ function Lifestyle({ form }: { form: any }) {
                 )} />
                 <FormField control={form.control} name="taste_preference" render={({ field }) => (
                     <FormItem><FormLabel>Preferencia de sabor</FormLabel>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-8 mt-4">
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} value={field.value} className="flex gap-8 mt-4">
                             <div className="flex items-center space-x-2"><RadioGroupItem value="dulces" id="t-d" /><Label htmlFor="t-d" className="text-white cursor-pointer">Dulces</Label></div>
                             <div className="flex items-center space-x-2"><RadioGroupItem value="salados" id="t-s" /><Label htmlFor="t-s" className="text-white cursor-pointer">Salados</Label></div>
                         </RadioGroup>
@@ -2292,12 +2256,3 @@ function Lifestyle({ form }: { form: any }) {
         </div>
     );
 }
-
-
-
-
-
-
-
-
-
