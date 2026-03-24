@@ -1032,10 +1032,10 @@ function GoalExperience({ form }: { form: any }) {
                             <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                                 <FormControl><SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 text-white"><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
                                 <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                                    <SelectItem value="Buenas experiencia">Buenas experiencia</SelectItem>
-                                    <SelectItem value="mala experiencia">mala experiencia</SelectItem>
-                                    <SelectItem value="ni buena ni mala experiencia">ni buena ni mala experiencia</SelectItem>
-                                    <SelectItem value="no tuve resultados">no tuve resultados</SelectItem>
+                                    <SelectItem value="Buena experiencia">Buena experiencia</SelectItem>
+                                    <SelectItem value="Mala experiencia">Mala experiencia</SelectItem>
+                                    <SelectItem value="Ni buena ni mala experiencia">Ni buena ni mala experiencia</SelectItem>
+                                    <SelectItem value="No tuve resultados">No tuve resultados</SelectItem>
                                 </SelectContent>
                             </Select>
                             <FormMessage /></FormItem>
@@ -1048,7 +1048,7 @@ function GoalExperience({ form }: { form: any }) {
                                     <SelectItem value="1 mes">1 mes</SelectItem>
                                     <SelectItem value="2 meses">2 meses</SelectItem>
                                     <SelectItem value="3 meses">3 meses</SelectItem>
-                                    <SelectItem value="actualmente no estoy siguiendo ningun plan">actualmente no estoy siguiendo ningun plan</SelectItem>
+                                    <SelectItem value="Más de 3 meses">Más de 3 meses</SelectItem>
                                 </SelectContent>
                             </Select>
                             <FormMessage /></FormItem>
@@ -1472,15 +1472,15 @@ function ActivityExercise({ form }: { form: any }) {
         "Recientemente (hace pocos dias)",
         "1 mes",
         "2 meses",
-        "mas de 3 meses",
-        "mas de 1 año"
+        "Más de 3 meses",
+        "Más de 1 año"
     ];
 
     const durOptions = [
-        "menos de 1 hora",
+        "Menos de 1 hora",
         "1 hora",
         "2 horas",
-        "mas de 3 horas"
+        "Más de 3 horas"
     ];
 
     const exeTypes = [
@@ -1711,7 +1711,7 @@ function Habits({ form }: { form: any }) {
                                 <SelectItem value="reparador">Reparador</SelectItem>
                                 <SelectItem value="no_reparador">No reparador</SelectItem>
                                 <SelectItem value="insomnio">Sufro de Insomnio</SelectItem>
-                                <SelectItem value="interrumpido">sueño interrumpido</SelectItem>
+                                <SelectItem value="interrumpido">Sueño interrumpido</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage /></FormItem>
@@ -1810,8 +1810,8 @@ function DietCooking({ form }: { form: any }) {
                                 <FormItem className="flex items-center space-x-3 space-y-0 bg-white/5 p-4 rounded-2xl border border-white/5 hover:border-nutri-brand/30 transition-all cursor-pointer">
                                     <FormControl><Checkbox checked={field.value?.includes(item)} onCheckedChange={(checked: boolean) => {
                                         const current = field.value || [];
-                                        if (item === "ninguna") return checked ? field.onChange(["ninguna"]) : field.onChange([]);
-                                        const withoutNone = current.filter((v: string) => v !== "ninguna");
+                                        if (item === "Ninguna") return checked ? field.onChange(["Ninguna"]) : field.onChange([]);
+                                        const withoutNone = current.filter((v: string) => v !== "Ninguna");
                                         return checked ? field.onChange([...withoutNone, item]) : field.onChange(withoutNone.filter((v: string) => v !== item));
                                     }} /></FormControl>
                                     <FormLabel className="font-bold text-slate-300 cursor-pointer">{item}</FormLabel>
@@ -1841,7 +1841,7 @@ function DietCooking({ form }: { form: any }) {
                     <FormItem>
                         <FormLabel>¿Quién cocina o prepara tus comidas?</FormLabel>
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
-                            {["yo mismo", "pareja", "mama", "hermana", "abuela", "en restaurante", "en concesionario"].map((opt) => (
+                            {["Yo mismo", "Pareja", "Mamá", "Hermana", "Abuela", "En restaurante", "En concesionario"].map((opt) => (
                                 <div
                                     key={opt}
                                     onClick={() => field.onChange(opt)}
@@ -1952,7 +1952,7 @@ function DairySupplements({ form }: { form: any }) {
     const [uploading, setUploading] = useState<string | null>(null);
 
     const dairyTypes = ["Leche de Vaca", "Leche de Soya", "Leche de Almendras", "Yogurt Natural", "Yogurt Griego", "Queso Fresco", "Queso Paria", "Otros"];
-    const supplements = ["Suplementos de proteina", "Suplementos de vitaminas y minerales", "Creatina", "Colageno", "otros"];
+    const supplements = ["Suplementos de proteina", "Suplementos de vitaminas y minerales", "Creatina", "Colageno", "Otros"];
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
