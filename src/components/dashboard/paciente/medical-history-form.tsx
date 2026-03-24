@@ -274,11 +274,21 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                             Object.keys(history).forEach(key => {
                                 if (key in medicalHistorySchema.shape) {
                                     const value = history[key];
-                                    if (['health_conditions', 'family_history', 'exercise_types', 'exercise_days', 'appetite_peak_time', 'available_instruments', 'supplement_types', 'previous_unhealthy_habits', 'disliked_cereals', 'disliked_tubers', 'disliked_legumes', 'disliked_meats', 'disliked_fats'].includes(key)) {
+                                    const arrayFields = [
+                                        'health_conditions', 'family_history', 'exercise_types', 'exercise_days', 
+                                        'appetite_peak_time', 'available_instruments', 'supplement_types', 
+                                        'previous_unhealthy_habits', 'medication_names', 'food_allergies', 
+                                        'intolerance_types', 'dairy_consumption_types', 'dairy_product_photos',
+                                        'lab_test_documents',
+                                        'disliked_cereals', 'disliked_tubers', 'disliked_legumes', 
+                                        'disliked_meats', 'disliked_fats', 'disliked_vegetables', 
+                                        'disliked_fruits', 'disliked_preparations'
+                                    ];
+                                    if (arrayFields.includes(key)) {
                                         if (typeof value === 'string' && value) {
                                             form.setValue(key as any, value.split(', ').filter(Boolean));
                                         } else {
-                                            form.setValue(key as any, value || []);
+                                            form.setValue(key as any, Array.isArray(value) ? value : []);
                                         }
                                     } else if (['previous_nutrition_service', 'takes_medication', 'recent_lab_tests', 'does_exercise', 'likes_cooking', 'supplements_consumption', 'has_calorie_tracker', 'food_intolerances'].includes(key)) {
                                         // If stored as boolean, convert to 'yes'/'no' for the form components
@@ -399,7 +409,7 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                 'health_conditions', 'family_history', 'exercise_types', 'exercise_days',
                 'appetite_peak_time', 'available_instruments', 'supplement_types',
                 'previous_unhealthy_habits', 'medication_names', 'lab_test_documents',
-                'intolerance_types', 'dairy_consumption_types', 'dairy_photos',
+                'intolerance_types', 'dairy_consumption_types', 'dairy_product_photos',
                 'food_allergies'
             ];
 
