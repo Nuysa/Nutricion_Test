@@ -507,10 +507,10 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
             if (historyRes.error) throw historyRes.error;
             if (patientRes.error) throw patientRes.error;
 
-            toast({ title: "¡¡Éxito!", description: "Tu Historia Clínica y datos de perfil han sido actualizados.", variant: "success" });
+            toast({ title: "¡Exito!", description: "Tu Historia Clínica y datos de perfil han sido actualizados.", variant: "success" });
             setHasHistory(true);
             setIsEditMode(false);
-            setStep(1); // Reset to step 1 for future edits
+            // No reseteamos el paso al inicio para que el usuario pueda seguir navegando o visualizar su cambio
             if (onSaveSuccess) onSaveSuccess();
         } catch (error: any) {
             console.error("Error saving medical history:", error);
@@ -579,6 +579,32 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                 </div>
             </div>
             <div className="p-8 lg:p-12">
+                {/* Step Selector for Quick Navigation */}
+                <div className="flex items-center gap-2 mb-10 overflow-x-auto pb-6 scrollbar-hide no-scrollbar">
+                    {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
+                        <div key={s} className="flex items-center group">
+                            <button
+                                type="button"
+                                onClick={() => setStep(s)}
+                                className={cn(
+                                    "w-10 h-10 rounded-xl flex items-center justify-center font-black transition-all border shrink-0",
+                                    step === s 
+                                        ? "bg-nutri-brand border-nutri-brand text-white shadow-lg shadow-nutri-brand/40 scale-110 z-10" 
+                                        : "bg-white/5 border-white/5 text-slate-500 hover:text-nutri-brand hover:border-nutri-brand/50"
+                                )}
+                            >
+                                {s}
+                            </button>
+                            {s < totalSteps && (
+                                <div className={cn(
+                                    "w-4 h-[2px] mx-1 transition-colors",
+                                    step > s ? "bg-nutri-brand/40" : "bg-white/5"
+                                )} />
+                            )}
+                        </div>
+                    ))}
+                </div>
+
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit as any, onError)} className="space-y-8">
                         {step === 1 && <PersonalData form={form} />}
