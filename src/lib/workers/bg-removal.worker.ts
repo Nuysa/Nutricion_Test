@@ -9,7 +9,7 @@ self.onmessage = async (event: MessageEvent) => {
         const baseUrl = self.location.origin || "";
 
         const config: any = {
-            model: 'small',
+            model: 'medium',
             publicPath: baseUrl ? `${baseUrl}/bg-removal-assets/` : '/bg-removal-assets/',
             progress: (res: any) => {
                 // progreso opcional

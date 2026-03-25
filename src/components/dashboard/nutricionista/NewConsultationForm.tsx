@@ -36,7 +36,7 @@ export function NewConsultationForm({
         : "--";
 
     const updateExtraData = (code: string, value: string) => {
-        setExtraData({ ...extraData, [code]: value });
+        setExtraData({ ...extraData, [code.toUpperCase()]: value });
     };
 
     return (
@@ -125,7 +125,7 @@ export function NewConsultationForm({
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">{item.header}</label>
                                     <input
                                         type="number" placeholder="0.0"
-                                        value={v ? (extraData[v.code] || '') : ''}
+                                        value={v ? (extraData[v.code.toUpperCase()] || '') : ''}
                                         onChange={e => v && updateExtraData(v.code, e.target.value)}
                                         className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2 text-sm font-tech font-black text-white focus:ring-1 focus:ring-blue-500/50 outline-none transition-all placeholder:text-white/5"
                                     />
@@ -148,7 +148,7 @@ export function NewConsultationForm({
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">{item.header}</label>
                                     <input
                                         type="number" placeholder="0.0"
-                                        value={v ? (extraData[v.code] || '') : ''}
+                                        value={v ? (extraData[v.code.toUpperCase()] || '') : ''}
                                         onChange={e => v && updateExtraData(v.code, e.target.value)}
                                         className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2 text-sm font-tech font-black text-white focus:ring-1 focus:ring-purple-500/50 outline-none transition-all placeholder:text-white/5"
                                     />
@@ -174,7 +174,7 @@ export function NewConsultationForm({
                                 </label>
                                 <textarea
                                     placeholder={isFinding ? "Ej. Porcentaje de grasa elevado..." : "Ej. Realizar 5000 pasos diarios..."}
-                                    value={v ? (extraData[v.code] || '') : ''}
+                                    value={v ? (extraData[v.code.toUpperCase()] || '') : ''}
                                     onChange={e => v && updateExtraData(v.code, e.target.value)}
                                     className="w-full flex-1 bg-white/5 border border-white/5 rounded-2xl p-4 text-sm text-slate-300 focus:ring-1 focus:ring-white/10 outline-none resize-none min-h-[100px] placeholder:text-white/5"
                                 ></textarea>

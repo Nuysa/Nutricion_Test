@@ -420,22 +420,37 @@ export default function PatientDetailPage() {
             };
 
             // Llenar con 0s si están vacíos los campos numéricos
+            // Normalizar extraData a mayúsculas para búsquedas robustas
+            const normalizedExtraData: Record<string, any> = {};
+            Object.keys(extraData).forEach(k => {
+                normalizedExtraData[k.toUpperCase()] = extraData[k];
+            });
+
             const cleanedExtraData: Record<string, any> = {};
             const nativeExcludes = ["peso", "grasa", "cintura", "talla", "talla_cm", "edad", "imc"];
+            
             clinicalVariables.forEach(v => {
                 const code = v.code?.toUpperCase();
                 if (code && !v.is_calculated && !nativeExcludes.includes(code.toLowerCase())) {
+                    // Buscar primero en el extraData con la clave original, luego en el normalizado
+                    const rawValue = extraData[v.code] !== undefined ? extraData[v.code] : normalizedExtraData[code];
+                    
                     if ((v as any).data_type === 'text') {
-                        cleanedExtraData[code] = extraData[code] || "";
+                        cleanedExtraData[code] = rawValue || "";
                     } else {
-                        cleanedExtraData[code] = parseNum(extraData[code] || "0");
+                        cleanedExtraData[code] = parseNum(rawValue || "0");
                     }
                 }
             });
 
             // Limpiamos los campos nativos de extraData por arrastre de bugs anteriores
-            const filteredExtraData = { ...extraData };
-            nativeExcludes.forEach(ex => delete filteredExtraData[ex.toUpperCase()]);
+            const filteredExtraData: Record<string, any> = {};
+            Object.keys(extraData).forEach(k => {
+                const upperK = k.toUpperCase();
+                if (!nativeExcludes.includes(upperK.toLowerCase())) {
+                    filteredExtraData[upperK] = extraData[k];
+                }
+            });
 
             const rowData: any = {
                 patient_id: patientId,
@@ -874,7 +889,14 @@ export default function PatientDetailPage() {
                                                 setEditingId(record.id);
                                                 setIsAddingMode(true);
                                                 setEditValues(record);
-                                                setExtraData(record.extra_data || {});
+                                                
+                                                const normalized: Record<string, any> = {};
+                                                if (record.extra_data) {
+                                                    Object.keys(record.extra_data).forEach(k => {
+                                                        normalized[k.toUpperCase()] = record.extra_data[k];
+                                                    });
+                                                }
+                                                setExtraData(normalized);
                                             }}
                                         >
                                             <td className="px-3 sm:px-8 py-5 text-center font-bold text-slate-400">

@@ -47,7 +47,7 @@ export function EditConsultationModal({
         : "--";
 
     const updateExtraData = (code: string, value: string) => {
-        setExtraData({ ...extraData, [code]: value });
+        setExtraData({ ...extraData, [code.toUpperCase()]: value });
     };
 
     return (
@@ -124,7 +124,7 @@ export function EditConsultationModal({
                                                 <label className="text-[9px] font-black text-slate-500 uppercase tracking-tight block">{item.header}</label>
                                                 <input
                                                     type="number"
-                                                    value={v ? (extraData[v.code] || '') : ''}
+                                                    value={v ? (extraData[v.code.toUpperCase()] || '') : ''}
                                                     onChange={e => v && updateExtraData(v.code, e.target.value)}
                                                     className="w-full bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-sm font-tech font-black text-white focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
                                                 />
@@ -148,7 +148,7 @@ export function EditConsultationModal({
                                                 <label className="text-[9px] font-black text-slate-500 uppercase tracking-tight block">{item.header}</label>
                                                 <input
                                                     type="number"
-                                                    value={v ? (extraData[v.code] || '') : ''}
+                                                    value={v ? (extraData[v.code.toUpperCase()] || '') : ''}
                                                     onChange={e => v && updateExtraData(v.code, e.target.value)}
                                                     className="w-full bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-sm font-tech font-black text-white focus:ring-1 focus:ring-purple-500/50 outline-none transition-all"
                                                 />
@@ -174,7 +174,7 @@ export function EditConsultationModal({
                                                 {item.header}
                                             </label>
                                             <textarea
-                                                value={v ? (extraData[v.code] || '') : ''}
+                                                value={v ? (extraData[v.code.toUpperCase()] || '') : ''}
                                                 onChange={e => v && updateExtraData(v.code, e.target.value)}
                                                 className="w-full flex-1 bg-white/5 border border-white/5 rounded-2xl p-4 text-sm text-slate-300 focus:ring-1 focus:ring-white/10 outline-none resize-none min-h-[120px] custom-scrollbar"
                                             ></textarea>
