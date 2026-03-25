@@ -579,32 +579,6 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                 </div>
             </div>
             <div className="p-8 lg:p-12">
-                {/* Step Selector for Quick Navigation */}
-                <div className="flex items-center gap-2 mb-10 overflow-x-auto pb-6 scrollbar-hide no-scrollbar">
-                    {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
-                        <div key={s} className="flex items-center group">
-                            <button
-                                type="button"
-                                onClick={() => setStep(s)}
-                                className={cn(
-                                    "w-10 h-10 rounded-xl flex items-center justify-center font-black transition-all border shrink-0",
-                                    step === s 
-                                        ? "bg-nutri-brand border-nutri-brand text-white shadow-lg shadow-nutri-brand/40 scale-110 z-10" 
-                                        : "bg-white/5 border-white/5 text-slate-500 hover:text-nutri-brand hover:border-nutri-brand/50"
-                                )}
-                            >
-                                {s}
-                            </button>
-                            {s < totalSteps && (
-                                <div className={cn(
-                                    "w-4 h-[2px] mx-1 transition-colors",
-                                    step > s ? "bg-nutri-brand/40" : "bg-white/5"
-                                )} />
-                            )}
-                        </div>
-                    ))}
-                </div>
-
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit as any, onError)} className="space-y-8">
                         {step === 1 && <PersonalData form={form} />}
@@ -625,10 +599,29 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                                 variant="ghost"
                                 onClick={prevStep}
                                 disabled={step === 1 || isUploadingPhoto}
-                                className="px-8 h-14 rounded-2xl font-black uppercase tracking-widest text-slate-500 hover:text-white disabled:opacity-50"
+                                className="px-6 h-12 rounded-xl font-black uppercase tracking-widest text-slate-500 hover:text-white disabled:opacity-50 text-[10px]"
                             >
-                                <ChevronLeft className="mr-2 h-5 w-5" /> Anterior
+                                <ChevronLeft className="mr-1 h-4 w-4" /> Anterior
                             </Button>
+
+                            {/* Mini Step Selector in Footer */}
+                            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar px-2 h-10 rounded-xl bg-white/[0.02] border border-white/5 mx-2">
+                                {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
+                                    <button
+                                        key={s}
+                                        type="button"
+                                        onClick={() => setStep(s)}
+                                        className={cn(
+                                            "w-7 h-7 min-w-[1.75rem] rounded-lg flex items-center justify-center font-black transition-all text-[10px]",
+                                            step === s 
+                                                ? "bg-nutri-brand text-white shadow-md shadow-nutri-brand/30" 
+                                                : "bg-transparent text-slate-600 hover:text-white hover:bg-white/5"
+                                        )}
+                                    >
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
 
                             <div className="flex items-center gap-4">
                                 {(isEditMode || isNutritionistView) && step < totalSteps && (
