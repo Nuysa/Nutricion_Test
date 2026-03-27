@@ -97,34 +97,55 @@ export default function PatientDetailPage() {
             if (layoutData.columns) setLayout(layoutData.columns);
             setClinicalVariables(vars);
 
+            const getVId = (codes: string[], header?: string) => {
+                const canonicalMap: Record<string, string[]> = {
+                    "CINTURA MIN.": ["CINTURA_MINIMA", "CINTURA_MIN", "MIN_CINTURA", "CINT_MINIMA", "CINT_MIN"],
+                    "CINTURA MAX.": ["CINTURA_MAXIMA", "CINTURA_MAX", "MAX_CINTURA", "CINT_MAXIMA", "CINT_MAX"],
+                    "CADERA MAX.": ["CADERA_MAXIMA", "CADERA_MAX", "MAX_CADERA"],
+                    "MUSLO MAX.": ["MUSLO_MAXIMO", "MUSLO_MAX", "MAX_MUSLO"],
+                    "MUSLO MED.": ["MUSLO_MEDIAL", "P_MUSLO_MEDIAL", "MUSLO_MED"],
+                    "PANTORRILLA": ["PANTORRILLA", "P_PANTORRILLA"]
+                };
+
+                const searchCodes = header && canonicalMap[header.toUpperCase()] 
+                    ? Array.from(new Set([...codes, ...canonicalMap[header.toUpperCase()]]))
+                    : codes;
+
+                for (const c of searchCodes) {
+                    const match = vars.find((v: any) => v.code?.toUpperCase() === c.toUpperCase() || v.name?.toLowerCase().includes(c.toLowerCase()));
+                    if (match) return match.id;
+                }
+                return null;
+            };
+
             if (formLayoutData?.columns && formLayoutData.columns.length > 10) {
                 setFormLayout(formLayoutData.columns);
             } else {
                 setFormLayout([
-                    { id: 'f1', header: "Fecha", fixed_variable: "date", variable_id: null, section: 'base' },
+                    { id: 'f1', header: "Registro", fixed_variable: "date", variable_id: null, section: 'base' },
                     { id: 'f2', header: "Peso Actual", fixed_variable: "weight", variable_id: null, section: 'base' },
                     { id: 'f3', header: "IMC", fixed_variable: "bmi", variable_id: null, section: 'base' },
 
-                    { id: 'f4', header: "B. Relajado", variable_id: vars.find((v: any) => v.code === 'BRAZO_RELAJADO')?.id || null, section: 'perimeters' },
-                    { id: 'f5', header: "B. Flexionado", variable_id: vars.find((v: any) => v.code === 'BRAZO_FLEXIONADO')?.id || null, section: 'perimeters' },
-                    { id: 'f6', header: "Antebrazo", variable_id: vars.find((v: any) => v.code === 'ANTEBRAZO_MAXIMO')?.id || null, section: 'perimeters' },
-                    { id: 'f7', header: "Tórax", variable_id: vars.find((v: any) => v.code === 'TORAX')?.id || null, section: 'perimeters' },
-                    { id: 'f8', header: "Cintura Min.", variable_id: vars.find((v: any) => v.code === 'CINTURA_MINIMA')?.id || null, section: 'perimeters' },
-                    { id: 'f9', header: "Cintura Max.", variable_id: vars.find((v: any) => v.code === 'CINTURA_MAXIMA')?.id || null, section: 'perimeters' },
-                    { id: 'f10', header: "Cadera Max.", variable_id: vars.find((v: any) => v.code === 'CADERA_MAXIMA')?.id || null, section: 'perimeters' },
-                    { id: 'f11', header: "Muslo Max.", variable_id: vars.find((v: any) => v.code === 'MUSLO_MAXIMO')?.id || null, section: 'perimeters' },
+                    { id: 'f4', header: "B. Relajado", variable_id: getVId(['BRAZO_RELAJADO'], "B. Relajado"), section: 'perimeters' },
+                    { id: 'f5', header: "B. Flexionado", variable_id: getVId(['BRAZO_FLEXIONADO'], "B. Flexionado"), section: 'perimeters' },
+                    { id: 'f6', header: "Antebrazo", variable_id: getVId(['ANTEBRAZO_MAXIMO', 'ANTEBRAZO'], "Antebrazo"), section: 'perimeters' },
+                    { id: 'f7', header: "Tórax", variable_id: getVId(['TORAX'], "Tórax"), section: 'perimeters' },
+                    { id: 'f8', header: "Cintura Min.", variable_id: getVId(['CINTURA_MINIMA'], "Cintura Min."), section: 'perimeters' },
+                    { id: 'f9', header: "Cintura Max.", variable_id: getVId(['CINTURA_MAXIMA'], "Cintura Max."), section: 'perimeters' },
+                    { id: 'f10', header: "Cadera Max.", variable_id: getVId(['CADERA_MAXIMA'], "Cadera Max."), section: 'perimeters' },
+                    { id: 'f11', header: "Muslo Max.", variable_id: getVId(['MUSLO_MAXIMO'], "Muslo Max."), section: 'perimeters' },
 
-                    { id: 'f12', header: "Tríceps", variable_id: vars.find((v: any) => v.code === 'P_TRICEPS')?.id || null, section: 'folds' },
-                    { id: 'f13', header: "Subescapular", variable_id: vars.find((v: any) => v.code === 'P_SUBESCAPULAR')?.id || null, section: 'folds' },
-                    { id: 'f14', header: "Supraespinal", variable_id: vars.find((v: any) => v.code === 'P_SUPRAESPINAL')?.id || null, section: 'folds' },
-                    { id: 'f15', header: "Abdominal", variable_id: vars.find((v: any) => v.code === 'P_ABDOMINAL')?.id || null, section: 'folds' },
-                    { id: 'f16', header: "Muslo Med.", variable_id: vars.find((v: any) => v.code === 'P_MUSLO_MEDIAL')?.id || null, section: 'folds' },
-                    { id: 'f17', header: "Pantorrilla", variable_id: vars.find((v: any) => v.code === 'P_PANTORRILLA')?.id || null, section: 'folds' },
-                    { id: 'f18', header: "C. Ilíaca", variable_id: vars.find((v: any) => v.code === 'CRESTA_ILIACA')?.id || null, section: 'folds' },
-                    { id: 'f19', header: "Bíceps", variable_id: vars.find((v: any) => v.code === 'BICEPS')?.id || null, section: 'folds' },
+                    { id: 'f12', header: "Tríceps", variable_id: getVId(['P_TRICEPS', 'TRICEPS'], "Tríceps"), section: 'folds' },
+                    { id: 'f13', header: "Subescapular", variable_id: getVId(['P_SUBESCAPULAR', 'SUBESCAPULAR'], "Subescapular"), section: 'folds' },
+                    { id: 'f14', header: "Supraespinal", variable_id: getVId(['P_SUPRAESPINAL', 'SUPRAESPINAL'], "Supraespinal"), section: 'folds' },
+                    { id: 'f15', header: "Abdominal", variable_id: getVId(['P_ABDOMINAL', 'ABDOMINAL'], "Abdominal"), section: 'folds' },
+                    { id: 'f16', header: "Muslo Med.", variable_id: getVId(['P_MUSLO_MEDIAL', 'MUSLO_MEDIAL'], "Muslo Med."), section: 'folds' },
+                    { id: 'f17', header: "Pantorrilla", variable_id: getVId(['P_PANTORRILLA', 'PANTORRILLA'], "Pantorrilla"), section: 'folds' },
+                    { id: 'f18', header: "C. Ilíaca", variable_id: getVId(['CRESTA_ILIACA', 'C_ILIACA'], "C. Ilíaca"), section: 'folds' },
+                    { id: 'f19', header: "Bíceps", variable_id: getVId(['BICEPS'], "Bíceps"), section: 'folds' },
 
-                    { id: 'f20', header: "Principales Hallazgos", variable_id: vars.find((v: any) => v.code === 'PRINCIPALES_HALLAZGOS')?.id || null, section: 'findings' },
-                    { id: 'f21', header: "Recomendación", variable_id: vars.find((v: any) => v.code === 'RECOMENDACION_NUTRICIONAL')?.id || null, section: 'recommendations' },
+                    { id: 'f20', header: "Principales Hallazgos", variable_id: getVId(['PRINCIPALES_HALLAZGOS', 'HALLAZGOS'], "Principales Hallazgos"), section: 'findings' },
+                    { id: 'f21', header: "Recomendación", variable_id: getVId(['RECOMENDACION_NUTRICIONAL', 'RECOMENDACION', 'RECOM'], "Recomendación"), section: 'recommendations' },
                 ]);
             }
 
@@ -145,7 +166,7 @@ export default function PatientDetailPage() {
 
             const { data: hData, error: hError } = await supabase
                 .from("weight_records")
-                .select("*")
+                .select("*, appointments(appointment_date, start_time, modality)")
                 .eq("patient_id", patientId)
                 .order("date", { ascending: false })
                 .order("created_at", { ascending: false });
@@ -208,10 +229,24 @@ export default function PatientDetailPage() {
             const dd = String(todayD.getDate()).padStart(2, '0');
             const todayStr = `${yyyy}-${mm}-${dd}`;
 
-            const pending = allApts?.filter(a => a.status !== 'cancelada' && a.status !== 'completada' && a.status !== 'completado' && a.status !== 'canceled') || [];
-            const activeToday = pending.find(a => a.appointment_date === todayStr);
+            const linkedAptIds = new Set((hData || []).map(r => r.appointment_id).filter(id => !!id));
             
-            setPendingAppointments(pending);
+            // Todas las citas marcadas con su estado de vinculación
+            const appointmentOptions = (allApts || []).map(a => ({
+                ...a,
+                isLinked: linkedAptIds.has(a.id)
+            }));
+
+            const availableApts = appointmentOptions.filter(a => 
+                !a.isLinked && 
+                a.status !== 'cancelada' && 
+                a.status !== 'canceled' &&
+                a.status !== 'cancelado'
+            );
+
+            const activeToday = availableApts.find(a => a.appointment_date === todayStr);
+            
+            setPendingAppointments(appointmentOptions); // Pasamos todas ahora
             setTodayAppointment(activeToday || null);
             if (activeToday) setSelectedAppointmentId(activeToday.id);
 
@@ -412,56 +447,81 @@ export default function PatientDetailPage() {
     const handleSaveRecord = async () => {
         try {
             const parseNum = (val: any) => {
-                if (!val) return 0;
+                if (val === undefined || val === null || val === '') return 0;
                 const str = String(val).trim().replace(',', '.');
                 if (str === '') return 0;
                 const n = parseFloat(str);
                 return isNaN(n) ? 0 : n;
             };
 
-            // Llenar con 0s si están vacíos los campos numéricos
-            // Normalizar extraData a mayúsculas para búsquedas robustas
-            const normalizedExtraData: Record<string, any> = {};
-            Object.keys(extraData).forEach(k => {
-                normalizedExtraData[k.toUpperCase()] = extraData[k];
-            });
-
-            const cleanedExtraData: Record<string, any> = {};
+            const finalExtraData: Record<string, any> = {};
             const nativeExcludes = ["peso", "grasa", "cintura", "talla", "talla_cm", "edad", "imc"];
+            const nativeFromExtra: Record<string, number> = {};
             
-            clinicalVariables.forEach(v => {
-                const code = v.code?.toUpperCase();
-                if (code && !v.is_calculated && !nativeExcludes.includes(code.toLowerCase())) {
-                    // Buscar primero en el extraData con la clave original, luego en el normalizado
-                    const rawValue = extraData[v.code] !== undefined ? extraData[v.code] : normalizedExtraData[code];
+            // 1. Procesar campos basados en el Layout del Formulario (esto asegura que lo que ve el usuario se guarde)
+            formLayout.forEach(item => {
+                if (item.fixed_variable) return; // Se manejan después como campos nativos
+
+                let code = "";
+                let isText = false;
+
+                if (item.variable_id) {
+                    const v = clinicalVariables.find(cv => cv.id === item.variable_id);
+                    if (v) {
+                        code = v.code.toUpperCase();
+                        isText = (v as any).data_type === 'text';
+                    }
+                }
+
+                // Fallback vinculando a códigos canónicos conocidos por el dashboard de seguimiento
+                if (!code) {
+                    const canonicalMap: Record<string, string> = {
+                        "Cintura Min.": "CINTURA_MINIMA",
+                        "Cintura Max.": "CINTURA_MAXIMA",
+                        "Cadera Max.": "CADERA_MAXIMA",
+                        "Muslo Max.": "MUSLO_MAXIMO",
+                        "Muslo Med.": "MUSLO_MEDIAL"
+                    };
+                    code = (canonicalMap[item.header] || item.header.toUpperCase().replace(/\./g, '').replace(/\s+/g, '_')).toUpperCase();
+                }
+
+                if (code) {
+                    const rawValue = extraData[code];
+                    const lowerCode = code.toLowerCase();
                     
-                    if ((v as any).data_type === 'text') {
-                        cleanedExtraData[code] = rawValue || "";
-                    } else {
-                        cleanedExtraData[code] = parseNum(rawValue || "0");
+                    // Si es un campo nativo o CINTURA_MINIMA, lo rescatamos para las columnas principales (para que aparezca en el card de CINTURA)
+                    if (lowerCode === 'cintura' || lowerCode === 'cintura_minima') nativeFromExtra.waist_circumference_cm = parseNum(rawValue);
+                    if (lowerCode === 'peso') nativeFromExtra.weight = parseNum(rawValue);
+                    if (lowerCode === 'grasa') nativeFromExtra.body_fat_percentage = parseNum(rawValue);
+
+                    if (!nativeExcludes.includes(lowerCode)) {
+                        if (isText) {
+                            finalExtraData[code] = rawValue || "";
+                        } else {
+                            finalExtraData[code] = parseNum(rawValue);
+                        }
                     }
                 }
             });
 
-            // Limpiamos los campos nativos de extraData por arrastre de bugs anteriores
-            const filteredExtraData: Record<string, any> = {};
+            // 2. Mantener campos que ya existían en extra_data...
             Object.keys(extraData).forEach(k => {
                 const upperK = k.toUpperCase();
-                if (!nativeExcludes.includes(upperK.toLowerCase())) {
-                    filteredExtraData[upperK] = extraData[k];
+                if (!finalExtraData[upperK] && !nativeExcludes.includes(upperK.toLowerCase())) {
+                    finalExtraData[upperK] = extraData[k];
                 }
             });
 
             const rowData: any = {
                 patient_id: patientId,
                 date: editValues.date || new Date().toISOString().split('T')[0],
-                weight: parseNum(editValues.weight),
-                body_fat_percentage: parseNum(editValues.body_fat_percentage),
-                waist_circumference_cm: parseNum(editValues.waist_circumference_cm),
+                weight: nativeFromExtra.weight || parseNum(editValues.weight),
+                body_fat_percentage: nativeFromExtra.body_fat_percentage || parseNum(editValues.body_fat_percentage),
+                waist_circumference_cm: nativeFromExtra.waist_circumference_cm || parseNum(editValues.waist_circumference_cm),
                 clinical_findings: editValues.clinical_findings || "",
                 nutritional_recommendations: editValues.nutritional_recommendations || "",
                 appointment_id: selectedAppointmentId || null,
-                extra_data: { ...filteredExtraData, ...cleanedExtraData } // fusionar manteniendo los 0s
+                extra_data: finalExtraData
             };
 
             const isNew = editingId === "new" || !editingId;
@@ -871,12 +931,13 @@ export default function PatientDetailPage() {
                                 <thead className="bg-white/5 text-[10px] font-black uppercase text-slate-500 border-b border-white/5">
                                     <tr>
                                         <th className="px-3 sm:px-8 py-4 sm:py-7 tracking-widest text-center w-10 sm:w-12 text-[#8F9BB3]">Nº</th>
-                                        {layout.slice(0, 4).map((col, idx) => (
+                                        <th className="px-3 sm:px-8 py-4 sm:py-7 tracking-widest text-center text-[#8F9BB3]">Registro</th>
+                                        {layout.slice(1, 4).map((col, idx) => (
                                             <th key={idx} className="px-3 sm:px-8 py-4 sm:py-7 tracking-widest text-center text-[#8F9BB3]">
                                                 {col.header}
                                             </th>
                                         ))}
-                                        <th className="px-3 sm:px-8 py-4 sm:py-7 tracking-widest text-center text-[#8F9BB3]">Fecha</th>
+                                        <th className="px-3 sm:px-8 py-4 sm:py-7 tracking-widest text-center text-[#8F9BB3]">Cita</th>
                                         <th className="px-3 sm:px-8 py-4 sm:py-7 tracking-widest text-center text-[#8F9BB3]">Acciones</th>
                                     </tr>
                                 </thead>
@@ -896,6 +957,16 @@ export default function PatientDetailPage() {
                                                         normalized[k.toUpperCase()] = record.extra_data[k];
                                                     });
                                                 }
+
+                                                // Inyectar campos nativos si no están en extra_data para que aparezcan en los inputs dinámicos
+                                                if (record.waist_circumference_cm && !normalized['CINTURA_MINIMA']) normalized['CINTURA_MINIMA'] = record.waist_circumference_cm;
+                                                if (record.waist_circumference_cm && !normalized['CINTURA']) normalized['CINTURA'] = record.waist_circumference_cm;
+                                                if (record.weight) {
+                                                    normalized['PESO'] = record.weight;
+                                                    setEditValues((v: any) => ({ ...v, weight: record.weight }));
+                                                }
+                                                if (record.body_fat_percentage) normalized['GRASA'] = record.body_fat_percentage;
+
                                                 setExtraData(normalized);
                                             }}
                                         >
@@ -935,7 +1006,9 @@ export default function PatientDetailPage() {
                                                 );
                                             })}
                                             <td className="px-3 sm:px-8 py-5 text-center font-bold text-white italic">
-                                                {new Date(record.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                {record.appointments?.appointment_date 
+                                                    ? new Date(record.appointments.appointment_date + 'T12:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                                    : "—"}
                                             </td>
                                             <td className="px-3 sm:px-8 py-5 text-center">
                                                 <div className="flex justify-center gap-2">
@@ -1116,6 +1189,9 @@ export default function PatientDetailPage() {
                 recordNumber={records.length - records.findIndex(r => r.id === editingId)}
                 layout={formLayout as any[]}
                 clinicalVariables={clinicalVariables}
+                pendingAppointments={pendingAppointments}
+                selectedAppointmentId={editValues.appointment_id || ""}
+                setSelectedAppointmentId={(id: string) => setEditValues({ ...editValues, appointment_id: id })}
             />
         </div>
     );

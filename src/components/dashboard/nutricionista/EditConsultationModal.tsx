@@ -32,11 +32,15 @@ interface EditConsultationModalProps {
     recordNumber: number;
     layout: DashboardColumn[];
     clinicalVariables: ClinicalVariable[];
+    pendingAppointments?: any[];
+    selectedAppointmentId?: string;
+    setSelectedAppointmentId?: (id: string) => void;
 }
 
 export function EditConsultationModal({
     isOpen, onClose, date, setDate, editValues, setEditValues,
-    extraData, setExtraData, onSave, onDelete, patientId, patientHeight, patientName, recordNumber, layout, clinicalVariables
+    extraData, setExtraData, onSave, onDelete, patientId, patientHeight, patientName, recordNumber, layout, clinicalVariables,
+    pendingAppointments, selectedAppointmentId, setSelectedAppointmentId
 }: EditConsultationModalProps) {
     const [isUploadingPhoto, setIsUploadingPhoto] = React.useState(false);
 
@@ -74,14 +78,45 @@ export function EditConsultationModal({
                             </div>
                         </div>
                         
-                        <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+                        <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/5 shrink-0">
                             <Calendar className="h-4 w-4 text-slate-500" />
-                            <input
-                                type="date"
-                                value={date}
-                                onChange={e => setDate(e.target.value)}
-                                className="bg-transparent text-white text-xs font-tech font-black outline-none focus:ring-0 cursor-pointer"
-                            />
+                            <select
+                                value={selectedAppointmentId || ""}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    if (val === "") {
+                                        setSelectedAppointmentId?.("");
+                                    } else {
+                                        const apt = pendingAppointments?.find(a => a.id === val);
+                                        if (apt) {
+                                            setSelectedAppointmentId?.(apt.id);
+                                            setDate(apt.appointment_date);
+                                        }
+                                    }
+                                }}
+                                className="bg-transparent text-white text-[10px] font-tech font-black outline-none focus:ring-0 cursor-pointer appearance-none uppercase"
+                            >
+                                <option value="" className="bg-[#151F32]">SIN CITA</option>
+                                {pendingAppointments?.map(apt => (
+                                    <option 
+                                        key={apt.id} 
+                                        value={apt.id} 
+                                        disabled={apt.isLinked && apt.id !== selectedAppointmentId}
+                                        className={cn("bg-[#151F32]", (apt.isLinked && apt.id !== selectedAppointmentId) ? "text-slate-600" : "text-white")}
+                                    >
+                                        {apt.appointment_date} - {apt.start_time.substring(0, 5)} { (apt.isLinked && apt.id !== selectedAppointmentId) ? "(Ya vinculada)" : `(${apt.modality})`}
+                                    </option>
+                                ))}
+                            </select>
+
+                            {(!selectedAppointmentId || selectedAppointmentId === "") && (
+                                <input
+                                    type="date"
+                                    value={date}
+                                    onChange={e => setDate(e.target.value)}
+                                    className="bg-nutrition-500/10 text-nutrition-400 text-[10px] font-tech font-black border-none outline-none focus:ring-0 cursor-pointer ml-1 rounded px-1"
+                                />
+                            )}
                         </div>
                     </div>
                 </DialogHeader>
@@ -119,13 +154,20 @@ export function EditConsultationModal({
                                 <div className="grid grid-cols-2 gap-4">
                                     {layout.filter(l => l.section === 'perimeters').map(item => {
                                         const v = clinicalVariables.find(v => v.id === item.variable_id);
+                                        const canonicalMap: Record<string, string> = {
+                                            "Cintura Min.": "CINTURA_MINIMA",
+                                            "Cintura Max.": "CINTURA_MAXIMA",
+                                            "Cadera Max.": "CADERA_MAXIMA",
+                                            "Muslo Max.": "MUSLO_MAXIMO"
+                                        };
+                                        const code = (v?.code || canonicalMap[item.header] || item.header.toUpperCase().replace(/\./g, '').replace(/\s+/g, '_')).toUpperCase();
                                         return (
                                             <div key={item.variable_id || item.header} className="space-y-1">
                                                 <label className="text-[9px] font-black text-slate-500 uppercase tracking-tight block">{item.header}</label>
                                                 <input
                                                     type="number"
-                                                    value={v ? (extraData[v.code.toUpperCase()] || '') : ''}
-                                                    onChange={e => v && updateExtraData(v.code, e.target.value)}
+                                                    value={extraData[code] || ''}
+                                                    onChange={e => updateExtraData(code, e.target.value)}
                                                     className="w-full bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-sm font-tech font-black text-white focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
                                                 />
                                             </div>
@@ -143,13 +185,17 @@ export function EditConsultationModal({
                                 <div className="grid grid-cols-2 gap-4">
                                     {layout.filter(l => l.section === 'folds').map(item => {
                                         const v = clinicalVariables.find(v => v.id === item.variable_id);
+                                        const canonicalMap: Record<string, string> = {
+                                            "Muslo Med.": "MUSLO_MEDIAL"
+                                        };
+                                        const code = (v?.code || canonicalMap[item.header] || item.header.toUpperCase().replace(/\./g, '').replace(/\s+/g, '_')).toUpperCase();
                                         return (
                                             <div key={item.variable_id || item.header} className="space-y-1">
                                                 <label className="text-[9px] font-black text-slate-500 uppercase tracking-tight block">{item.header}</label>
                                                 <input
                                                     type="number"
-                                                    value={v ? (extraData[v.code.toUpperCase()] || '') : ''}
-                                                    onChange={e => v && updateExtraData(v.code, e.target.value)}
+                                                    value={extraData[code] || ''}
+                                                    onChange={e => updateExtraData(code, e.target.value)}
                                                     className="w-full bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-sm font-tech font-black text-white focus:ring-1 focus:ring-purple-500/50 outline-none transition-all"
                                                 />
                                             </div>
@@ -163,6 +209,7 @@ export function EditConsultationModal({
                                 {layout.filter(l => l.section === 'findings' || l.section === 'recommendations').map(item => {
                                     const v = clinicalVariables.find(v => v.id === item.variable_id);
                                     const isFinding = item.section === 'findings';
+                                    const code = (v?.code || item.header.toUpperCase().replace(/\./g, '').replace(/\s+/g, '_')).toUpperCase();
                                     return (
                                         <div key={item.variable_id || item.header} className="bg-white/[0.03] p-6 rounded-[2rem] border border-white/5 flex-1 flex flex-col focus-within:border-white/10 transition-all group">
                                             <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-3 group-focus-within:text-white transition-colors">
@@ -174,8 +221,8 @@ export function EditConsultationModal({
                                                 {item.header}
                                             </label>
                                             <textarea
-                                                value={v ? (extraData[v.code.toUpperCase()] || '') : ''}
-                                                onChange={e => v && updateExtraData(v.code, e.target.value)}
+                                                value={extraData[code] || ''}
+                                                onChange={e => updateExtraData(code, e.target.value)}
                                                 className="w-full flex-1 bg-white/5 border border-white/5 rounded-2xl p-4 text-sm text-slate-300 focus:ring-1 focus:ring-white/10 outline-none resize-none min-h-[120px] custom-scrollbar"
                                             ></textarea>
                                         </div>
