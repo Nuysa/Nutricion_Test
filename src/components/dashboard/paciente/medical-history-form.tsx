@@ -281,7 +281,15 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                             setHasHistory(true);
                             // Pre-fill form with existing data
                             Object.keys(history).forEach(key => {
-                                if (key in medicalHistorySchema.shape) {
+                                const photoMap: Record<string, string> = {
+                                    'photo_front_url': 'front_photo_url',
+                                    'photo_side1_url': 'side_photo_1_url',
+                                    'photo_side2_url': 'side_photo_2_url',
+                                    'photo_back_url': 'back_photo_url'
+                                };
+                                const formKey = (photoMap[key] || key) as any;
+
+                                if (formKey in medicalHistorySchema.shape) {
                                     const value = history[key];
                                     const arrayFields = [
                                         'health_conditions', 'family_history', 'exercise_types', 'exercise_days', 
@@ -293,23 +301,23 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                                         'disliked_meats', 'disliked_fats', 'disliked_vegetables', 
                                         'disliked_fruits', 'disliked_preparations'
                                     ];
-                                    if (arrayFields.includes(key)) {
+                                    if (arrayFields.includes(formKey)) {
                                         if (typeof value === 'string' && value) {
-                                            form.setValue(key as any, value.split(', ').filter(Boolean));
+                                            form.setValue(formKey, value.split(', ').filter(Boolean));
                                         } else {
-                                            form.setValue(key as any, Array.isArray(value) ? value : []);
+                                            form.setValue(formKey, Array.isArray(value) ? value : []);
                                         }
-                                    } else if (['previous_nutrition_service', 'takes_medication', 'recent_lab_tests', 'does_exercise', 'likes_cooking', 'supplements_consumption', 'has_calorie_tracker', 'food_intolerances'].includes(key)) {
+                                    } else if (['previous_nutrition_service', 'takes_medication', 'recent_lab_tests', 'does_exercise', 'likes_cooking', 'supplements_consumption', 'has_calorie_tracker', 'food_intolerances'].includes(formKey)) {
                                         // If stored as boolean, convert to 'yes'/'no' for the form components
-                                        if (value === true || value === 'si' || value === 'Sí') form.setValue(key as any, 'yes');
-                                        else if (value === false || value === 'no' || value === 'nunca') form.setValue(key as any, 'no');
-                                        else form.setValue(key as any, value ?? "");
+                                        if (value === true || value === 'si' || value === 'Sí') form.setValue(formKey, 'yes');
+                                        else if (value === false || value === 'no' || value === 'nunca') form.setValue(formKey, 'no');
+                                        else form.setValue(formKey, value ?? "");
                                     } else {
                                         // Global safety: Many fields might come as boolean from old DB structures
                                         if (typeof value === 'boolean') {
-                                            form.setValue(key as any, value ? "yes" : "no");
+                                            form.setValue(formKey, value ? "yes" : "no");
                                         } else {
-                                            form.setValue(key as any, value ?? "");
+                                            form.setValue(formKey, value ?? "");
                                         }
                                     }
                                 }
@@ -477,10 +485,10 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
             });
 
             // Mapeos manuales para campos que tienen nombres distintos en el formulario vs base de datos
-            if (values.front_photo_url) finalData.photo_front_url = values.front_photo_url;
-            if (values.side_photo_1_url) finalData.photo_side1_url = values.side_photo_1_url;
-            if (values.side_photo_2_url) finalData.photo_side2_url = values.side_photo_2_url;
-            if (values.back_photo_url) finalData.photo_back_url = values.back_photo_url;
+            finalData.photo_front_url = values.front_photo_url || "";
+            finalData.photo_side1_url = values.side_photo_1_url || "";
+            finalData.photo_side2_url = values.side_photo_2_url || "";
+            finalData.photo_back_url = values.back_photo_url || "";
             
             // Evitamos enviar dairy_photos ya que NO existe en el esquema del usuario
             delete finalData.dairy_photos;
