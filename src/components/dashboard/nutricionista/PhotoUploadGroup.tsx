@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import { getCroppedImg } from "@/lib/utils/crop-image";
+import { getCroppedImg, getPixelCrop } from "@/lib/utils/crop-image";
+import { cn } from "@/lib/utils";
 
 interface PhotoUploadGroupProps {
     patientId: string;
@@ -69,7 +70,7 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
     };
 
     const handleConfirmCrop = async () => {
-        if (!croppingSlot || !tempImage || !crop) return;
+        if (!croppingSlot || !tempImage || !crop || !imgRef.current) return;
 
         const typeId = croppingSlot;
         setUploadingSlots(prev => ({ ...prev, [typeId]: "Guardando..." }));
@@ -77,13 +78,15 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
 
         const currentTempImage = tempImage;
         const currentCrop = crop;
+        const currentImg = imgRef.current;
         
         // Reset crop view immediately
         setCroppingSlot(null);
         setTempImage(null);
 
         try {
-            const croppedBlob = await getCroppedImg(currentTempImage, currentCrop);
+            const pixelCrop = getPixelCrop(currentImg, currentCrop);
+            const croppedBlob = await getCroppedImg(currentTempImage, pixelCrop);
             const fileName = `${patientId}/${Date.now()}_${typeId}.jpg`;
 
             const { error: uploadError } = await supabase.storage
@@ -165,6 +168,7 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                                                     src={tempImage} 
                                                     alt="Crop view" 
                                                     onLoad={onImageLoad}
+                                                    ref={imgRef}
                                                     className="max-w-full max-h-full object-contain"
                                                 />
                                             </ReactCrop>

@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import { getCroppedImg } from "@/lib/utils/crop-image";
+import { getCroppedImg, getPixelCrop } from "@/lib/utils/crop-image";
 import { cn } from "@/lib/utils";
 
 const medicalHistorySchema = z.object({
@@ -1161,7 +1161,7 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
     };
 
     const handleConfirmCrop = async () => {
-        if (!croppingSlot || !tempImage || !crop) return;
+        if (!croppingSlot || !tempImage || !crop || !imgRef.current) return;
 
         const typeId = croppingSlot;
         setUploading(typeId);
@@ -1170,12 +1170,14 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
 
         const currentTempImage = tempImage;
         const currentCrop = crop;
+        const currentImg = imgRef.current;
         
         setCroppingSlot(null);
         setTempImage(null);
 
         try {
-            const croppedBlob = await getCroppedImg(currentTempImage, currentCrop);
+            const pixelCrop = getPixelCrop(currentImg, currentCrop);
+            const croppedBlob = await getCroppedImg(currentTempImage, pixelCrop);
             const fileName = `${patientId}/${Date.now()}_${typeId}.jpg`;
 
             const { error: uploadError } = await supabase.storage
@@ -1251,6 +1253,7 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
                                                             src={tempImage} 
                                                             alt="Crop view" 
                                                             onLoad={onImageLoad}
+                                                            ref={imgRef}
                                                             className="max-w-full max-h-full object-contain"
                                                         />
                                                     </ReactCrop>

@@ -1,6 +1,9 @@
-import { type Crop } from 'react-image-crop';
+import { type PixelCrop } from 'react-image-crop';
 
-export const getCroppedImg = async (imageSrc: string, crop: Crop): Promise<Blob> => {
+export const getCroppedImg = async (
+    imageSrc: string,
+    pixelCrop: PixelCrop
+): Promise<Blob> => {
     const image = await createImage(imageSrc);
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -9,29 +12,29 @@ export const getCroppedImg = async (imageSrc: string, crop: Crop): Promise<Blob>
         throw new Error("No 2d context");
     }
 
-    // Convert percentages to pixels if necessary
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-
-    // Standard react-image-crop pixel calculation
-    const pixelX = (crop.x * image.naturalWidth) / 100;
-    const pixelY = (crop.y * image.naturalHeight) / 100;
-    const pixelWidth = (crop.width * image.naturalWidth) / 100;
-    const pixelHeight = (crop.height * image.naturalHeight) / 100;
-
-    canvas.width = pixelWidth;
-    canvas.height = pixelHeight;
+    // Since pixelCrop already comes from the library's onComplete handles, 
+    // it's based on the RENDERED size of the image.
+    // We need to translate those pixels to the NATURAL size of the image.
+    
+    // We get the rendered size from the image element that is passed or found.
+    // In our case, we'll re-calculate the scale based on natural vs rendered.
+    
+    // However, it's easier to just use the percentage calculation if we don't have the rendered element.
+    // But react-image-crop RECOMMENDS using the pixelCrop provided by the library.
+    
+    canvas.width = pixelCrop.width;
+    canvas.height = pixelCrop.height;
 
     ctx.drawImage(
         image,
-        pixelX,
-        pixelY,
-        pixelWidth,
-        pixelHeight,
+        pixelCrop.x,
+        pixelCrop.y,
+        pixelCrop.width,
+        pixelCrop.height,
         0,
         0,
-        pixelWidth,
-        pixelHeight
+        pixelCrop.width,
+        pixelCrop.height
     );
 
     return new Promise((resolve, reject) => {
@@ -45,13 +48,21 @@ export const getCroppedImg = async (imageSrc: string, crop: Crop): Promise<Blob>
     });
 };
 
+// Helper function to get the actual pixels on the NATURAL image based on rendered percentages
+export const getPixelCrop = (image: HTMLImageElement, percentCrop: any): PixelCrop => {
+    return {
+        unit: 'px',
+        x: (percentCrop.x * image.naturalWidth) / 100,
+        y: (percentCrop.y * image.naturalHeight) / 100,
+        width: (percentCrop.width * image.naturalWidth) / 100,
+        height: (percentCrop.height * image.naturalHeight) / 100,
+    };
+};
+
 const createImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
         const image = new Image();
-        image.addEventListener("load", () => {
-            // Wait a frame to ensure dimensions are loaded if not in natural
-            resolve(image);
-        });
+        image.addEventListener("load", () => resolve(image));
         image.addEventListener("error", (error) => reject(error));
         image.setAttribute("crossOrigin", "anonymous");
         image.src = url;
