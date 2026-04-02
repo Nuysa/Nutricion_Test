@@ -139,8 +139,8 @@ export function EditConsultationModal({
                                 </TabsTrigger>
                             </TabsList>
 
-                            <TabsContent value="mediciones" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
-                                <ScrollArea className="max-h-[65vh]">
+                            <TabsContent value="mediciones" className="flex-1 min-h-0 mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
+                                <ScrollArea className="h-[60vh] w-full">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pb-6 pr-6">
                                         {/* Column 1: Peso e IMC */}
                                         <div className="col-span-1 flex flex-col gap-6">
@@ -251,8 +251,8 @@ export function EditConsultationModal({
                                 </ScrollArea>
                             </TabsContent>
 
-                            <TabsContent value="fotos" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
-                                <ScrollArea className="max-h-[65vh]">
+                            <TabsContent value="fotos" className="flex-1 min-h-0 mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
+                                <ScrollArea className="h-[60vh] w-full">
                                     <div className="max-w-4xl mx-auto py-2 pb-6 pr-6">
                                         <h3 className="text-xl font-black text-white uppercase tracking-tight mb-8">Gestión de Registro Fotográfico</h3>
                                         <PhotoUploadGroup patientId={patientId} extraData={extraData} setExtraData={setExtraData} isUploadingPhoto={isUploadingPhoto} setIsUploadingPhoto={setIsUploadingPhoto} />
