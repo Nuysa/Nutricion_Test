@@ -26,7 +26,8 @@ import {
     Moon, Utensils, Camera, AlertCircle, Sparkles, CheckCircle2, Clock,
     Loader2, Upload, X, Plus, Download, Check
 } from "lucide-react";
-import Cropper from 'react-easy-crop';
+import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import { getCroppedImg } from "@/lib/utils/crop-image";
 import { cn } from "@/lib/utils";
 
@@ -1115,13 +1116,25 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
     // Estados para el recorte
     const [croppingSlot, setCroppingSlot] = useState<string | null>(null);
     const [tempImage, setTempImage] = useState<string | null>(null);
-    const [crop, setCrop] = useState({ x: 0, y: 0 });
-    const [zoom, setZoom] = useState(1);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+    const [crop, setCrop] = useState<Crop>({
+        unit: '%',
+        x: 10,
+        y: 10,
+        width: 80,
+        height: 80,
+    });
+    const imgRef = useRef<HTMLImageElement | null>(null);
 
-    const onCropComplete = useCallback((_area: any, pixels: any) => {
-        setCroppedAreaPixels(pixels);
-    }, []);
+    const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+        const { width, height } = e.currentTarget;
+        imgRef.current = e.currentTarget;
+        const initialCrop = centerCrop(
+            makeAspectCrop({ unit: '%', width: 90 }, 3 / 4, width, height),
+            width,
+            height
+        );
+        setCrop(initialCrop);
+    };
 
     const PHOTO_TYPES = [
         { id: 'front_photo_url', label: 'FRENTE' },
@@ -1148,7 +1161,7 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
     };
 
     const handleConfirmCrop = async () => {
-        if (!croppingSlot || !tempImage || !croppedAreaPixels) return;
+        if (!croppingSlot || !tempImage || !crop) return;
 
         const typeId = croppingSlot;
         setUploading(typeId);
@@ -1156,13 +1169,13 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
         setStatusText("Guardando...");
 
         const currentTempImage = tempImage;
-        const currentPixels = croppedAreaPixels;
+        const currentCrop = crop;
         
         setCroppingSlot(null);
         setTempImage(null);
 
         try {
-            const croppedBlob = await getCroppedImg(currentTempImage, currentPixels);
+            const croppedBlob = await getCroppedImg(currentTempImage, currentCrop);
             const fileName = `${patientId}/${Date.now()}_${typeId}.jpg`;
 
             const { error: uploadError } = await supabase.storage
@@ -1227,24 +1240,28 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
                                                 <span className="text-[9px] font-black uppercase tracking-widest text-center px-1">{statusText}</span>
                                             </div>
                                         ) : croppingSlot === type.id && tempImage ? (
-                                            <div className="absolute inset-0 z-30 bg-black flex flex-col">
-                                                <div className="relative flex-1">
-                                                    <Cropper
-                                                        image={tempImage}
+                                            <div className="absolute inset-0 z-30 bg-[#0B1120] flex flex-col items-center">
+                                                <div className="flex-1 w-full flex items-center justify-center overflow-hidden p-1">
+                                                    <ReactCrop
                                                         crop={crop}
-                                                        zoom={zoom}
+                                                        onChange={c => setCrop(c)}
                                                         aspect={3 / 4}
-                                                        onCropChange={setCrop}
-                                                        onZoomChange={setZoom}
-                                                        onCropComplete={onCropComplete}
-                                                    />
+                                                        className="max-h-full"
+                                                    >
+                                                        <img 
+                                                            src={tempImage} 
+                                                            alt="Crop view" 
+                                                            onLoad={onImageLoad}
+                                                            className="max-w-full max-h-[120px] object-contain"
+                                                        />
+                                                    </ReactCrop>
                                                 </div>
-                                                <div className="h-10 bg-black/90 flex items-center justify-around border-t border-white/10">
-                                                    <button type="button" onClick={handleCancelCrop} className="p-2 text-red-400 hover:text-red-300 transition-colors">
-                                                        <X className="h-5 w-5" />
+                                                <div className="w-full h-8 bg-black/90 flex items-center justify-around border-t border-white/10 mt-auto">
+                                                    <button type="button" onClick={handleCancelCrop} className="p-1 text-red-400 hover:text-red-300 transition-colors">
+                                                        <X className="h-4 w-4" />
                                                     </button>
-                                                    <button type="button" onClick={handleConfirmCrop} className="p-2 text-emerald-400 hover:text-emerald-300 transition-colors">
-                                                        <Check className="h-5 w-5" />
+                                                    <button type="button" onClick={handleConfirmCrop} className="p-1 text-emerald-400 hover:text-emerald-300 transition-colors">
+                                                        <Check className="h-4 w-4" />
                                                     </button>
                                                 </div>
                                             </div>

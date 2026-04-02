@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
-import { Camera, Upload, X, Loader2, Check, Crop } from "lucide-react";
+import React, { useState, useRef } from 'react';
+import { Camera, Upload, X, Loader2, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import Cropper from 'react-easy-crop';
+import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import { getCroppedImg } from "@/lib/utils/crop-image";
 
 interface PhotoUploadGroupProps {
@@ -30,13 +31,24 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
     // Estados para el recorte
     const [croppingSlot, setCroppingSlot] = useState<string | null>(null);
     const [tempImage, setTempImage] = useState<string | null>(null);
-    const [crop, setCrop] = useState({ x: 0, y: 0 });
-    const [zoom, setZoom] = useState(1);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+    const [crop, setCrop] = useState<Crop>({
+        unit: '%',
+        x: 10,
+        y: 10,
+        width: 80,
+        height: 80,
+    });
+    const imgRef = useRef<HTMLImageElement | null>(null);
 
-    const onCropComplete = useCallback((_area: any, pixels: any) => {
-        setCroppedAreaPixels(pixels);
-    }, []);
+    const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+        const { width, height } = e.currentTarget;
+        const initialCrop = centerCrop(
+            makeAspectCrop({ unit: '%', width: 90 }, 3 / 4, width, height),
+            width,
+            height
+        );
+        setCrop(initialCrop);
+    };
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, typeId: string) => {
         const file = e.target.files?.[0];
@@ -56,21 +68,21 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
     };
 
     const handleConfirmCrop = async () => {
-        if (!croppingSlot || !tempImage || !croppedAreaPixels) return;
+        if (!croppingSlot || !tempImage || !crop) return;
 
         const typeId = croppingSlot;
         setUploadingSlots(prev => ({ ...prev, [typeId]: "Guardando..." }));
         if (setIsUploadingPhoto) setIsUploadingPhoto(true);
 
         const currentTempImage = tempImage;
-        const currentCroppedPixels = croppedAreaPixels;
+        const currentCrop = crop;
         
         // Reset crop view immediately
         setCroppingSlot(null);
         setTempImage(null);
 
         try {
-            const croppedBlob = await getCroppedImg(currentTempImage, currentCroppedPixels);
+            const croppedBlob = await getCroppedImg(currentTempImage, currentCrop);
             const fileName = `${patientId}/${Date.now()}_${typeId}.jpg`;
 
             const { error: uploadError } = await supabase.storage
@@ -141,24 +153,29 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                                         </span>
                                     </div>
                                 ) : isCropping && tempImage ? (
-                                    <div className="absolute inset-0 z-30 bg-black flex flex-col">
-                                        <div className="relative flex-1">
-                                            <Cropper
-                                                image={tempImage}
+                                    <div className="absolute inset-0 z-30 bg-[#0B1120] flex flex-col items-center">
+                                        <div className="flex-1 w-full flex items-center justify-center overflow-hidden p-2">
+                                            <ReactCrop
                                                 crop={crop}
-                                                zoom={zoom}
+                                                onChange={c => setCrop(c)}
                                                 aspect={3 / 4}
-                                                onCropChange={setCrop}
-                                                onZoomChange={setZoom}
-                                                onCropComplete={onCropComplete}
-                                            />
+                                                className="max-h-full"
+                                            >
+                                                <img 
+                                                    src={tempImage} 
+                                                    alt="Crop view" 
+                                                    ref={imgRef}
+                                                    onLoad={onImageLoad}
+                                                    className="max-w-full max-h-[300px] object-contain"
+                                                />
+                                            </ReactCrop>
                                         </div>
-                                        <div className="h-10 bg-black/90 flex items-center justify-around border-t border-white/10">
+                                        <div className="w-full h-12 bg-black/90 flex items-center justify-around border-t border-white/10 mt-auto">
                                             <button onClick={handleCancelCrop} className="p-2 text-red-400 hover:text-red-300 transition-colors">
-                                                <X className="h-5 w-5" />
+                                                <X className="h-6 w-6" />
                                             </button>
                                             <button onClick={handleConfirmCrop} className="p-2 text-emerald-400 hover:text-emerald-300 transition-colors">
-                                                <Check className="h-5 w-5" />
+                                                <Check className="h-6 w-6" />
                                             </button>
                                         </div>
                                     </div>
