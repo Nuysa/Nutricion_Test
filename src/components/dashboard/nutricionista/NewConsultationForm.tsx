@@ -126,8 +126,8 @@ export function NewConsultationForm({
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="mediciones" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
-                    <ScrollArea className="h-[600px] w-full">
+                <TabsContent value="mediciones" className="flex-1 min-h-0 mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none overflow-y-auto custom-scrollbar">
+                    <div className="w-full">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-16 pr-6">
                             {/* Column 1: Peso e IMC */}
                             <div className="col-span-1 flex flex-col gap-4 sm:gap-6">
@@ -232,16 +232,16 @@ export function NewConsultationForm({
                                 })}
                             </div>
                         </div>
-                    </ScrollArea>
+                    </div>
                 </TabsContent>
 
-                <TabsContent value="fotos" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
-                    <ScrollArea className="h-[600px] w-full">
+                <TabsContent value="fotos" className="mt-0 flex-1 min-h-0 animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none overflow-y-auto custom-scrollbar">
+                    <div className="w-full">
                         <div className="max-w-4xl mx-auto py-2 pb-20 pr-6">
                             <h3 className="text-xl font-black text-white uppercase tracking-tight mb-8">Registro Fotográfico de Consulta</h3>
                             <PhotoUploadGroup patientId={patientId} extraData={extraData} setExtraData={setExtraData} isUploadingPhoto={isUploadingPhoto} setIsUploadingPhoto={setIsUploadingPhoto} />
                         </div>
-                    </ScrollArea>
+                    </div>
                 </TabsContent>
             </Tabs>
         </div>
