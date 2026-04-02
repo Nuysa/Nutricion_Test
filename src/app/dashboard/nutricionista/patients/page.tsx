@@ -52,6 +52,7 @@ export default function PatientsPage() {
             const { data: profile } = await supabase.from("profiles").select("id, full_name, role").eq("user_id", user.id).single();
             if (!profile) return;
 
+            // 1. Obtener pacientes
             let query = supabase
                 .from("patients")
                 .select(`
@@ -62,19 +63,42 @@ export default function PatientsPage() {
                     profile:profiles!profile_id(id, full_name, role, status, avatar_url, created_at)
                 `);
             
-            // Si no es admin, filtrar solo por sus pacientes asignados
             if (profile.role !== 'admin') {
                 query = query.eq("nutritionist_id", profile.id);
             }
 
             const { data: assignedPatients, error } = await query;
-
-            console.log("[PatientsPage] Assigned patients raw:", assignedPatients);
             if (error) throw error;
+
+            // 2. Obtener la siguiente cita para cada paciente
+            const { data: upcomingAppts } = await supabase
+                .from("appointments")
+                .select("patient_id, appointment_date, start_time, status")
+                .eq("nutritionist_id", profile.id)
+                .eq("status", "programada")
+                .gte("appointment_date", new Date().toISOString().split('T')[0])
+                .order("appointment_date", { ascending: true })
+                .order("start_time", { ascending: true });
+
+            // Crear mapa de próximas citas por paciente (la primera que aparezca por orden de fecha es la siguiente)
+            const nextApptByPatient: Record<string, any> = {};
+            upcomingAppts?.forEach(appt => {
+                if (!nextApptByPatient[appt.patient_id]) {
+                    nextApptByPatient[appt.patient_id] = appt;
+                }
+            });
 
             if (assignedPatients) {
                 setPatients(assignedPatients.map(p => {
                     const profileData = Array.isArray(p.profile) ? p.profile[0] : (p.profile || {});
+                    const nextAppt = nextApptByPatient[p.id];
+                    
+                    let nextVisitStr = "Sin programar";
+                    if (nextAppt) {
+                        const date = new Date(nextAppt.appointment_date + 'T12:00:00');
+                        nextVisitStr = `${date.getDate()}/${date.getMonth() + 1} - ${nextAppt.start_time.substring(0, 5)}`;
+                    }
+
                     return {
                         id: p.id,
                         name: profileData.full_name || "Paciente",
@@ -82,8 +106,8 @@ export default function PatientsPage() {
                         subscription: p.plan_type || "No Plan",
                         progress: 0,
                         lastVisit: "Por programar",
-                        nextVisit: "Sin programar",
-                        nextVisitStatus: "",
+                        nextVisit: nextVisitStr,
+                        nextVisitStatus: nextAppt?.status || "",
                         currentMediciones: 0,
                         totalMediciones: 4,
                         startDate: profileData.created_at ? new Date(profileData.created_at).toLocaleDateString() : "N/A",
@@ -114,7 +138,8 @@ export default function PatientsPage() {
                 loadPatients();
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
-                console.log("Realtime: Appointments table changed, refreshing availability...");
+                console.log("Realtime: Appointments table changed, refreshing everything...");
+                loadPatients();
                 loadSupabaseData();
             })
             .subscribe();
@@ -343,9 +368,21 @@ export default function PatientsPage() {
                                             </Badge>
                                         </td>
                                         <td className="py-6 px-4">
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                                                {patient.nextVisit}
-                                            </span>
+                                            {patient.nextVisit === "Sin programar" ? (
+                                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 opacity-50">
+                                                    {patient.nextVisit}
+                                                </span>
+                                            ) : (
+                                                <div className="flex flex-col gap-1.5">
+                                                    <span className="text-[10px] font-black text-nutrition-400 uppercase tracking-widest leading-none bg-nutrition-500/10 px-3 py-2 rounded-lg border border-nutrition-500/20 w-fit">
+                                                        {patient.nextVisit}
+                                                    </span>
+                                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1 flex items-center gap-1.5">
+                                                        <div className="h-1.5 w-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)]" />
+                                                        {patient.nextVisitStatus}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="py-6 px-10 text-right">
                                             <div className="flex items-center justify-end gap-3 opacity-60 group-hover:opacity-100 transition-all">

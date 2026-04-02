@@ -1112,10 +1112,10 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
     const [statusText, setStatusText] = useState("Subiendo...");
 
     const PHOTO_TYPES = [
-        { id: 'front_photo_url', label: 'Frente' },
-        { id: 'side_photo_1_url', label: 'Costado 1' },
-        { id: 'side_photo_2_url', label: 'Costado 2' },
-        { id: 'back_photo_url', label: 'Espalda' }
+        { id: 'front_photo_url', label: 'FRENTE' },
+        { id: 'side_photo_1_url', label: 'COSTADO 1' },
+        { id: 'side_photo_2_url', label: 'COSTADO 2' },
+        { id: 'back_photo_url', label: 'ESPALDA' }
     ];
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, typeId: string) => {
@@ -1216,7 +1216,7 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3">
                         <Camera className="h-6 w-6 text-nutri-brand" />
-                        <h4 className="font-tech font-bold text-white uppercase tracking-widest text-sm">Fotos de Progreso (Opcional)</h4>
+                        <h4 className="font-tech font-bold text-white uppercase tracking-widest text-sm">Fotos de Progreso</h4>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                         {PHOTO_TYPES.map(type => {

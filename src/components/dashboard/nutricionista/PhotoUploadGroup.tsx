@@ -15,10 +15,10 @@ interface PhotoUploadGroupProps {
 }
 
 const PHOTO_TYPES = [
-    { id: 'photo_front_url', label: 'De frente' },
-    { id: 'photo_side1_url', label: 'De lado brazo abajo' },
-    { id: 'photo_side2_url', label: 'De lado brazo arriba' },
-    { id: 'photo_back_url', label: 'De espalda' }
+    { id: 'photo_front_url', label: 'FRENTE' },
+    { id: 'photo_side1_url', label: 'COSTADO 1' },
+    { id: 'photo_side2_url', label: 'COSTADO 2' },
+    { id: 'photo_back_url', label: 'ESPALDA' }
 ];
 
 export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadingPhoto, setIsUploadingPhoto }: PhotoUploadGroupProps) {
@@ -81,7 +81,7 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                 .getPublicUrl(fileName);
 
             // Uso de actualización funcional para evitar condiciones de carrera entre cargas simultáneas
-            setExtraData((prev: any) => ({ ...prev, [typeId]: publicUrl }));
+            setExtraData((prev: any) => ({ ...prev, [typeId.toUpperCase()]: publicUrl }));
             
             if (isFallback) {
                 toast({ 
@@ -111,7 +111,7 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
     const handleRemove = (typeId: string) => {
         setExtraData((prev: any) => {
             const newData = { ...prev };
-            delete newData[typeId];
+            delete newData[typeId.toUpperCase()];
             return newData;
         });
     };
@@ -120,12 +120,12 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
         <div className="mt-8 col-span-1 lg:col-span-4 bg-white/[0.03] p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] border border-white/5 shadow-inner">
             <h4 className="text-xs font-black text-white uppercase tracking-widest mb-6 flex items-center gap-3">
                 <div className="p-2 bg-pink-500/10 rounded-lg"><Camera className="h-4 w-4 text-pink-400" /></div>
-                Registro Fotográfico
+                Fotos de Progreso
             </h4>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                 {PHOTO_TYPES.map((type) => {
-                    const currentUrl = extraData[type.id];
+                    const currentUrl = extraData[type.id.toUpperCase()] || extraData[type.id];
                     const slotStatus = uploadingSlots[type.id];
                     const isUploading = !!slotStatus;
 
