@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import { getCroppedImg, getPixelCrop } from "@/lib/utils/crop-image";
+import { getCroppedImg, getNaturalPixelCrop } from "@/lib/utils/crop-image";
 import { cn } from "@/lib/utils";
 
 const medicalHistorySchema = z.object({
@@ -1118,11 +1118,12 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
     const [tempImage, setTempImage] = useState<string | null>(null);
     const [crop, setCrop] = useState<Crop>({
         unit: '%',
-        x: 10,
-        y: 10,
-        width: 80,
-        height: 80,
+        x: 5,
+        y: 5,
+        width: 90,
+        height: 90,
     });
+    const [pixelCrop, setPixelCrop] = useState<any>(null);
     const imgRef = useRef<HTMLImageElement | null>(null);
 
     const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -1161,7 +1162,7 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
     };
 
     const handleConfirmCrop = async () => {
-        if (!croppingSlot || !tempImage || !crop || !imgRef.current) return;
+        if (!croppingSlot || !tempImage || !pixelCrop || !imgRef.current) return;
 
         const typeId = croppingSlot;
         setUploading(typeId);
@@ -1169,15 +1170,15 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
         setStatusText("Guardando...");
 
         const currentTempImage = tempImage;
-        const currentCrop = crop;
+        const currentPixelCrop = pixelCrop;
         const currentImg = imgRef.current;
         
         setCroppingSlot(null);
         setTempImage(null);
 
         try {
-            const pixelCrop = getPixelCrop(currentImg, currentCrop);
-            const croppedBlob = await getCroppedImg(currentTempImage, pixelCrop);
+            const finalNaturalCrop = getNaturalPixelCrop(currentImg, currentPixelCrop);
+            const croppedBlob = await getCroppedImg(currentTempImage, finalNaturalCrop);
             const fileName = `${patientId}/${Date.now()}_${typeId}.jpg`;
 
             const { error: uploadError } = await supabase.storage
@@ -1247,6 +1248,7 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
                                                     <ReactCrop
                                                         crop={crop}
                                                         onChange={c => setCrop(c)}
+                                                        onComplete={c => setPixelCrop(c)}
                                                         className="max-w-full max-h-full overflow-visible"
                                                     >
                                                         <img 

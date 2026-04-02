@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import { getCroppedImg, getPixelCrop } from "@/lib/utils/crop-image";
+import { getCroppedImg, getNaturalPixelCrop } from "@/lib/utils/crop-image";
 import { cn } from "@/lib/utils";
 
 interface PhotoUploadGroupProps {
@@ -34,11 +34,12 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
     const [tempImage, setTempImage] = useState<string | null>(null);
     const [crop, setCrop] = useState<Crop>({
         unit: '%',
-        x: 10,
-        y: 10,
-        width: 80,
-        height: 80,
+        x: 5,
+        y: 5,
+        width: 90,
+        height: 90,
     });
+    const [pixelCrop, setPixelCrop] = useState<any>(null);
     const imgRef = useRef<HTMLImageElement | null>(null);
 
     const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -70,14 +71,14 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
     };
 
     const handleConfirmCrop = async () => {
-        if (!croppingSlot || !tempImage || !crop || !imgRef.current) return;
+        if (!croppingSlot || !tempImage || !pixelCrop || !imgRef.current) return;
 
         const typeId = croppingSlot;
         setUploadingSlots(prev => ({ ...prev, [typeId]: "Guardando..." }));
         if (setIsUploadingPhoto) setIsUploadingPhoto(true);
 
         const currentTempImage = tempImage;
-        const currentCrop = crop;
+        const currentPixelCrop = pixelCrop;
         const currentImg = imgRef.current;
         
         // Reset crop view immediately
@@ -85,8 +86,8 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
         setTempImage(null);
 
         try {
-            const pixelCrop = getPixelCrop(currentImg, currentCrop);
-            const croppedBlob = await getCroppedImg(currentTempImage, pixelCrop);
+            const finalNaturalCrop = getNaturalPixelCrop(currentImg, currentPixelCrop);
+            const croppedBlob = await getCroppedImg(currentTempImage, finalNaturalCrop);
             const fileName = `${patientId}/${Date.now()}_${typeId}.jpg`;
 
             const { error: uploadError } = await supabase.storage
@@ -162,6 +163,7 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                                             <ReactCrop
                                                 crop={crop}
                                                 onChange={c => setCrop(c)}
+                                                onComplete={c => setPixelCrop(c)}
                                                 className="max-w-full max-h-full overflow-visible"
                                             >
                                                 <img 
