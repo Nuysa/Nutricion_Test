@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -24,9 +24,10 @@ import {
 import {
     ChevronRight, ChevronLeft, Save, HeartPulse, User, Ruler, Activity,
     Moon, Utensils, Camera, AlertCircle, Sparkles, CheckCircle2, Clock,
-    Loader2, Upload, X, Plus, Download
+    Loader2, Upload, X, Plus, Download, Check
 } from "lucide-react";
-import { removeBackground } from "@imgly/background-removal";
+import Cropper from 'react-easy-crop';
+import { getCroppedImg } from "@/lib/utils/crop-image";
 import { cn } from "@/lib/utils";
 
 const medicalHistorySchema = z.object({
@@ -1110,6 +1111,17 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
     const { toast } = useToast();
     const [uploading, setUploading] = useState<string | null>(null);
     const [statusText, setStatusText] = useState("Subiendo...");
+    
+    // Estados para el recorte
+    const [croppingSlot, setCroppingSlot] = useState<string | null>(null);
+    const [tempImage, setTempImage] = useState<string | null>(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
+    const onCropComplete = useCallback((_area: any, pixels: any) => {
+        setCroppedAreaPixels(pixels);
+    }, []);
 
     const PHOTO_TYPES = [
         { id: 'front_photo_url', label: 'FRENTE' },
@@ -1118,54 +1130,44 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
         { id: 'back_photo_url', label: 'ESPALDA' }
     ];
 
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, typeId: string) => {
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, typeId: string) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         if (!patientId) {
-            toast({ title: "Error", description: "Cargando datos del paciente... Intenta de nuevo en un segundo.", variant: "destructive" });
+            toast({ title: "Error", description: "Cargando datos del paciente...", variant: "destructive" });
             return;
         }
 
+        const reader = new FileReader();
+        reader.onload = () => {
+            setTempImage(reader.result as string);
+            setCroppingSlot(typeId);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleConfirmCrop = async () => {
+        if (!croppingSlot || !tempImage || !croppedAreaPixels) return;
+
+        const typeId = croppingSlot;
         setUploading(typeId);
         setIsUploadingPhoto(true);
-        setStatusText("Procesando silueta con IA...");
+        setStatusText("Guardando...");
+
+        const currentTempImage = tempImage;
+        const currentPixels = croppedAreaPixels;
+        
+        setCroppingSlot(null);
+        setTempImage(null);
 
         try {
-            // Dar tiempo al navegador para renderizar el spinner antes de bloquear el hilo principal
-            await new Promise(resolve => setTimeout(resolve, 150));
-
-            const worker = new Worker(new URL('../../../lib/workers/bg-removal.worker.ts', import.meta.url), { type: 'module' });
-
-            const { processedBlob, isFallback } = await new Promise<{ processedBlob: Blob, isFallback: boolean }>((resolve, reject) => {
-                worker.onmessage = (event) => {
-                    if (event.data.success) {
-                        resolve({ 
-                            processedBlob: event.data.blob, 
-                            isFallback: !!event.data.isFallback 
-                        });
-                    } else {
-                        reject(new Error(event.data.error));
-                    }
-                    worker.terminate();
-                };
-                worker.onerror = (error) => {
-                    reject(error);
-                    worker.terminate();
-                };
-                worker.postMessage({ file, typeId });
-            });
-
-            const fileBaseName = file.name.split('.').slice(0, -1).join('.') || 'foto';
-            const processedFile = new File([processedBlob], `${fileBaseName}.jpg`, { type: "image/jpeg" });
-
-            setStatusText("Subiendo a la nube...");
-            const fileExt = "jpg";
-            const fileName = `${patientId}/${Date.now()}_${typeId}.${fileExt}`;
+            const croppedBlob = await getCroppedImg(currentTempImage, currentPixels);
+            const fileName = `${patientId}/${Date.now()}_${typeId}.jpg`;
 
             const { error: uploadError } = await supabase.storage
                 .from('progress-photos')
-                .upload(fileName, processedFile, { upsert: true });
+                .upload(fileName, croppedBlob, { upsert: true, contentType: 'image/jpeg' });
 
             if (uploadError) throw uploadError;
 
@@ -1174,27 +1176,19 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
                 .getPublicUrl(fileName);
 
             form.setValue(typeId, publicUrl);
-            
-            if (isFallback) {
-                toast({ 
-                    title: "Foto cargada (Sin procesar)", 
-                    description: "No se pudo quitar el fondo por problemas de red, se guardó la original.",
-                    variant: "default" 
-                });
-            } else {
-                toast({ title: "Foto subida y procesada correctamente", variant: "default" });
-            }
+            toast({ title: "Foto guardada correctamente" });
         } catch (error: any) {
-            console.error("Upload error:", error);
-            const msg = error.message.includes("Bucket not found") 
-                ? "El almacenamiento 'progress-photos' no está configurado en Supabase." 
-                : error.message;
-            toast({ title: "Error al subir foto", description: msg, variant: "destructive" });
+            toast({ title: "Error al guardar foto", description: error.message, variant: "destructive" });
         } finally {
             setUploading(null);
             setIsUploadingPhoto(false);
             setStatusText("Subiendo...");
         }
+    };
+
+    const handleCancelCrop = () => {
+        setCroppingSlot(null);
+        setTempImage(null);
     };
 
     const handleRemove = (typeId: string) => {
@@ -1232,6 +1226,28 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
                                                 <Loader2 className="h-6 w-6 animate-spin mb-2" />
                                                 <span className="text-[9px] font-black uppercase tracking-widest text-center px-1">{statusText}</span>
                                             </div>
+                                        ) : croppingSlot === type.id && tempImage ? (
+                                            <div className="absolute inset-0 z-30 bg-black flex flex-col">
+                                                <div className="relative flex-1">
+                                                    <Cropper
+                                                        image={tempImage}
+                                                        crop={crop}
+                                                        zoom={zoom}
+                                                        aspect={3 / 4}
+                                                        onCropChange={setCrop}
+                                                        onZoomChange={setZoom}
+                                                        onCropComplete={onCropComplete}
+                                                    />
+                                                </div>
+                                                <div className="h-10 bg-black/90 flex items-center justify-around border-t border-white/10">
+                                                    <button type="button" onClick={handleCancelCrop} className="p-2 text-red-400 hover:text-red-300 transition-colors">
+                                                        <X className="h-5 w-5" />
+                                                    </button>
+                                                    <button type="button" onClick={handleConfirmCrop} className="p-2 text-emerald-400 hover:text-emerald-300 transition-colors">
+                                                        <Check className="h-5 w-5" />
+                                                    </button>
+                                                </div>
+                                            </div>
                                         ) : currentUrl && currentUrl !== "" ? (
                                             <>
                                                 <img src={currentUrl} alt={type.label} className="w-full h-full object-contain" />
@@ -1253,7 +1269,7 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
                                                     type="file"
                                                     accept="image/*"
                                                     className="hidden"
-                                                    onChange={(e) => handleUpload(e, type.id)}
+                                                    onChange={(e) => handleFileSelect(e, type.id)}
                                                 />
                                             </label>
                                         )}

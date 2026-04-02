@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Camera, Upload, X, Loader2 } from "lucide-react";
+import React, { useState, useCallback } from 'react';
+import { Camera, Upload, X, Loader2, Check, Crop } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { removeBackground } from "@imgly/background-removal";
+import Cropper from 'react-easy-crop';
+import { getCroppedImg } from "@/lib/utils/crop-image";
 
 interface PhotoUploadGroupProps {
     patientId: string;
@@ -25,8 +26,19 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
     const { toast } = useToast();
     const supabase = createClient();
     const [uploadingSlots, setUploadingSlots] = useState<Record<string, string>>({});
+    
+    // Estados para el recorte
+    const [croppingSlot, setCroppingSlot] = useState<string | null>(null);
+    const [tempImage, setTempImage] = useState<string | null>(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, typeId: string) => {
+    const onCropComplete = useCallback((_area: any, pixels: any) => {
+        setCroppedAreaPixels(pixels);
+    }, []);
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, typeId: string) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -35,44 +47,35 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
             return;
         }
 
-        setUploadingSlots(prev => ({ ...prev, [typeId]: "Procesando silueta..." }));
+        const reader = new FileReader();
+        reader.onload = () => {
+            setTempImage(reader.result as string);
+            setCroppingSlot(typeId);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleConfirmCrop = async () => {
+        if (!croppingSlot || !tempImage || !croppedAreaPixels) return;
+
+        const typeId = croppingSlot;
+        setUploadingSlots(prev => ({ ...prev, [typeId]: "Guardando..." }));
         if (setIsUploadingPhoto) setIsUploadingPhoto(true);
+
+        const currentTempImage = tempImage;
+        const currentCroppedPixels = croppedAreaPixels;
         
+        // Reset crop view immediately
+        setCroppingSlot(null);
+        setTempImage(null);
+
         try {
-            // Dar tiempo al navegador para renderizar el spinner
-            await new Promise(resolve => setTimeout(resolve, 150));
-
-            const worker = new Worker(new URL('../../../lib/workers/bg-removal.worker.ts', import.meta.url), { type: 'module' });
-
-            const { processedBlob, isFallback } = await new Promise<{ processedBlob: Blob, isFallback: boolean }>((resolve, reject) => {
-                worker.onmessage = (event) => {
-                    if (event.data.success) {
-                        resolve({ 
-                            processedBlob: event.data.blob, 
-                            isFallback: !!event.data.isFallback 
-                        });
-                    } else {
-                        reject(new Error(event.data.error));
-                    }
-                    worker.terminate();
-                };
-                worker.onerror = (error) => {
-                    reject(error);
-                    worker.terminate();
-                };
-                worker.postMessage({ file, typeId });
-            });
-
-            const fileBaseName = file.name.split('.').slice(0, -1).join('.') || 'foto';
-            const processedFile = new File([processedBlob], `${fileBaseName}.jpg`, { type: "image/jpeg" });
-
-            setUploadingSlots(prev => ({ ...prev, [typeId]: "Subiendo..." }));
-            const fileExt = "jpg";
-            const fileName = `${patientId}/${Date.now()}_${typeId}.${fileExt}`;
+            const croppedBlob = await getCroppedImg(currentTempImage, currentCroppedPixels);
+            const fileName = `${patientId}/${Date.now()}_${typeId}.jpg`;
 
             const { error: uploadError } = await supabase.storage
                 .from('progress-photos')
-                .upload(fileName, processedFile, { upsert: true });
+                .upload(fileName, croppedBlob, { upsert: true, contentType: 'image/jpeg' });
 
             if (uploadError) throw uploadError;
 
@@ -80,32 +83,25 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                 .from('progress-photos')
                 .getPublicUrl(fileName);
 
-            // Uso de actualización funcional para evitar condiciones de carrera entre cargas simultáneas
             setExtraData((prev: any) => ({ ...prev, [typeId.toUpperCase()]: publicUrl }));
-            
-            if (isFallback) {
-                toast({ 
-                    title: "Foto cargada (Sin procesar)", 
-                    description: "No se pudo quitar el fondo por problemas de red, se guardó la original.",
-                    variant: "default" 
-                });
-            } else {
-                toast({ title: "Foto subida y procesada correctamente" });
-            }
+            toast({ title: "Foto guardada correctamente" });
         } catch (error: any) {
-            toast({ title: "Error al subir foto", description: error.message, variant: "destructive" });
+            toast({ title: "Error al guardar foto", description: error.message, variant: "destructive" });
         } finally {
             setUploadingSlots(prev => {
                 const next = { ...prev };
                 delete next[typeId];
-                
-                // Si ya no quedan procesos activos, avisamos al padre
                 if (Object.keys(next).length === 0 && setIsUploadingPhoto) {
                     setIsUploadingPhoto(false);
                 }
                 return next;
             });
         }
+    };
+
+    const handleCancelCrop = () => {
+        setCroppingSlot(null);
+        setTempImage(null);
     };
 
     const handleRemove = (typeId: string) => {
@@ -120,7 +116,7 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
         <div className="mt-8 col-span-1 lg:col-span-4 bg-white/[0.03] p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] border border-white/5 shadow-inner">
             <h4 className="text-xs font-black text-white uppercase tracking-widest mb-6 flex items-center gap-3">
                 <div className="p-2 bg-pink-500/10 rounded-lg"><Camera className="h-4 w-4 text-pink-400" /></div>
-                Fotos de Progreso
+                Registro Fotográfico
             </h4>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
@@ -128,6 +124,7 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                     const currentUrl = extraData[type.id.toUpperCase()] || extraData[type.id];
                     const slotStatus = uploadingSlots[type.id];
                     const isUploading = !!slotStatus;
+                    const isCropping = croppingSlot === type.id;
 
                     return (
                         <div key={type.id} className="flex flex-col gap-2">
@@ -142,6 +139,28 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                                         <span className="text-[8px] font-black uppercase tracking-widest text-center px-2 leading-tight">
                                             {slotStatus}
                                         </span>
+                                    </div>
+                                ) : isCropping && tempImage ? (
+                                    <div className="absolute inset-0 z-30 bg-black flex flex-col">
+                                        <div className="relative flex-1">
+                                            <Cropper
+                                                image={tempImage}
+                                                crop={crop}
+                                                zoom={zoom}
+                                                aspect={3 / 4}
+                                                onCropChange={setCrop}
+                                                onZoomChange={setZoom}
+                                                onCropComplete={onCropComplete}
+                                            />
+                                        </div>
+                                        <div className="h-10 bg-black/90 flex items-center justify-around border-t border-white/10">
+                                            <button onClick={handleCancelCrop} className="p-2 text-red-400 hover:text-red-300 transition-colors">
+                                                <X className="h-5 w-5" />
+                                            </button>
+                                            <button onClick={handleConfirmCrop} className="p-2 text-emerald-400 hover:text-emerald-300 transition-colors">
+                                                <Check className="h-5 w-5" />
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : currentUrl ? (
                                     <>
@@ -164,7 +183,7 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                                             type="file"
                                             accept="image/*"
                                             className="hidden"
-                                            onChange={(e) => handleUpload(e, type.id)}
+                                            onChange={(e) => handleFileSelect(e, type.id)}
                                             disabled={isUploadingPhoto} 
                                         />
                                     </label>
