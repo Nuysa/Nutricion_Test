@@ -199,17 +199,20 @@ export default function PatientDetailPage() {
             const mappedRecords = (hData || [])
                 .filter((r: any) => {
                     const ex = getExtra(r);
-                    return ex.photo_front_url || ex.photo_side1_url || ex.photo_side2_url || ex.photo_back_url;
+                    return ex.PHOTO_FRONT_URL || ex.photo_front_url || 
+                           ex.PHOTO_SIDE1_URL || ex.photo_side1_url || 
+                           ex.PHOTO_SIDE2_URL || ex.photo_side2_url || 
+                           ex.PHOTO_BACK_URL || ex.photo_back_url;
                 })
                 .map((r: any) => {
                     const ex = getExtra(r);
                     return {
                         date: r.date,
                         photos: {
-                            1: ex.photo_front_url || null,
-                            2: ex.photo_side1_url || null,
-                            3: ex.photo_side2_url || null,
-                            4: ex.photo_back_url || null
+                            1: ex.PHOTO_FRONT_URL || ex.photo_front_url || null,
+                            2: ex.PHOTO_SIDE1_URL || ex.photo_side1_url || null,
+                            3: ex.PHOTO_SIDE2_URL || ex.photo_side2_url || null,
+                            4: ex.PHOTO_BACK_URL || ex.photo_back_url || null
                         }
                     };
                 });

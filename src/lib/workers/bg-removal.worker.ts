@@ -9,8 +9,8 @@ self.onmessage = async (event: MessageEvent) => {
         const baseUrl = self.location.origin || "";
 
         const config: any = {
-            model: 'isnet', // Mayor precisión para humanos
-            publicPath: baseUrl ? `${baseUrl}/bg-removal-assets/` : '/bg-removal-assets/',
+            model: 'medium', // Cambiado a 'medium' para usar los assets locales disponibles en resources.json
+            publicPath: `${self.location.origin}/bg-removal-assets/`,
             progress: (res: any) => {
                 // progreso opcional
             }

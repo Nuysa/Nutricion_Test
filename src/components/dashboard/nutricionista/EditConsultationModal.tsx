@@ -57,7 +57,7 @@ export function EditConsultationModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="w-[95vw] max-w-7xl p-0 overflow-hidden border-none bg-slate-900/95 backdrop-blur-xl shadow-2xl h-[90vh] flex flex-col rounded-[2rem] sm:rounded-[3rem]">
+            <DialogContent className="w-[95vw] max-w-7xl p-0 overflow-hidden border-none bg-slate-900/95 backdrop-blur-xl shadow-2xl max-h-[90vh] flex flex-col rounded-[2rem] sm:rounded-[3rem]">
                 <DialogHeader className="p-4 sm:p-6 border-b border-white/5 relative shrink-0">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 pr-12">
                         <div className="flex items-center gap-4 sm:gap-6">
@@ -121,9 +121,9 @@ export function EditConsultationModal({
                         </div>
                     </div>
                 </DialogHeader>
-                <div className="flex-1 overflow-hidden flex flex-col">
-                    <div className="px-6 py-2 sm:px-10 flex-1 flex flex-col overflow-hidden">
-                        <Tabs defaultValue="mediciones" className="flex-1 flex flex-col overflow-hidden">
+                <div className="overflow-hidden flex flex-col">
+                    <div className="px-6 py-2 sm:px-10 flex flex-col overflow-hidden">
+                        <Tabs defaultValue="mediciones" className="flex flex-col overflow-hidden">
                             <TabsList className="bg-white/5 p-1 rounded-2xl mb-4 border border-white/5 flex w-full max-w-md mx-auto shadow-2xl shrink-0">
                                 <TabsTrigger 
                                     value="mediciones" 
@@ -139,9 +139,9 @@ export function EditConsultationModal({
                                 </TabsTrigger>
                             </TabsList>
 
-                            <TabsContent value="mediciones" className="mt-0 flex-1 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
-                                <ScrollArea className="flex-1">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pb-8 pr-6">
+                            <TabsContent value="mediciones" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
+                                <ScrollArea className="max-h-[65vh]">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pb-6 pr-6">
                                         {/* Column 1: Peso e IMC */}
                                         <div className="col-span-1 flex flex-col gap-6">
                                             <div className="bg-white/[0.03] p-6 rounded-[2rem] border border-white/5 shadow-inner focus-within:border-nutrition-500/50 transition-all group">
@@ -251,9 +251,9 @@ export function EditConsultationModal({
                                 </ScrollArea>
                             </TabsContent>
 
-                            <TabsContent value="fotos" className="mt-0 flex-1 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
-                                <ScrollArea className="flex-1">
-                                    <div className="max-w-4xl mx-auto py-2 pb-10 pr-6">
+                            <TabsContent value="fotos" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500 outline-none">
+                                <ScrollArea className="max-h-[65vh]">
+                                    <div className="max-w-4xl mx-auto py-2 pb-6 pr-6">
                                         <h3 className="text-xl font-black text-white uppercase tracking-tight mb-8">Gestión de Registro Fotográfico</h3>
                                         <PhotoUploadGroup patientId={patientId} extraData={extraData} setExtraData={setExtraData} isUploadingPhoto={isUploadingPhoto} setIsUploadingPhoto={setIsUploadingPhoto} />
                                     </div>
