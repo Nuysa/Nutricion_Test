@@ -1256,12 +1256,12 @@ function Measurements({ form, patientId, setIsUploadingPhoto }: { form: any, pat
                                                         />
                                                     </ReactCrop>
                                                 </div>
-                                                <div className="w-full h-8 bg-black/90 flex items-center justify-around border-t border-white/10 mt-auto">
-                                                    <button type="button" onClick={handleCancelCrop} className="p-1 text-red-400 hover:text-red-300 transition-colors">
-                                                        <X className="h-4 w-4" />
+                                                <div className="w-full h-12 bg-black/90 flex items-center justify-around border-t border-white/10 mt-auto">
+                                                    <button type="button" onClick={handleCancelCrop} className="p-2 text-red-400 hover:text-red-300 transition-colors">
+                                                        <X className="h-6 w-6" />
                                                     </button>
-                                                    <button type="button" onClick={handleConfirmCrop} className="p-1 text-emerald-400 hover:text-emerald-300 transition-colors">
-                                                        <Check className="h-4 w-4" />
+                                                    <button type="button" onClick={handleConfirmCrop} className="p-2 text-emerald-400 hover:text-emerald-300 transition-colors">
+                                                        <Check className="h-6 w-6" />
                                                     </button>
                                                 </div>
                                             </div>
