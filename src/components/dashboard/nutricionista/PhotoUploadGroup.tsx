@@ -42,8 +42,9 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
 
     const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
         const { width, height } = e.currentTarget;
+        imgRef.current = e.currentTarget;
         const initialCrop = centerCrop(
-            makeAspectCrop({ unit: '%', width: 90 }, 3 / 4, width, height),
+            { unit: '%', width: 90, height: 90 },
             width,
             height
         );
@@ -154,19 +155,17 @@ export function PhotoUploadGroup({ patientId, extraData, setExtraData, isUploadi
                                     </div>
                                 ) : isCropping && tempImage ? (
                                     <div className="absolute inset-0 z-30 bg-[#0B1120] flex flex-col items-center">
-                                        <div className="flex-1 w-full flex items-center justify-center overflow-hidden p-2">
+                                        <div className="flex-1 w-full flex items-center justify-center min-h-0 overflow-hidden p-2">
                                             <ReactCrop
                                                 crop={crop}
                                                 onChange={c => setCrop(c)}
-                                                aspect={3 / 4}
                                                 className="max-h-full"
                                             >
                                                 <img 
                                                     src={tempImage} 
                                                     alt="Crop view" 
-                                                    ref={imgRef}
                                                     onLoad={onImageLoad}
-                                                    className="max-w-full max-h-[300px] object-contain"
+                                                    className="max-w-full max-h-[calc(100%-8px)] object-contain"
                                                 />
                                             </ReactCrop>
                                         </div>
