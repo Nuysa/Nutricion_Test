@@ -9,8 +9,9 @@ self.onmessage = async (event: MessageEvent) => {
         const baseUrl = self.location.origin || "";
 
         const config: any = {
-            model: 'medium', // Cambiado a 'medium' para usar los assets locales disponibles en resources.json
+            model: 'large', // Mejorado a 'large' (ISNet) para máxima precisión en bordes y objetos complejos
             publicPath: `${self.location.origin}/bg-removal-assets/`,
+            device: 'webgpu', // Intenta usar WebGPU para mayor rendimiento si está disponible
             progress: (res: any) => {
                 // progreso opcional
             }
