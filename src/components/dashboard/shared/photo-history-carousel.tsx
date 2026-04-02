@@ -58,7 +58,7 @@ export function PhotoHistoryCarousel({ photoHistory }: PhotoHistoryCarouselProps
                                                     <img
                                                         src={group.photos[type.id]}
                                                         alt={type.label}
-                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover/photo:scale-110"
+                                                        className="w-full h-full object-contain transition-all duration-700"
                                                     />
                                                 ) : (
                                                     <div className="w-full h-full flex flex-col items-center justify-center gap-2 sm:gap-3 text-slate-600 grayscale opacity-20 group-hover/photo:opacity-40 transition-opacity">
