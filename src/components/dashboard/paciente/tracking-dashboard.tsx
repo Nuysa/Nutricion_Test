@@ -425,24 +425,64 @@ export function TrackingDashboard() {
                 const mappedRecords = records
                     .filter((r: any) => {
                         const ex = getExtra(r);
-                        return ex.photo_front_url || ex.photo_side1_url || ex.photo_side2_url || ex.photo_back_url;
+                        return ex.photo_front_url || ex.PHOTO_FRONT_URL || 
+                               ex.photo_side1_url || ex.PHOTO_SIDE1_URL || 
+                               ex.photo_side2_url || ex.PHOTO_SIDE2_URL || 
+                               ex.photo_back_url || ex.PHOTO_BACK_URL;
                     })
                     .map((r: any) => {
                         const ex = getExtra(r);
                         return {
                             date: r.date,
                             photos: {
-                                1: ex.photo_front_url || null,
-                                2: ex.photo_side1_url || null,
-                                3: ex.photo_side2_url || null,
-                                4: ex.photo_back_url || null
+                                1: ex.PHOTO_FRONT_URL || ex.photo_front_url || null,
+                                2: ex.PHOTO_SIDE1_URL || ex.photo_side1_url || null,
+                                3: ex.PHOTO_SIDE2_URL || ex.photo_side2_url || null,
+                                4: ex.PHOTO_BACK_URL || ex.photo_back_url || null
                             }
                         };
                     });
 
-                // Combine and sort by date ascending
-                const combinedHistory = [...mappedRecords, ...mappedHistory].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-                setPhotoHistory(combinedHistory);
+                // Consolidación Robusta de Fotos (1:1 con mediciones)
+                const photoMap = new Map();
+
+                // 1. Cargar fotos del Historial Clínico (Perfil) - Base inicial
+                (mappedHistory || []).forEach(h => {
+                    const dateKey = h.date.split('T')[0];
+                    photoMap.set(dateKey, { ...h.photos });
+                });
+
+                // 2. Cargar fotos de las Mediciones (Overwrite o Merge)
+                (mappedRecords || []).forEach(r => {
+                    const dateKey = r.date.split('T')[0];
+                    const existing = photoMap.get(dateKey) || {};
+                    // Combinamos priorizando las fotos de la medición (que son más específicas)
+                    photoMap.set(dateKey, {
+                        1: r.photos[1] || existing[1] || null,
+                        2: r.photos[2] || existing[2] || null,
+                        3: r.photos[3] || existing[3] || null,
+                        4: r.photos[4] || existing[4] || null
+                    });
+                });
+
+                // 3. Crear el historial final basado en las mediciones
+                const finalHistory = (records || [])
+                    .map((record: any) => {
+                        const dateKey = record.date.split('T')[0];
+                        return {
+                            date: record.date,
+                            photos: photoMap.get(dateKey) || { 1: null, 2: null, 3: null, 4: null }
+                        };
+                    })
+                    // Opcional: filtrar si deseamos solo mostrar mediciones que tienen alguna foto o mantener 1:1
+                    .filter((h: any) => h.photos[1] || h.photos[2] || h.photos[3] || h.photos[4]);
+
+                // Fallback: si no hay mediciones con fotos pero hay fotos de perfil, mostrar el perfil
+                const resultHistory = (finalHistory.length === 0 && mappedHistory.length > 0)
+                    ? mappedHistory
+                    : finalHistory;
+
+                setPhotoHistory([...resultHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
 
             } else {
                 setMeasurements([]);

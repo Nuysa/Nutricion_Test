@@ -199,10 +199,10 @@ export default function PatientDetailPage() {
             const mappedRecords = (hData || [])
                 .filter((r: any) => {
                     const ex = getExtra(r);
-                    return ex.PHOTO_FRONT_URL || ex.photo_front_url || 
-                           ex.PHOTO_SIDE1_URL || ex.photo_side1_url || 
-                           ex.PHOTO_SIDE2_URL || ex.photo_side2_url || 
-                           ex.PHOTO_BACK_URL || ex.photo_back_url;
+                    return ex.photo_front_url || ex.PHOTO_FRONT_URL || 
+                           ex.photo_side1_url || ex.PHOTO_SIDE1_URL || 
+                           ex.photo_side2_url || ex.PHOTO_SIDE2_URL || 
+                           ex.photo_back_url || ex.PHOTO_BACK_URL;
                 })
                 .map((r: any) => {
                     const ex = getExtra(r);
@@ -216,8 +216,47 @@ export default function PatientDetailPage() {
                         }
                     };
                 });
-            const combinedHistory = [...mappedRecords, ...mappedHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            setPhotoHistory(combinedHistory);
+
+            // Consolidación Robusta de Fotos (1:1 con mediciones)
+            const photoMap = new Map();
+
+            // 1. Cargar fotos del Historial Clínico (Perfil) - Base inicial
+            (mappedHistory || []).forEach(h => {
+                const dateKey = h.date.split('T')[0];
+                photoMap.set(dateKey, { ...h.photos });
+            });
+
+            // 2. Cargar fotos de las Mediciones (Overwrite o Merge)
+            (mappedRecords || []).forEach(r => {
+                const dateKey = r.date.split('T')[0];
+                const existing = photoMap.get(dateKey) || {};
+                // Combinamos priorizando las fotos de la medición (que son más específicas)
+                photoMap.set(dateKey, {
+                    1: r.photos[1] || existing[1] || null,
+                    2: r.photos[2] || existing[2] || null,
+                    3: r.photos[3] || existing[3] || null,
+                    4: r.photos[4] || existing[4] || null
+                });
+            });
+
+            // 3. Crear el historial final basado en las mediciones
+            // Si el paciente tiene mediciones, cada medición DEBE tener su grupo de fotos (fusionado con perfil)
+            const finalHistory = (hData || [])
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .map(record => {
+                    const dateKey = record.date.split('T')[0];
+                    return {
+                        date: record.date,
+                        photos: photoMap.get(dateKey) || { 1: null, 2: null, 3: null, 4: null }
+                    };
+                });
+
+            // Fallback: si no hay mediciones pero hay fotos de perfil, mostrar el perfil
+            const resultHistory = (finalHistory.length === 0 && mappedHistory.length > 0) 
+                ? mappedHistory 
+                : finalHistory;
+
+            setPhotoHistory([...resultHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
 
             // Fetch appointments
             const { data: allApts } = await supabase
@@ -310,6 +349,7 @@ export default function PatientDetailPage() {
                     });
                 }
                 rowData._computedInputs = inputs;
+                rowData._rawSource = r; // Guardamos el original para edición
                 return rowData;
             });
 
@@ -952,24 +992,24 @@ export default function PatientDetailPage() {
                                             onClick={() => {
                                                 setEditingId(record.id);
                                                 setIsAddingMode(true);
-                                                setEditValues(record);
+                                                // Usamos _rawSource para tener los datos originales (incluyendo la fecha en formato ISO)
+                                                setEditValues(record._rawSource);
                                                 
                                                 const normalized: Record<string, any> = {};
-                                                if (record.extra_data) {
-                                                    Object.keys(record.extra_data).forEach(k => {
-                                                        normalized[k.toUpperCase()] = record.extra_data[k];
+                                                if (record._rawSource.extra_data) {
+                                                    Object.keys(record._rawSource.extra_data).forEach(k => {
+                                                        normalized[k.toUpperCase()] = record._rawSource.extra_data[k];
                                                     });
                                                 }
-
-                                                // Inyectar campos nativos si no están en extra_data para que aparezcan en los inputs dinámicos
-                                                if (record.waist_circumference_cm && !normalized['CINTURA_MINIMA']) normalized['CINTURA_MINIMA'] = record.waist_circumference_cm;
-                                                if (record.waist_circumference_cm && !normalized['CINTURA']) normalized['CINTURA'] = record.waist_circumference_cm;
-                                                if (record.weight) {
-                                                    normalized['PESO'] = record.weight;
-                                                    setEditValues((v: any) => ({ ...v, weight: record.weight }));
+ 
+                                                // Inyectar campos nativos
+                                                if (record._rawSource.waist_circumference_cm && !normalized['CINTURA_MINIMA']) normalized['CINTURA_MINIMA'] = record._rawSource.waist_circumference_cm;
+                                                if (record._rawSource.waist_circumference_cm && !normalized['CINTURA']) normalized['CINTURA'] = record._rawSource.waist_circumference_cm;
+                                                if (record._rawSource.weight) {
+                                                    normalized['PESO'] = record._rawSource.weight;
                                                 }
-                                                if (record.body_fat_percentage) normalized['GRASA'] = record.body_fat_percentage;
-
+                                                if (record._rawSource.body_fat_percentage) normalized['GRASA'] = record._rawSource.body_fat_percentage;
+ 
                                                 setExtraData(normalized);
                                             }}
                                         >
@@ -986,7 +1026,7 @@ export default function PatientDetailPage() {
                                                      value = record.weight ? (parseFloat(record.weight) / ((h / 100) * (h / 100))).toFixed(1) : "—";
                                                 }
                                                 else if (col.fixed_variable === 'date') {
-                                                     value = new Date(record.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                                                     value = new Date(record._rawSource.date + 'T12:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
                                                 }
                                                 else if (col.variable_id || col.fixed_variable) {
                                                     const key = `col_${col.variable_id || col.fixed_variable}`;
@@ -1179,9 +1219,9 @@ export default function PatientDetailPage() {
                 isOpen={isAddingMode && editingId !== 'new' && editingId !== null}
                 onClose={() => { setIsAddingMode(false); setEditingId(null); }}
                 patientId={patientId}
-                date={editValues.date || ''}
-                setDate={(d: string) => setEditValues({ ...editValues, date: d })}
-                editValues={editValues}
+                date={editValues?.date || ''}
+                setDate={(d: string) => setEditValues({ ...(editValues || {}), date: d })}
+                editValues={editValues || {}}
                 setEditValues={setEditValues}
                 extraData={extraData}
                 setExtraData={setExtraData}
