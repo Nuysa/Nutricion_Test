@@ -256,7 +256,7 @@ export default function PatientDetailPage() {
                 ? mappedHistory 
                 : finalHistory;
 
-            setPhotoHistory([...resultHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+            setPhotoHistory([...resultHistory].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
 
             // Fetch appointments
             const { data: allApts } = await supabase
