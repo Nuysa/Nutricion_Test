@@ -568,6 +568,25 @@ export default function PatientDetailPage() {
             };
 
             const isNew = editingId === "new" || !editingId;
+            if (isNew) {
+                if (!selectedAppointmentId) {
+                    const availableCount = pendingAppointments.filter(a => !a.isLinked).length;
+                    if (availableCount > 0) {
+                        toast({ 
+                            title: "Vinculación Obligatoria", 
+                            description: "Debe vincularse a una cita disponible para poder guardar la consulta.", 
+                            variant: "destructive" 
+                        });
+                    } else {
+                        toast({ 
+                            title: "Sin Citas Disponibles", 
+                            description: "Se debe crear una cita primero para poder registrar una consulta.", 
+                            variant: "destructive" 
+                        });
+                    }
+                    return;
+                }
+            }
 
             const { error } = isNew
                 ? await supabase.from("weight_records").insert([rowData])
@@ -847,39 +866,21 @@ export default function PatientDetailPage() {
                         <Edit2 className="h-4 w-4 mr-2 text-nutri-brand" /> Editar Ficha
                     </Button>
                     <div className="w-full sm:w-auto">
-                        <TooltipProvider>
-                            <Tooltip delayDuration={0}>
-                                <TooltipTrigger asChild>
-                                    <div className="w-full sm:w-auto">
-                                        <Button
-                                            disabled={patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan") || !todayAppointment}
-                                            className="rounded-xl bg-nutri-brand font-black text-xs text-white shadow-xl h-12 px-6 w-full hover:scale-105 transition-all shadow-nutri-brand/20 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                                            onClick={() => {
-                                                setIsAddingMode(true);
-                                                setEditingId("new");
-                                                setEditValues({
-                                                    date: new Date().toISOString().split('T')[0],
-                                                    weight: patient.rawWeight || "",
-                                                    findings: "",
-                                                    recommendations: ""
-                                                });
-                                                setExtraData({});
-                                            }}>
-                                            <Plus className="h-4 w-4 mr-2" /> Nueva Consulta
-                                        </Button>
-                                    </div>
-                                </TooltipTrigger>
-                                {(patient.subscription === "No Plan" || !patient.subscription || patient.subscription.toLowerCase().includes("sin plan") || !todayAppointment) && (
-                                    <TooltipContent className="bg-[#151F32] border-white/10 text-white p-4 rounded-2xl shadow-2xl max-w-xs transition-all animate-in fade-in zoom-in-95" side="top">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-center leading-relaxed">
-                                            {!todayAppointment 
-                                                ? "Primero debes agendar una cita para hoy para poder ingresar una nueva consulta."
-                                                : "El paciente requiere un plan activo para registrar nuevas consultas."}
-                                        </p>
-                                    </TooltipContent>
-                                )}
-                            </Tooltip>
-                        </TooltipProvider>
+                        <Button
+                            className="rounded-xl bg-nutri-brand font-black text-xs text-white shadow-xl h-12 px-6 w-full hover:scale-105 transition-all shadow-nutri-brand/20 uppercase tracking-widest"
+                            onClick={() => {
+                                setIsAddingMode(true);
+                                setEditingId("new");
+                                setEditValues({
+                                    date: new Date().toISOString().split('T')[0],
+                                    weight: patient.rawWeight || "",
+                                    findings: "",
+                                    recommendations: ""
+                                });
+                                setExtraData({});
+                            }}>
+                            <Plus className="h-4 w-4 mr-2" /> Nueva Consulta
+                        </Button>
                     </div>
                 </div>
             </div>
