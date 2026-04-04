@@ -301,7 +301,18 @@ export function FlexiblePlanEditor({
     };
 
     const toggleMeal = (id: string) => {
-        setMeals(prev => prev.map(m => m.id === id ? { ...m, active: !m.active } : m));
+        setMeals(prev => {
+            const meal = prev.find(m => m.id === id);
+            if (!meal) return prev;
+            
+            const newActiveState = !meal.active;
+            toast({
+                title: `${meal.name} ${newActiveState ? 'Activado' : 'Desactivado'}`,
+                duration: 2000,
+            });
+
+            return prev.map(m => m.id === id ? { ...m, active: newActiveState } : m);
+        });
     };
 
     const addRow = (mealId: string) => {
@@ -833,39 +844,34 @@ export function FlexiblePlanEditor({
                         <div className="flex flex-col md:flex-row justify-between items-center bg-[#151F32] p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group gap-10">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF7A00]/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-[#FF7A00]/10 transition-colors" />
 
-                            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6 relative z-30">
+                            <div className="flex flex-wrap items-center justify-center gap-x-16 gap-y-8 relative z-30">
                                 {[
-                                    { id: 'pre-entreno', label: 'PRE' },
-                                    { id: 'desayuno', label: 'DES' },
-                                    { id: 'media-manana', label: 'MM' },
-                                    { id: 'almuerzo', label: 'ALM' },
-                                    { id: 'media-tarde', label: 'MT' },
-                                    { id: 'post-entreno', label: 'POST' },
-                                    { id: 'cena', label: 'CENA' },
+                                    { id: 'pre-entreno', label: 'PRE-ENTRENO' },
+                                    { id: 'media-manana', label: 'MEDIA MAÑANA' },
+                                    { id: 'media-tarde', label: 'MEDIA TARDE' },
+                                    { id: 'post-entreno', label: 'POST-ENTRENO' },
                                 ].map(toggle => {
-                                    const isActive = meals.find(m => m.id === toggle.id)?.active;
+                                    const mealStatus = meals.find(m => m.id === toggle.id);
+                                    const isActive = mealStatus?.active || false;
+                                    
                                     return (
-                                        <div key={toggle.id} className="flex flex-col items-center gap-2">
-                                            <button 
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    toggleMeal(toggle.id);
-                                                }}
-                                                className={cn(
-                                                    "w-12 h-6 rounded-full relative transition-all duration-300 border focus:outline-none focus:ring-2 focus:ring-orange-500/50",
-                                                    isActive ? "bg-orange-600 border-orange-500 shadow-[0_0_10px_rgba(255,122,0,0.3)]" : "bg-slate-800 border-white/5"
-                                                )}
-                                            >
+                                        <div 
+                                            key={toggle.id} 
+                                            className="flex flex-col items-center gap-3 cursor-pointer group/toggle p-4 rounded-3xl hover:bg-white/5 transition-all"
+                                            onClick={() => toggleMeal(toggle.id)}
+                                        >
+                                            <div className={cn(
+                                                "w-14 h-7 rounded-full relative transition-all duration-300 border shadow-inner",
+                                                isActive ? "bg-orange-600 border-orange-500 shadow-[0_0_20px_rgba(255,122,0,0.4)]" : "bg-slate-800 border-white/5"
+                                            )}>
                                                 <div className={cn(
-                                                    "absolute top-1 left-1 h-3.5 w-3.5 rounded-full transition-all duration-300 pointer-events-none",
-                                                    isActive ? "translate-x-6 bg-white" : "translate-x-0 bg-slate-500"
+                                                    "absolute top-1 left-1 h-4.5 w-4.5 rounded-full transition-all duration-300 pointer-events-none shadow-lg",
+                                                    isActive ? "translate-x-7 bg-white" : "translate-x-0 bg-slate-500"
                                                 )} />
-                                            </button>
+                                            </div>
                                             <span className={cn(
-                                                "text-[8px] font-black uppercase tracking-widest transition-colors",
-                                                isActive ? "text-white" : "text-slate-500"
+                                                "text-[9px] font-black uppercase tracking-[0.2em] transition-colors",
+                                                isActive ? "text-orange-500" : "text-slate-500 group-hover/toggle:text-slate-300"
                                             )}>
                                                 {toggle.label}
                                             </span>
