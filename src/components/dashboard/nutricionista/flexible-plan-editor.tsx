@@ -146,6 +146,14 @@ export function FlexiblePlanEditor({
             ]
         },
         {
+            id: 'media-manana',
+            name: 'MEDIA MAÑANA',
+            time: '11:30',
+            active: false,
+            title: 'Opciones de media mañana',
+            rows: [{ id: 'mm1', group: 'fruta', portions: 1, comment: '1 fruta de estación (Manzana, Mandarina, Pera)' }]
+        },
+        {
             id: 'almuerzo',
             name: 'ALMUERZO',
             time: '13:00',
@@ -157,6 +165,22 @@ export function FlexiblePlanEditor({
                 { id: '12', group: 'pro-bajo', portions: 4, comment: 'Pescado Tilapia (100g) o Pollo pulpa (100g)' },
                 { id: '13', group: 'grasa', portions: 2, comment: 'Palta (88g) o Aceite (10g)' },
             ]
+        },
+        {
+            id: 'media-tarde',
+            name: 'MEDIA TARDE',
+            time: '17:00',
+            active: false,
+            title: 'Opciones de media tarde',
+            rows: [{ id: 'mt1', group: 'fruta', portions: 1, comment: 'Frutos secos (15g)' }]
+        },
+        {
+            id: 'post-entreno',
+            name: 'POST ENTRENO',
+            time: '18:30',
+            active: false,
+            title: 'Recuperación post-entrenamiento',
+            rows: [{ id: 'pe1', group: 'pro-bajo', portions: 2, comment: 'Scoop de proteína o 4 claras de huevo' }]
         },
         {
             id: 'cena',
@@ -284,6 +308,18 @@ export function FlexiblePlanEditor({
                 return {
                     ...m,
                     rows: [...m.rows, { id: Math.random().toString(), group: 'almidon', portions: 1, comment: '' }]
+                };
+            }
+            return m;
+        }));
+    };
+
+    const removeRow = (mealId: string, rowId: string) => {
+        setMeals(prev => prev.map(m => {
+            if (m.id === mealId) {
+                return {
+                    ...m,
+                    rows: m.rows.filter(r => r.id !== rowId)
                 };
             }
             return m;
@@ -782,25 +818,33 @@ export function FlexiblePlanEditor({
                     </div>
                 ) : (
                     <div className="flex flex-col gap-8 pb-32 animate-in slide-in-from-right-10 duration-500">
-                        {/* Summary Header */}
-                        <div className="flex justify-between items-center bg-[#151F32] p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group">
+                        <div className="flex flex-col md:flex-row justify-between items-center bg-[#151F32] p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group gap-10">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF7A00]/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-[#FF7A00]/10 transition-colors" />
 
-                            <div className="flex items-center gap-10">
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={meals[0].active}
-                                        onChange={() => toggleMeal('pre-entreno')}
-                                        className="sr-only peer"
-                                    />
-                                    <div className="w-14 h-7 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-slate-400 after:rounded-full after:h-[1.2rem] after:w-[1.2rem] after:transition-all peer-checked:bg-orange-600 after:shadow-lg peer-checked:after:bg-white" />
-                                    <span className="ml-5 text-sm font-black text-white uppercase tracking-widest">Activar Pre-Entreno</span>
-                                </label>
+                            <div className="flex flex-wrap items-center gap-x-10 gap-y-4 relative z-10">
+                                {[
+                                    { id: 'pre-entreno', label: 'PRE' },
+                                    { id: 'media-manana', label: 'MM' },
+                                    { id: 'media-tarde', label: 'MT' },
+                                    { id: 'post-entreno', label: 'POST' },
+                                ].map(toggle => (
+                                    <div key={toggle.id} className="flex items-center gap-3">
+                                        <label className="relative inline-flex items-center cursor-pointer scale-90">
+                                            <input
+                                                type="checkbox"
+                                                checked={meals.find(m => m.id === toggle.id)?.active || false}
+                                                onChange={() => toggleMeal(toggle.id)}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-10 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:rounded-full after:h-[1rem] after:w-[1rem] after:transition-all peer-checked:bg-orange-600 after:shadow-lg peer-checked:after:bg-white" />
+                                            <span className="ml-3 text-[9px] font-black text-white uppercase tracking-widest">{toggle.label}</span>
+                                        </label>
+                                    </div>
+                                ))}
                             </div>
 
                             <div className="flex items-center gap-12 relative z-10">
-                                <div className="h-16 w-1px bg-white/5" />
+                                <div className="h-16 w-px bg-white/5 hidden md:block" />
                                 <div className="text-right flex flex-col items-end">
                                     <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-1">Calorías Logradas</span>
                                     <div className="flex items-baseline gap-2">
@@ -813,7 +857,7 @@ export function FlexiblePlanEditor({
 
                         {/* Meal Cards */}
                         <div className="grid grid-cols-1 gap-8 max-w-6xl mx-auto w-full">
-                            {meals.filter(m => m.active).map(meal => (
+                            {meals.filter(m => m.active).sort((a, b) => a.time.localeCompare(b.time)).map(meal => (
                                 <Card key={meal.id} className="bg-[#151F32] border-white/5 rounded-3xl flex flex-col md:flex-row overflow-hidden shadow-2xl group border-l-0">
                                     <div className="w-full md:w-56 bg-[#0B1120] p-10 flex flex-col justify-center items-center border-b md:border-b-0 md:border-r border-white/5 relative shrink-0">
                                         <div className="absolute left-0 top-0 w-2 h-full bg-[#FF7A00] shadow-[4px_0_15px_rgba(255,122,0,0.3)]" />
@@ -842,7 +886,7 @@ export function FlexiblePlanEditor({
 
                                         <div className="p-8 flex flex-col gap-5">
                                             {meal.rows.map((row, idx) => (
-                                                <div key={row.id} className="flex flex-col xl:flex-row items-stretch gap-4 animate-in fade-in duration-300">
+                                                <div key={row.id} className="flex flex-col xl:flex-row items-stretch gap-4 animate-in fade-in duration-300 group/row">
                                                     <div className="flex items-center gap-2 w-full xl:w-72 shrink-0">
                                                         <Select value={row.group} onValueChange={(v) => setMeals(prev => prev.map(m => m.id === meal.id ? { ...m, rows: m.rows.map(r => r.id === row.id ? { ...r, group: v } : r) } : m))}>
                                                             <SelectTrigger className="flex-1 bg-[#0B1120] border-white/5 rounded-xl h-11 text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -858,14 +902,22 @@ export function FlexiblePlanEditor({
                                                             {row.portions}
                                                         </div>
                                                     </div>
-                                                    <div className="flex-1 relative">
+                                                    <div className="flex-1 relative flex gap-3">
                                                         <textarea
-                                                            className="w-full bg-[#0B1120] border border-white/5 rounded-2xl py-3 px-5 text-[11px] font-medium text-slate-300 min-h-[44px] outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all resize-none leading-relaxed"
+                                                            className="flex-1 bg-[#0B1120] border border-white/5 rounded-2xl py-3 px-5 text-[11px] font-medium text-slate-300 min-h-[44px] outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all resize-none leading-relaxed"
                                                             spellCheck="false"
                                                             value={row.comment}
                                                             onChange={e => setMeals(prev => prev.map(m => m.id === meal.id ? { ...m, rows: m.rows.map(r => r.id === row.id ? { ...r, comment: e.target.value } : r) } : m))}
                                                             placeholder="Instrucciones o ejemplos de alimentos..."
                                                         />
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => removeRow(meal.id, row.id)}
+                                                            className="h-11 w-11 rounded-xl bg-red-500/5 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 border border-white/5 opacity-0 group-hover/row:opacity-100 transition-all shrink-0"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
                                                     </div>
                                                 </div>
                                             ))}
