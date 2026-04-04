@@ -857,7 +857,7 @@ export function FlexiblePlanEditor({
                                                 isActive ? "bg-orange-600 border-orange-500 shadow-[0_0_15px_rgba(255,122,0,0.4)]" : "bg-slate-800 border-white/5"
                                             )}>
                                                 <div className={cn(
-                                                    "absolute top-1 left-1 h-3.5 w-3.5 rounded-full transition-all duration-300",
+                                                    "absolute top-1 left-1 h-3.5 w-3.5 rounded-full transition-all duration-300 pointer-events-none",
                                                     isActive ? "translate-x-6 bg-white shadow-md" : "translate-x-0 bg-slate-500"
                                                 )} />
                                             </div>
