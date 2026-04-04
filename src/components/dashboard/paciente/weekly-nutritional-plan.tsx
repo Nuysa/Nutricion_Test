@@ -167,7 +167,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
             const { data: meals } = await supabase
                 .from("meals")
                 .select("*")
-                .eq("patient_id", patient.id)
+                .eq("patient_id", finalPatientId)
                 .gte("date", yearStr(monday))
                 .lte("date", yearStr(sunday))
                 .order("date", { ascending: true });
@@ -177,14 +177,14 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
             const { data: flexData } = await supabase
                 .from("flexible_plans")
                 .select("data")
-                .eq("patient_id", patient.id)
+                .eq("patient_id", finalPatientId)
                 .eq("week_number", weekNum)
                 .single();
 
             if (flexData && flexData.data) {
                 setFlexiblePlan(flexData.data);
                 const p = flexData.data;
-                const activeWeight = currentPatientWeight > 0 ? currentPatientWeight : (p.peso || 0);
+                const activeWeight = activePatientWeight > 0 ? activePatientWeight : (p.peso || 0);
                 
                 if (p.portions) {
                     let totK = 0, totC = 0, totPr = 0, totF = 0;
