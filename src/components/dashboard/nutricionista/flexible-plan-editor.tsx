@@ -833,26 +833,32 @@ export function FlexiblePlanEditor({
                         <div className="flex flex-col md:flex-row justify-between items-center bg-[#151F32] p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group gap-10">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF7A00]/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-[#FF7A00]/10 transition-colors" />
 
-                            <div className="flex flex-wrap items-center gap-x-10 gap-y-4 relative z-10">
+                            <div className="flex flex-wrap items-center justify-center gap-3 relative z-20">
                                 {[
                                     { id: 'pre-entreno', label: 'PRE-ENTRENO' },
+                                    { id: 'desayuno', label: 'DESAYUNO' },
                                     { id: 'media-manana', label: 'MEDIA MAÑANA' },
+                                    { id: 'almuerzo', label: 'ALMUERZO' },
                                     { id: 'media-tarde', label: 'MEDIA TARDE' },
                                     { id: 'post-entreno', label: 'POST-ENTRENO' },
-                                ].map(toggle => (
-                                    <div key={toggle.id} className="flex items-center gap-3">
-                                        <label className="relative inline-flex items-center cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={meals.find(m => m.id === toggle.id)?.active || false}
-                                                onChange={() => toggleMeal(toggle.id)}
-                                                className="sr-only peer"
-                                            />
-                                            <div className="w-11 h-6 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:rounded-full after:h-[1.2rem] after:w-[1.2rem] after:transition-all peer-checked:bg-orange-600 after:shadow-lg peer-checked:after:bg-white" />
-                                            <span className="ml-3 text-[10px] font-black text-white uppercase tracking-[0.2em]">{toggle.label}</span>
-                                        </label>
-                                    </div>
-                                ))}
+                                    { id: 'cena', label: 'CENA' },
+                                ].map(toggle => {
+                                    const isActive = meals.find(m => m.id === toggle.id)?.active;
+                                    return (
+                                        <button
+                                            key={toggle.id}
+                                            onClick={() => toggleMeal(toggle.id)}
+                                            className={cn(
+                                                "px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                                                isActive 
+                                                    ? "bg-orange-600 border-orange-500 text-white shadow-[0_5px_15px_rgba(255,122,0,0.3)] scale-105" 
+                                                    : "bg-[#0B1120] border-white/5 text-slate-500 hover:border-white/10 hover:bg-[#151F32]"
+                                            )}
+                                        >
+                                            {toggle.label}
+                                        </button>
+                                    );
+                                })}
                             </div>
 
                             <div className="flex items-center gap-12 relative z-10">
