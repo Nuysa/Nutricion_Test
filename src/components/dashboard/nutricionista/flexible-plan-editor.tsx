@@ -934,13 +934,6 @@ export function FlexiblePlanEditor({
                                 </Card>
                             ))}
 
-                            <div className="bg-[#151F32]/40 border border-white/5 border-dashed rounded-[3rem] p-12 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-[#151F32] transition-all">
-                                <div className="h-16 w-16 rounded-[1.5rem] bg-orange-500/10 flex items-center justify-center text-orange-500 mb-6 group-hover:scale-110 group-hover:bg-orange-500 transition-all group-hover:text-white">
-                                    <Plus className="h-8 w-8" />
-                                </div>
-                                <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1">Añadir Nuevo Momento</h4>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Ej: Merienda, Cena, Post-Entreno</p>
-                            </div>
                         </div>
                     </div>
                 )}
