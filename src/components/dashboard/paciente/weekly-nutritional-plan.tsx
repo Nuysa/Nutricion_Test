@@ -77,7 +77,7 @@ const DAYS_SHORT = [
     { id: "Domingo", label: "DOM", num: 7 },
 ];
 
-export function WeeklyNutritionalPlan() {
+export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId?: string }) {
     const [weeklyPlan, setWeeklyPlan] = useState<any[]>([]);
     const [flexiblePlan, setFlexiblePlan] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -121,29 +121,45 @@ export function WeeklyNutritionalPlan() {
             const sunday = new Date(new Date(monday).setDate(monday.getDate() + 6));
             sunday.setHours(23, 59, 59, 999);
 
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const { data: profile } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
-            if (!profile) return;
-            const { data: patient } = await supabase.from("patients").select("id, plan_type, current_weight").eq("profile_id", profile.id).single();
-            if (!patient) return;
+            let finalPatientId = overridePatientId;
+            let currentPatientPlanType = "sin plan";
+            let currentWeight = 0;
+
+            if (!finalPatientId) {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+                const { data: profile } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
+                if (!profile) return;
+                const { data: patient } = await supabase.from("patients").select("id, plan_type, current_weight").eq("profile_id", profile.id).single();
+                if (!patient) return;
+                finalPatientId = patient.id;
+                currentPatientPlanType = patient.plan_type || "sin plan";
+                currentWeight = patient.current_weight || 0;
+            } else {
+                const { data: patient } = await supabase.from("patients").select("id, plan_type, current_weight").eq("id", finalPatientId).single();
+                if (patient) {
+                    currentPatientPlanType = patient.plan_type || "sin plan";
+                    currentWeight = patient.current_weight || 0;
+                }
+            }
+
+            if (!finalPatientId) return;
 
             // Obtener el último peso registrado para cálculos más precisos
             const { data: latestRecord } = await supabase
                 .from("weight_records")
                 .select("weight")
-                .eq("patient_id", patient.id)
+                .eq("patient_id", finalPatientId)
                 .order("date", { ascending: false })
                 .order("created_at", { ascending: false })
                 .limit(1)
                 .maybeSingle();
 
-            const currentPatientWeight = latestRecord?.weight || patient.current_weight || 0;
-            setPatientWeight(currentPatientWeight);
-
-            setPatientId(patient.id);
-            setPatientPlanType(patient.plan_type || "sin plan");
-            console.log("Patient loaded:", patient.id, "Type:", patient.plan_type);
+            const activePatientWeight = latestRecord?.weight || currentWeight || 0;
+            setPatientWeight(activePatientWeight);
+            setPatientId(finalPatientId);
+            setPatientPlanType(currentPatientPlanType);
+            console.log("Patient loaded:", finalPatientId, "Type:", currentPatientPlanType);
 
             // Fetch Weekly Menu Plan (if applicable)
             const yearStr = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -239,7 +255,7 @@ export function WeeklyNutritionalPlan() {
             setLoading(false);
         }
         fetchPlan();
-    }, [weekOffset, supabase]);
+    }, [weekOffset, supabase, overridePatientId]);
 
     const activeDayData = useMemo(() => {
         return weeklyPlan.find(d => d.day === activeDay);

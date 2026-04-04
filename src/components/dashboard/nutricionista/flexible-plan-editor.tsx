@@ -22,8 +22,10 @@ import {
     User,
     Calendar,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Eye
 } from "lucide-react";
+import { WeeklyNutritionalPlan } from "../paciente/weekly-nutritional-plan";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -76,7 +78,7 @@ export function FlexiblePlanEditor({
     selectedAppointmentId?: string;
     setSelectedAppointmentId?: (id: string) => void;
 }) {
-    const [activeTab, setActiveTab] = useState<"calculos" | "resumen">("calculos");
+    const [activeTab, setActiveTab] = useState<"calculos" | "resumen" | "vista-paciente">("calculos");
     const [weekOffset, setWeekOffset] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -568,6 +570,16 @@ export function FlexiblePlanEditor({
                 >
                     Resumen del Plan
                 </button>
+                <button
+                    onClick={() => setActiveTab("vista-paciente")}
+                    className={cn(
+                        "px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center gap-2",
+                        activeTab === "vista-paciente" ? "bg-blue-600 text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
+                    )}
+                >
+                    <Eye className="h-4 w-4" />
+                    Vista Paciente
+                </button>
             </div>
 
             <ScrollArea className="flex-1 -mx-6 px-6">
@@ -816,28 +828,28 @@ export function FlexiblePlanEditor({
                             </Card>
                         </div>
                     </div>
-                ) : (
+                ) : activeTab === "resumen" ? (
                     <div className="flex flex-col gap-8 pb-32 animate-in slide-in-from-right-10 duration-500">
                         <div className="flex flex-col md:flex-row justify-between items-center bg-[#151F32] p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group gap-10">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF7A00]/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-[#FF7A00]/10 transition-colors" />
 
                             <div className="flex flex-wrap items-center gap-x-10 gap-y-4 relative z-10">
                                 {[
-                                    { id: 'pre-entreno', label: 'PRE' },
-                                    { id: 'media-manana', label: 'MM' },
-                                    { id: 'media-tarde', label: 'MT' },
-                                    { id: 'post-entreno', label: 'POST' },
+                                    { id: 'pre-entreno', label: 'PRE-ENTRENO' },
+                                    { id: 'media-manana', label: 'MEDIA MAÑANA' },
+                                    { id: 'media-tarde', label: 'MEDIA TARDE' },
+                                    { id: 'post-entreno', label: 'POST-ENTRENO' },
                                 ].map(toggle => (
                                     <div key={toggle.id} className="flex items-center gap-3">
-                                        <label className="relative inline-flex items-center cursor-pointer scale-90">
+                                        <label className="relative inline-flex items-center cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 checked={meals.find(m => m.id === toggle.id)?.active || false}
                                                 onChange={() => toggleMeal(toggle.id)}
                                                 className="sr-only peer"
                                             />
-                                            <div className="w-10 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:rounded-full after:h-[1rem] after:w-[1rem] after:transition-all peer-checked:bg-orange-600 after:shadow-lg peer-checked:after:bg-white" />
-                                            <span className="ml-3 text-[9px] font-black text-white uppercase tracking-widest">{toggle.label}</span>
+                                            <div className="w-11 h-6 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:rounded-full after:h-[1.2rem] after:w-[1.2rem] after:transition-all peer-checked:bg-orange-600 after:shadow-lg peer-checked:after:bg-white" />
+                                            <span className="ml-3 text-[10px] font-black text-white uppercase tracking-[0.2em]">{toggle.label}</span>
                                         </label>
                                     </div>
                                 ))}
@@ -935,6 +947,12 @@ export function FlexiblePlanEditor({
                             ))}
 
                         </div>
+                    </div>
+                ) : (
+                    <div className="pb-32 animate-in fade-in duration-700">
+                        <Card className="bg-[#0B1120] border-white/5 rounded-[3rem] overflow-hidden shadow-2xl p-1 md:p-8">
+                            <WeeklyNutritionalPlan overridePatientId={patientId} />
+                        </Card>
                     </div>
                 )}
             </ScrollArea>
