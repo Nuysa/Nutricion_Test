@@ -283,14 +283,14 @@ export default function PatientsPage() {
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex flex-col space-y-2">
-                <h1 className="text-3xl font-black text-white uppercase tracking-tight">Mis Pacientes</h1>
-                <p className="text-slate-400 font-bold text-sm uppercase tracking-widest opacity-60">Gestiona y realiza seguimiento a tus pacientes asignados en Supabase.</p>
+                <h1 className="text-xl sm:text-3xl font-black text-white uppercase tracking-tight">Mis Pacientes</h1>
+                <p className="text-slate-400 font-bold text-xs sm:text-sm uppercase tracking-widest opacity-60">Gestiona y realiza seguimiento a tus pacientes asignados en Supabase.</p>
             </div>
 
             <Card className="rounded-[2.5rem] border-white/10 bg-white/[0.03] backdrop-blur-md shadow-2xl overflow-hidden">
-                <CardHeader className="border-b border-white/5 p-10">
+                <CardHeader className="border-b border-white/5 p-4 sm:p-10">
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                        <CardTitle className="text-lg text-nutrition-500 font-black uppercase tracking-[0.2em]">Listado de Pacientes</CardTitle>
+                        <CardTitle className="text-sm sm:text-lg text-nutrition-500 font-black uppercase tracking-[0.15em] sm:tracking-[0.2em]">Listado de Pacientes</CardTitle>
                         <div className="flex flex-col sm:flex-row items-center gap-4">
                             <div className="relative w-full sm:w-80">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -319,35 +319,35 @@ export default function PatientsPage() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-white/5 bg-white/[0.02]">
-                                    <th className="text-left py-6 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Paciente</th>
-                                    <th className="text-left py-6 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Fecha Inicio</th>
-                                    <th className="text-left py-6 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Estado</th>
-                                    <th className="text-left py-6 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Suscripción</th>
-                                    <th className="text-left py-6 px-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Siguiente Visita</th>
-                                    <th className="py-6 px-10"></th>
+                                    <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Paciente</th>
+                                    <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hidden sm:table-cell">Fecha Inicio</th>
+                                    <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Estado</th>
+                                    <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hidden md:table-cell">Suscripción</th>
+                                    <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hidden lg:table-cell">Siguiente Visita</th>
+                                    <th className="py-4 sm:py-6 px-3 sm:px-10"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {filteredPatients.map((patient) => (
                                     <tr key={patient.id} className="group hover:bg-white/[0.03] transition-all duration-300">
-                                        <td className="py-6 px-10">
-                                            <div className="flex items-center gap-4">
-                                                <Avatar className="h-12 w-12 border-2 border-white/10 shadow-xl group-hover:border-nutrition-500/50 transition-all">
+                                        <td className="py-4 sm:py-6 px-3 sm:px-10">
+                                            <div className="flex items-center gap-2 sm:gap-4">
+                                                <Avatar className="h-9 w-9 sm:h-12 sm:w-12 border-2 border-white/10 shadow-xl group-hover:border-nutrition-500/50 transition-all">
                                                     <AvatarFallback className="bg-nutrition-500/20 text-nutrition-400 font-bold text-xs uppercase">
                                                         {patient.name.split(" ").map((n: string) => n[0]).join("")}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div>
-                                                    <p className="text-sm font-black text-white group-hover:text-nutrition-400 transition-colors uppercase tracking-tight">{patient.name}</p>
+                                                    <p className="text-xs sm:text-sm font-black text-white group-hover:text-nutrition-400 transition-colors uppercase tracking-tight">{patient.name}</p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-6 px-4">
+                                        <td className="py-4 sm:py-6 px-3 sm:px-4 hidden sm:table-cell">
                                             <Badge variant="outline" className="text-[10px] font-black text-slate-400 border-white/5 bg-white/5 px-3 py-1 rounded-lg uppercase">
                                                 {patient.startDate}
                                             </Badge>
                                         </td>
-                                        <td className="py-6 px-4">
+                                        <td className="py-4 sm:py-6 px-3 sm:px-4">
                                             <div className="flex items-center gap-2">
                                                 {isOnline(patient.profileId) ? (
                                                     <>
@@ -362,12 +362,12 @@ export default function PatientsPage() {
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="py-6 px-4">
+                                        <td className="py-4 sm:py-6 px-3 sm:px-4 hidden md:table-cell">
                                             <Badge variant="outline" className="text-[10px] font-black text-nutrition-400 border-nutrition-500/20 bg-nutrition-500/5 px-3 py-1 rounded-lg uppercase">
                                                 {patient.subscription}
                                             </Badge>
                                         </td>
-                                        <td className="py-6 px-4">
+                                        <td className="py-4 sm:py-6 px-3 sm:px-4 hidden lg:table-cell">
                                             {patient.nextVisit === "Sin programar" ? (
                                                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 opacity-50">
                                                     {patient.nextVisit}
@@ -384,8 +384,8 @@ export default function PatientsPage() {
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="py-6 px-10 text-right">
-                                            <div className="flex items-center justify-end gap-3 opacity-60 group-hover:opacity-100 transition-all">
+                                        <td className="py-4 sm:py-6 px-3 sm:px-10 text-right">
+                                            <div className="flex items-center justify-end gap-2 sm:gap-3 opacity-80 sm:opacity-60 group-hover:opacity-100 transition-all">
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"

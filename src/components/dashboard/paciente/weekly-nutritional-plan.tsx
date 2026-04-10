@@ -296,7 +296,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
     );
 
     return (
-        <div className="flex flex-col lg:flex-row gap-10 bg-[#0B1120] text-slate-100 p-2 sm:p-6 lg:p-10 min-h-screen font-sans overflow-x-hidden">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 bg-[#0B1120] text-slate-100 p-3 sm:p-6 lg:p-10 min-h-screen font-sans overflow-x-hidden">
             {/* --- MAIN CONTENT AREA --- */}
             <div className="flex-1 space-y-12">
                 {patientPlanType === "sin plan" ? (
@@ -307,7 +307,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                 <AlertTriangle className="h-16 w-16 text-slate-500" />
                             </div>
                         </div>
-                        <h2 className="text-4xl font-black text-white tracking-tight mb-4 uppercase tracking-[0.2em]">Aún no tienes un plan</h2>
+                        <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-4 uppercase tracking-[0.2em]">Aún no tienes un plan</h2>
                         <p className="text-slate-400 text-lg font-medium max-w-md mx-auto leading-relaxed mb-10">
                             Tu nutricionista está preparando tu plan personalizado. Una vez asignado, podrás verlo aquí.
                         </p>
@@ -327,14 +327,14 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                         </div>
                     </div>
                 ) : patientPlanType === "plan flexible" ? (
-                    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                            <div className="flex items-center gap-6">
-                                <div className="h-16 w-16 rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
-                                    <Zap className="h-8 w-8 text-orange-500" />
+                    <div className="space-y-6 sm:space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
+                            <div className="flex items-center gap-4 sm:gap-6">
+                                <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20 shrink-0">
+                                    <Zap className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500" />
                                 </div>
                                 <div>
-                                    <h1 className="text-4xl font-black tracking-tight text-white mb-1">Plan Flexible</h1>
+                                    <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white mb-1">Plan Flexible</h1>
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">CUMPLIMIENTO DE MACROS Y PORCIONES</p>
                                         {patientWeight && (
@@ -356,9 +356,9 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                     <ChevronLeft className="h-5 w-5" />
                                 </button>
 
-                                <div className="bg-[#151F32] rounded-2xl px-6 py-2.5 border border-white/5 shadow-2xl flex items-center gap-4">
-                                    <Calendar className="h-4 w-4 text-[#FF7A00]" />
-                                    <span className="text-sm font-black text-white uppercase tracking-tight">
+                                <div className="bg-[#151F32] rounded-2xl px-3 sm:px-6 py-2.5 border border-white/5 shadow-2xl flex items-center gap-2 sm:gap-4">
+                                    <Calendar className="h-4 w-4 text-[#FF7A00] shrink-0" />
+                                    <span className="text-[10px] sm:text-sm font-black text-white uppercase tracking-tight">
                                         Semana: {weekRange}
                                     </span>
                                 </div>
@@ -372,61 +372,61 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <Card className="bg-[#151F32] border-white/5 p-6 rounded-[2rem] shadow-2xl relative group overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 flex flex-col items-end">
-                                    <Flame className="h-5 w-5 text-orange-500 mb-1" />
-                                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">KCAL</span>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                            <Card className="bg-[#151F32] border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl relative group overflow-hidden">
+                                <div className="absolute top-0 right-0 p-2 sm:p-4 flex flex-col items-end">
+                                    <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 mb-1" />
+                                    <span className="text-[8px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">KCAL</span>
                                 </div>
-                                <span className="text-5xl font-tech font-black text-white block mb-1">{goals.kcal}</span>
-                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                <span className="text-3xl sm:text-5xl font-tech font-black text-white block mb-1">{goals.kcal}</span>
+                                <div className="h-1 sm:h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full bg-orange-500 w-[100%] rounded-full shadow-[0_0_10px_rgba(255,122,0,0.5)]" />
                                 </div>
-                                <p className="mt-3 text-[11px] font-black text-orange-500 uppercase tracking-widest">Calorías Totales</p>
+                                <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-orange-500 uppercase tracking-widest">Calorías Totales</p>
                             </Card>
 
-                            <Card className="bg-[#151F32] border-white/5 p-6 rounded-[2rem] shadow-2xl relative group overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 flex flex-col items-end">
-                                    <Drumstick className="h-5 w-5 text-sky-400 mb-1" />
-                                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">PROT</span>
+                            <Card className="bg-[#151F32] border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl relative group overflow-hidden">
+                                <div className="absolute top-0 right-0 p-2 sm:p-4 flex flex-col items-end">
+                                    <Drumstick className="h-4 w-4 sm:h-5 sm:w-5 text-sky-400 mb-1" />
+                                    <span className="text-[8px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">PROT</span>
                                 </div>
-                                <span className="text-5xl font-tech font-black text-sky-400 block mb-1">{goals.pro}g</span>
-                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                <span className="text-3xl sm:text-5xl font-tech font-black text-sky-400 block mb-1">{goals.pro}g</span>
+                                <div className="h-1 sm:h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full bg-sky-400 w-[100%] rounded-full" />
                                 </div>
-                                <p className="mt-3 text-[11px] font-black text-sky-400 uppercase tracking-widest">Proteínas</p>
+                                <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-sky-400 uppercase tracking-widest">Proteínas</p>
                             </Card>
 
-                            <Card className="bg-[#151F32] border-white/5 p-6 rounded-[2rem] shadow-2xl relative group overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 flex flex-col items-end">
-                                    <Wheat className="h-5 w-5 text-yellow-500 mb-1" />
-                                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">CHO</span>
+                            <Card className="bg-[#151F32] border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl relative group overflow-hidden">
+                                <div className="absolute top-0 right-0 p-2 sm:p-4 flex flex-col items-end">
+                                    <Wheat className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 mb-1" />
+                                    <span className="text-[8px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">CHO</span>
                                 </div>
-                                <span className="text-5xl font-tech font-black text-yellow-500 block mb-1">{goals.car}g</span>
-                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                <span className="text-3xl sm:text-5xl font-tech font-black text-yellow-500 block mb-1">{goals.car}g</span>
+                                <div className="h-1 sm:h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full bg-yellow-500 w-[100%] rounded-full" />
                                 </div>
-                                <p className="mt-3 text-[11px] font-black text-yellow-500 uppercase tracking-widest">Carbohidratos</p>
+                                <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-yellow-500 uppercase tracking-widest">Carbohidratos</p>
                             </Card>
 
-                            <Card className="bg-[#151F32] border-white/5 p-6 rounded-[2rem] shadow-2xl relative group overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 flex flex-col items-end">
-                                    <Droplets className="h-5 w-5 text-emerald-400 mb-1" />
-                                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">GRASAS</span>
+                            <Card className="bg-[#151F32] border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl relative group overflow-hidden">
+                                <div className="absolute top-0 right-0 p-2 sm:p-4 flex flex-col items-end">
+                                    <Droplets className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400 mb-1" />
+                                    <span className="text-[8px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">GRASAS</span>
                                 </div>
-                                <span className="text-5xl font-tech font-black text-emerald-400 block mb-1">{goals.fat}g</span>
-                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                <span className="text-3xl sm:text-5xl font-tech font-black text-emerald-400 block mb-1">{goals.fat}g</span>
+                                <div className="h-1 sm:h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full bg-emerald-400 w-[100%] rounded-full" />
                                 </div>
-                                <p className="mt-3 text-[11px] font-black text-emerald-400 uppercase tracking-widest">LIPIDOS</p>
+                                <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-emerald-400 uppercase tracking-widest">LIPIDOS</p>
                             </Card>
                         </div>
 
                         {/* Flexible Plan Details */}
-                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 sm:gap-10">
                             {/* Distribution / Plate View */}
-                            <div className="xl:col-span-12 space-y-12">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                            <div className="xl:col-span-12 space-y-8 sm:space-y-12">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
                                     {flexiblePlan && flexiblePlan.meals ? (
                                         <>
                                             {/* Column Left: Interactive Accordions (Detailed) */}
@@ -439,14 +439,14 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                     {flexiblePlan.meals.filter((m: any) => m.active).map((meal: any) => (
                                                         <AccordionItem key={meal.id} value={meal.id} className="border-none">
                                                             <Card className="bg-[#151F32] border-white/5 rounded-3xl overflow-hidden shadow-2xl group transition-all hover:border-orange-500/30">
-                                                                <AccordionTrigger className="hover:no-underline p-0 px-8 py-6">
+                                                                <AccordionTrigger className="hover:no-underline p-0 px-4 sm:px-8 py-4 sm:py-6">
                                                                     <div className="flex flex-col w-full pr-4 text-left gap-4">
                                                                         <div className="flex items-center justify-between w-full">
-                                                                            <div className="flex items-center gap-6">
-                                                                                <div className="h-12 w-12 rounded-2xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500">
-                                                                                    <Clock className="h-5 w-5" />
+                                                                            <div className="flex items-center gap-3 sm:gap-6">
+                                                                                <div className="h-9 w-9 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500 shrink-0">
+                                                                                    <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
                                                                                 </div>
-                                                                                <span className="font-tech font-black text-sm text-white tracking-widest uppercase block">{meal.name}</span>
+                                                                                <span className="font-tech font-black text-xs sm:text-sm text-white tracking-widest uppercase block">{meal.name}</span>
                                                                             </div>
                                                                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{meal.time}</span>
                                                                         </div>
@@ -459,7 +459,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                                     </div>
                                                                 </AccordionTrigger>
                                                                 <AccordionContent className="p-0 border-t border-white/5">
-                                                                    <div className="p-8 space-y-6 bg-[#0B1120]/30">
+                                                                    <div className="p-4 sm:p-8 space-y-4 sm:space-y-6 bg-[#0B1120]/30">
                                                                         {meal.rows.map((row: any) => (
                                                                             <div key={row.id} className="space-y-3">
                                                                                 <div className="flex items-center justify-between">
@@ -488,7 +488,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                 </Accordion>
                                             </div>
 
-                                            <div className="space-y-8 bg-[#0B1120]/20 p-6 rounded-[2.5rem] border border-white/5 h-[800px] overflow-y-auto custom-scrollbar relative">
+                                            <div className="space-y-6 sm:space-y-8 bg-[#0B1120]/20 p-4 sm:p-6 rounded-2xl sm:rounded-[2.5rem] border border-white/5 max-h-[500px] lg:max-h-[800px] overflow-y-auto custom-scrollbar relative">
                                                 <div className="sticky top-[-24px] z-20 bg-[#0B1120]/80 backdrop-blur-md py-6 -mx-6 px-6 mb-2 border-b border-white/5">
                                                     <div className="flex items-center gap-4">
                                                         <div className="h-1.5 w-12 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
@@ -523,7 +523,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                                                 {guide.cards.map((card: any, cidx: number) => (
                                                                                     <div
                                                                                         key={cidx}
-                                                                                        className="w-[180px] bg-[#0B1120] rounded-2xl border border-white/5 overflow-hidden group/card shadow-lg"
+                                                                                        className="w-[140px] sm:w-[180px] bg-[#0B1120] rounded-2xl border border-white/5 overflow-hidden group/card shadow-lg"
                                                                                     >
                                                                                         <div className="h-24 bg-white/5 relative overflow-hidden">
                                                                                             {card.image_url ? (
@@ -539,8 +539,8 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                                                             )}
                                                                                         </div>
                                                                                         <div className="p-3 space-y-1">
-                                                                                            <p className="text-[10px] font-black text-white uppercase tracking-tight truncate">{card.title}</p>
-                                                                                            <p className="text-[9px] text-slate-500 font-medium leading-tight line-clamp-2">{card.description}</p>
+                                                                                            <p className="text-[11px] sm:text-[12px] font-black text-white uppercase tracking-tight truncate">{card.title}</p>
+                                                                                            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-tight line-clamp-2">{card.description}</p>
                                                                                         </div>
                                                                                     </div>
                                                                                 ))}
@@ -569,11 +569,11 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                 ) : (
                     <>
                         {/* Header Section */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
                             <div className="space-y-3">
-                                <div className="flex items-center gap-4">
-                                    <Calendar className="h-8 w-8 text-[#FF7A00]" />
-                                    <h1 className="text-3xl font-black tracking-tight text-white leading-none uppercase">
+                                <div className="flex items-center gap-3 sm:gap-4">
+                                    <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-[#FF7A00] shrink-0" />
+                                    <h1 className="text-xl sm:text-3xl font-black tracking-tight text-white leading-none uppercase">
                                         Plan Nutricional Semanal
                                     </h1>
                                 </div>
@@ -623,7 +623,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                         </div>
 
                         {/* Day selector pills */}
-                        <div className="flex items-center gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                        <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide">
                             {weeklyPlan.map((d, idx) => {
                                 const dayShort = DAYS_SHORT[idx].label;
                                 const isSelected = activeDay === d.day;
@@ -632,14 +632,14 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                         key={d.day}
                                         onClick={() => setActiveDay(d.day)}
                                         className={cn(
-                                            "flex flex-col items-center justify-center min-w-[70px] h-20 rounded-[1.5rem] transition-all relative border overflow-hidden",
+                                            "flex flex-col items-center justify-center min-w-[48px] sm:min-w-[70px] h-16 sm:h-20 rounded-xl sm:rounded-[1.5rem] transition-all relative border overflow-hidden",
                                             isSelected
                                                 ? "bg-gradient-to-br from-[#FF7A00] to-[#FF9D42] text-white border-[#FF7A00] shadow-[0_10px_20px_rgba(255,122,0,0.2)] scale-110 z-10"
                                                 : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
                                         )}
                                     >
-                                        <span className="text-[10px] font-black uppercase tracking-widest">{dayShort}</span>
-                                        <span className="text-xl font-tech font-black">{d.dateNum}</span>
+                                        <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{dayShort}</span>
+                                        <span className="text-base sm:text-xl font-tech font-black">{d.dateNum}</span>
                                         {isSelected && <div className="absolute top-0 right-0 p-1"><CheckCircle className="h-3 w-3 text-white/50" /></div>}
                                     </button>
                                 );
@@ -647,30 +647,30 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                         </div>
 
                         {/* Active Day Banner Macros */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 py-8 px-10 bg-white/5 rounded-[2.5rem] border border-white/5">
-                            <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
-                                    <Repeat className="h-6 w-6 text-orange-500" />
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 py-4 sm:py-8 px-4 sm:px-10 bg-white/5 rounded-2xl sm:rounded-[2.5rem] border border-white/5">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20 shrink-0">
+                                    <Repeat className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500" />
                                 </div>
-                                <h2 className="text-2xl font-black text-white tracking-tight">Menú de {activeDay}</h2>
+                                <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight">Menú de {activeDay}</h2>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-4">
-                                <div className="bg-orange-500 text-white px-5 py-2.5 rounded-full flex items-center gap-2 shadow-lg shadow-orange-500/10">
-                                    <Flame className="h-4 w-4" />
-                                    <span className="text-sm font-tech font-black">{goals.kcal} kcal</span>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                                <div className="bg-orange-500 text-white px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full flex items-center gap-1.5 sm:gap-2 shadow-lg shadow-orange-500/10">
+                                    <Flame className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    <span className="text-xs sm:text-sm font-tech font-black">{goals.kcal} kcal</span>
                                 </div>
-                                <div className="bg-[#1e293b] border border-white/10 text-slate-300 px-5 py-2.5 rounded-full flex items-center gap-2">
-                                    <span className="text-[9px] font-black uppercase text-slate-500">PRO:</span>
-                                    <span className="text-sm font-tech font-black text-slate-300">{goals.pro}g</span>
+                                <div className="bg-[#1e293b] border border-white/10 text-slate-300 px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full flex items-center gap-1.5 sm:gap-2">
+                                    <span className="text-[8px] sm:text-[9px] font-black uppercase text-slate-500">PRO:</span>
+                                    <span className="text-xs sm:text-sm font-tech font-black text-slate-300">{goals.pro}g</span>
                                 </div>
-                                <div className="bg-[#1e293b] border border-white/10 text-sky-400 px-5 py-2.5 rounded-full flex items-center gap-2">
-                                    <span className="text-[9px] font-black uppercase text-slate-500">CAR:</span>
-                                    <span className="text-sm font-tech font-black text-sky-400">{goals.car}g</span>
+                                <div className="bg-[#1e293b] border border-white/10 text-sky-400 px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full flex items-center gap-1.5 sm:gap-2">
+                                    <span className="text-[8px] sm:text-[9px] font-black uppercase text-slate-500">CAR:</span>
+                                    <span className="text-xs sm:text-sm font-tech font-black text-sky-400">{goals.car}g</span>
                                 </div>
-                                <div className="bg-[#1e293b] border border-white/10 text-yellow-500 px-5 py-2.5 rounded-full flex items-center gap-2">
-                                    <span className="text-[9px] font-black uppercase text-slate-500">FAT:</span>
-                                    <span className="text-sm font-tech font-black text-yellow-500">{goals.fat}g</span>
+                                <div className="bg-[#1e293b] border border-white/10 text-yellow-500 px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full flex items-center gap-1.5 sm:gap-2">
+                                    <span className="text-[8px] sm:text-[9px] font-black uppercase text-slate-500">FAT:</span>
+                                    <span className="text-xs sm:text-sm font-tech font-black text-yellow-500">{goals.fat}g</span>
                                 </div>
                             </div>
                         </div>
@@ -683,14 +683,14 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                 return (
                                     <Accordion key={type} type="single" collapsible className="w-full">
                                         <AccordionItem value={type} className="border-none bg-[#151F32] rounded-[2rem] overflow-hidden shadow-xl mb-6 last:mb-0 border border-white/5 group transition-all hover:bg-[#1a263d]">
-                                            <AccordionTrigger className="px-10 py-8 hover:no-underline group">
-                                                <div className="flex flex-col sm:flex-row items-center w-full gap-8">
-                                                    <div className="flex items-center gap-6 min-w-[240px]">
-                                                        <div className="h-16 w-16 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-all duration-500 border border-orange-500/10">
-                                                            <Icon className="h-8 w-8" />
+                                            <AccordionTrigger className="px-4 sm:px-10 py-5 sm:py-8 hover:no-underline group">
+                                                <div className="flex flex-col sm:flex-row items-start sm:items-center w-full gap-4 sm:gap-8">
+                                                    <div className="flex items-center gap-3 sm:gap-6 min-w-0 sm:min-w-[240px]">
+                                                        <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-all duration-500 border border-orange-500/10 shrink-0">
+                                                            <Icon className="h-6 w-6 sm:h-8 sm:w-8" />
                                                         </div>
                                                         <div className="text-left">
-                                                            <h3 className="text-xl font-black text-white leading-tight uppercase tracking-widest">{info.label}</h3>
+                                                            <h3 className="text-base sm:text-xl font-black text-white leading-tight uppercase tracking-widest">{info.label}</h3>
                                                             <div className="flex items-center gap-2 text-slate-500 mt-1 font-tech font-black text-xs">
                                                                 <Clock className="h-3 w-3" />
                                                                 {info.time}
@@ -715,8 +715,8 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                     </div>
                                                 </div>
                                             </AccordionTrigger>
-                                            <AccordionContent className="px-10 pb-10">
-                                                <div className="pt-8 border-t border-white/5 grid grid-cols-1 lg:grid-cols-12 gap-10">
+                                            <AccordionContent className="px-4 sm:px-10 pb-6 sm:pb-10">
+                                                <div className="pt-4 sm:pt-8 border-t border-white/5 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10">
                                                     <div className="lg:col-span-8 space-y-8">
                                                         <div>
                                                             <h4 className="text-[10px] font-black text-[#FF7A00] uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
@@ -761,19 +761,19 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
             </div>
 
             {/* --- RIGHT SIDEBAR --- */}
-            <div className="w-full lg:w-96 space-y-8">
+            <div className="w-full lg:w-96 space-y-6 sm:space-y-8">
                 {/* Hydration Card */}
-                <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-white/5 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group">
+                <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-white/5 rounded-2xl sm:rounded-[2.5rem] p-5 sm:p-8 shadow-2xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 h-40 w-40 bg-blue-500/5 blur-[80px] rounded-full group-hover:bg-blue-500/10 transition-all" />
-                    <div className="relative z-10 space-y-8">
+                    <div className="relative z-10 space-y-5 sm:space-y-8">
                         <div className="flex items-center gap-3">
-                            <Droplets className="h-5 w-5 text-blue-400" />
-                            <h2 className="text-sm font-black text-white uppercase tracking-widest">Hidratación Diaria Recomendada</h2>
+                            <Droplets className="h-5 w-5 text-blue-400 shrink-0" />
+                            <h2 className="text-xs sm:text-sm font-black text-white uppercase tracking-widest">Hidratación Diaria Recomendada</h2>
                         </div>
 
                         <div className="text-center space-y-1">
                             <div className="flex items-center justify-center gap-2 text-white">
-                                <h3 className="text-6xl font-tech font-black tracking-tighter">
+                                <h3 className="text-4xl sm:text-6xl font-tech font-black tracking-tighter">
                                     {patientWeight ? (parseFloat(patientWeight) * 35).toLocaleString() : "2,100"}
                                 </h3>
                                 <span className="text-lg font-black text-blue-400 mt-6 ml-1">ml</span>
@@ -784,7 +784,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                         <div className="h-px bg-white/5 w-full" />
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-white/5 rounded-2xl p-6 text-center space-y-2 border border-white/5 hover:bg-white/10 transition-colors">
+                            <div className="bg-white/5 rounded-2xl p-4 sm:p-6 text-center space-y-2 border border-white/5 hover:bg-white/10 transition-colors">
                                 <GlassWater className="h-5 w-5 text-blue-400 mx-auto" />
                                 <div className="space-y-0">
                                     <h4 className="text-2xl font-tech font-black text-white">
@@ -793,7 +793,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                     <p className="text-[11px] font-black text-slate-500 uppercase tracking-tighter">Vasos (250ml)</p>
                                 </div>
                             </div>
-                            <div className="bg-white/5 rounded-2xl p-6 text-center space-y-2 border border-white/5 hover:bg-white/10 transition-colors">
+                            <div className="bg-white/5 rounded-2xl p-4 sm:p-6 text-center space-y-2 border border-white/5 hover:bg-white/10 transition-colors">
                                 <Milk className="h-5 w-5 text-blue-500 mx-auto" />
                                 <div className="space-y-0">
                                     <h4 className="text-2xl font-tech font-black text-white">

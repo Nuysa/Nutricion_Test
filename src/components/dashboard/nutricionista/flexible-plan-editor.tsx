@@ -505,10 +505,10 @@ export function FlexiblePlanEditor({
     }, [weekOffset, patientId]);
 
     return (
-        <div className="flex-1 overflow-hidden flex flex-col p-6 animate-in fade-in duration-500">
+        <div className="flex-1 overflow-hidden flex flex-col p-3 sm:p-6 animate-in fade-in duration-500">
             {/* Week and Save Navigation */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-[#0B1120]/50 p-6 rounded-[2rem] border border-white/5">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 mb-4 sm:mb-8 bg-[#0B1120]/50 p-3 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-white/5">
+                <div className="flex items-center gap-2 sm:gap-4">
                     <button
                         onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
                         className="text-slate-500 hover:text-white transition-colors"
@@ -516,9 +516,9 @@ export function FlexiblePlanEditor({
                         <ChevronLeft className="h-5 w-5" />
                     </button>
 
-                    <div className="bg-[#151F32] rounded-2xl px-6 py-2.5 border border-white/5 shadow-2xl flex items-center gap-4">
-                        <Calendar className="h-4 w-4 text-[#FF7A00]" />
-                        <span className="text-sm font-black text-white uppercase tracking-tight">
+                    <div className="bg-[#151F32] rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2 sm:py-2.5 border border-white/5 shadow-2xl flex items-center gap-2 sm:gap-4">
+                        <Calendar className="h-4 w-4 text-[#FF7A00] shrink-0" />
+                        <span className="text-[10px] sm:text-sm font-black text-white uppercase tracking-tight">
                             Semana: {weekRange}
                         </span>
                     </div>
@@ -553,7 +553,7 @@ export function FlexiblePlanEditor({
                     <Button
                         onClick={savePlan}
                         disabled={isSaving}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl px-8 h-12 shadow-lg shadow-emerald-600/20"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[9px] sm:text-[10px] uppercase tracking-widest rounded-xl px-4 sm:px-8 h-10 sm:h-12 shadow-lg shadow-emerald-600/20 w-full sm:w-auto"
                     >
                         {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                         Guardar Plan
@@ -562,40 +562,40 @@ export function FlexiblePlanEditor({
             </div>
 
             {/* Tabs Selector */}
-            <div className="flex bg-[#151F32] rounded-2xl p-1 w-max mb-8 border border-white/5 shadow-2xl">
+            <div className="flex bg-[#151F32] rounded-xl sm:rounded-2xl p-1 w-full sm:w-max mb-4 sm:mb-8 border border-white/5 shadow-2xl overflow-x-auto">
                 <button
                     onClick={() => setActiveTab("calculos")}
                     className={cn(
-                        "px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all",
+                        "flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all whitespace-nowrap",
                         activeTab === "calculos" ? "bg-[#FF7A00] text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
                     )}
                 >
-                    Cálculos del Plan
+                    Cálculos
                 </button>
                 <button
                     onClick={() => setActiveTab("resumen")}
                     className={cn(
-                        "px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all",
+                        "flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all whitespace-nowrap",
                         activeTab === "resumen" ? "bg-[#FF7A00] text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
                     )}
                 >
-                    Resumen del Plan
+                    Resumen
                 </button>
                 <button
                     onClick={() => setActiveTab("vista-paciente")}
                     className={cn(
-                        "px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center gap-2",
+                        "flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all flex items-center justify-center gap-2 whitespace-nowrap",
                         activeTab === "vista-paciente" ? "bg-blue-600 text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
                     )}
                 >
-                    <Eye className="h-4 w-4" />
-                    Vista Paciente
+                    <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                    Vista
                 </button>
             </div>
 
             <ScrollArea className="flex-1 -mx-6 px-6">
                 {activeTab === "calculos" ? (
-                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 pb-20">
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-8 pb-20">
                         {/* Biometría y Gasto */}
                         <div className="xl:col-span-4 space-y-6">
                             <Card className="bg-[#151F32] border-white/5 p-6 rounded-2xl shadow-xl">
@@ -840,8 +840,8 @@ export function FlexiblePlanEditor({
                         </div>
                     </div>
                 ) : activeTab === "resumen" ? (
-                    <div className="flex flex-col gap-8 pb-32 animate-in slide-in-from-right-10 duration-500">
-                        <div className="flex flex-col md:flex-row justify-between items-center bg-[#151F32] p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group gap-10">
+                    <div className="flex flex-col gap-4 sm:gap-8 pb-32 animate-in slide-in-from-right-10 duration-500">
+                        <div className="flex flex-col md:flex-row justify-between items-center bg-[#151F32] p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group gap-4 sm:gap-10">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF7A00]/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-[#FF7A00]/10 transition-colors" />
 
                             <div className="flex flex-wrap items-center justify-center gap-x-16 gap-y-8 relative z-30">
@@ -895,10 +895,10 @@ export function FlexiblePlanEditor({
                         {/* Meal Cards */}
                         <div className="grid grid-cols-1 gap-8 max-w-6xl mx-auto w-full">
                             {meals.filter(m => m.active).sort((a, b) => a.time.localeCompare(b.time)).map(meal => (
-                                <Card key={meal.id} className="bg-[#151F32] border-white/5 rounded-3xl flex flex-col md:flex-row overflow-hidden shadow-2xl group border-l-0">
-                                    <div className="w-full md:w-56 bg-[#0B1120] p-10 flex flex-col justify-center items-center border-b md:border-b-0 md:border-r border-white/5 relative shrink-0">
-                                        <div className="absolute left-0 top-0 w-2 h-full bg-[#FF7A00] shadow-[4px_0_15px_rgba(255,122,0,0.3)]" />
-                                        <span className="font-tech font-black text-xl text-white tracking-[0.2em] text-center leading-tight">{meal.name}</span>
+                                <Card key={meal.id} className="bg-[#151F32] border-white/5 rounded-2xl sm:rounded-3xl flex flex-col md:flex-row overflow-hidden shadow-2xl group border-l-0">
+                                    <div className="w-full md:w-56 bg-[#0B1120] p-6 sm:p-10 flex flex-col justify-center items-center border-b md:border-b-0 md:border-r border-white/5 relative shrink-0">
+                                        <div className="absolute left-0 top-0 w-1.5 sm:w-2 h-full bg-[#FF7A00] shadow-[4px_0_15px_rgba(255,122,0,0.3)]" />
+                                        <span className="font-tech font-black text-base sm:text-xl text-white tracking-[0.2em] text-center leading-tight">{meal.name}</span>
                                         <div className="mt-6 flex items-center gap-3 bg-[#151F32] px-4 py-2 rounded-2xl border border-white/5 shadow-inner">
                                             <Clock className="h-4 w-4 text-orange-500" />
                                             <input
@@ -921,7 +921,7 @@ export function FlexiblePlanEditor({
                                             />
                                         </div>
 
-                                        <div className="p-8 flex flex-col gap-5">
+                                        <div className="p-4 sm:p-8 flex flex-col gap-4 sm:gap-5">
                                             {meal.rows.map((row, idx) => (
                                                 <div key={row.id} className="flex flex-col xl:flex-row items-stretch gap-4 animate-in fade-in duration-300 group/row">
                                                     <div className="flex items-center gap-2 w-full xl:w-72 shrink-0">

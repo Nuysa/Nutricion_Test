@@ -105,15 +105,15 @@ export default function NutritionistDashboard() {
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {statsCards.map((stat) => (
                     <Card key={stat.label} className="card-hover">
-                        <CardContent className="p-4">
+                        <CardContent className="p-3 sm:p-4">
                             <div className="flex items-start justify-between">
-                                <div>
-                                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                                    <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                                    <span className="text-xs text-nutrition-600 font-medium flex items-center gap-0.5 mt-1">
+                                <div className="min-w-0">
+                                    <p className="text-[10px] sm:text-sm text-muted-foreground truncate">{stat.label}</p>
+                                    <p className="text-xl sm:text-2xl font-bold mt-1">{stat.value}</p>
+                                    <span className="text-[9px] sm:text-xs text-nutrition-600 font-medium flex items-center gap-0.5 mt-1">
                                         <ArrowUpRight className="h-3 w-3" /> {stat.change}
                                     </span>
                                 </div>
@@ -167,18 +167,18 @@ export default function NutritionistDashboard() {
             </div>
 
             <Card className="shadow-lg bg-gradient-to-br from-nutrition-600 to-nutrition-700 text-white overflow-hidden relative group">
-                <CardContent className="p-8 relative z-10 sm:text-left flex flex-col sm:flex-row items-center justify-between gap-8">
+                <CardContent className="p-4 sm:p-8 relative z-10 sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-8">
                     <div className="space-y-2">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-widest">
                             Base de Datos Real
                         </div>
-                        <h3 className="text-2xl font-black tracking-tight">Gestión de Pacientes</h3>
+                        <h3 className="text-xl sm:text-2xl font-black tracking-tight">Gestión de Pacientes</h3>
                         <p className="text-nutrition-50 text-sm max-w-lg font-medium opacity-90 leading-relaxed">
                             Ahora todos los pacientes mostrados aquí están vinculados directamente a tu ID de nutricionista en Supabase.
                         </p>
                     </div>
                     <Link href="/dashboard/nutricionista/patients">
-                        <Button className="bg-white text-nutrition-700 hover:bg-slate-50 border-none px-10 py-7 rounded-2xl font-black text-lg shadow-2xl shadow-black/20 group-hover:scale-105 transition-transform">
+                        <Button className="bg-white text-nutrition-700 hover:bg-slate-50 border-none px-6 sm:px-10 py-5 sm:py-7 rounded-xl sm:rounded-2xl font-black text-sm sm:text-lg shadow-2xl shadow-black/20 group-hover:scale-105 transition-transform w-full sm:w-auto">
                             Acceder al Listado
                             <ArrowUpRight className="ml-2 h-6 w-6" />
                         </Button>

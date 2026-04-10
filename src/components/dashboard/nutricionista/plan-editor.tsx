@@ -749,16 +749,16 @@ export function PlanEditor() {
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)] w-full bg-[#0B1120] text-white overflow-hidden font-sans border-t border-white/5">
             {/* --- TOP GLOBAL BAR --- */}
-            <div className="h-20 shrink-0 border-b border-white/5 flex items-center justify-between px-10 bg-[#0B1120]">
-                <div className="flex items-center gap-10">
-                    <div className="bg-[#151F32] border border-white/5 rounded-2xl px-5 py-2.5 flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 border border-orange-500/10">
-                            <User className="h-5 w-5" />
+            <div className="shrink-0 border-b border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-10 py-3 sm:py-0 sm:h-20 bg-[#0B1120] gap-3 sm:gap-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-10 w-full sm:w-auto">
+                    <div className="bg-[#151F32] border border-white/5 rounded-2xl px-3 sm:px-5 py-2 sm:py-2.5 flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                        <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 border border-orange-500/10 shrink-0">
+                            <User className="h-4 w-4 sm:h-5 sm:w-5" />
                         </div>
-                        <div className="flex flex-col min-w-[180px]">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-tight">Paciente Asignado</span>
+                        <div className="flex flex-col min-w-0 sm:min-w-[180px] flex-1">
+                            <span className="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest leading-tight">Paciente Asignado</span>
                             <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
-                                <SelectTrigger className="border-none bg-transparent p-0 h-auto text-sm font-black text-white focus:ring-0 mt-0.5">
+                                <SelectTrigger className="border-none bg-transparent p-0 h-auto text-xs sm:text-sm font-black text-white focus:ring-0 mt-0.5">
                                     <SelectValue placeholder="Seleccionar paciente..." />
                                 </SelectTrigger>
                                 <SelectContent className="bg-[#151F32] border-white/10 text-white">
@@ -784,14 +784,14 @@ export function PlanEditor() {
 
                     {selectedPatientId && (
                         <div className={cn(
-                            "flex bg-[#151F32] p-1.5 rounded-2xl border border-white/5 shadow-2xl transition-all",
+                            "flex bg-[#151F32] p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-white/5 shadow-2xl transition-all w-full sm:w-auto",
                             patientPlanType === "sin plan" && "opacity-50 grayscale pointer-events-none"
                         )}>
                             <button
                                 onClick={() => handlePlanTypeChange("plan flexible")}
                                 disabled={patientPlanType === "plan menu semanal" || patientPlanType === "sin plan"}
                                 className={cn(
-                                    "px-8 py-3 text-[11px] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-300",
+                                    "flex-1 sm:flex-none px-4 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] rounded-lg sm:rounded-xl transition-all duration-300",
                                     patientPlanType === "plan flexible" ? "bg-[#FF7A00] text-white shadow-[0_10px_20px_rgba(255,122,0,0.3)]" : "text-slate-500 hover:text-slate-300",
                                     (patientPlanType === "plan menu semanal" || patientPlanType === "sin plan") && "opacity-50 grayscale cursor-not-allowed"
                                 )}
@@ -802,7 +802,7 @@ export function PlanEditor() {
                                 onClick={() => handlePlanTypeChange("plan menu semanal")}
                                 disabled={patientPlanType === "plan flexible" || patientPlanType === "sin plan"}
                                 className={cn(
-                                    "px-8 py-3 text-[11px] font-black uppercase tracking-[0.2em] rounded-xl transition-all duration-300",
+                                    "flex-1 sm:flex-none px-4 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] rounded-lg sm:rounded-xl transition-all duration-300",
                                     patientPlanType === "plan menu semanal" ? "bg-[#FF7A00] text-white shadow-[0_10px_20px_rgba(255,122,0,0.3)]" : "text-slate-500 hover:text-slate-300",
                                     (patientPlanType === "plan flexible" || patientPlanType === "sin plan") && "opacity-50 grayscale cursor-not-allowed"
                                 )}
@@ -835,7 +835,7 @@ export function PlanEditor() {
                 ) : patientPlanType === "plan menu semanal" ? (
                     <>
                         {/* --- LEFT SIDEBAR: DAYS --- */}
-                        <aside className="w-52 bg-[#0B1120] border-r border-white/5 flex flex-col py-8">
+                        <aside className="hidden sm:flex w-52 bg-[#0B1120] border-r border-white/5 flex-col py-8">
                             <div className="px-8 mb-10">
                                 <h2 className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-500">Días de la Semana</h2>
                             </div>
@@ -866,7 +866,7 @@ export function PlanEditor() {
                         {/* --- CENTER SECTION --- */}
                         <main className="flex-1 flex flex-col overflow-hidden">
                             {/* Top Nav BAR */}
-                            <header className="h-24 px-10 flex items-center justify-between border-b border-white/5 bg-[#0B1120]/80 backdrop-blur-md z-40">
+                            <header className="min-h-[60px] sm:h-24 px-3 sm:px-10 py-2 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/5 bg-[#0B1120]/80 backdrop-blur-md z-40 gap-2 sm:gap-0">
                                 <div className="flex items-center gap-6">
                                     <div className="space-y-1">
                                         <h1 className="text-2xl font-black tracking-tight text-white">Editor de Plan</h1>
@@ -927,17 +927,17 @@ export function PlanEditor() {
                                     <Button
                                         onClick={handleSavePlan}
                                         disabled={loading}
-                                        className="bg-gradient-to-r from-[#FF7A00] to-[#FF9D42] hover:opacity-90 text-white font-black px-10 h-14 rounded-2xl shadow-[0_15px_35px_rgba(255,122,0,0.25)] flex items-center gap-3 transition-all active:scale-95 text-xs uppercase tracking-widest"
+                                        className="bg-gradient-to-r from-[#FF7A00] to-[#FF9D42] hover:opacity-90 text-white font-black px-4 sm:px-10 h-10 sm:h-14 rounded-xl sm:rounded-2xl shadow-[0_15px_35px_rgba(255,122,0,0.25)] flex items-center gap-2 sm:gap-3 transition-all active:scale-95 text-[10px] sm:text-xs uppercase tracking-widest"
                                     >
-                                        <Save className="h-5 w-5" />
-                                        Guardar Plan Semanal
+                                        <Save className="h-4 w-4 sm:h-5 sm:w-5" />
+                                        Guardar Plan
                                     </Button>
                                 </div>
                             </header>
 
                             {/* Main Scroll Content */}
                             <ScrollArea className="flex-1 bg-[#0B1120]">
-                                <div className="max-w-6xl mx-auto p-10 space-y-10 pb-32">
+                                <div className="max-w-6xl mx-auto p-3 sm:p-10 space-y-6 sm:space-y-10 pb-32">
 
                                     {/* Objetivo del Paciente Card */}
                                     <Card className="bg-[#151F32] border-white/5 rounded-[2rem] overflow-hidden shadow-2xl">
