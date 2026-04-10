@@ -14,7 +14,7 @@ import {
     Plus, Trash2, DatabaseZap as DbIcon, Mail, Edit3, Save, Loader2,
     BarChart3, TrendingUp, Target, DollarSign, Activity, AlertTriangle,
     Shield, ShieldPlus, User, FileText, ChevronRight, Play, Layers, Filter, LayoutGrid, LayoutList, LayoutTemplate, Stethoscope,
-    ChevronDown, ChevronUp, ShieldCheck
+    ChevronDown, ChevronUp, ShieldCheck, Repeat
 } from "lucide-react";
 import { VariablesConfig } from "@/components/dashboard/admin/variables-config";
 import { TableEditor } from "@/components/dashboard/admin/table-editor";
@@ -22,6 +22,7 @@ import { VisualLandingEditor } from "@/components/dashboard/admin/visual-landing
 import { FoodDatabase } from "@/components/dashboard/admin/food-database";
 import { AuthCMSEditor } from "@/components/dashboard/admin/auth-cms-editor";
 import { VisualAuthEditor } from "@/components/dashboard/admin/visual-auth-editor";
+import { ExchangeGuideEditor } from "@/components/dashboard/admin/exchange-guide-editor";
 import { MessagingService, GlobalProfile } from "@/lib/messaging-service";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -66,7 +67,7 @@ const getAppointmentStatus = (status: string, date: string, time: string) => {
 
 export function AdminStaffDashboardContent({ initialTab = "overview" }: { initialTab?: any }) {
     const { toast } = useToast();
-    const [activeTab, setActiveTab] = useState<"overview" | "verification" | "assignments" | "plan_assignments" | "subscriptions" | "metrics" | "calendar" | "settings" | "visualization" | "landing_cms" | "auth_cms" | "plans_management" | "food_database" | "users_management">(initialTab);
+    const [activeTab, setActiveTab] = useState<"overview" | "verification" | "assignments" | "plan_assignments" | "subscriptions" | "metrics" | "calendar" | "settings" | "visualization" | "landing_cms" | "auth_cms" | "plans_management" | "food_database" | "users_management" | "exchange_guide">(initialTab);
     const [plansEditMode, setPlansEditMode] = useState(true);
 
     const [profiles, setProfiles] = useState<GlobalProfile[]>([]);
@@ -623,10 +624,10 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
             ) : (
                 <div className={cn(
                     "grid grid-cols-1 gap-6 lg:gap-8 items-start",
-                    (activeTab !== "settings" && activeTab !== "visualization" && activeTab !== "landing_cms" && activeTab !== "auth_cms" && activeTab !== "plans_management" && activeTab !== "food_database") ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1"
+                    (activeTab !== "settings" && activeTab !== "visualization" && activeTab !== "landing_cms" && activeTab !== "auth_cms" && activeTab !== "plans_management" && activeTab !== "food_database" && activeTab !== "exchange_guide") ? "lg:grid-cols-[260px_1fr]" : "lg:grid-cols-1"
                 )}>
                     {/* Panel Lateral Interno */}
-                    {activeTab !== "settings" && activeTab !== "visualization" && activeTab !== "landing_cms" && activeTab !== "auth_cms" && activeTab !== "plans_management" && activeTab !== "food_database" && (
+                    {activeTab !== "settings" && activeTab !== "visualization" && activeTab !== "landing_cms" && activeTab !== "auth_cms" && activeTab !== "plans_management" && activeTab !== "food_database" && activeTab !== "exchange_guide" && (
                         <div className="flex lg:flex-col gap-2 bg-white/[0.03] p-2 lg:p-4 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/5 sticky top-20 lg:top-24 overflow-x-auto lg:overflow-x-visible no-scrollbar z-20 backdrop-blur-md">
                             {/* Administración label removed as per user request */}
                             {[
@@ -636,7 +637,9 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                 { id: "plan_assignments", label: "Asig. Plan", fullLabel: "Asignación de Plan", icon: LayoutGrid },
                                 { id: "subscriptions", label: "Planes", fullLabel: "Suscripciones Pro", icon: DatabaseZap },
                                 { id: "calendar", label: "Agenda", fullLabel: "Agenda Global", icon: Calendar },
-                                ...(currentAdminRole === "administrador" ? [{ id: "users_management", label: "Usuarios", fullLabel: "Usuarios", icon: ShieldPlus }] : []),
+                                ...(currentAdminRole === "administrador" ? [
+                                    { id: "users_management", label: "Usuarios", fullLabel: "Usuarios", icon: ShieldPlus }
+                                ] : []),
                             ].map(tab => (
                                 <button
                                     key={tab.id}
@@ -2634,6 +2637,11 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                         )}
                         {activeTab === "food_database" && currentAdminRole === 'administrador' && (
                             <FoodDatabase />
+                        )}
+                        {activeTab === "exchange_guide" && currentAdminRole === 'administrador' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
+                                <ExchangeGuideEditor />
+                            </div>
                         )}
                     </div>
                 </div>

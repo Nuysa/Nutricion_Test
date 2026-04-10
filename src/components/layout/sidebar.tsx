@@ -77,6 +77,7 @@ const adminNav: NavItem[] = [
     { label: "Plantilla Recetas", href: "/dashboard/administrador/recipe-templates", icon: ChefHat },
     { label: "Configuración Variables", href: "/dashboard/administrador/settings", icon: Settings },
     { label: "Configuración Tablas", href: "/dashboard/administrador/visualization", icon: LayoutGrid },
+    { label: "Guía de Intercambio", href: "/dashboard/administrador/exchange-guide", icon: UtensilsCrossed as any },
 ];
 
 
