@@ -167,21 +167,21 @@ export function PatientHistoryCharts({
                     const natVal = parseFloat(m.body_fat_percentage || m._rawSource?.body_fat_percentage);
                     if (!isNaN(natVal)) {
                         labels.push("");
-                        dataPoints.push(natVal);
+                        values.push(natVal);
                         return;
                     }
                 } else if (variable_id === 'weight' || variable_id === 'peso') {
                     const natVal = parseFloat(m.weight || m._rawSource?.weight);
                     if (!isNaN(natVal)) {
                         labels.push("");
-                        dataPoints.push(natVal);
+                        values.push(natVal);
                         return;
                     }
                 } else if (variable_id === 'waist_circumference_cm' || variable_id === 'cintura') {
                     const natVal = parseFloat(m.waist_circumference_cm || m._rawSource?.waist_circumference_cm);
                     if (!isNaN(natVal)) {
                         labels.push("");
-                        dataPoints.push(natVal);
+                        values.push(natVal);
                         return;
                     }
                 }
