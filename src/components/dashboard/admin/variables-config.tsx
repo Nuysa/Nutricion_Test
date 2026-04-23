@@ -99,20 +99,7 @@ interface Variable {
 const OPERATORS = ["+", "-", "*", "/", "(", ")", "^"];
 const FUNCTIONS = ["REDONDEAR"];
 
-interface CardSlot {
-    id: string;
-    slot_index: number;
-    variable_id: string | null;
-    icon: string;
-    color: string;
-    is_active: boolean;
-}
 
-const DEFAULT_SLOTS: CardSlot[] = [
-    { id: 's1', slot_index: 0, variable_id: '00000000-0000-0000-0000-00000000000c', icon: 'Scale', color: 'text-nutrition-600', is_active: true }, // Peso Base
-    { id: 's2', slot_index: 1, variable_id: '00000000-0000-0000-0000-00000000000d', icon: 'Activity', color: 'text-orange-500', is_active: true }, // Talla
-    { id: 's3', slot_index: 2, variable_id: '00000000-0000-0000-0000-00000000000a', icon: 'Ruler', color: 'text-indigo-500', is_active: true }, // Edad
-];
 
 const INITIAL_VARIABLES: Variable[] = [
     {
@@ -308,7 +295,6 @@ function SortableToken({ token, onRemove }: { token: Token, onRemove: (id: strin
 
 export function VariablesConfig() {
     const [variables, setVariables] = useState<Variable[]>([]);
-    const [cardSlots, setCardSlots] = useState<CardSlot[]>(DEFAULT_SLOTS);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedVarId, setSelectedVarId] = useState<string | null>(null);
     const [activeBranchId, setActiveBranchId] = useState<string>("b1");
@@ -317,9 +303,6 @@ export function VariablesConfig() {
     const [draggingPreview, setDraggingPreview] = useState<Token | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const { toast } = useToast();
-
-    // Dashboard Modal state
-    const [isDashboardPreviewOpen, setIsDashboardPreviewOpen] = useState(false);
 
     // New variable modal state
     const [isNewVarOpen, setIsNewVarOpen] = useState(false);
@@ -339,9 +322,8 @@ export function VariablesConfig() {
     useEffect(() => {
         async function loadData() {
             try {
-                const [varsData, slotsData] = await Promise.all([
-                    VariablesService.getVariables(),
-                    VariablesService.getCardSlots('paciente')
+                const [varsData] = await Promise.all([
+                    VariablesService.getVariables()
                 ]);
 
                 if (varsData) {
@@ -382,28 +364,6 @@ export function VariablesConfig() {
                     if (orderedVars.length > 0) setSelectedVarId(orderedVars[0].id);
                 }
 
-                if (slotsData && slotsData.length > 0) {
-                    // Solo cargar y permitir editar los 3 primeros slots dinámicos
-                    const editableSlots = slotsData
-                        .filter((s: any) => s.slot_index < 3)
-                        .map((s: any) => ({
-                            id: s.id,
-                            slot_index: s.slot_index,
-                            variable_id: s.variable_id,
-                            icon: s.icon,
-                            color: s.color,
-                            is_active: s.is_active
-                        }));
-
-                    // Asegurar que si faltan algunos de los 3 básicos, se completen con DEFAULT_SLOTS
-                    const finalSlots = [...DEFAULT_SLOTS];
-                    editableSlots.forEach(es => {
-                        const idx = finalSlots.findIndex(fs => fs.slot_index === es.slot_index);
-                        if (idx !== -1) finalSlots[idx] = es;
-                    });
-
-                    setCardSlots(finalSlots);
-                }
             } catch (e) {
                 console.error("Error loading config:", e);
                 toast({ title: "Error", description: "No se pudo cargar la configuración." });
@@ -456,19 +416,10 @@ export function VariablesConfig() {
             const saveVarResult = await VariablesService.saveVariable(selectedVar);
             const realVarId = saveVarResult.id;
 
-            // 2. Actualizar slots localmente si usaban el ID temporal de esta variable
-            const updatedSlots = cardSlots.map(s =>
-                s.variable_id === selectedVar.id ? { ...s, variable_id: realVarId } : s
-            );
-
-            // 3. Guardar slots con los IDs reales
-            await VariablesService.saveCardSlots('paciente', updatedSlots);
-
             // 4. Actualizar estado local para que ya no existan IDs temporales 'var_...'
             // We only need to overwrite the basic info and ID, we should NOT overwrite the entire branches/ranges if they were just saved successfully.
             setVariables(prev => prev.map(v => v.id === selectedVar.id ? { ...v, id: realVarId } : v));
             setSelectedVarId(realVarId);
-            setCardSlots(updatedSlots);
 
             toast({
                 title: "Cambios Sincronizados",
@@ -788,205 +739,7 @@ export function VariablesConfig() {
                         </DialogContent>
                     </Dialog>
 
-                    {/* CARD MAPPER SECTION: Moved to a Button + Dialog */}
-                    <Dialog open={isDashboardPreviewOpen} onOpenChange={setIsDashboardPreviewOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black rounded-[1.5rem] h-14 shadow-sm flex items-center justify-center gap-3 backdrop-blur-md transition-all active:scale-[0.98]">
-                                <LayoutTemplate className="h-5 w-5 text-nutrition-500" /> Configurar Dashboard Paciente
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-[7xl] w-[95vw] h-[95vh] p-0 overflow-hidden flex flex-col bg-[#0A0F1C] border-white/10 rounded-[3rem] shadow-2xl">
-                            <DialogHeader className="px-8 py-5 bg-white/5 border-b border-white/10 flex flex-row items-center justify-between shrink-0 backdrop-blur-xl">
-                                <div>
-                                    <DialogTitle className="text-xl font-black flex items-center gap-3 text-white">
-                                        <LayoutTemplate className="h-6 w-6 text-nutrition-500" /> Editor del Dashboard de Pacientes
-                                    </DialogTitle>
-                                    <DialogDescription className="text-slate-400 mt-1 font-bold">
-                                        Modifique los elementos visibles del dashboard del paciente. (Solo las "Cards de Resumen" son editables en esta fase).
-                                    </DialogDescription>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <Button
-                                        onClick={() => setIsDashboardPreviewOpen(false)}
-                                        variant="outline"
-                                        className="h-11 px-6 font-black rounded-xl border-white/10 text-slate-300 hover:bg-white/10 transition-all active:scale-95 bg-transparent"
-                                    >
-                                        Cerrar
-                                    </Button>
-                                    <Button
-                                        onClick={async () => {
-                                            setIsSaving(true);
-                                            try {
-                                                await VariablesService.saveCardSlots('paciente', cardSlots);
-                                                const bc = new BroadcastChannel('nutrigo_global_sync');
-                                                bc.postMessage({ type: 'config_updated' });
-                                                bc.close();
-                                                toast({
-                                                    title: "Configuración Guardada",
-                                                    description: "El dashboard de los pacientes ha sido actualizado exitosamente.",
-                                                    className: "bg-nutrition-600 text-white border-none rounded-2xl",
-                                                });
-                                            } catch (e: any) {
-                                                toast({ title: "Error al guardar", description: e.message, variant: "destructive" });
-                                            } finally {
-                                                setIsSaving(false);
-                                            }
-                                        }}
-                                        disabled={isSaving}
-                                        className="bg-nutrition-500 hover:bg-nutrition-600 text-white font-black rounded-xl h-11 px-6 shadow-xl shadow-nutrition-500/20 transition-all active:scale-95 border-none"
-                                    >
-                                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                                        Guardar Cambios
-                                    </Button>
-                                </div>
-                            </DialogHeader>
 
-                            <ScrollArea className="flex-1 p-8 bg-black/20">
-                                {/* SIMULATED DASHBOARD FULL LAYOUT */}
-                                <div className="max-w-6xl mx-auto space-y-10">
-                                    {/* SECTION 1: CARDS (Editable) */}
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="h-3 w-3 rounded-full bg-nutrition-500 animate-pulse" />
-                                            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Sección Editable: Resumen</h3>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-                                            {cardSlots.slice(0, 3).map((slot, idx) => {
-                                                const selectedV = variables.find(v => v.id === slot.variable_id);
-                                                const Ico = slot.icon === 'Scale' ? Scale : (slot.icon === 'Ruler' ? Ruler : Activity);
-                                                let dummyVal = "—";
-                                                let dummyUnit = "";
-
-                                                if (selectedV) {
-                                                    const code = (selectedV.code || "").toLowerCase();
-                                                    const name = (selectedV.name || "").toLowerCase();
-
-                                                    if (name.includes("género") || name.includes("genero")) {
-                                                        dummyVal = "Masculino";
-                                                        dummyUnit = "";
-                                                    } else if (code.includes("peso") || name.includes("peso")) {
-                                                        dummyVal = "72.5";
-                                                        dummyUnit = "kg";
-                                                    } else if (code.includes("talla") || name.includes("talla")) {
-                                                        dummyVal = "175";
-                                                        dummyUnit = "cm";
-                                                    } else if (code.includes("edad") || name.includes("edad")) {
-                                                        dummyVal = "32";
-                                                        dummyUnit = "años";
-                                                    } else if (code.includes("imc") || name.includes("imc")) {
-                                                        dummyVal = "23.6";
-                                                        dummyUnit = "kg/m²";
-                                                    } else if (code.includes("grasa") || name.includes("grasa")) {
-                                                        dummyVal = "18.5";
-                                                        dummyUnit = "%";
-                                                    } else {
-                                                        dummyVal = "24";
-                                                        dummyUnit = (selectedV as any).unit || "";
-                                                    }
-                                                } else {
-                                                    dummyVal = "—";
-                                                    dummyUnit = "";
-                                                }
-
-                                                return (
-                                                    <div key={slot.id} className="bg-white/5 rounded-[2.5rem] border-2 border-dashed border-white/10 shadow-sm overflow-hidden flex flex-col group transition-all hover:border-nutrition-500/50 hover:bg-white/10 relative h-48 backdrop-blur-md">
-                                                        <div className="p-6 flex flex-col justify-between h-full relative z-10">
-                                                            <div>
-                                                                <div className="flex items-center justify-between mb-4">
-                                                                    <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shadow-lg shadow-black/20", slot.color.replace('text-', 'bg-').replace('600', '500/20'), slot.color)}>
-                                                                        <Ico className="h-5 w-5" />
-                                                                    </div>
-                                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none text-right flex-1 ml-4 truncate">
-                                                                        {selectedV?.name || "(Vacío)"}
-                                                                    </p>
-                                                                </div>
-                                                                <div className="flex items-baseline gap-1">
-                                                                    <span className="text-3xl font-black tracking-tight text-white">
-                                                                        {dummyVal}
-                                                                    </span>
-                                                                    <span className="text-[10px] text-slate-500 font-black uppercase">{dummyUnit}</span>
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Dropdown overlay */}
-                                                            <div className="absolute inset-0 bg-black/40 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all flex flex-col justify-center p-6 rounded-[2.5rem] z-20 border border-nutrition-500/30">
-                                                                <p className="text-[10px] font-black text-nutrition-400 uppercase tracking-widest mb-2 text-center">Cambiar Variable</p>
-                                                                <select
-                                                                    value={slot.variable_id || ""}
-                                                                    onChange={e => {
-                                                                        const val = e.target.value || null;
-                                                                        setCardSlots(prev => prev.map(s => s.id === slot.id ? { ...s, variable_id: val } : s));
-                                                                    }}
-                                                                    className="w-full h-11 rounded-xl border border-white/10 px-3 text-xs font-black uppercase text-white bg-slate-900 shadow-2xl outline-none cursor-pointer focus:ring-4 focus:ring-nutrition-500/20 transition-all"
-                                                                >
-                                                                    <option value="" className="bg-slate-900">(Seleccione Variable)</option>
-                                                                    {variables.map(v => (
-                                                                        <option key={v.id} value={v.id} className="bg-slate-900">{v.name}</option>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-
-                                            {/* Loyalty Card (Static) */}
-                                            <div className="bg-white/5 rounded-[2.5rem] border border-white/10 shadow-sm overflow-hidden flex flex-col opacity-60 h-48 backdrop-blur-md">
-                                                <div className="p-6 flex flex-col justify-between h-full">
-                                                    <div>
-                                                        <div className="flex items-center justify-between mb-4">
-                                                            <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-lg bg-sky-500/20 text-sky-400">
-                                                                <Milestone className="h-5 w-5" />
-                                                            </div>
-                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none text-right flex-1 ml-4 truncate">
-                                                                Total Mediciones
-                                                            </p>
-                                                        </div>
-                                                        <div className="flex items-baseline gap-1">
-                                                            <span className="text-3xl font-black tracking-tight text-white">1</span>
-                                                            <span className="text-[10px] text-slate-500 font-black uppercase">total</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="mt-6 grid grid-cols-6 gap-1.5">
-                                                        {Array.from({ length: 12 }).map((_, i) => (
-                                                            <div key={i} className={cn("h-3 flex-1 rounded-full", i === 0 ? "bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.4)]" : (i === 11 ? "bg-amber-400/50" : "bg-white/5"))} />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* SECTION 2: BMI GAUGE MOCK (Not Editable Yet) */}
-                                    <div className="space-y-4 opacity-50 grayscale pointer-events-none">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="h-2 w-2 rounded-full bg-slate-500" />
-                                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">En Próximas Versiones...</h3>
-                                        </div>
-                                        <Card className="rounded-[2.5rem] border-white/5 shadow-sm h-72 flex items-center justify-center bg-white/5 backdrop-blur-sm">
-                                            <div className="text-center">
-                                                <Activity className="h-12 w-12 text-slate-700 mx-auto mb-4" />
-                                                <h4 className="text-lg font-black text-slate-600">BMI Gauge & Progreso (No Editable)</h4>
-                                            </div>
-                                        </Card>
-                                        <div className="grid grid-cols-2 gap-6">
-                                            <Card className="rounded-[2.5rem] border-white/5 shadow-sm h-64 flex items-center justify-center bg-white/5 backdrop-blur-sm">
-                                                <div className="text-center">
-                                                    <span className="text-lg font-black text-slate-600">Tracking Dashboard</span>
-                                                </div>
-                                            </Card>
-                                            <Card className="rounded-[2.5rem] border-white/5 shadow-sm h-64 flex items-center justify-center bg-white/5 backdrop-blur-sm">
-                                                <div className="text-center">
-                                                    <span className="text-lg font-black text-slate-600">Subscription Info</span>
-                                                </div>
-                                            </Card>
-                                        </div>
-                                    </div>
-                                </div>
-                            </ScrollArea>
-                        </DialogContent>
-                    </Dialog>
 
                     <Card className="rounded-[2.5rem] border-white/10 bg-white/5 backdrop-blur-md shadow-2xl overflow-hidden flex-1 flex flex-col max-h-[600px]">
                         <CardHeader className="bg-white/5 border-b border-white/10 py-4 px-6">

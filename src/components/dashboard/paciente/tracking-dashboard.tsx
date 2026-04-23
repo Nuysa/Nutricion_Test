@@ -22,6 +22,8 @@ export function TrackingDashboard() {
         specialistsCount: 0,
         reportStatus: "Pendiente"
     });
+    const [patientData, setPatientData] = useState<any>(null);
+    const [patientAge, setPatientAge] = useState<number>(0);
     const [loading, setLoading] = useState(true);
     const [layout, setLayout] = useState<DashboardColumn[]>([]);
     const [clinicalVariables, setClinicalVariables] = useState<ClinicalVariable[]>([]);
@@ -71,6 +73,7 @@ export function TrackingDashboard() {
 
                 patientData = { ...fallbackData, nutritionist: { full_name: "Asignado" } } as any;
             }
+            setPatientData(patientData);
 
             // 3. Cargar Registros
             const { data: records, error } = await supabase
@@ -94,6 +97,7 @@ export function TrackingDashboard() {
                 if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
                     age--;
                 }
+                setPatientAge(age);
             }
 
             const patientHeight = parseFloat(patientData.height_cm?.toString() || "0");
@@ -109,8 +113,13 @@ export function TrackingDashboard() {
                         nutritionist: patientData.nutritionist?.full_name || "Asignado"
                     };
 
+                    let parsedExtra = m.extra_data || {};
+                    if (typeof m.extra_data === 'string') {
+                        try { parsedExtra = JSON.parse(m.extra_data); } catch(e) { parsedExtra = {}; }
+                    }
+
                     const inputs: Record<string, any> = {
-                        ...(m.extra_data || {}),
+                        ...parsedExtra,
                         "PESO_BASE": patientData.current_weight != null ? Number(patientData.current_weight) : 0,
                         "TALLA_BASE": patientHeight || 0,
                         "EDAD": age,
@@ -127,9 +136,16 @@ export function TrackingDashboard() {
 
                     for (let pass = 0; pass < 3; pass++) {
                         vars.forEach(v => {
-                            if (v.is_calculated && v.code) {
+                            if (v.is_calculated) {
                                 const calc = calculate(v, { gender: patientData.gender, age, inputs });
-                                inputs[v.code.toUpperCase()] = calc.result;
+                                // Usamos el código si existe, si no el ID o el nombre normalizado como fallback
+                                const key = (v.code || v.id || v.name || "").toUpperCase();
+                                if (key) {
+                                    inputs[key] = calc.result;
+                                    if (calc.range && calc.range.label) {
+                                        inputs[`${key}_LABEL`] = calc.range.label;
+                                    }
+                                }
                             }
                         });
                     }
@@ -643,9 +659,16 @@ export function TrackingDashboard() {
                     </div>
                 </CardHeader>
                 <CardContent className="p-8">
-                    {chartProps && measurements.length > 0 ? (
+                    {measurements.length > 0 ? (
                         <div className="w-full">
-                            <PatientHistoryCharts {...chartProps} />
+                            <PatientHistoryCharts 
+                                fechasHistorial={chartProps?.fechasHistorial || []} 
+                                measurements={measurements}
+                                clinicalVariables={clinicalVariables}
+                                patientHeight={parseFloat(patientData?.height_cm?.toString() || "0")}
+                                patientGender={patientData?.gender}
+                                patientAge={patientAge}
+                            />
                         </div>
                     ) : null}
                     {measurements.length === 0 && !loading && (

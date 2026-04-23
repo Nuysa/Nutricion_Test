@@ -49,6 +49,7 @@ export default function PatientDetailPage() {
     const [layout, setLayout] = useState<DashboardColumn[]>([]);
     const [formLayout, setFormLayout] = useState<any[]>([]);
     const [clinicalVariables, setClinicalVariables] = useState<ClinicalVariable[]>([]);
+    const [cardSlots, setCardSlots] = useState<any[]>([]);
 
     const [showBioDialog, setShowBioDialog] = useState(false);
     const [showHistoryDialog, setShowHistoryDialog] = useState(false);
@@ -88,14 +89,26 @@ export default function PatientDetailPage() {
                 setCurrentUserRole(profile?.role || "user");
             }
 
-            const [layoutData, formLayoutData, vars] = await Promise.all([
+            const [layoutData, formLayoutData, vars, slots] = await Promise.all([
                 VariablesService.getDashboardLayout('nutricionista'),
                 VariablesService.getDashboardLayout('form_nutricionista'),
-                VariablesService.getVariables()
+                VariablesService.getVariables(),
+                VariablesService.getCardSlots('nutricionista')
             ]);
 
             if (layoutData.columns) setLayout(layoutData.columns);
             setClinicalVariables(vars);
+
+            if (slots && slots.length > 0) {
+                setCardSlots(slots);
+            } else {
+                setCardSlots([
+                    { id: 'n1', slot_index: 0, variable_id: vars.find(v => v.code?.toUpperCase().includes('IMC'))?.id, is_active: true },
+                    { id: 'n2', slot_index: 1, variable_id: vars.find(v => v.code?.toUpperCase().includes('GRASA'))?.id, is_active: true },
+                    { id: 'n3', slot_index: 2, variable_id: vars.find(v => v.code?.toUpperCase().includes('MUSCULO_LEE'))?.id, is_active: true },
+                    { id: 'n4', slot_index: 3, variable_id: vars.find(v => v.code?.toUpperCase().includes('CINTURA'))?.id, is_active: true },
+                ]);
+            }
 
             const getVId = (codes: string[], header?: string) => {
                 const canonicalMap: Record<string, string[]> = {
@@ -324,8 +337,16 @@ export default function PatientDetailPage() {
             // Procesar records: Paso 1, calcular inputs
             const preProcessedRecords = (hData || []).map((r: any) => {
                 const rowData = { ...r };
+                
+                let parsedExtra = {};
+                if (typeof r.extra_data === 'string') {
+                    try { parsedExtra = JSON.parse(r.extra_data); } catch (e) { parsedExtra = {}; }
+                } else if (r.extra_data) {
+                    parsedExtra = r.extra_data;
+                }
+
                 const inputs: Record<string, any> = {
-                    ...(r.extra_data || {}),
+                    ...parsedExtra,
                     "PESO_BASE": pData.current_weight != null ? Number(pData.current_weight) : 0,
                     "TALLA_BASE": pData.height_cm || 0,
                     "EDAD": age,
@@ -344,7 +365,11 @@ export default function PatientDetailPage() {
                     vars.forEach(v => {
                         if (v.is_calculated && v.code) {
                             const calc = calculate(v, { gender: pData.gender, age, inputs });
-                            inputs[v.code.toUpperCase()] = calc.result;
+                            const key = v.code.toUpperCase();
+                            inputs[key] = calc.result;
+                            if (calc.range && calc.range.label) {
+                                inputs[`${key}_LABEL`] = calc.range.label;
+                            }
                         }
                     });
                 }
@@ -628,177 +653,110 @@ export default function PatientDetailPage() {
         const h = latest?._computedInputs?.['TALLA'] || latest?._computedInputs?.['TALLA_CM'] || patient?.rawHeight || null;
         const w = latest?._computedInputs?.['PESO'] || latest?.weight || patient?.rawWeight || null;
 
-        let imcVal = "—";
-        let imcLabel = "Sin datos";
-        let imcColor = "bg-white/20";
-        if (h && w) {
-            const n = (w / ((h / 100) * (h / 100)));
-            imcVal = n.toFixed(1);
-            imcLabel = getIMCCategory(imcVal);
-            if (imcLabel === 'Sobrepeso') imcColor = 'bg-orange-500/40 text-white';
-            else if (imcLabel.includes('Obesidad')) imcColor = 'bg-red-500/40 text-white';
-            else if (imcLabel === 'Saludable') imcColor = 'bg-green-500/40 text-white';
-        }
-
-        const varDiagGrasa = clinicalVariables.find((v: any) => (v.name?.toUpperCase().includes('SUMA DE PLIEGUES') || v.code?.toUpperCase().includes('SUMA_PLIEGUES')) && (v.has_ranges || v.hasRanges));
-        const varDiagMusculo = clinicalVariables.find((v: any) => v.name?.toUpperCase().includes('MUSCULO LEE') && (v.has_ranges || v.hasRanges));
-        const varDiagCintura = clinicalVariables.find((v: any) => v.name?.toUpperCase().includes('CINTURA') && (v.has_ranges || v.hasRanges));
-
         const getDiag = (v: any) => {
-            if (!v || !latest?._computedInputs) return { label: "—", color: "bg-white/10" };
+            if (!v || !latest?._computedInputs) return { value: 0, label: "—", color: "bg-white/10" };
             const calc = calculate(v, { gender: patient?.gender, age: patient?.age, inputs: latest._computedInputs });
             return {
+                value: calc.result,
                 label: calc.range?.label || "Normal",
                 color: calc.range?.color ? `bg-${calc.range.color}-500/20 text-${calc.range.color}-500` : "bg-white/10 text-slate-400"
             };
         };
 
-        const fatDiag = getDiag(varDiagGrasa);
-        const musDiag = getDiag(varDiagMusculo);
-        const cinDiag = getDiag(varDiagCintura);
+        const dynamicCards = cardSlots.slice(0, 4).map((slot, idx) => {
+            const v = clinicalVariables.find(cv => cv.id === slot.variable_id);
+            if (!v) return null;
+
+            const code = (v.code || "").toUpperCase();
+            const name = (v.name || "").toUpperCase();
+            
+            let isImc = false;
+            let val = "0";
+            let unit = v.unit || "";
+            let diagLabel = "Normal";
+            let diagColor = "bg-white/10 text-slate-400";
+            
+            if (code.includes("IMC") || name.includes("IMC")) {
+                isImc = true;
+                if (h && w && h > 0 && w > 0) {
+                    const n = (w / ((h / 100) * (h / 100)));
+                    val = n.toFixed(1);
+                    diagLabel = getIMCCategory(val);
+                    if (diagLabel === 'Sobrepeso') diagColor = 'bg-orange-500/40 text-white';
+                    else if (diagLabel.includes('Obesidad')) diagColor = 'bg-red-500/40 text-white';
+                    else if (diagLabel === 'Saludable') diagColor = 'bg-green-500/40 text-white';
+                } else {
+                    val = "0";
+                    diagLabel = "Sin datos";
+                    diagColor = "bg-white/20 text-white";
+                }
+            } else {
+                const diag = getDiag(v);
+                
+                let rawVal = 0;
+                if (latest?._computedInputs && latest._computedInputs[code] !== undefined && latest._computedInputs[code] !== null && latest._computedInputs[code] !== "") {
+                    rawVal = Number(latest._computedInputs[code]);
+                } else if (code.includes("GRASA") && latest?.body_fat_percentage) {
+                    rawVal = Number(latest.body_fat_percentage);
+                } else if (code.includes("CINTURA") && latest?.waist_circumference_cm) {
+                    rawVal = Number(latest.waist_circumference_cm);
+                }
+
+                if (v.is_calculated) {
+                    val = diag.value?.toString() || "0";
+                } else {
+                    val = rawVal.toString();
+                }
+
+                diagLabel = diag.label;
+                diagColor = diag.color;
+                
+                // Extra fallback checks just in case
+                if ((val === "0" || val === "NaN") && code.includes("GRASA")) {
+                    val = (latest?.body_fat_percentage || 0).toString();
+                } else if ((val === "0" || val === "NaN") && code.includes("CINTURA")) {
+                    val = (latest?.waist_circumference_cm || 0).toString();
+                }
+                
+                if (val === "NaN") val = "0";
+            }
+
+            return {
+                id: slot.id,
+                title: v.name,
+                value: val,
+                unit,
+                diagLabel,
+                diagColor,
+                isImc,
+                idx
+            };
+        }).filter(Boolean);
 
         return {
             weight: w != null ? `${w} kg` : "—",
             height: h != null ? `${h} cm` : "—",
-            fat: {
-                value: (latest?._computedInputs?.['GRASA_CORPORAL'] || latest?.body_fat_percentage || 0).toString(),
-                diag: fatDiag.label,
-                color: fatDiag.color
-            },
-            muscle: {
-                value: (latest?._computedInputs?.['MASA_MUSCULAR_LEE'] || 0).toString(),
-                diag: musDiag.label,
-                color: musDiag.color
-            },
-            waist: {
-                value: (latest?._computedInputs?.['CINTURA_MINIMA'] || latest?.waist_circumference_cm || latest?._computedInputs?.['CINTURA'] || 0).toString(),
-                diag: cinDiag.label,
-                color: cinDiag.color
-            },
-            imc: {
-                value: imcVal,
-                label: imcLabel,
-                color: imcColor
-            },
-            lastVisit: latest ? new Date(latest.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : "Sin mediciones"
+            lastVisit: latest ? new Date(latest.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : "Sin mediciones",
+            dynamicCards
         };
-    }, [records, patient, clinicalVariables, calculate]);
+    }, [records, patient, clinicalVariables, calculate, cardSlots]);
 
-    const chartProps = useMemo(() => {
+    const chartPropsData = useMemo(() => {
         if (!records || records.length === 0) return null;
 
         const reversedMeasurements = [...records].reverse();
-        const patientHeight = patient?.rawHeight || 100;
-
-        const varDiagGrasa = clinicalVariables.find((v: any) => (v.name?.toUpperCase().includes('SUMA DE PLIEGUES') || v.code?.toUpperCase().includes('SUMA_PLIEGUES')) && (v.has_ranges || v.hasRanges));
-        const varDiagMusculo = clinicalVariables.find((v: any) => v.name?.toUpperCase().includes('MUSCULO LEE') && (v.has_ranges || v.hasRanges));
-        const varDiagCintura = clinicalVariables.find((v: any) => v.name?.toUpperCase().includes('CINTURA') && (v.has_ranges || v.hasRanges));
-
         const fechasHistorial = reversedMeasurements.map(r => {
             const dateObj = new Date(r.date + 'T12:00:00');
             return dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).toUpperCase();
         });
 
-        const pesoData = reversedMeasurements.map(m => parseFloat(m.weight) || 0);
-
-        const imcData = reversedMeasurements.map(m => {
-            const w = parseFloat(m.weight) || 0;
-            return w > 0 && patientHeight > 0 ? parseFloat((w / ((patientHeight / 100) * (patientHeight / 100))).toFixed(1)) : 0;
-        });
-
-        const grasaPctData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['GRASA_CORPORAL']) || 0);
-        const grasaKgData = reversedMeasurements.map((m, i) => {
-            const w = parseFloat(m.weight) || 0;
-            const pct = grasaPctData[i];
-            return parseFloat((w * (pct / 100)).toFixed(2));
-        });
-
-        const diffGrasaData = grasaKgData.map((val, i, arr) => i === 0 ? 0 : parseFloat((val - arr[i - 1]).toFixed(2)));
-
-        const etiquetasDiagnosticoGrasa = reversedMeasurements.map(m => {
-            if (varDiagGrasa) {
-                const calc = calculate(varDiagGrasa, { gender: patient?.gender, age: patient?.age, inputs: m._computedInputs });
-                const val = (calc.range?.label || (calc.result && calc.result.toString())) || "—";
-                if (val && typeof val === 'string' && val.includes('-')) return val.split('-');
-                return val;
-            }
-            return "—";
-        });
-
-        const musculoPctData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['MASA_MUSCULAR_LEE']) || 0);
-        const musculoKgData = reversedMeasurements.map((m, i) => {
-            const w = parseFloat(m.weight) || 0;
-            const pct = musculoPctData[i];
-            return parseFloat((w * (pct / 100)).toFixed(2));
-        });
-
-        const diffMusculoData = musculoKgData.map((val, i, arr) => i === 0 ? 0 : parseFloat((val - arr[i - 1]).toFixed(2)));
-
-        const etiquetasDiagnosticoMusculo = reversedMeasurements.map(m => {
-            if (varDiagMusculo) {
-                const calc = calculate(varDiagMusculo, { gender: patient?.gender, age: patient?.age, inputs: m._computedInputs });
-                const val = (calc.range?.label || (calc.result && calc.result.toString())) || "—";
-                if (val && typeof val === 'string' && val.includes('-')) return val.split('-');
-                return val;
-            }
-            return "—";
-        });
-
-        const cinturaCmData = reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CINTURA_MINIMA']) || parseFloat(m.waist_circumference_cm) || parseFloat(m._computedInputs?.['CINTURA']) || 0);
-
-        const etiquetasDiagnosticoCintura = reversedMeasurements.map(m => {
-            if (varDiagCintura) {
-                const calc = calculate(varDiagCintura, { gender: patient?.gender, age: patient?.age, inputs: m._computedInputs });
-                const val = (calc.range?.label || (calc.result && calc.result.toString())) || "—";
-                if (val && typeof val === 'string' && val.includes('-')) return val.split('-');
-                return val;
-            }
-            return "—";
-        });
-
         return {
             fechasHistorial,
-            pesoData,
-            imcData,
-            grasaPctData,
-            grasaKgData,
-            etiquetasDiagnosticoGrasa,
-            diffGrasaData,
-            musculoPctData,
-            musculoKgData,
-            etiquetasDiagnosticoMusculo,
-            diffMusculoData,
-            cinturaCmData,
-            etiquetasDiagnosticoCintura,
-            brazoRelajadoData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['BRAZO_RELAJADO']) || 0),
-            brazoFlexionadoData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['BRAZO_FLEXIONADO']) || 0),
-            antebrazoData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['ANTEBRAZO_MAXIMO']) || 0),
-            toraxData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['TORAX']) || 0),
-            cinturaMinData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CINTURA_MINIMA']) || 0),
-            cinturaMaxData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CINTURA_MAXIMA']) || 0),
-            caderaMaxData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CADERA_MAXIMA']) || 0),
-            musloMaxData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['MUSLO_MAXIMO']) || 0),
-            musloMedialData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['MUSLO_MEDIAL']) || 0),
-            pantorrillaPerimData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_PANTORRILLA_PERIMETRO']) || parseFloat(m._computedInputs?.['PANTORRILLA']) || 0),
-            tricepsData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_TRICEPS']) || 0),
-            subescapularData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_SUBESCAPULAR']) || 0),
-            abdominalData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_ABDOMINAL']) || 0),
-            musloMedialFoldData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_MUSLO_MEDIAL']) || 0),
-            pantorrillaFoldData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['P_PANTORRILLA']) || 0),
-            crestaIliacaData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['CRESTA_ILIACA']) || parseFloat(m._computedInputs?.['P_SUPRAESPINAL']) || 0),
-            bicepsData: reversedMeasurements.map(m => parseFloat(m._computedInputs?.['BICEPS']) || 0),
-            sumaPlieguesData: reversedMeasurements.map(m => {
-                const val = parseFloat(m._computedInputs?.['SUMA_PLIEGUES']);
-                if (val > 0) return val;
-                // Fallback manual sum of ISAK 6 folds
-                const isak6 = ['P_TRICEPS', 'P_SUBESCAPULAR', 'P_SUPRAESPINAL', 'P_ABDOMINAL', 'P_MUSLO_MEDIAL', 'P_PANTORRILLA'];
-                let sum = isak6.reduce((acc, code) => acc + (parseFloat(m._computedInputs?.[code]) || 0), 0);
-                // Si supraespinal es 0, intentar con Cresta Iliaca como alternativo para el 6to pliegue
-                if ((parseFloat(m._computedInputs?.['P_SUPRAESPINAL']) || 0) === 0) {
-                    sum += (parseFloat(m._computedInputs?.['CRESTA_ILIACA']) || 0);
-                }
-                return parseFloat(sum.toFixed(1));
-            })
+            measurements: records,
+            clinicalVariables,
+            patientHeight: patient?.rawHeight || 170,
+            patientGender: patient?.gender,
+            patientAge: patient?.age
         };
     }, [records, patient, clinicalVariables]);
 
@@ -887,49 +845,45 @@ export default function PatientDetailPage() {
 
             {/* Métricas Destacadas */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <Card className={cn("border-0 text-white shadow-2xl overflow-hidden relative rounded-3xl sm:rounded-[2rem]", parseFloat(stats.imc.value) < 25 ? "bg-gradient-to-br from-nutri-brand to-emerald-600" : "bg-gradient-to-br from-orange-500 to-red-600")}>
-                    <div className="absolute top-0 right-10 w-20 h-20 bg-white/10 blur-[50px] rounded-full -mr-10 -mt-10" />
-                    <CardContent className="p-4 sm:p-7 relative z-10 h-full flex flex-col justify-between">
-                        <div className="text-[8px] sm:text-[10px] font-black uppercase opacity-80 mb-1 sm:mb-2 tracking-widest">IMC Actual</div>
-                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
-                            <span className="text-3xl sm:text-5xl font-black tracking-tighter text-white">{stats.imc.value}</span>
-                            <Badge variant="secondary" className={cn("text-[7px] sm:text-[9px] border-0 font-black uppercase px-2 w-fit", stats.imc.color)}>{stats.imc.label}</Badge>
-                        </div>
-                    </CardContent>
-                </Card>
+                {stats.dynamicCards.map((card: any) => {
+                    let bgClass = "bg-[#1A253A]/60 backdrop-blur-xl border-white/5";
+                    let textClass = "text-white";
+                    let titleClass = "text-slate-400";
+                    let badgeClass = card.diagColor;
+                    
+                    if (card.isImc) {
+                        bgClass = parseFloat(card.value) < 25 ? "bg-gradient-to-br from-nutri-brand to-emerald-600 border-0" : "bg-gradient-to-br from-orange-500 to-red-600 border-0";
+                        titleClass = "text-white opacity-80";
+                        badgeClass = card.diagColor;
+                    } else if (card.idx === 1) {
+                        titleClass = "text-orange-500";
+                    } else if (card.idx === 2) {
+                        titleClass = "text-emerald-500";
+                    } else if (card.idx === 3) {
+                        titleClass = "text-indigo-500";
+                    }
 
-                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-3xl sm:rounded-[2rem] overflow-hidden relative group">
-                    <div className="absolute top-0 right-10 w-20 h-20 bg-orange-500/5 blur-3xl group-hover:bg-orange-500/10 transition-all opacity-0 group-hover:opacity-100" />
-                    <CardContent className="p-4 sm:p-7 h-full flex flex-col justify-between">
-                        <div className="text-[8px] sm:text-[10px] font-black uppercase text-orange-500 mb-1 sm:mb-2 tracking-widest">% Grasa</div>
-                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
-                             <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">{stats.fat.value}%</span>
-                             <Badge variant="secondary" className={cn("text-[7px] sm:text-[9px] border-0 font-black uppercase px-2 w-fit", stats.fat.color)}>{stats.fat.diag}</Badge>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-3xl sm:rounded-[2rem] overflow-hidden relative group">
-                    <div className="absolute top-0 right-10 w-20 h-20 bg-emerald-500/5 blur-3xl group-hover:bg-emerald-500/10 transition-all opacity-0 group-hover:opacity-100" />
-                    <CardContent className="p-4 sm:p-7 h-full flex flex-col justify-between">
-                        <div className="text-[8px] sm:text-[10px] font-black uppercase text-emerald-500 mb-1 sm:mb-2 tracking-widest">% Músculo</div>
-                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
-                             <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">{stats.muscle.value}%</span>
-                             <Badge variant="secondary" className={cn("text-[7px] sm:text-[9px] border-0 font-black uppercase px-2 w-fit", stats.muscle.color)}>{stats.muscle.diag}</Badge>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-[#1A253A]/60 backdrop-blur-xl shadow-2xl border-white/5 rounded-3xl sm:rounded-[2rem] overflow-hidden relative group">
-                    <div className="absolute top-0 right-10 w-20 h-20 bg-indigo-500/5 blur-3xl group-hover:bg-indigo-500/10 transition-all opacity-0 group-hover:opacity-100" />
-                    <CardContent className="p-4 sm:p-7 h-full flex flex-col justify-between">
-                        <div className="text-[8px] sm:text-[10px] font-black uppercase text-indigo-500 mb-1 sm:mb-2 tracking-widest">Cintura</div>
-                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
-                            <span className="text-2xl sm:text-4xl font-black text-white tracking-tighter">{stats.waist.value} cm</span>
-                            <Badge variant="secondary" className={cn("text-[7px] sm:text-[9px] border-0 font-black uppercase px-2 w-fit", stats.waist.color)}>{stats.waist.diag}</Badge>
-                        </div>
-                    </CardContent>
-                </Card>
+                    return (
+                        <Card key={card.id} className={cn("shadow-2xl rounded-3xl sm:rounded-[2rem] overflow-hidden relative group", bgClass)}>
+                            {!card.isImc && <div className={cn("absolute top-0 right-10 w-20 h-20 blur-3xl group-hover:opacity-100 transition-all opacity-0", `bg-${titleClass.split('-')[1]}-500/10`)} />}
+                            {card.isImc && <div className="absolute top-0 right-10 w-20 h-20 bg-white/10 blur-[50px] rounded-full -mr-10 -mt-10" />}
+                            
+                            <CardContent className="p-4 sm:p-7 relative z-10 h-full flex flex-col justify-between">
+                                <div className={cn("text-[8px] sm:text-[10px] font-black uppercase mb-1 sm:mb-2 tracking-widest", titleClass)}>{card.title}</div>
+                                <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                    <span className={cn("text-2xl sm:text-4xl lg:text-5xl font-black tracking-tighter", textClass)}>
+                                        {card.value}{card.unit}
+                                    </span>
+                                    {card.diagLabel && card.diagLabel !== "—" && (
+                                        <Badge variant="secondary" className={cn("text-[7px] sm:text-[9px] border-0 font-black uppercase px-2 w-fit", badgeClass)}>
+                                            {card.diagLabel}
+                                        </Badge>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
             </div>
 
             <Tabs defaultValue="historial" className="w-full">
@@ -1196,9 +1150,9 @@ export default function PatientDetailPage() {
                         </div>
                     </DialogHeader>
                     <div className="flex-1 overflow-y-auto p-4 sm:p-8 no-scrollbar">
-                        {chartProps ? (
+                        {chartPropsData ? (
                             <div className="space-y-8">
-                                <PatientHistoryCharts {...chartProps} />
+                                <PatientHistoryCharts {...chartPropsData} />
                                 <div className="mt-8 bg-[#151F32] p-4 sm:p-8 rounded-3xl sm:rounded-[3rem] border border-white/5 shadow-2xl">
                                     <h3 className="text-lg sm:text-xl font-black text-white tracking-tight uppercase mb-6 flex items-center gap-3">
                                         <Camera className="h-4 w-4 sm:h-5 sm:w-5 text-nutri-brand" /> Seguimiento Fotográfico

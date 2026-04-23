@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, Edit2, Loader2, Plus, Save, Trash2, GripVertical, AlertCircle, Apple, Stethoscope, Ruler, User, Activity } from "lucide-react";
+import { Check, Edit2, Loader2, Plus, Save, Trash2, GripVertical, AlertCircle, Apple, Stethoscope, Ruler, User, Activity, LayoutTemplate, Scale, Droplet, BicepsFlexed } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { NewConsultationForm } from "@/components/dashboard/nutricionista/NewConsultationForm";
 import { cn } from "@/lib/utils";
 import { VariablesService, DashboardColumn, ClinicalVariable } from "@/lib/variables-service";
@@ -19,8 +21,18 @@ export function ConsultationFormEditor() {
     const { toast } = useToast();
     const [fields, setFields] = useState<EditableField[]>([]);
     const [variables, setVariables] = useState<ClinicalVariable[]>([]);
+    const [cardSlots, setCardSlots] = useState<any[]>([]);
+    const [isDashboardPreviewOpen, setIsDashboardPreviewOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [isSavingCards, setIsSavingCards] = useState(false);
+
+    const DEFAULT_SLOTS = [
+        { id: 'n1', slot_index: 0, variable_id: '00000000-0000-0000-0000-00000000000b', icon: 'Activity', color: 'text-emerald-500', is_active: true }, // IMC
+        { id: 'n2', slot_index: 1, variable_id: '00000000-0000-0000-0000-00000000000e', icon: 'Droplet', color: 'text-orange-500', is_active: true }, // Grasa
+        { id: 'n3', slot_index: 2, variable_id: '00000000-0000-0000-0000-00000000000f', icon: 'BicepsFlexed', color: 'text-emerald-500', is_active: true }, // Músculo
+        { id: 'n4', slot_index: 3, variable_id: '00000000-0000-0000-0000-000000000010', icon: 'Ruler', color: 'text-indigo-500', is_active: true }, // Cintura
+    ];
 
     // Dummy state para el Preview
     const [dummyDate, setDummyDate] = useState(new Date().toISOString().split('T')[0]);
@@ -31,11 +43,34 @@ export function ConsultationFormEditor() {
         const load = async () => {
             setLoading(true);
             try {
-                const [data, vars] = await Promise.all([
+                const [data, vars, slotsData] = await Promise.all([
                     VariablesService.getDashboardLayout('form_nutricionista'),
-                    VariablesService.getVariables()
+                    VariablesService.getVariables(),
+                    VariablesService.getCardSlots('nutricionista')
                 ]);
                 setVariables(vars);
+
+                if (slotsData && slotsData.length > 0) {
+                    const editableSlots = slotsData
+                        .filter((s: any) => s.slot_index < 4)
+                        .map((s: any) => ({
+                            id: s.id,
+                            slot_index: s.slot_index,
+                            variable_id: s.variable_id,
+                            icon: s.icon,
+                            color: s.color,
+                            is_active: s.is_active
+                        }));
+
+                    const finalSlots = [...DEFAULT_SLOTS];
+                    editableSlots.forEach(es => {
+                        const idx = finalSlots.findIndex(fs => fs.slot_index === es.slot_index);
+                        if (idx !== -1) finalSlots[idx] = es;
+                    });
+                    setCardSlots(finalSlots);
+                } else {
+                    setCardSlots(DEFAULT_SLOTS);
+                }
 
                 if (data && data.columns && data.columns.length > 10) {
                     setFields(data.columns.map((c: any) => ({
@@ -239,6 +274,166 @@ export function ConsultationFormEditor() {
                                 layout={fields}
                                 clinicalVariables={variables}
                             />
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isDashboardPreviewOpen} onOpenChange={setIsDashboardPreviewOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="flex-1 lg:flex-none border-white/10 text-white bg-white/5 hover:bg-white/10 font-black h-12 px-8 rounded-2xl transition-all uppercase text-[10px] tracking-widest">
+                                <LayoutTemplate className="mr-3 h-4 w-4 text-nutrition-500" /> Configurar Dashboard Nutricionista (Ver Ficha)
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-[7xl] w-[95vw] h-[95vh] p-0 overflow-hidden flex flex-col bg-[#0A0F1C] border-white/10 rounded-[3rem] shadow-2xl">
+                            <DialogHeader className="px-8 py-5 bg-white/5 border-b border-white/10 flex flex-row items-center justify-between shrink-0 backdrop-blur-xl">
+                                <div>
+                                    <DialogTitle className="text-xl font-black flex items-center gap-3 text-white">
+                                        <LayoutTemplate className="h-6 w-6 text-nutrition-500" /> Editor del Dashboard de Nutricionista (Ver Ficha)
+                                    </DialogTitle>
+                                    <DialogDescription className="text-slate-400 mt-1 font-bold">
+                                        Modifique los elementos visibles del dashboard "Ver Ficha". (Las 4 "Cards de Resumen" son editables).
+                                    </DialogDescription>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Button
+                                        onClick={() => setIsDashboardPreviewOpen(false)}
+                                        variant="outline"
+                                        className="h-11 px-6 font-black rounded-xl border-white/10 text-slate-300 hover:bg-white/10 transition-all active:scale-95 bg-transparent"
+                                    >
+                                        Cerrar
+                                    </Button>
+                                    <Button
+                                        onClick={async () => {
+                                            setIsSavingCards(true);
+                                            try {
+                                                await VariablesService.saveCardSlots('nutricionista', cardSlots);
+                                                const bc = new BroadcastChannel('nutrigo_global_sync');
+                                                bc.postMessage({ type: 'config_updated' });
+                                                bc.close();
+                                                toast({
+                                                    title: "Configuración Guardada",
+                                                    description: "El dashboard del nutricionista ha sido actualizado exitosamente.",
+                                                    className: "bg-nutrition-600 text-white border-none rounded-2xl",
+                                                });
+                                            } catch (e: any) {
+                                                toast({ title: "Error al guardar", description: e.message, variant: "destructive" });
+                                            } finally {
+                                                setIsSavingCards(false);
+                                            }
+                                        }}
+                                        disabled={isSavingCards}
+                                        className="bg-nutrition-500 hover:bg-nutrition-600 text-white font-black rounded-xl h-11 px-6 shadow-xl shadow-nutrition-500/20 transition-all active:scale-95 border-none"
+                                    >
+                                        {isSavingCards ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                                        Guardar Cambios
+                                    </Button>
+                                </div>
+                            </DialogHeader>
+
+                            <ScrollArea className="flex-1 p-8 bg-black/20">
+                                <div className="max-w-6xl mx-auto space-y-10">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="h-3 w-3 rounded-full bg-nutrition-500 animate-pulse" />
+                                            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Sección Editable: Tarjetas Principales (Ver Ficha)</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 relative">
+                                            {cardSlots.slice(0, 4).map((slot, idx) => {
+                                                const selectedV = variables.find(v => v.id === slot.variable_id);
+                                                
+                                                let dummyVal = "—";
+                                                let dummyUnit = "";
+                                                let dummyDiag = "";
+                                                let isImc = false;
+
+                                                if (selectedV) {
+                                                    const code = (selectedV.code || "").toLowerCase();
+                                                    const name = (selectedV.name || "").toLowerCase();
+
+                                                    if (code.includes("imc") || name.includes("imc")) {
+                                                        dummyVal = "23.8";
+                                                        dummyDiag = "SALUDABLE";
+                                                        isImc = true;
+                                                    } else if (code.includes("grasa") || name.includes("grasa")) {
+                                                        dummyVal = "10.63";
+                                                        dummyUnit = "%";
+                                                        dummyDiag = "SALUD";
+                                                    } else if (code.includes("musculo") || name.includes("músculo") || code.includes("lee")) {
+                                                        dummyVal = "19.53";
+                                                        dummyUnit = "%";
+                                                        dummyDiag = "SALUD";
+                                                    } else if (code.includes("cintura") || name.includes("cintura")) {
+                                                        dummyVal = "77.2";
+                                                        dummyUnit = " cm";
+                                                        dummyDiag = "NORMAL";
+                                                    } else {
+                                                        dummyVal = "24";
+                                                        dummyUnit = (selectedV as any).unit || "";
+                                                        dummyDiag = "NORMAL";
+                                                    }
+                                                }
+
+                                                let bgClass = "bg-[#1A253A]/60 backdrop-blur-xl border-white/5";
+                                                let textClass = "text-white";
+                                                let titleClass = "text-slate-400";
+                                                let BadgeClass = "bg-white/10 text-white";
+                                                if (isImc) {
+                                                    bgClass = "bg-gradient-to-br from-nutri-brand to-emerald-600 border-0";
+                                                    titleClass = "text-white opacity-80";
+                                                    BadgeClass = "bg-white/20 text-white";
+                                                } else if (idx === 1) {
+                                                    titleClass = "text-orange-500";
+                                                } else if (idx === 2) {
+                                                    titleClass = "text-emerald-500";
+                                                } else if (idx === 3) {
+                                                    titleClass = "text-indigo-500";
+                                                }
+
+                                                return (
+                                                    <Card key={slot.id} className={cn("shadow-2xl rounded-3xl sm:rounded-[2rem] overflow-hidden relative group transition-all hover:ring-2 hover:ring-nutrition-500/50 cursor-pointer", bgClass)}>
+                                                        {!isImc && <div className={cn("absolute top-0 right-10 w-20 h-20 blur-3xl group-hover:opacity-100 transition-all opacity-0", `bg-${titleClass.split('-')[1]}-500/10`)} />}
+                                                        {isImc && <div className="absolute top-0 right-10 w-20 h-20 bg-white/10 blur-[50px] rounded-full -mr-10 -mt-10" />}
+                                                        
+                                                        <CardContent className="p-4 sm:p-7 relative z-10 h-full flex flex-col justify-between">
+                                                            <div className={cn("text-[8px] sm:text-[10px] font-black uppercase mb-1 sm:mb-2 tracking-widest", titleClass)}>
+                                                                {selectedV ? selectedV.name : "(Vacío)"}
+                                                            </div>
+                                                            <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                                                <span className={cn("text-2xl sm:text-4xl font-black tracking-tighter", textClass)}>
+                                                                    {dummyVal}{dummyUnit}
+                                                                </span>
+                                                                {selectedV && (
+                                                                    <Badge variant="secondary" className={cn("text-[7px] sm:text-[9px] border-0 font-black uppercase px-2 w-fit", BadgeClass)}>
+                                                                        {dummyDiag}
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                        </CardContent>
+
+                                                        {/* Dropdown overlay */}
+                                                        <div className="absolute inset-0 bg-black/60 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all flex flex-col justify-center p-6 z-20">
+                                                            <p className="text-[10px] font-black text-nutrition-400 uppercase tracking-widest mb-2 text-center">Cambiar Variable</p>
+                                                            <select
+                                                                value={slot.variable_id || ""}
+                                                                onChange={e => {
+                                                                    const val = e.target.value || null;
+                                                                    setCardSlots(prev => prev.map(s => s.id === slot.id ? { ...s, variable_id: val } : s));
+                                                                }}
+                                                                className="w-full h-11 rounded-xl border border-white/10 px-3 text-xs font-black uppercase text-white bg-slate-900 shadow-2xl outline-none cursor-pointer focus:ring-4 focus:ring-nutrition-500/20 transition-all"
+                                                            >
+                                                                <option value="" className="bg-slate-900">(Seleccione Variable)</option>
+                                                                {variables.map(v => (
+                                                                    <option key={v.id} value={v.id} className="bg-slate-900">{v.name}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </Card>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            </ScrollArea>
                         </DialogContent>
                     </Dialog>
 

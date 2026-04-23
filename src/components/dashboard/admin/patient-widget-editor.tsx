@@ -7,12 +7,13 @@ import {
     Plus, Trash2, Edit2, Check, Save, Loader2, ArrowLeft, ArrowRight,
     Scale, Droplet, BicepsFlexed, Ruler, Heart, Activity, Flame, Zap,
     Dumbbell, Apple, Carrot, Timer, ActivitySquare, TrendingUp, BarChart2, PieChart, Target, Award,
-    ChevronDown
+    ChevronDown, LayoutTemplate, Milestone
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { PatientHistoryCharts } from "../paciente/PatientHistoryCharts";
 
@@ -40,6 +41,7 @@ const AVAILABLE_ICONS: Record<string, any> = {
 export interface WidgetMetric {
     id: string; // custom id
     label: string; // custom label
+    subtitle?: string; // custom subtitle
     variable_id: string; // which clinical variable
     isSystem?: boolean;
 }
@@ -58,8 +60,17 @@ export function PatientWidgetEditor() {
     const { toast } = useToast();
     const [tabs, setTabs] = useState<WidgetTabConfig[]>([]);
     const [variables, setVariables] = useState<any[]>([]);
+    const [cardSlots, setCardSlots] = useState<any[]>([]);
+    const [isDashboardPreviewOpen, setIsDashboardPreviewOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [isSavingCards, setIsSavingCards] = useState(false);
+
+    const DEFAULT_SLOTS = [
+        { id: 's1', slot_index: 0, variable_id: '00000000-0000-0000-0000-00000000000c', icon: 'Scale', color: 'text-nutrition-600', is_active: true },
+        { id: 's2', slot_index: 1, variable_id: '00000000-0000-0000-0000-00000000000d', icon: 'Activity', color: 'text-orange-500', is_active: true },
+        { id: 's3', slot_index: 2, variable_id: '00000000-0000-0000-0000-00000000000a', icon: 'Ruler', color: 'text-indigo-500', is_active: true },
+    ];
 
     useEffect(() => {
         loadData();
@@ -68,11 +79,34 @@ export function PatientWidgetEditor() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [layout, vars] = await Promise.all([
+            const [layout, vars, slotsData] = await Promise.all([
                 VariablesService.getDashboardLayout('paciente_widget'),
-                VariablesService.getVariables()
+                VariablesService.getVariables(),
+                VariablesService.getCardSlots('paciente')
             ]);
             setVariables(vars);
+
+            if (slotsData && slotsData.length > 0) {
+                const editableSlots = slotsData
+                    .filter((s: any) => s.slot_index < 3)
+                    .map((s: any) => ({
+                        id: s.id,
+                        slot_index: s.slot_index,
+                        variable_id: s.variable_id,
+                        icon: s.icon,
+                        color: s.color,
+                        is_active: s.is_active
+                    }));
+
+                const finalSlots = [...DEFAULT_SLOTS];
+                editableSlots.forEach(es => {
+                    const idx = finalSlots.findIndex(fs => fs.slot_index === es.slot_index);
+                    if (idx !== -1) finalSlots[idx] = es;
+                });
+                setCardSlots(finalSlots);
+            } else {
+                setCardSlots(DEFAULT_SLOTS);
+            }
 
             if (layout && layout.columns && layout.columns.length > 0) {
                 setTabs(layout.columns);
@@ -198,17 +232,217 @@ export function PatientWidgetEditor() {
 
     const dummyProps = {
         fechasHistorial: ['10 Ene', '15 Feb', '04 Mar'],
-        pesoData: [72.1, 71.5, 71.0], imcData: [26.1, 25.8, 25.4],
-        grasaPctData: [25, 23, 21], grasaKgData: [18, 16.4, 14.9],
-        etiquetasDiagnosticoGrasa: ['Sobrepeso', 'Exceso Leve', 'Normal'], diffGrasaData: [0, -1.6, -1.5],
-        musculoPctData: [42, 43, 45], musculoKgData: [30.2, 30.7, 31.9],
-        etiquetasDiagnosticoMusculo: ['Bajo', 'Normal', 'Normal'], diffMusculoData: [0, 0.5, 1.2],
-        cinturaCmData: [88.5, 87.0, 85.5], etiquetasDiagnosticoCintura: ['Riesgo Alto', 'Riesgo Moderado', 'Normal']
+        measurements: [
+            { date: '2026-01-10', weight: 72.1, _computedInputs: { 'GRASA_CORPORAL': 25, 'MASA_MUSCULAR_LEE': 42, 'CINTURA_MINIMA': 88.5 } },
+            { date: '2026-02-15', weight: 71.5, _computedInputs: { 'GRASA_CORPORAL': 23, 'MASA_MUSCULAR_LEE': 43, 'CINTURA_MINIMA': 87.0 } },
+            { date: '2026-03-04', weight: 71.0, _computedInputs: { 'GRASA_CORPORAL': 21, 'MASA_MUSCULAR_LEE': 45, 'CINTURA_MINIMA': 85.5 } }
+        ],
+        clinicalVariables: variables || [],
+        patientHeight: 170
     };
 
     return (
-        <div className="space-y-8 p-8 bg-[#151F32]/50">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 border-b border-white/5 pb-8">
+        <div className="space-y-8 mt-6">
+            <Dialog open={isDashboardPreviewOpen} onOpenChange={setIsDashboardPreviewOpen}>
+                <DialogTrigger asChild>
+                    <Button className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black rounded-[1.5rem] h-14 shadow-sm flex items-center justify-center gap-3 backdrop-blur-md transition-all active:scale-[0.98]">
+                        <LayoutTemplate className="h-5 w-5 text-nutrition-500" /> Configurar Dashboard Paciente (Tarjetas Resumen)
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-[7xl] w-[95vw] h-[95vh] p-0 overflow-hidden flex flex-col bg-[#0A0F1C] border-white/10 rounded-[3rem] shadow-2xl">
+                    <DialogHeader className="px-8 py-5 bg-white/5 border-b border-white/10 flex flex-row items-center justify-between shrink-0 backdrop-blur-xl">
+                        <div>
+                            <DialogTitle className="text-xl font-black flex items-center gap-3 text-white">
+                                <LayoutTemplate className="h-6 w-6 text-nutrition-500" /> Editor del Dashboard de Pacientes
+                            </DialogTitle>
+                            <DialogDescription className="text-slate-400 mt-1 font-bold">
+                                Modifique los elementos visibles del dashboard del paciente. (Solo las "Cards de Resumen" son editables en esta fase).
+                            </DialogDescription>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Button
+                                onClick={() => setIsDashboardPreviewOpen(false)}
+                                variant="outline"
+                                className="h-11 px-6 font-black rounded-xl border-white/10 text-slate-300 hover:bg-white/10 transition-all active:scale-95 bg-transparent"
+                            >
+                                Cerrar
+                            </Button>
+                            <Button
+                                onClick={async () => {
+                                    setIsSavingCards(true);
+                                    try {
+                                        await VariablesService.saveCardSlots('paciente', cardSlots);
+                                        const bc = new BroadcastChannel('nutrigo_global_sync');
+                                        bc.postMessage({ type: 'config_updated' });
+                                        bc.close();
+                                        toast({
+                                            title: "Configuración Guardada",
+                                            description: "El dashboard de los pacientes ha sido actualizado exitosamente.",
+                                            className: "bg-nutrition-600 text-white border-none rounded-2xl",
+                                        });
+                                    } catch (e: any) {
+                                        toast({ title: "Error al guardar", description: e.message, variant: "destructive" });
+                                    } finally {
+                                        setIsSavingCards(false);
+                                    }
+                                }}
+                                disabled={isSavingCards}
+                                className="bg-nutrition-500 hover:bg-nutrition-600 text-white font-black rounded-xl h-11 px-6 shadow-xl shadow-nutrition-500/20 transition-all active:scale-95 border-none"
+                            >
+                                {isSavingCards ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                                Guardar Cambios
+                            </Button>
+                        </div>
+                    </DialogHeader>
+
+                    <ScrollArea className="flex-1 p-8 bg-black/20">
+                        {/* SIMULATED DASHBOARD FULL LAYOUT */}
+                        <div className="max-w-6xl mx-auto space-y-10">
+                            {/* SECTION 1: CARDS (Editable) */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="h-3 w-3 rounded-full bg-nutrition-500 animate-pulse" />
+                                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Sección Editable: Resumen</h3>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+                                    {cardSlots.slice(0, 3).map((slot, idx) => {
+                                        const selectedV = variables.find(v => v.id === slot.variable_id);
+                                        const Ico = slot.icon === 'Scale' ? Scale : (slot.icon === 'Ruler' ? Ruler : Activity);
+                                        let dummyVal = "—";
+                                        let dummyUnit = "";
+
+                                        if (selectedV) {
+                                            const code = (selectedV.code || "").toLowerCase();
+                                            const name = (selectedV.name || "").toLowerCase();
+
+                                            if (name.includes("género") || name.includes("genero")) {
+                                                dummyVal = "Masculino";
+                                                dummyUnit = "";
+                                            } else if (code.includes("peso") || name.includes("peso")) {
+                                                dummyVal = "72.5";
+                                                dummyUnit = "kg";
+                                            } else if (code.includes("talla") || name.includes("talla")) {
+                                                dummyVal = "175";
+                                                dummyUnit = "cm";
+                                            } else if (code.includes("edad") || name.includes("edad")) {
+                                                dummyVal = "32";
+                                                dummyUnit = "años";
+                                            } else if (code.includes("imc") || name.includes("imc")) {
+                                                dummyVal = "23.6";
+                                                dummyUnit = "kg/m²";
+                                            } else if (code.includes("grasa") || name.includes("grasa")) {
+                                                dummyVal = "18.5";
+                                                dummyUnit = "%";
+                                            } else {
+                                                dummyVal = "24";
+                                                dummyUnit = (selectedV as any).unit || "";
+                                            }
+                                        } else {
+                                            dummyVal = "—";
+                                            dummyUnit = "";
+                                        }
+
+                                        return (
+                                            <div key={slot.id} className="bg-white/5 rounded-[2.5rem] border-2 border-dashed border-white/10 shadow-sm overflow-hidden flex flex-col group transition-all hover:border-nutrition-500/50 hover:bg-white/10 relative h-48 backdrop-blur-md">
+                                                <div className="p-6 flex flex-col justify-between h-full relative z-10">
+                                                    <div>
+                                                        <div className="flex items-center justify-between mb-4">
+                                                            <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center shadow-lg shadow-black/20", slot.color.replace('text-', 'bg-').replace('600', '500/20'), slot.color)}>
+                                                                <Ico className="h-5 w-5" />
+                                                            </div>
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none text-right flex-1 ml-4 truncate">
+                                                                {selectedV?.name || "(Vacío)"}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-3xl font-black tracking-tight text-white">
+                                                                {dummyVal}
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-500 font-black uppercase">{dummyUnit}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Dropdown overlay */}
+                                                    <div className="absolute inset-0 bg-black/40 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all flex flex-col justify-center p-6 rounded-[2.5rem] z-20 border border-nutrition-500/30">
+                                                        <p className="text-[10px] font-black text-nutrition-400 uppercase tracking-widest mb-2 text-center">Cambiar Variable</p>
+                                                        <select
+                                                            value={slot.variable_id || ""}
+                                                            onChange={e => {
+                                                                const val = e.target.value || null;
+                                                                setCardSlots(prev => prev.map(s => s.id === slot.id ? { ...s, variable_id: val } : s));
+                                                            }}
+                                                            className="w-full h-11 rounded-xl border border-white/10 px-3 text-xs font-black uppercase text-white bg-slate-900 shadow-2xl outline-none cursor-pointer focus:ring-4 focus:ring-nutrition-500/20 transition-all"
+                                                        >
+                                                            <option value="" className="bg-slate-900">(Seleccione Variable)</option>
+                                                            {variables.map(v => (
+                                                                <option key={v.id} value={v.id} className="bg-slate-900">{v.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* Loyalty Card (Static) */}
+                                    <div className="bg-white/5 rounded-[2.5rem] border border-white/10 shadow-sm overflow-hidden flex flex-col opacity-60 h-48 backdrop-blur-md">
+                                        <div className="p-6 flex flex-col justify-between h-full">
+                                            <div>
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-lg bg-sky-500/20 text-sky-400">
+                                                        <Milestone className="h-5 w-5" />
+                                                    </div>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none text-right flex-1 ml-4 truncate">
+                                                        Total Mediciones
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-3xl font-black tracking-tight text-white">1</span>
+                                                    <span className="text-[10px] text-slate-500 font-black uppercase">total</span>
+                                                </div>
+                                            </div>
+                                            <div className="mt-6 grid grid-cols-6 gap-1.5">
+                                                {Array.from({ length: 12 }).map((_, i) => (
+                                                    <div key={i} className={cn("h-3 flex-1 rounded-full", i === 0 ? "bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.4)]" : (i === 11 ? "bg-amber-400/50" : "bg-white/5"))} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* SECTION 2: BMI GAUGE MOCK (Not Editable Yet) */}
+                            <div className="space-y-4 opacity-50 grayscale pointer-events-none">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="h-2 w-2 rounded-full bg-slate-500" />
+                                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">En Próximas Versiones...</h3>
+                                </div>
+                                <Card className="rounded-[2.5rem] border-white/5 shadow-sm h-72 flex items-center justify-center bg-white/5 backdrop-blur-sm">
+                                    <div className="text-center">
+                                        <Activity className="h-12 w-12 text-slate-700 mx-auto mb-4" />
+                                        <h4 className="text-lg font-black text-slate-600">BMI Gauge & Progreso (No Editable)</h4>
+                                    </div>
+                                </Card>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <Card className="rounded-[2.5rem] border-white/5 shadow-sm h-64 flex items-center justify-center bg-white/5 backdrop-blur-sm">
+                                        <div className="text-center">
+                                            <span className="text-lg font-black text-slate-600">Tracking Dashboard</span>
+                                        </div>
+                                    </Card>
+                                    <Card className="rounded-[2.5rem] border-white/5 shadow-sm h-64 flex items-center justify-center bg-white/5 backdrop-blur-sm">
+                                        <div className="text-center">
+                                            <span className="text-lg font-black text-slate-600">Subscription Info</span>
+                                        </div>
+                                    </Card>
+                                </div>
+                            </div>
+                        </div>
+                    </ScrollArea>
+                </DialogContent>
+            </Dialog>
+
+            <div className="flex justify-between items-center bg-white/5 p-4 rounded-[2rem] border border-white/10 backdrop-blur-md">
                 <Button
                     variant="outline"
                     onClick={addTab}
@@ -340,14 +574,23 @@ export function PatientWidgetEditor() {
                                                     : "bg-white/[0.04] border-white/5 hover:border-white/10 shadow-xl"
                                             )}
                                         >
-                                            <div className="flex-1 w-full">
+                                            <div className="flex-[2] w-full">
                                                 <label className="text-[8px] font-black text-slate-600 uppercase tracking-widest block mb-1.5 ml-1">Título Visual</label>
                                                 <Input
                                                     placeholder="Ej. Grasa %"
                                                     value={metric.label}
                                                     onChange={e => updateMetric(tIdx, mIdx, { label: e.target.value })}
-                                                    className="h-10 text-sm font-black bg-black/20 border-white/5 text-white placeholder:text-slate-800 rounded-xl focus:border-nutrition-500"
+                                                    className="h-10 text-xs font-black bg-black/20 border-white/5 text-white placeholder:text-slate-800 rounded-xl focus:border-nutrition-500"
                                                     disabled={metric.isSystem && metric.variable_id === 'SYSTEM_DATE'}
+                                                />
+                                            </div>
+                                            <div className="flex-1 w-full">
+                                                <label className="text-[8px] font-black text-slate-600 uppercase tracking-widest block mb-1.5 ml-1">Subtítulo</label>
+                                                <Input
+                                                    placeholder="Ej. Porcentaje (%)"
+                                                    value={metric.subtitle || ''}
+                                                    onChange={e => updateMetric(tIdx, mIdx, { subtitle: e.target.value })}
+                                                    className="h-10 text-[10px] font-bold bg-black/20 border-white/5 text-slate-400 placeholder:text-slate-800 rounded-xl focus:border-nutrition-500"
                                                 />
                                             </div>
                                             <div className="flex-1 w-full">

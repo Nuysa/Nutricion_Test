@@ -38,104 +38,252 @@ ChartJS.register(
 
 interface PatientHistoryChartsProps {
     fechasHistorial: string[];
-    pesoData: number[];
-    imcData: number[];
-    grasaPctData: number[];
-    grasaKgData: number[];
-    etiquetasDiagnosticoGrasa: (string | string[])[];
-    diffGrasaData: number[];
-    musculoPctData: number[];
-    musculoKgData: number[];
-    etiquetasDiagnosticoMusculo: (string | string[])[];
-    diffMusculoData: number[];
-    cinturaCmData: number[];
-    etiquetasDiagnosticoCintura: (string | string[])[];
-    // Nuevas Medidas
-    brazoRelajadoData?: number[];
-    brazoFlexionadoData?: number[];
-    antebrazoData?: number[];
-    toraxData?: number[];
-    cinturaMinData?: number[];
-    cinturaMaxData?: number[];
-    caderaMaxData?: number[];
-    musloMaxData?: number[];
-    musloMedialData?: number[];
-    pantorrillaPerimData?: number[];
-    tricepsData?: number[];
-    subescapularData?: number[];
-    abdominalData?: number[];
-    musloMedialFoldData?: number[];
-    pantorrillaFoldData?: number[];
-    crestaIliacaData?: number[];
-    bicepsData?: number[];
-    sumaPlieguesData?: number[];
+    measurements: any[];
+    clinicalVariables: any[];
+    patientHeight?: number;
+    patientGender?: string;
+    patientAge?: number;
 }
 
 export function PatientHistoryCharts({
-    fechasHistorial,
-    pesoData,
-    imcData,
-    grasaPctData,
-    grasaKgData,
-    etiquetasDiagnosticoGrasa,
-    diffGrasaData,
-    musculoPctData,
-    musculoKgData,
-    etiquetasDiagnosticoMusculo,
-    diffMusculoData,
-    cinturaCmData,
-    etiquetasDiagnosticoCintura,
-    brazoRelajadoData = [],
-    brazoFlexionadoData = [],
-    antebrazoData = [],
-    toraxData = [],
-    cinturaMinData = [],
-    cinturaMaxData = [],
-    caderaMaxData = [],
-    musloMaxData = [],
-    musloMedialData = [],
-    pantorrillaPerimData = [],
-    tricepsData = [],
-    subescapularData = [],
-    abdominalData = [],
-    musloMedialFoldData = [],
-    pantorrillaFoldData = [],
-    crestaIliacaData = [],
-    bicepsData = [],
-    sumaPlieguesData = []
+    fechasHistorial = [],
+    measurements = [],
+    clinicalVariables = [],
+    patientHeight = 170,
+    patientGender = 'femenino',
+    patientAge = 30
 }: PatientHistoryChartsProps) {
-    const [activeTab, setActiveTab] = useState<'peso' | 'grasa' | 'musculo' | 'cintura' | 'medidas'>('peso');
+    const [activeTab, setActiveTab] = useState<string>('peso');
     const [tabConfigs, setTabConfigs] = useState<any[]>([]);
 
     useEffect(() => {
         VariablesService.getDashboardLayout('paciente_widget').then(layout => {
             if (layout && layout.columns) {
                 setTabConfigs(layout.columns);
+                if (layout.columns.length > 0) setActiveTab(layout.columns[0].id || layout.columns[0].name.toLowerCase());
             }
         }).catch(console.error);
     }, []);
 
-    const getTabConfig = (defaultName: string, FallbackIcon: any, fallbackColor: string) => {
-        const config = tabConfigs.find(t => t.name.toLowerCase() === defaultName.toLowerCase());
-        const IconMatch = config && AVAILABLE_ICONS[config.icon] ? AVAILABLE_ICONS[config.icon] : FallbackIcon;
-        const color = config ? config.lineColor || config.btnColor || fallbackColor : fallbackColor;
-        return { Icon: IconMatch, color, label: config ? config.name : defaultName };
+    // IMPORTANTE: measurements viene [NUEVO -> ANTIGUO] o [ANTIGUO -> NUEVO]?
+    // El TrackingDashboard hace un reverse() antes de pasar los arrays.
+    // Nosotros necesitamos [ANTIGUO -> NUEVO] para la gráfica.
+    // Asumiremos que el padre pasa 'measurements' tal cual vienen de la BD [NUEVO -> ANTIGUO].
+    // Mejoramos la ordenación cronológica para que sea robusta
+    const chronoMeasurements = React.useMemo(() => {
+        if (!measurements || measurements.length === 0) return [];
+        
+        // Creamos una copia y ordenamos por fecha ascendente [ANTIGUO -> NUEVO]
+        return [...measurements].sort((a, b) => {
+            const dateA = new Date(a.date).getTime();
+            const dateB = new Date(b.date).getTime();
+            // Si las fechas son inválidas (NaN), comparamos los strings como fallback
+            if (isNaN(dateA) || isNaN(dateB)) return a.date.localeCompare(b.date);
+            return dateA - dateB;
+        });
+    }, [measurements]);
+
+    const renderFechas = fechasHistorial;
+    const totalSlots = renderFechas.length;
+
+    /**
+     * Extrae tanto el valor numérico (para la línea) como el texto (para etiquetas/diagnósticos)
+     */
+    const getMetricData = (metric: any) => {
+        const { variable_id, isSystem, label } = metric;
+        const values: number[] = [];
+        const labels: string[] = [];
+        
+        // Búsqueda "Ultra-Fuzzy" para encontrar la variable (ID, Código o Nombre)
+        const normalize = (s: string) => s?.toUpperCase().replace(/[\s_-]/g, '') || '';
+        const targetNorm = normalize(variable_id);
+        
+        const v = clinicalVariables.find(cv => 
+            cv.id === variable_id || 
+            normalize(cv.code) === targetNorm || 
+            normalize(cv.name) === targetNorm
+        );
+
+        chronoMeasurements.forEach((m, idx) => {
+            let val: any = null;
+            let textLabel: string | null = null;
+
+            const isDiffGrasa = label && label.toLowerCase().includes('diferencia de grasa');
+            const isDiffMusculo = label && (label.toLowerCase().includes('diferencia de músculo') || label.toLowerCase().includes('diferencia de musculo'));
+
+            // 1. Caso Variables de Sistema o Diferencias
+            if (isSystem || (variable_id && variable_id.startsWith('SYSTEM_')) || isDiffGrasa || isDiffMusculo) {
+                if (variable_id === 'SYSTEM_IMC' || (label && label.toUpperCase() === 'IMC')) {
+                    const w = parseFloat(m.weight || m._rawSource?.weight) || 0;
+                    val = w > 0 ? parseFloat((w / ((patientHeight / 100) * (patientHeight / 100))).toFixed(2)) : 0;
+                } else if (variable_id === 'SYSTEM_CALC_FAT_KG' || (label && label.toLowerCase().includes('grasa corporal (kg)'))) {
+                    const w = parseFloat(m.weight || m._rawSource?.weight) || 0;
+                    const pct = parseFloat(m._computedInputs?.['GRASA_CORPORAL'] || m._computedInputs?.['GRASA'] || m.body_fat_percentage) || 0;
+                    val = parseFloat((w * (pct / 100)).toFixed(2));
+                } else if (variable_id === 'SYSTEM_CALC_MUSCLE_KG' || (label && label.toLowerCase().includes('masa muscular lee (kg)'))) {
+                    const w = parseFloat(m.weight || m._rawSource?.weight) || 0;
+                    const pct = parseFloat(m._computedInputs?.['MASA_MUSCULAR_LEE'] || m._computedInputs?.['MUSCULO']) || 0;
+                    val = parseFloat((w * (pct / 100)).toFixed(2));
+                } else if (label && label.toLowerCase().includes('diferencia de grasa')) {
+                    if (idx === 0) {
+                        val = 0;
+                    } else {
+                        const mPrev = chronoMeasurements[idx - 1];
+                        
+                        const wCurr = parseFloat(m.weight || m._rawSource?.weight) || 0;
+                        const pctCurr = parseFloat(m._computedInputs?.['GRASA_CORPORAL'] || m._computedInputs?.['GRASA'] || m.body_fat_percentage) || 0;
+                        const currFat = wCurr * (pctCurr / 100);
+
+                        const wPrev = parseFloat(mPrev.weight || mPrev._rawSource?.weight) || 0;
+                        const pctPrev = parseFloat(mPrev._computedInputs?.['GRASA_CORPORAL'] || mPrev._computedInputs?.['GRASA'] || mPrev.body_fat_percentage) || 0;
+                        const prevFat = wPrev * (pctPrev / 100);
+
+                        val = parseFloat((currFat - prevFat).toFixed(2));
+                    }
+                } else if (label && (label.toLowerCase().includes('diferencia de músculo') || label.toLowerCase().includes('diferencia de musculo'))) {
+                    if (idx === 0) {
+                        val = 0;
+                    } else {
+                        const mPrev = chronoMeasurements[idx - 1];
+                        
+                        const wCurr = parseFloat(m.weight || m._rawSource?.weight) || 0;
+                        const pctCurr = parseFloat(m._computedInputs?.['MASA_MUSCULAR_LEE'] || m._computedInputs?.['MUSCULO']) || 0;
+                        const currMusc = wCurr * (pctCurr / 100);
+
+                        const wPrev = parseFloat(mPrev.weight || mPrev._rawSource?.weight) || 0;
+                        const pctPrev = parseFloat(mPrev._computedInputs?.['MASA_MUSCULAR_LEE'] || mPrev._computedInputs?.['MUSCULO']) || 0;
+                        const prevMusc = wPrev * (pctPrev / 100);
+
+                        val = parseFloat((currMusc - prevMusc).toFixed(2));
+                    }
+                }
+            } else {
+                // 2. Caso Variable Clínica Específica
+                // Generamos todos los códigos posibles para buscar en _computedInputs
+                const possibleCodes = v ? [v.code, v.name, v.id] : [variable_id];
+                
+                // Prioridad 0: Si el ID de la variable mapeada es directamente una columna nativa
+                if (variable_id === 'body_fat_percentage' || variable_id === 'grasa') {
+                    const natVal = parseFloat(m.body_fat_percentage || m._rawSource?.body_fat_percentage);
+                    if (!isNaN(natVal)) {
+                        labels.push("");
+                        dataPoints.push(natVal);
+                        return;
+                    }
+                } else if (variable_id === 'weight' || variable_id === 'peso') {
+                    const natVal = parseFloat(m.weight || m._rawSource?.weight);
+                    if (!isNaN(natVal)) {
+                        labels.push("");
+                        dataPoints.push(natVal);
+                        return;
+                    }
+                } else if (variable_id === 'waist_circumference_cm' || variable_id === 'cintura') {
+                    const natVal = parseFloat(m.waist_circumference_cm || m._rawSource?.waist_circumference_cm);
+                    if (!isNaN(natVal)) {
+                        labels.push("");
+                        dataPoints.push(natVal);
+                        return;
+                    }
+                }
+
+                for (const code of possibleCodes) {
+                    if (!code) continue;
+                    const codeUpper = code.toUpperCase();
+                    const codeNorm = normalize(code);
+
+                    // Prioridad Única: Buscar en _computedInputs por CUALQUIER variante del código
+                    // _computedInputs ya contiene los campos nativos, extra_data y resultados de fórmulas.
+                    const computedKey = Object.keys(m._computedInputs || {}).find(k => k === codeUpper || normalize(k) === codeNorm);
+                    const computed = computedKey ? m._computedInputs[computedKey] : undefined;
+
+                    if (computed !== undefined && computed !== null) {
+                        // Leemos la etiqueta si TrackingDashboard la guardó desde el rango
+                        const computedLabel = computedKey ? m._computedInputs[`${computedKey}_LABEL`] : undefined;
+                        
+                        if (computedLabel) {
+                            textLabel = computedLabel;
+                            val = parseFloat(computed) || 0;
+                        } else if (typeof computed === 'string' && isNaN(parseFloat(computed))) {
+                            textLabel = computed;
+                            // Fallback numérico para que la gráfica no sea plana en 0
+                            if (codeNorm.includes('CINTURA')) val = parseFloat(m.waist_circumference_cm || m._rawSource?.waist_circumference_cm) || 0;
+                            else if (codeNorm.includes('GRASA')) val = parseFloat(m.body_fat_percentage || m._rawSource?.body_fat_percentage) || 0;
+                            else if (codeNorm.includes('PESO')) val = parseFloat(m.weight || m._rawSource?.weight) || 0;
+                            else val = 0;
+                        } else {
+                            val = parseFloat(computed);
+                        }
+                        break;
+                    }
+
+                    // Prioridad 3: extra_data
+                    let parsedExtra = m.extra_data || {};
+                    if (typeof m.extra_data === 'string') {
+                        try {
+                            parsedExtra = JSON.parse(m.extra_data);
+                        } catch (e) {
+                            parsedExtra = {};
+                        }
+                    }
+
+                    const extraKey = Object.keys(parsedExtra).find(k => k === codeUpper || normalize(k) === codeNorm);
+                    const extra = extraKey ? parsedExtra[extraKey] : undefined;
+                    
+                    if (extra !== undefined && extra !== null) {
+                        if (typeof extra === 'string' && isNaN(parseFloat(extra))) {
+                            textLabel = extra;
+                            val = 0;
+                        } else {
+                            val = parseFloat(extra);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // Si el valor es numérico y no tenemos label, pero la variable tiene rangos, calculamos el label
+            if (v && v.ranges && v.ranges.length > 0 && val !== null && !textLabel) {
+                const numericVal = parseFloat(val);
+                const range = v.ranges.find((r: any) => {
+                    const min = parseFloat(r.min);
+                    const max = parseFloat(r.max);
+                    return (isNaN(min) || numericVal >= min) && (isNaN(max) || numericVal <= max);
+                });
+                if (range) textLabel = range.label;
+            }
+
+            values.push(val || 0);
+            labels.push(textLabel || "");
+        });
+
+        return { values, labels };
     };
 
-    const pesoConfig = getTabConfig('Peso', Scale, '#10b981');
-    const grasaConfig = getTabConfig('Grasa', Droplet, '#3b82f6');
-    const musculoConfig = getTabConfig('Músculo', BicepsFlexed, '#ef4444');
-    const cinturaConfig = getTabConfig('Cintura', Ruler, '#a855f7');
-    const medidasConfig = getTabConfig('Medidas', Heart, '#f472b6');
+    const getDiagnosticLabels = (metric: any, dataPoints: number[], currentTextLabels: string[]) => {
+        // 1. Si la variable ya devolvió un texto (desde la fórmula), lo usamos tal cual
+        if (currentTextLabels.some(l => l && l !== "")) {
+            return currentTextLabels.map(l => l || "—");
+        }
 
-    // Premium Dark Button Styles
-    const btnBase = "rounded-2xl flex flex-col items-center justify-center py-1.5 w-[19%] transition-all cursor-pointer border border-transparent";
-    const btnActive = "bg-white/5 border-white/10 text-white shadow-2xl scale-105 relative before:absolute before:bottom-0 before:left-1/2 before:-translate-x-1/2 before:w-8 before:h-1 before:bg-nutrition-500 before:rounded-t-full";
-    const btnInactive = "text-slate-500 hover:text-slate-300 hover:bg-white/[0.02]";
+        // 2. Si no, buscamos la variable para ver si tiene rangos configurados
+        const v = clinicalVariables.find(cv => cv.id === metric.variable_id || cv.code === metric.variable_id || (cv.name && cv.name === metric.variable_id));
+        if (!v || !v.ranges || v.ranges.length === 0) return dataPoints.map(() => "—");
 
-    const minSlots = 2; // Reducido de 6 para evitar amontonamiento en móviles
-    const totalSlots = Math.max(minSlots, fechasHistorial.length);
-    const renderFechas = Array.from({ length: totalSlots }).map((_, i) => fechasHistorial[i] || "");
+        return dataPoints.map(val => {
+            if (val === 0 || val === null || val === undefined) return "—";
+            
+            // Buscamos en qué rango cae el valor
+            const range = v.ranges.find((r: any) => {
+                const min = parseFloat(r.min);
+                const max = parseFloat(r.max);
+                // Si el rango es por ejemplo "Abajo de 80", min suele ser 0 o null
+                const minOk = isNaN(min) || val >= min;
+                const maxOk = isNaN(max) || val <= max;
+                return minOk && maxOk;
+            });
+            return range ? range.label : "—";
+        });
+    };
 
     const getChartOptions = (dataPoints: number[], customLabels?: any[]) => {
         let minVal = Math.min(...dataPoints.filter(n => typeof n === 'number' && !isNaN(n)));
@@ -156,7 +304,17 @@ export function PatientHistoryCharts({
                     bodyFont: { family: 'inherit', size: 12 },
                     padding: 12,
                     cornerRadius: 12,
-                    displayColors: false
+                    displayColors: false,
+                    callbacks: {
+                        label: (context: any) => {
+                            const val = context.parsed.y;
+                            const idx = context.dataIndex;
+                            if (customLabels && customLabels[idx] && customLabels[idx] !== "—") {
+                                return [`${val}`, `Estado: ${customLabels[idx]}`];
+                            }
+                            return `${val}`;
+                        }
+                    }
                 }
             },
             scales: {
@@ -171,8 +329,17 @@ export function PatientHistoryCharts({
                         maxRotation: 0,
                         autoSkip: false,
                         callback: function (value: any, index: number) {
-                            if (index >= dataPoints.length) return "";
-                            return customLabels ? (Array.isArray(customLabels[index]) ? customLabels[index][0] : customLabels[index]) : dataPoints[index];
+                            const val = dataPoints[index];
+                            if (val === undefined || val === null) return "";
+                            
+                            // Prioridad absoluta a las etiquetas de diagnóstico (customLabels)
+                            if (customLabels && customLabels[index]) {
+                                if (customLabels[index] === "—") return val; // Si no hay rango, mostramos el número
+                                const labelText = Array.isArray(customLabels[index]) ? customLabels[index][0] : customLabels[index];
+                                return labelText;
+                            }
+                            
+                            return val;
                         }
                     },
                     border: { display: false }
@@ -187,7 +354,7 @@ export function PatientHistoryCharts({
         } as any;
     };
 
-    const getChartData = (dataPoints: number[], lineColor: string, customLabels?: any[]) => {
+    const getChartData = (dataPoints: number[], lineColor: string) => {
         const paddedData = Array.from({ length: totalSlots }).map((_, i) => i < dataPoints.length ? dataPoints[i] : null);
         return {
             labels: renderFechas,
@@ -235,11 +402,13 @@ export function PatientHistoryCharts({
             </div>
             <div className="flex-1 min-w-0 w-full h-[90px] relative z-10 overflow-hidden text-left flex items-center px-1">
                 <div className="w-full h-full relative flex justify-between">
-                    <Line options={getChartOptions(dataPoints, customLabels)} data={getChartData(dataPoints, lineColor, customLabels)} />
+                    <Line options={getChartOptions(dataPoints, customLabels)} data={getChartData(dataPoints, lineColor)} />
                 </div>
             </div>
         </div>
     );
+
+    const activeTabConfig = tabConfigs.find(t => t.id === activeTab || t.name.toLowerCase() === activeTab);
 
     return (
         <div className="bg-[#0B1120] rounded-3xl sm:rounded-[3rem] border border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.5)] p-0 flex flex-col overflow-hidden m-auto w-full mb-8 sm:mb-12 pb-8 sm:pb-12 relative">
@@ -247,93 +416,55 @@ export function PatientHistoryCharts({
             <div className="absolute top-0 left-1/4 w-1/2 h-64 bg-nutrition-500/5 blur-[120px] pointer-events-none" />
 
             <div className="bg-white/[0.02] border-b border-white/5 rounded-b-[2rem] sm:rounded-b-[3rem] px-4 sm:px-10 py-1.5 mb-4 flex justify-between items-center z-10 w-full relative overflow-x-auto no-scrollbar">
-                {[
-                    { key: 'peso', config: pesoConfig },
-                    { key: 'grasa', config: grasaConfig },
-                    { key: 'musculo', config: musculoConfig },
-                    { key: 'cintura', config: cinturaConfig },
-                    { key: 'medidas', config: medidasConfig }
-                ].map(({ key, config }) => (
-                    <button key={key} onClick={() => setActiveTab(key as any)} className={cn(btnBase, activeTab === key ? btnActive : btnInactive)}>
-                        <config.Icon className={cn("h-5 w-5 sm:h-6 sm:w-6 mb-1 sm:mb-2 transition-colors", activeTab !== key && "text-slate-600")} style={activeTab === key ? { color: config.color } : {}} />
-                        <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{config.label}</span>
-                    </button>
-                ))}
+                {tabConfigs.map((config) => {
+                    const Icon = AVAILABLE_ICONS[config.icon] || Activity;
+                    const isActive = activeTab === config.id || activeTab === config.name.toLowerCase();
+                    return (
+                        <button 
+                            key={config.id} 
+                            onClick={() => setActiveTab(config.id)} 
+                            className={cn(
+                                "rounded-2xl flex flex-col items-center justify-center py-1.5 w-[19%] transition-all cursor-pointer border border-transparent",
+                                isActive ? "bg-white/5 border-white/10 text-white shadow-2xl scale-105 relative before:absolute before:bottom-0 before:left-1/2 before:-translate-x-1/2 before:w-8 before:h-1 before:bg-nutrition-500 before:rounded-t-full" : "text-slate-500 hover:text-slate-300 hover:bg-white/[0.02]"
+                            )}
+                        >
+                            <Icon className={cn("h-5 w-5 sm:h-6 sm:w-6 mb-1 sm:mb-2 transition-colors", !isActive && "text-slate-600")} style={isActive ? { color: config.lineColor || config.btnColor } : {}} />
+                            <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{config.name}</span>
+                        </button>
+                    );
+                })}
             </div>
 
-            {activeTab === 'peso' && (
-                <div className="flex-1 flex flex-col gap-3 px-4 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
-                    <FechasRow />
-                    <ChartCard title="Evolución Peso" subtitle="Peso Actual (kg)" dataPoints={pesoData} lineColor={pesoConfig.color} />
-                    <ChartCard title="Índice de Masa" subtitle="IMC Bio-Calculado" dataPoints={imcData} lineColor={pesoConfig.color} />
-                </div>
-            )}
+            <div className="flex-1 flex flex-col gap-3 px-4 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
+                <FechasRow />
+                {activeTabConfig && activeTabConfig.metrics.filter((m: any) => m.variable_id !== 'SYSTEM_DATE').map((metric: any) => {
+                    const { values, labels: extractedLabels } = getMetricData(metric);
+                    const labelNorm = (metric.label || metric.visual_title || "").toUpperCase();
+                    const isDiagnostic = labelNorm.includes('DIAGNOSTICO') || labelNorm.includes('DIAGNÓSTICO');
+                    
+                    const labels = isDiagnostic 
+                        ? getDiagnosticLabels(metric, values, extractedLabels) 
+                        : undefined;
+                    
+                    return (
+                        <ChartCard 
+                            key={metric.id}
+                            title={metric.label}
+                            subtitle={metric.subtitle}
+                            dataPoints={values}
+                            lineColor={activeTabConfig.lineColor || activeTabConfig.btnColor}
+                            customLabels={labels}
+                        />
+                    );
+                })}
 
-            {activeTab === 'grasa' && (
-                <div className="flex-1 flex flex-col gap-3 px-4 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
-                    <FechasRow />
-                    <ChartCard title="Grasa Relativa" subtitle="Porcentaje (%)" dataPoints={grasaPctData} lineColor={grasaConfig.color} />
-                    <ChartCard title="Grasa Absoluta" subtitle="Masa Grasa (kg)" dataPoints={grasaKgData} lineColor={grasaConfig.color} />
-                    <ChartCard title="Diferencial" subtitle="Variación (kg)" dataPoints={diffGrasaData} lineColor={grasaConfig.color} />
-                    <ChartCard title="Diagnóstico" subtitle="Estado de Grasa" dataPoints={grasaPctData} lineColor={grasaConfig.color} customLabels={etiquetasDiagnosticoGrasa} />
-                </div>
-            )}
-
-            {activeTab === 'musculo' && (
-                <div className="flex-1 flex flex-col gap-3 px-4 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
-                    <FechasRow />
-                    <ChartCard title="Músculo Lee" subtitle="Porcentaje (%)" dataPoints={musculoPctData} lineColor={musculoConfig.color} />
-                    <ChartCard title="Masa Muscular" subtitle="Masa Lee (kg)" dataPoints={musculoKgData} lineColor={musculoConfig.color} />
-                    <ChartCard title="Diferencial" subtitle="Variación (kg)" dataPoints={diffMusculoData} lineColor={musculoConfig.color} />
-                    <ChartCard title="Diagnóstico" subtitle="Estado Muscular" dataPoints={musculoPctData} lineColor={musculoConfig.color} customLabels={etiquetasDiagnosticoMusculo} />
-                </div>
-            )}
-
-            {activeTab === 'cintura' && (
-                <div className="flex-1 flex flex-col gap-3 px-4 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
-                    <FechasRow />
-                    <ChartCard title="Cintura Mín." subtitle="Medición (cm)" dataPoints={cinturaCmData} lineColor={cinturaConfig.color} />
-                    <ChartCard title="Estado Metabólico" subtitle="Riesgo Cintura" dataPoints={cinturaCmData} lineColor={cinturaConfig.color} customLabels={etiquetasDiagnosticoCintura} />
-                </div>
-            )}
-
-            {activeTab === 'medidas' && (
-                <div className="flex-1 flex flex-col gap-3 px-4 pb-8 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 h-[500px] overflow-y-auto no-scrollbar">
-                    <FechasRow />
-                    <div className="space-y-6">
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-l-2 pl-4" style={{ borderColor: medidasConfig.color }}>Perímetros (cm)</h4>
-                        <div className="flex flex-col gap-4">
-                            <ChartCard title="B. Relajado" subtitle="Perímetro" dataPoints={brazoRelajadoData} lineColor={medidasConfig.color} />
-                            <ChartCard title="B. Tensión" subtitle="Perímetro" dataPoints={brazoFlexionadoData} lineColor={medidasConfig.color} />
-                            <ChartCard title="Antebrazo" subtitle="Perímetro" dataPoints={antebrazoData} lineColor={medidasConfig.color} />
-                            <ChartCard title="Tórax" subtitle="Perímetro" dataPoints={toraxData} lineColor={medidasConfig.color} />
-                            <ChartCard title="Cintura Mín" subtitle="Perímetro" dataPoints={cinturaMinData} lineColor={medidasConfig.color} />
-                            <ChartCard title="Cintura Máx" subtitle="Perímetro" dataPoints={cinturaMaxData} lineColor={medidasConfig.color} />
-                            <ChartCard title="Cadera Máx" subtitle="Perímetro" dataPoints={caderaMaxData} lineColor={medidasConfig.color} />
-                            <ChartCard title="Muslo Máx" subtitle="Perímetro" dataPoints={musloMaxData} lineColor={medidasConfig.color} />
-                            <ChartCard title="Muslo Medial" subtitle="Perímetro" dataPoints={musloMedialData} lineColor={medidasConfig.color} />
-                            <ChartCard title="Pantorrilla" subtitle="Perímetro" dataPoints={pantorrillaPerimData} lineColor={medidasConfig.color} />
-                        </div>
-
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-l-2 pl-4 mt-8" style={{ borderColor: medidasConfig.color }}>Pliegues (mm)</h4>
-                        <div className="flex flex-col gap-4">
-                            <ChartCard title="P. Tríceps" subtitle="Pliegue" dataPoints={tricepsData} lineColor={medidasConfig.color} />
-                            <ChartCard title="P. Subescapular" subtitle="Pliegue" dataPoints={subescapularData} lineColor={medidasConfig.color} />
-                            <ChartCard title="P. Abdominal" subtitle="Pliegue" dataPoints={abdominalData} lineColor={medidasConfig.color} />
-                            <ChartCard title="P. Muslo Medial" subtitle="Pliegue" dataPoints={musloMedialFoldData} lineColor={medidasConfig.color} />
-                            <ChartCard title="P. Pantorrilla" subtitle="Pliegue" dataPoints={pantorrillaFoldData} lineColor={medidasConfig.color} />
-                            <ChartCard title="Cresta Ilíaca" subtitle="Pliegue" dataPoints={crestaIliacaData} lineColor={medidasConfig.color} />
-                            <ChartCard title="P. Bíceps" subtitle="Pliegue" dataPoints={bicepsData} lineColor={medidasConfig.color} />
-                        </div>
-
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] border-l-2 pl-4 mt-8" style={{ borderColor: medidasConfig.color }}>Resultados Totales</h4>
-                        <div className="grid grid-cols-1 gap-4">
-                            <ChartCard title="Suma de 6 Pliegues" subtitle="Total (mm)" dataPoints={sumaPlieguesData} lineColor={medidasConfig.color} />
-                        </div>
+                {!activeTabConfig && (
+                    <div className="p-20 text-center opacity-20">
+                        <Activity className="h-12 w-12 mx-auto mb-4" />
+                        <p className="text-[10px] font-black uppercase tracking-widest">Sin configuración detectada</p>
                     </div>
-                </div>
-            )}
-
+                )}
+            </div>
         </div>
     );
 }
