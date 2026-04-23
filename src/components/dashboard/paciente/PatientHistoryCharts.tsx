@@ -117,26 +117,40 @@ export function PatientHistoryCharts({
                     const w = parseFloat(m.weight || m._rawSource?.weight) || 0;
                     val = w > 0 ? parseFloat((w / ((patientHeight / 100) * (patientHeight / 100))).toFixed(2)) : 0;
                 } else if (variable_id === 'SYSTEM_CALC_FAT_KG' || (label && label.toLowerCase().includes('grasa corporal (kg)'))) {
-                    const w = parseFloat(m.weight || m._rawSource?.weight) || 0;
-                    const pct = parseFloat(m._computedInputs?.['GRASA_CORPORAL'] || m._computedInputs?.['GRASA'] || m.body_fat_percentage) || 0;
-                    val = parseFloat((w * (pct / 100)).toFixed(2));
+                    let calcFat = parseFloat(m._computedInputs?.['GRASA_CORPORAL']);
+                    if (isNaN(calcFat)) {
+                        const w = parseFloat(m.weight || m._rawSource?.weight) || 0;
+                        const pct = parseFloat(m._computedInputs?.['GRASA'] || m.body_fat_percentage) || 0;
+                        calcFat = w * (pct / 100);
+                    }
+                    val = parseFloat(calcFat.toFixed(2));
                 } else if (variable_id === 'SYSTEM_CALC_MUSCLE_KG' || (label && label.toLowerCase().includes('masa muscular lee (kg)'))) {
-                    const w = parseFloat(m.weight || m._rawSource?.weight) || 0;
-                    const pct = parseFloat(m._computedInputs?.['MASA_MUSCULAR_LEE'] || m._computedInputs?.['MUSCULO']) || 0;
-                    val = parseFloat((w * (pct / 100)).toFixed(2));
+                    let calcMusc = parseFloat(m._computedInputs?.['MASA_MUSCULAR_LEE']);
+                    if (isNaN(calcMusc)) {
+                        const w = parseFloat(m.weight || m._rawSource?.weight) || 0;
+                        const pct = parseFloat(m._computedInputs?.['MUSCULO']) || 0;
+                        calcMusc = w * (pct / 100);
+                    }
+                    val = parseFloat(calcMusc.toFixed(2));
                 } else if (label && label.toLowerCase().includes('diferencia de grasa')) {
                     if (idx === 0) {
                         val = 0;
                     } else {
                         const mPrev = chronoMeasurements[idx - 1];
                         
-                        const wCurr = parseFloat(m.weight || m._rawSource?.weight) || 0;
-                        const pctCurr = parseFloat(m._computedInputs?.['GRASA_CORPORAL'] || m._computedInputs?.['GRASA'] || m.body_fat_percentage) || 0;
-                        const currFat = wCurr * (pctCurr / 100);
+                        let currFat = parseFloat(m._computedInputs?.['GRASA_CORPORAL']);
+                        if (isNaN(currFat)) {
+                            const wCurr = parseFloat(m.weight || m._rawSource?.weight) || 0;
+                            const pctCurr = parseFloat(m._computedInputs?.['GRASA'] || m.body_fat_percentage) || 0;
+                            currFat = wCurr * (pctCurr / 100);
+                        }
 
-                        const wPrev = parseFloat(mPrev.weight || mPrev._rawSource?.weight) || 0;
-                        const pctPrev = parseFloat(mPrev._computedInputs?.['GRASA_CORPORAL'] || mPrev._computedInputs?.['GRASA'] || mPrev.body_fat_percentage) || 0;
-                        const prevFat = wPrev * (pctPrev / 100);
+                        let prevFat = parseFloat(mPrev._computedInputs?.['GRASA_CORPORAL']);
+                        if (isNaN(prevFat)) {
+                            const wPrev = parseFloat(mPrev.weight || mPrev._rawSource?.weight) || 0;
+                            const pctPrev = parseFloat(mPrev._computedInputs?.['GRASA'] || mPrev.body_fat_percentage) || 0;
+                            prevFat = wPrev * (pctPrev / 100);
+                        }
 
                         val = parseFloat((currFat - prevFat).toFixed(2));
                     }
@@ -146,13 +160,19 @@ export function PatientHistoryCharts({
                     } else {
                         const mPrev = chronoMeasurements[idx - 1];
                         
-                        const wCurr = parseFloat(m.weight || m._rawSource?.weight) || 0;
-                        const pctCurr = parseFloat(m._computedInputs?.['MASA_MUSCULAR_LEE'] || m._computedInputs?.['MUSCULO']) || 0;
-                        const currMusc = wCurr * (pctCurr / 100);
+                        let currMusc = parseFloat(m._computedInputs?.['MASA_MUSCULAR_LEE']);
+                        if (isNaN(currMusc)) {
+                            const wCurr = parseFloat(m.weight || m._rawSource?.weight) || 0;
+                            const pctCurr = parseFloat(m._computedInputs?.['MUSCULO']) || 0;
+                            currMusc = wCurr * (pctCurr / 100);
+                        }
 
-                        const wPrev = parseFloat(mPrev.weight || mPrev._rawSource?.weight) || 0;
-                        const pctPrev = parseFloat(mPrev._computedInputs?.['MASA_MUSCULAR_LEE'] || mPrev._computedInputs?.['MUSCULO']) || 0;
-                        const prevMusc = wPrev * (pctPrev / 100);
+                        let prevMusc = parseFloat(mPrev._computedInputs?.['MASA_MUSCULAR_LEE']);
+                        if (isNaN(prevMusc)) {
+                            const wPrev = parseFloat(mPrev.weight || mPrev._rawSource?.weight) || 0;
+                            const pctPrev = parseFloat(mPrev._computedInputs?.['MUSCULO']) || 0;
+                            prevMusc = wPrev * (pctPrev / 100);
+                        }
 
                         val = parseFloat((currMusc - prevMusc).toFixed(2));
                     }
