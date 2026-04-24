@@ -45,6 +45,33 @@
     --chart-4: 43 74% 66%;
 
     --chart-5: 27 87% 67%;
+
+    /* N8N Chat Theme Overrides */
+    --chat--color--primary: #FF7A00 !important;
+    --chat--color--secondary: #FF7A00 !important;
+    --chat--color-white: #151F32 !important;
+    --chat--color-light: #0B1120 !important;
+    --chat--color-dark: #F8FAFC !important;
+    
+    --chat--body--background: #0B1120 !important;
+    --chat--header--background: #151F32 !important;
+    --chat--header--color: #F8FAFC !important;
+    
+    --chat--message--bot--background: #151F32 !important;
+    --chat--message--bot--color: #F8FAFC !important;
+    --chat--message--user--background: #FF7A00 !important;
+    --chat--message--user--color: #FFFFFF !important;
+    
+    --chat--input--background: #151F32 !important;
+    --chat--input--container--background: #151F32 !important;
+    --chat--input--text-color: #F8FAFC !important;
+    
+    --chat--footer--background: #0B1120 !important;
+    --chat--footer--color: #F8FAFC !important;
+    
+    --chat--toggle--background: #FF7A00 !important;
+    --chat--toggle--hover--background: #E66A00 !important;
+    --chat--toggle--active--background: #CC5E00 !important;
   }
 
   .dark {
