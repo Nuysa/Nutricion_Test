@@ -59,31 +59,29 @@ export default function RootLayout({
 
                             const webhookUrl = 'https://smudge-batch-handwork.ngrok-free.dev/webhook/7d96619e-99c0-47b8-ad57-105e0096050d/chat';
 
-                            // Hacemos un ping silencioso para ver si ngrok/n8n está en línea
-                            fetch(webhookUrl, { method: 'OPTIONS' })
-                                .then(response => {
-                                    // Si responde (incluso con 405 Method Not Allowed), el servidor existe
-                                    if (response.ok || response.status === 405 || response.status === 404) {
-                                        createChat({
-                                            webhookUrl: webhookUrl,
-                                            initialMessages: [
-                                                '¡Hola! 👋',
-                                                'Soy tu asistente virtual de NuySa. ¿En qué te puedo ayudar hoy?'
-                                            ],
-                                            i18n: {
-                                                en: {
-                                                    title: 'Asistente NuySa',
-                                                    subtitle: 'Soporte inteligente para tu salud',
-                                                    footer: '',
-                                                    getStarted: 'Nueva conversación',
-                                                    inputPlaceholder: 'Escribe tu pregunta...',
-                                                },
-                                            }
-                                        });
-                                    }
+                            // Hacemos un ping con modo 'no-cors' para evitar bloqueos del navegador en Vercel
+                            fetch(webhookUrl, { method: 'GET', mode: 'no-cors' })
+                                .then(() => {
+                                    // Si la promesa se resuelve, significa que el túnel de ngrok está respondiendo
+                                    createChat({
+                                        webhookUrl: webhookUrl,
+                                        initialMessages: [
+                                            '¡Hola! 👋',
+                                            'Soy tu asistente virtual de NuySa. ¿En qué te puedo ayudar hoy?'
+                                        ],
+                                        i18n: {
+                                            en: {
+                                                title: 'Asistente NuySa',
+                                                subtitle: 'Soporte inteligente para tu salud',
+                                                footer: '',
+                                                getStarted: 'Nueva conversación',
+                                                inputPlaceholder: 'Escribe tu pregunta...',
+                                            },
+                                        }
+                                    });
                                 })
                                 .catch(err => {
-                                    console.log("Asistente NuySa offline (Servidor n8n no disponible).");
+                                    console.log("Asistente NuySa offline (Túnel ngrok no disponible).");
                                 });
                         `
                     }}
