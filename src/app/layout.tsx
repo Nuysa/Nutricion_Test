@@ -69,31 +69,110 @@ export default function RootLayout({
                             })
                                 .then(res => {
                                     // Si llegamos aquí, n8n está activo (respondió 400, 415, 200, etc. con cabeceras CORS)
-                                    createChat({
-                                        webhookUrl: webhookUrl,
-                                        initialMessages: [
-                                            '¡Hola! 👋',
-                                            '¿En qué sección puedo ayudarte hoy? Escribe el número o la opción:',
-                                            '[1] Servicios',
-                                            '[2] Horarios',
-                                            '[3] Preguntas Frecuentes',
-                                            '[4] Otra consulta'
-                                        ],
-                                        i18n: {
-                                            en: {
-                                                title: 'Asistente NuySa',
-                                                subtitle: 'Asistente Nuysa 24/7',
-                                                footer: '',
-                                                getStarted: 'Nueva conversación',
-                                                inputPlaceholder: 'Escribe tu respuesta o selecciona una opción...',
-                                            },
-                                        }
-                                    });
-                                })
-                                .catch(err => {
-                                    console.log("Asistente NuySa offline (Workflow inactivo o sin CORS).");
-                                });
-                        `
+                            // Inyectar estilos CSS directamente para asegurar prioridad máxima y evitar caché
+                            const style = document.createElement('style');
+                            style.innerHTML = `
+                                #n8n-chat .chat-window-wrapper {
+                                    --chat--color--primary: #FF7A00;
+                                    --chat--color-white: #151F32;
+                                    --chat--input--background: #151F32;
+                                    --chat--header--background: #151F32;
+                                    --chat--body--background: #0B1120;
+                                }
+                                
+                                #n8n-chat .chat-input, #n8n-chat .chat-inputs {
+                                    background-color: #0B1120 !important;
+                                    display: flex !important;
+                                    flex-direction: row !important;
+                                    flex-wrap: nowrap !important;
+                                    align-items: flex-end !important;
+                                    padding: 10px !important;
+                                    border-top: 1px solid #1E293B !important;
+                                    box-sizing: border-box !important;
+                                    width: 100% !important;
+                                }
+
+                                #n8n-chat textarea {
+                                    flex: 1 !important;
+                                    background-color: #151F32 !important;
+                                    color: #F8FAFC !important;
+                                    border: 1px solid #334155 !important;
+                                    border-radius: 8px !important;
+                                    padding: 10px !important;
+                                    height: 45px !important;
+                                    min-height: 45px !important;
+                                    margin: 0 !important;
+                                    resize: none !important;
+                                    width: 100% !important;
+                                }
+
+                                #n8n-chat .chat-inputs-controls {
+                                    display: flex !important;
+                                    margin-left: 8px !important;
+                                    flex-shrink: 0 !important;
+                                    height: 45px !important;
+                                    align-items: center !important;
+                                }
+
+                                #n8n-chat .chat-input-send-button {
+                                    background-color: #FF7A00 !important;
+                                    color: #FFFFFF !important;
+                                    border-radius: 50% !important;
+                                    width: 40px !important;
+                                    height: 40px !important;
+                                    display: flex !important;
+                                    align-items: center !important;
+                                    justify-content: center !important;
+                                    cursor: pointer !important;
+                                    border: none !important;
+                                    padding: 0 !important;
+                                }
+
+                                #n8n-chat .chat-input-send-button svg {
+                                    fill: #FFFFFF !important;
+                                    color: #FFFFFF !important;
+                                    width: 20px !important;
+                                    height: 20px !important;
+                                }
+                                
+                                #n8n-chat .chat-header {
+                                    background-color: #151F32 !important;
+                                    color: #F8FAFC !important;
+                                }
+                                
+                                #n8n-chat .chat-message-from-bot {
+                                    background-color: #151F32 !important;
+                                    color: #F8FAFC !important;
+                                }
+                            `;
+                            document.head.appendChild(style);
+
+                            createChat({
+                                webhookUrl: webhookUrl,
+                                initialMessages: [
+                                    '¡Hola! 👋',
+                                    '¿En qué sección puedo ayudarte hoy? Escribe el número o la opción:',
+                                    '[1] Servicios',
+                                    '[2] Horarios',
+                                    '[3] Preguntas Frecuentes',
+                                    '[4] Otra consulta'
+                                ],
+                                i18n: {
+                                    en: {
+                                        title: 'Asistente NuySa',
+                                        subtitle: 'Asistente Nuysa 24/7',
+                                        footer: '',
+                                        getStarted: 'Nueva conversación',
+                                        inputPlaceholder: 'Escribe tu respuesta o selecciona una opción...',
+                                    },
+                                }
+                            });
+                        })
+                        .catch(err => {
+                            console.log("Asistente NuySa offline (Workflow inactivo o sin CORS).");
+                        });
+                `
+
                     }}
                 />
             </body>
