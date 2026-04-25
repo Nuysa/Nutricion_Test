@@ -47,37 +47,38 @@
     --chart-5: 27 87% 67%;
 
     /* N8N Chat Theme Overrides */
-    --chat--color--primary: #FF7A00 !important;
-    --chat--color--secondary: #FF7A00 !important;
-    --chat--color-white: #151F32 !important;
-    --chat--color-light: #0B1120 !important;
-    --chat--color-dark: #F8FAFC !important;
+    --chat--color--primary: #FF7A00;
+    --chat--color--secondary: #FF7A00;
+    --chat--color-white: #151F32;
+    --chat--color-light: #0B1120;
+    --chat--color-dark: #F8FAFC;
 
-    --chat--body--background: #0B1120 !important;
-    --chat--header--background: #151F32 !important;
-    --chat--header--color: #F8FAFC !important;
+    --chat--body--background: #0B1120;
+    --chat--header--background: #151F32;
+    --chat--header--color: #F8FAFC;
 
-    --chat--message--bot--background: #151F32 !important;
-    --chat--message--bot--color: #F8FAFC !important;
-    --chat--message--user--background: #FF7A00 !important;
-    --chat--message--user--color: #FFFFFF !important;
+    --chat--message--bot--background: #151F32;
+    --chat--message--bot--color: #F8FAFC;
+    --chat--message--user--background: #FF7A00;
+    --chat--message--user--color: #FFFFFF;
 
-    --chat--input--background: #151F32 !important;
-    --chat--input--container--background: #151F32 !important;
-    --chat--input--text-color: #F8FAFC !important;
+    --chat--input--background: #151F32;
+    --chat--input--container--background: #151F32;
+    --chat--input--text-color: #F8FAFC;
 
-    --chat--footer--background: #0B1120 !important;
-    --chat--footer--color: #F8FAFC !important;
+    --chat--footer--background: #0B1120;
+    --chat--footer--color: #F8FAFC;
 
-    --chat--toggle--background: #FF7A00 !important;
-    --chat--toggle--hover--background: #E66A00 !important;
-    --chat--toggle--active--background: #CC5E00 !important;
+    --chat--toggle--background: #FF7A00;
+    --chat--toggle--hover--background: #E66A00;
+    --chat--toggle--active--background: #CC5E00;
 
-    --chat--window--border-radius: 12px !important;
+    --chat--window--border-radius: 12px;
   }
 
   /* Fix for N8N chat input broken by Tailwind CSS */
-  .chat-inputs {
+  #n8n-chat .chat-input,
+  #n8n-chat .chat-inputs {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -85,10 +86,13 @@
     border-top: 1px solid #1E293B !important;
     padding: 10px !important;
     width: 100% !important;
+    box-sizing: border-box !important;
   }
   
-  .chat-inputs textarea {
+  #n8n-chat .chat-inputs textarea {
     flex-grow: 1 !important;
+    flex-shrink: 1 !important;
+    width: 100% !important;
     background-color: #151F32 !important;
     color: #F8FAFC !important;
     border: 1px solid #1E293B !important;
@@ -96,31 +100,40 @@
     padding: 12px !important;
     resize: none !important;
     min-height: 45px !important;
+    height: 45px !important;
     margin-right: 10px !important;
     outline: none !important;
+    box-sizing: border-box !important;
   }
   
-  .chat-inputs textarea::placeholder {
+  #n8n-chat .chat-inputs textarea::placeholder {
     color: #94A3B8 !important;
   }
   
-  .chat-inputs-controls {
+  #n8n-chat .chat-inputs-controls {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    flex: 0 0 auto !important;
   }
   
-  .chat-input-send-button {
+  #n8n-chat .chat-input-send-button {
     background-color: #FF7A00 !important;
     color: #FFFFFF !important;
     border-radius: 50% !important;
     width: 40px !important;
     height: 40px !important;
+    min-width: 40px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     border: none !important;
     cursor: pointer !important;
+    box-sizing: border-box !important;
+  }
+  
+  #n8n-chat .chat-input-send-button svg {
+    fill: #FFFFFF !important;
   }
   
   .chat-input-send-button svg {
