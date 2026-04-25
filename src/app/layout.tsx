@@ -49,7 +49,7 @@ export default function RootLayout({
                 {children}
                 <Toaster />
 
-                <Script 
+                <Script
                     id="n8n-chat-widget"
                     type="module"
                     strategy="lazyOnload"
@@ -67,15 +67,19 @@ export default function RootLayout({
                                         webhookUrl: webhookUrl,
                                         initialMessages: [
                                             '¡Hola! 👋',
-                                            'Soy tu asistente virtual de NuySa. ¿En qué te puedo ayudar hoy?'
+                                            '¿En qué sección puedo ayudarte hoy? Escribe el número o la opción:',
+                                            '[1] Servicios',
+                                            '[2] Horarios',
+                                            '[3] Preguntas Frecuentes',
+                                            '[4] Otra consulta'
                                         ],
                                         i18n: {
                                             en: {
                                                 title: 'Asistente NuySa',
-                                                subtitle: 'Soporte inteligente para tu salud',
+                                                subtitle: 'Asistente Nuysa 24/7',
                                                 footer: '',
                                                 getStarted: 'Nueva conversación',
-                                                inputPlaceholder: 'Escribe tu pregunta...',
+                                                inputPlaceholder: 'Escribe tu respuesta o selecciona una opción...',
                                             },
                                         }
                                     });
