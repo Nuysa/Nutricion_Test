@@ -45,8 +45,12 @@
     --chart-4: 43 74% 66%;
 
     --chart-5: 27 87% 67%;
+  }
 
-    /* N8N Chat Theme Overrides */
+  /* N8N Chat Theme Overrides - High Specificity to beat dynamically injected styles */
+  body #n8n-chat, 
+  body .n8n-chat,
+  body .chat-window-wrapper {
     --chat--color--primary: #FF7A00;
     --chat--color--secondary: #FF7A00;
     --chat--color-white: #151F32;
@@ -77,8 +81,10 @@
   }
 
   /* Fix for N8N chat input broken by Tailwind CSS */
-  #n8n-chat .chat-input,
-  #n8n-chat .chat-inputs {
+  body #n8n-chat .chat-input,
+  body #n8n-chat .chat-inputs,
+  body .n8n-chat .chat-input,
+  body .n8n-chat .chat-inputs {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -89,7 +95,8 @@
     box-sizing: border-box !important;
   }
   
-  #n8n-chat .chat-inputs textarea {
+  body #n8n-chat textarea,
+  body .n8n-chat textarea {
     flex-grow: 1 !important;
     flex-shrink: 1 !important;
     width: 100% !important;
@@ -101,23 +108,28 @@
     resize: none !important;
     min-height: 45px !important;
     height: 45px !important;
-    margin-right: 10px !important;
+    margin: 0 10px 0 0 !important;
     outline: none !important;
     box-sizing: border-box !important;
   }
   
-  #n8n-chat .chat-inputs textarea::placeholder {
+  body #n8n-chat textarea::placeholder,
+  body .n8n-chat textarea::placeholder {
     color: #94A3B8 !important;
   }
   
-  #n8n-chat .chat-inputs-controls {
+  body #n8n-chat .chat-inputs-controls,
+  body .n8n-chat .chat-inputs-controls {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     flex: 0 0 auto !important;
   }
   
-  #n8n-chat .chat-input-send-button {
+  body #n8n-chat button.chat-input-send-button,
+  body .n8n-chat button.chat-input-send-button,
+  body #n8n-chat .chat-input-send-button,
+  body .n8n-chat .chat-input-send-button {
     background-color: #FF7A00 !important;
     color: #FFFFFF !important;
     border-radius: 50% !important;
@@ -132,7 +144,8 @@
     box-sizing: border-box !important;
   }
   
-  #n8n-chat .chat-input-send-button svg {
+  body #n8n-chat .chat-input-send-button svg,
+  body .n8n-chat .chat-input-send-button svg {
     fill: #FFFFFF !important;
   }
   
