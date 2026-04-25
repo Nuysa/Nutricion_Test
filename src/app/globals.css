@@ -110,6 +110,7 @@
     flex-grow: 1 !important;
     flex-shrink: 1 !important;
     width: 100% !important;
+    min-width: 0 !important;
     background-color: #151F32 !important;
     color: #F8FAFC !important;
     border: 1px solid #1E293B !important;
@@ -139,7 +140,9 @@
   body #n8n-chat button.chat-input-send-button,
   body .n8n-chat button.chat-input-send-button,
   body #n8n-chat .chat-input-send-button,
-  body .n8n-chat .chat-input-send-button {
+  body .n8n-chat .chat-input-send-button,
+  body #n8n-chat button.chat-input-send-button:disabled,
+  body .n8n-chat button.chat-input-send-button:disabled {
     background-color: #FF7A00 !important;
     color: #FFFFFF !important;
     border-radius: 50% !important;
