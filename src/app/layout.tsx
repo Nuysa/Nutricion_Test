@@ -59,37 +59,39 @@ export default function RootLayout({
 
                             const webhookUrl = 'https://smudge-batch-handwork.ngrok-free.dev/webhook/7d96619e-99c0-47b8-ad57-105e0096050d/chat';
 
-                            // Hacemos ping a nuestra propia API interna para evadir bloqueos CORS del navegador y validaciones de ngrok
-                            fetch('/api/ping-n8n')
-                                .then(res => res.json())
-                                .then(data => {
-                                    if (data.active) {
-                                        createChat({
-                                            webhookUrl: webhookUrl,
-                                            initialMessages: [
-                                                '¡Hola! 👋',
-                                                '¿En qué sección puedo ayudarte hoy? Escribe el número o la opción:',
-                                                '[1] Servicios',
-                                                '[2] Horarios',
-                                                '[3] Preguntas Frecuentes',
-                                                '[4] Otra consulta'
-                                            ],
-                                            i18n: {
-                                                en: {
-                                                    title: 'Asistente NuySa',
-                                                    subtitle: 'Asistente Nuysa 24/7',
-                                                    footer: '',
-                                                    getStarted: 'Nueva conversación',
-                                                    inputPlaceholder: 'Escribe tu respuesta o selecciona una opción...',
-                                                },
-                                            }
-                                        });
-                                    } else {
-                                        console.log("Asistente NuySa offline (Workflow inactivo o ngrok apagado).");
-                                    }
+                            // Ping desde el cliente (evita bloqueos de IP en Vercel) usando un POST 'Simple' (text/plain) para no lanzar preflight CORS.
+                            // ngrok dejará pasar el POST. Si n8n está activo, rechazará el text/plain con error 4xx pero CON cabeceras CORS.
+                            // Si n8n está inactivo, devolverá 404 SIN cabeceras CORS, lo que lanzará un error capturado en el catch().
+                            fetch(webhookUrl, { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'text/plain' },
+                                body: 'ping'
+                            })
+                                .then(res => {
+                                    // Si llegamos aquí, n8n está activo (respondió 400, 415, 200, etc. con cabeceras CORS)
+                                    createChat({
+                                        webhookUrl: webhookUrl,
+                                        initialMessages: [
+                                            '¡Hola! 👋',
+                                            '¿En qué sección puedo ayudarte hoy? Escribe el número o la opción:',
+                                            '[1] Servicios',
+                                            '[2] Horarios',
+                                            '[3] Preguntas Frecuentes',
+                                            '[4] Otra consulta'
+                                        ],
+                                        i18n: {
+                                            en: {
+                                                title: 'Asistente NuySa',
+                                                subtitle: 'Asistente Nuysa 24/7',
+                                                footer: '',
+                                                getStarted: 'Nueva conversación',
+                                                inputPlaceholder: 'Escribe tu respuesta o selecciona una opción...',
+                                            },
+                                        }
+                                    });
                                 })
                                 .catch(err => {
-                                    console.log("Error verificando estado del asistente.");
+                                    console.log("Asistente NuySa offline (Workflow inactivo o sin CORS).");
                                 });
                         `
                     }}
