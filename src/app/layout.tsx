@@ -59,15 +59,11 @@ export default function RootLayout({
 
                             const webhookUrl = 'https://smudge-batch-handwork.ngrok-free.dev/webhook/7d96619e-99c0-47b8-ad57-105e0096050d/chat';
 
-                            // Hacemos un ping simulando la carga de historial para validar si el Chat Trigger está activo sin ejecutar el workflow
-                            fetch(webhookUrl, { 
-                                method: 'POST', 
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: "loadHistory", sessionId: "ping-test" })
-                            })
-                                .then(res => {
-                                    // Si el workflow está activo, n8n responde 200 OK a loadHistory
-                                    if (res.ok) {
+                            // Hacemos ping a nuestra propia API interna para evadir bloqueos CORS del navegador y validaciones de ngrok
+                            fetch('/api/ping-n8n')
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.active) {
                                         createChat({
                                             webhookUrl: webhookUrl,
                                             initialMessages: [
@@ -89,11 +85,11 @@ export default function RootLayout({
                                             }
                                         });
                                     } else {
-                                        console.log("Asistente NuySa offline (Workflow inactivo, Error " + res.status + ").");
+                                        console.log("Asistente NuySa offline (Workflow inactivo o ngrok apagado).");
                                     }
                                 })
                                 .catch(err => {
-                                    console.log("Asistente NuySa offline (Servidor o túnel no disponible).");
+                                    console.log("Error verificando estado del asistente.");
                                 });
                         `
                     }}
