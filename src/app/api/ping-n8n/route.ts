@@ -16,8 +16,10 @@ export async function GET() {
             signal: AbortSignal.timeout(3000)
         });
         
-        // Si el workflow de chat está activo, n8n procesa el loadHistory y devuelve 200 OK
-        if (response.ok) {
+        // Si el workflow de chat está activo, n8n procesará la petición.
+        // Puede devolver 200 (éxito), 400 o 422 (error de validación), pero TODO eso significa que ESTÁ ACTIVO.
+        // Solo si está completamente desactivado o no existe devolverá 404 Not Found.
+        if (response.status !== 404) {
             return NextResponse.json({ active: true });
         }
         
