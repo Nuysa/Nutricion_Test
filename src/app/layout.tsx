@@ -65,7 +65,6 @@ export default function RootLayout({
                                     // Si la promesa se resuelve, significa que el túnel de ngrok está respondiendo
                                     createChat({
                                         webhookUrl: webhookUrl,
-                                        showWelcomeScreen: false,
                                         initialMessages: [
                                             '¡Hola! 👋',
                                             '¿En qué sección puedo ayudarte hoy? Escribe el número o la opción:',
@@ -82,13 +81,6 @@ export default function RootLayout({
                                                 getStarted: 'Nueva conversación',
                                                 inputPlaceholder: 'Escribe tu respuesta o selecciona una opción...',
                                             },
-                                            es: {
-                                                title: 'Asistente NuySa',
-                                                subtitle: 'Asistente Nuysa 24/7',
-                                                footer: '',
-                                                getStarted: 'Nueva conversación',
-                                                inputPlaceholder: 'Escribe tu respuesta o selecciona una opción...',
-                                            }
                                         }
                                     });
                                 })
