@@ -82,17 +82,27 @@
 
   /* Fix for N8N chat input broken by Tailwind CSS */
   body #n8n-chat .chat-input,
-  body #n8n-chat .chat-inputs,
-  body .n8n-chat .chat-input,
-  body .n8n-chat .chat-inputs {
+  body .n8n-chat .chat-input {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
     background-color: #0B1120 !important;
     border-top: 1px solid #1E293B !important;
     padding: 10px !important;
     width: 100% !important;
     box-sizing: border-box !important;
+  }
+
+  body #n8n-chat .chat-inputs,
+  body .n8n-chat .chat-inputs {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    flex: 1 1 auto !important;
   }
   
   body #n8n-chat textarea,
