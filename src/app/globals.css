@@ -72,6 +72,8 @@
     --chat--toggle--background: #FF7A00 !important;
     --chat--toggle--hover--background: #E66A00 !important;
     --chat--toggle--active--background: #CC5E00 !important;
+    
+    --chat--window--border-radius: 12px !important;
   }
 
   .dark {
