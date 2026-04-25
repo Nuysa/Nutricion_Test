@@ -59,14 +59,15 @@ export default function RootLayout({
 
                             const webhookUrl = 'https://smudge-batch-handwork.ngrok-free.dev/webhook/7d96619e-99c0-47b8-ad57-105e0096050d/chat';
 
-                            // Hacemos un ping OPTIONS con cabeceras para saltar la advertencia de ngrok
+                            // Hacemos un ping simulando la carga de historial para validar si el Chat Trigger está activo sin ejecutar el workflow
                             fetch(webhookUrl, { 
-                                method: 'OPTIONS', 
-                                headers: { 'ngrok-skip-browser-warning': 'true' }
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: "loadHistory", sessionId: "ping-test" })
                             })
                                 .then(res => {
-                                    // Si el workflow está activo, n8n responde al OPTIONS correctamente
-                                    if (res.ok || res.status === 200 || res.status === 204) {
+                                    // Si el workflow está activo, n8n responde 200 OK a loadHistory
+                                    if (res.ok) {
                                         createChat({
                                             webhookUrl: webhookUrl,
                                             initialMessages: [
@@ -88,11 +89,11 @@ export default function RootLayout({
                                             }
                                         });
                                     } else {
-                                        console.log("Asistente NuySa offline (Workflow de n8n desactivado).");
+                                        console.log("Asistente NuySa offline (Workflow inactivo, Error " + res.status + ").");
                                     }
                                 })
                                 .catch(err => {
-                                    console.log("Asistente NuySa offline (Túnel ngrok cerrado o bloqueado).");
+                                    console.log("Asistente NuySa offline (Servidor o túnel no disponible).");
                                 });
                         `
                     }}
