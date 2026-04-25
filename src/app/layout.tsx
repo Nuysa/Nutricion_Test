@@ -59,33 +59,40 @@ export default function RootLayout({
 
                             const webhookUrl = 'https://smudge-batch-handwork.ngrok-free.dev/webhook/7d96619e-99c0-47b8-ad57-105e0096050d/chat';
 
-                            // Hacemos un ping con modo 'no-cors' para evitar bloqueos del navegador en Vercel
-                            fetch(webhookUrl, { method: 'GET', mode: 'no-cors' })
-                                .then(() => {
-                                    // Si la promesa se resuelve, significa que el túnel de ngrok está respondiendo
-                                    createChat({
-                                        webhookUrl: webhookUrl,
-                                        initialMessages: [
-                                            '¡Hola! 👋',
-                                            '¿En qué sección puedo ayudarte hoy? Escribe el número o la opción:',
-                                            '[1] Servicios',
-                                            '[2] Horarios',
-                                            '[3] Preguntas Frecuentes',
-                                            '[4] Otra consulta'
-                                        ],
-                                        i18n: {
-                                            en: {
-                                                title: 'Asistente NuySa',
-                                                subtitle: 'Asistente Nuysa 24/7',
-                                                footer: '',
-                                                getStarted: 'Nueva conversación',
-                                                inputPlaceholder: 'Escribe tu respuesta o selecciona una opción...',
-                                            },
-                                        }
-                                    });
+                            // Hacemos un ping OPTIONS con cabeceras para saltar la advertencia de ngrok
+                            fetch(webhookUrl, { 
+                                method: 'OPTIONS', 
+                                headers: { 'ngrok-skip-browser-warning': 'true' }
+                            })
+                                .then(res => {
+                                    // Si el workflow está activo, n8n responde al OPTIONS correctamente
+                                    if (res.ok || res.status === 200 || res.status === 204) {
+                                        createChat({
+                                            webhookUrl: webhookUrl,
+                                            initialMessages: [
+                                                '¡Hola! 👋',
+                                                '¿En qué sección puedo ayudarte hoy? Escribe el número o la opción:',
+                                                '[1] Servicios',
+                                                '[2] Horarios',
+                                                '[3] Preguntas Frecuentes',
+                                                '[4] Otra consulta'
+                                            ],
+                                            i18n: {
+                                                en: {
+                                                    title: 'Asistente NuySa',
+                                                    subtitle: 'Asistente Nuysa 24/7',
+                                                    footer: '',
+                                                    getStarted: 'Nueva conversación',
+                                                    inputPlaceholder: 'Escribe tu respuesta o selecciona una opción...',
+                                                },
+                                            }
+                                        });
+                                    } else {
+                                        console.log("Asistente NuySa offline (Workflow de n8n desactivado).");
+                                    }
                                 })
                                 .catch(err => {
-                                    console.log("Asistente NuySa offline (Túnel ngrok no disponible).");
+                                    console.log("Asistente NuySa offline (Túnel ngrok cerrado o bloqueado).");
                                 });
                         `
                     }}
