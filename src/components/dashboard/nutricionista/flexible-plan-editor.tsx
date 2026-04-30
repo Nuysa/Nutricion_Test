@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -159,6 +160,11 @@ export function FlexiblePlanEditor({
     selectedAppointmentId?: string;
     setSelectedAppointmentId?: (id: string) => void;
 }) {
+    const [portalNode, setPortalNode] = useState<HTMLElement | null>(null);
+    useEffect(() => {
+        setPortalNode(document.getElementById("top-bar-right-portal"));
+    }, []);
+
     const [activeTab, setActiveTab] = useState<"calculos" | "resumen" | "vista-paciente">("calculos");
     const [weekOffset, setWeekOffset] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
@@ -515,91 +521,151 @@ export function FlexiblePlanEditor({
 
     return (
         <div className="flex-1 overflow-hidden flex flex-col p-3 sm:p-6 animate-in fade-in duration-500">
-            {/* Week and Save Navigation */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 mb-4 sm:mb-8 bg-[#0B1120]/50 p-3 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-white/5">
-                <div className="flex items-center gap-2 sm:gap-4">
-                    <button
-                        onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
-                        className="text-slate-500 hover:text-white transition-colors"
-                    >
-                        <ChevronLeft className="h-5 w-5" />
-                    </button>
+            {/* Week and Save Navigation (Portal to Top Bar) */}
+            {portalNode && createPortal(
+                <>
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        <button
+                            onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
+                            className="text-slate-500 hover:text-white transition-colors"
+                        >
+                            <ChevronLeft className="h-5 w-5" />
+                        </button>
 
-                    <div className="bg-[#151F32] rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2 sm:py-2.5 border border-white/5 shadow-2xl flex items-center gap-2 sm:gap-4">
-                        <Calendar className="h-4 w-4 text-[#FF7A00] shrink-0" />
-                        <span className="text-[10px] sm:text-sm font-black text-white uppercase tracking-tight">
-                            Semana: {weekRange}
-                        </span>
+                        <div className="bg-[#151F32] rounded-xl sm:rounded-2xl px-3 sm:px-6 py-2 sm:py-2.5 border border-white/5 shadow-2xl flex items-center gap-2 sm:gap-4">
+                            <Calendar className="h-4 w-4 text-[#FF7A00] shrink-0" />
+                            <span className="text-[10px] sm:text-sm font-black text-white uppercase tracking-tight">
+                                Semana: {weekRange}
+                            </span>
+                        </div>
+
+                        <button
+                            onClick={() => setWeekOffset(prev => prev + 1)}
+                            className="text-slate-500 hover:text-white transition-colors"
+                        >
+                            <ChevronRight className="h-5 w-5" />
+                        </button>
+
+                        {pendingAppointments && pendingAppointments.length > 0 && (
+                            <div className="bg-[#151F32] rounded-2xl px-6 py-2.5 border border-white/5 shadow-2xl flex items-center gap-4 ml-4">
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-r border-white/10 pr-4">Vincular Cita</span>
+                                <select
+                                    value={selectedAppointmentId}
+                                    onChange={e => setSelectedAppointmentId && setSelectedAppointmentId(e.target.value)}
+                                    className="bg-transparent text-sm font-black text-white outline-none border-none focus:ring-0 cursor-pointer appearance-none"
+                                >
+                                    <option value="" className="bg-[#151F32]">Ninguna</option>
+                                    {pendingAppointments.map(apt => (
+                                        <option key={apt.id} value={apt.id} className="bg-[#151F32]">
+                                            {apt.appointment_date} - {apt.start_time.substring(0, 5)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
 
+                    <div className="flex items-center gap-4">
+                        <Button
+                            onClick={savePlan}
+                            disabled={isSaving}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[9px] sm:text-[10px] uppercase tracking-widest rounded-xl px-4 sm:px-8 h-10 sm:h-12 shadow-lg shadow-emerald-600/20 w-full sm:w-auto"
+                        >
+                            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                            Guardar Plan
+                        </Button>
+                    </div>
+                </>,
+                portalNode
+            )}
+
+            {/* Tabs Selector + Control Panel Row */}
+            <div className="flex flex-col xl:flex-row justify-between items-center gap-4 sm:gap-6 mb-4 sm:mb-8">
+                {/* Tabs Selector */}
+                <div className="flex bg-[#151F32] rounded-xl sm:rounded-2xl p-1 w-full xl:w-max border border-white/5 shadow-2xl overflow-x-auto shrink-0">
                     <button
-                        onClick={() => setWeekOffset(prev => prev + 1)}
-                        className="text-slate-500 hover:text-white transition-colors"
+                        onClick={() => setActiveTab("calculos")}
+                        className={cn(
+                            "flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all whitespace-nowrap",
+                            activeTab === "calculos" ? "bg-[#FF7A00] text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
+                        )}
                     >
-                        <ChevronRight className="h-5 w-5" />
+                        Cálculos
                     </button>
-
-                    {pendingAppointments && pendingAppointments.length > 0 && (
-                        <div className="bg-[#151F32] rounded-2xl px-6 py-2.5 border border-white/5 shadow-2xl flex items-center gap-4 ml-4">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-r border-white/10 pr-4">Vincular Cita</span>
-                            <select
-                                value={selectedAppointmentId}
-                                onChange={e => setSelectedAppointmentId && setSelectedAppointmentId(e.target.value)}
-                                className="bg-transparent text-sm font-black text-white outline-none border-none focus:ring-0 cursor-pointer appearance-none"
-                            >
-                                <option value="" className="bg-[#151F32]">Ninguna</option>
-                                {pendingAppointments.map(apt => (
-                                    <option key={apt.id} value={apt.id} className="bg-[#151F32]">
-                                        {apt.appointment_date} - {apt.start_time.substring(0, 5)}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <Button
-                        onClick={savePlan}
-                        disabled={isSaving}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[9px] sm:text-[10px] uppercase tracking-widest rounded-xl px-4 sm:px-8 h-10 sm:h-12 shadow-lg shadow-emerald-600/20 w-full sm:w-auto"
+                    <button
+                        onClick={() => setActiveTab("resumen")}
+                        className={cn(
+                            "flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all whitespace-nowrap",
+                            activeTab === "resumen" ? "bg-[#FF7A00] text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
+                        )}
                     >
-                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                        Guardar Plan
-                    </Button>
+                        Resumen
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("vista-paciente")}
+                        className={cn(
+                            "flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all flex items-center justify-center gap-2 whitespace-nowrap",
+                            activeTab === "vista-paciente" ? "bg-blue-600 text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
+                        )}
+                    >
+                        <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                        Vista
+                    </button>
                 </div>
-            </div>
 
-            {/* Tabs Selector */}
-            <div className="flex bg-[#151F32] rounded-xl sm:rounded-2xl p-1 w-full sm:w-max mb-4 sm:mb-8 border border-white/5 shadow-2xl overflow-x-auto">
-                <button
-                    onClick={() => setActiveTab("calculos")}
-                    className={cn(
-                        "flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all whitespace-nowrap",
-                        activeTab === "calculos" ? "bg-[#FF7A00] text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
-                    )}
-                >
-                    Cálculos
-                </button>
-                <button
-                    onClick={() => setActiveTab("resumen")}
-                    className={cn(
-                        "flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all whitespace-nowrap",
-                        activeTab === "resumen" ? "bg-[#FF7A00] text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
-                    )}
-                >
-                    Resumen
-                </button>
-                <button
-                    onClick={() => setActiveTab("vista-paciente")}
-                    className={cn(
-                        "flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all flex items-center justify-center gap-2 whitespace-nowrap",
-                        activeTab === "vista-paciente" ? "bg-blue-600 text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
-                    )}
-                >
-                    <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                    Vista
-                </button>
+                {/* Control Panel: Toggles & Kcal (Only visible in Resumen Tab) */}
+                {activeTab === "resumen" && (
+                    <div className="flex flex-col md:flex-row justify-between items-center bg-[#151F32] px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border border-white/5 shadow-2xl relative overflow-hidden group gap-4 sm:gap-8 flex-1">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF7A00]/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-[#FF7A00]/10 transition-colors" />
+
+                        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:gap-x-6 sm:gap-y-4 relative z-30">
+                            {[
+                                { id: 'pre-entreno', label: 'PRE-ENTRENO' },
+                                { id: 'media-manana', label: 'MEDIA MAÑANA' },
+                                { id: 'media-tarde', label: 'MEDIA TARDE' },
+                                { id: 'post-entreno', label: 'POST-ENTRENO' },
+                            ].map(toggle => {
+                                const mealStatus = meals.find(m => m.id === toggle.id);
+                                const isActive = mealStatus?.active || false;
+                                
+                                return (
+                                    <div 
+                                        key={toggle.id} 
+                                        className="flex flex-col items-center gap-2 cursor-pointer group/toggle p-2 sm:p-3 rounded-2xl hover:bg-white/5 transition-all"
+                                        onClick={() => toggleMeal(toggle.id)}
+                                    >
+                                        <div className={cn(
+                                            "w-10 h-5 sm:w-12 sm:h-6 rounded-full relative transition-all duration-300 border shadow-inner",
+                                            isActive ? "bg-orange-600 border-orange-500 shadow-[0_0_20px_rgba(255,122,0,0.4)]" : "bg-slate-800 border-white/5 group-hover/toggle:border-slate-600"
+                                        )}>
+                                            <div className={cn(
+                                                "absolute top-0.5 left-0.5 h-4 w-4 sm:h-5 sm:w-5 rounded-full transition-all duration-300 pointer-events-none shadow-lg",
+                                                isActive ? "translate-x-5 sm:translate-x-6 bg-white" : "translate-x-0 bg-slate-400"
+                                            )} />
+                                        </div>
+                                        <span className={cn(
+                                            "text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] transition-colors",
+                                            isActive ? "text-orange-500" : "text-slate-500 group-hover/toggle:text-slate-300"
+                                        )}>
+                                            {toggle.label}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="flex items-center gap-4 sm:gap-8 relative z-10">
+                            <div className="h-10 w-px bg-white/5 hidden md:block" />
+                            <div className="text-right flex flex-col items-end">
+                                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-0.5">Calorías Logradas</span>
+                                <div className="flex items-baseline gap-2">
+                                    <p className="text-2xl sm:text-3xl font-tech font-black text-white drop-shadow-md">{portionTable.totals.k}</p>
+                                    <span className="text-[10px] font-black text-slate-500">KCAL</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <ScrollArea className="flex-1 -mx-6 px-6">
@@ -850,58 +916,6 @@ export function FlexiblePlanEditor({
                     </div>
                 ) : activeTab === "resumen" ? (
                     <div className="flex flex-col gap-4 sm:gap-6 pb-32 animate-in slide-in-from-right-10 duration-500">
-                        {/* Control Panel: Toggles & Kcal */}
-                        <div className="flex flex-col md:flex-row justify-between items-center bg-[#151F32] p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group gap-4 sm:gap-6">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF7A00]/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-[#FF7A00]/10 transition-colors" />
-
-                            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 sm:gap-x-10 sm:gap-y-6 relative z-30">
-                                {[
-                                    { id: 'pre-entreno', label: 'PRE-ENTRENO' },
-                                    { id: 'media-manana', label: 'MEDIA MAÑANA' },
-                                    { id: 'media-tarde', label: 'MEDIA TARDE' },
-                                    { id: 'post-entreno', label: 'POST-ENTRENO' },
-                                ].map(toggle => {
-                                    const mealStatus = meals.find(m => m.id === toggle.id);
-                                    const isActive = mealStatus?.active || false;
-                                    
-                                    return (
-                                        <div 
-                                            key={toggle.id} 
-                                            className="flex flex-col items-center gap-3 cursor-pointer group/toggle p-3 sm:p-4 rounded-3xl hover:bg-white/5 transition-all"
-                                            onClick={() => toggleMeal(toggle.id)}
-                                        >
-                                            <div className={cn(
-                                                "w-14 h-7 rounded-full relative transition-all duration-300 border shadow-inner",
-                                                isActive ? "bg-orange-600 border-orange-500 shadow-[0_0_20px_rgba(255,122,0,0.4)]" : "bg-slate-800 border-white/5 group-hover/toggle:border-slate-600"
-                                            )}>
-                                                <div className={cn(
-                                                    "absolute top-1 left-1 h-4.5 w-4.5 rounded-full transition-all duration-300 pointer-events-none shadow-lg",
-                                                    isActive ? "translate-x-7 bg-white" : "translate-x-0 bg-slate-400"
-                                                )} />
-                                            </div>
-                                            <span className={cn(
-                                                "text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] transition-colors",
-                                                isActive ? "text-orange-500" : "text-slate-500 group-hover/toggle:text-slate-300"
-                                            )}>
-                                                {toggle.label}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            <div className="flex items-center gap-8 sm:gap-12 relative z-10">
-                                <div className="h-16 w-px bg-white/5 hidden md:block" />
-                                <div className="text-right flex flex-col items-end">
-                                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-1">Calorías Logradas</span>
-                                    <div className="flex items-baseline gap-2">
-                                        <p className="text-3xl sm:text-4xl font-tech font-black text-white drop-shadow-md">{portionTable.totals.k}</p>
-                                        <span className="text-xs font-black text-slate-500">KCAL</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Meal Cards */}
                         <div className="grid grid-cols-1 gap-6 max-w-6xl mx-auto w-full">
                             {meals.filter(m => m.active).sort((a, b) => a.time.localeCompare(b.time)).map(meal => (

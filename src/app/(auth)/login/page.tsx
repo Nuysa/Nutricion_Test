@@ -22,6 +22,7 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        console.log("Iniciando login para:", email);
 
         try {
             const supabase = createClient();
@@ -30,25 +31,37 @@ export default function LoginPage() {
                 password,
             });
 
+            console.log("Respuesta de auth:", { data, authError });
+
             if (authError) {
+                console.error("Error de autenticación:", authError);
                 setError(authError.message === "Invalid login credentials"
                     ? "Credenciales inválidas. Verifica tu email y contraseña."
                     : authError.message);
                 return;
             }
 
-            if (data.user) {
-                const { data: profile } = await supabase
+            if (data?.user) {
+                console.log("Usuario autenticado:", data.user.id);
+                const { data: profile, error: profileError } = await supabase
                     .from("profiles")
                     .select("role")
                     .eq("user_id", data.user.id)
                     .single();
 
-                const role = profile?.role || "patient";
-                router.push(`/dashboard/${role}`);
-                router.refresh();
+                console.log("Perfil obtenido:", { profile, profileError });
+
+                const role = profile?.role || "paciente";
+                console.log("Redirigiendo a:", `/dashboard/${role}`);
+                
+                // Forzar un reload en lugar de push para evitar conflictos de caché/middleware
+                window.location.href = `/dashboard/${role}`;
+            } else {
+                console.log("No authError pero tampoco data.user");
+                setError("No se pudo iniciar sesión. Verifica tu conexión.");
             }
-        } catch {
+        } catch (err) {
+            console.error("Error inesperado en login:", err);
             setError("Ocurrió un error inesperado. Intenta de nuevo.");
         } finally {
             setLoading(false);

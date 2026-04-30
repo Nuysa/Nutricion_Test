@@ -812,6 +812,7 @@ export function PlanEditor() {
                         </div>
                     )}
                 </div>
+                <div id="top-bar-right-portal" className="flex items-center gap-4 w-full sm:w-auto mt-4 sm:mt-0 empty:hidden" />
             </div>
 
             {/* --- CONTENT AREA --- */}

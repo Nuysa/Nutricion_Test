@@ -523,14 +523,14 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                                                 {guide.cards.map((card: any, cidx: number) => (
                                                                                     <div
                                                                                         key={cidx}
-                                                                                        className="w-[140px] sm:w-[180px] bg-[#0B1120] rounded-2xl border border-white/5 overflow-hidden group/card shadow-lg"
+                                                                                        className="w-[160px] sm:w-[180px] bg-[#0B1120] rounded-2xl border border-white/5 overflow-hidden group/card shadow-lg flex flex-col h-full"
                                                                                     >
-                                                                                        <div className="h-24 bg-white/5 relative overflow-hidden">
+                                                                                        <div className="h-24 sm:h-28 bg-white/5 relative overflow-hidden shrink-0">
                                                                                             {card.image_url ? (
                                                                                                 <img
                                                                                                     src={card.image_url}
                                                                                                     alt={card.title}
-                                                                                                    className="w-full h-full object-contain transition-transform duration-500 group-hover/card:scale-105"
+                                                                                                    className="w-full h-full object-cover sm:object-contain transition-transform duration-500 group-hover/card:scale-105"
                                                                                                 />
                                                                                             ) : (
                                                                                                 <div className="w-full h-full flex items-center justify-center opacity-20">
@@ -538,9 +538,13 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                                                                 </div>
                                                                                             )}
                                                                                         </div>
-                                                                                        <div className="p-3 space-y-1">
-                                                                                            <p className="text-[11px] sm:text-[12px] font-black text-white uppercase tracking-tight truncate">{card.title}</p>
-                                                                                            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-tight line-clamp-2">{card.description}</p>
+                                                                                        <div className="p-3 sm:p-4 flex flex-col flex-1 justify-center gap-1.5 bg-gradient-to-b from-transparent to-[#151F32]/50">
+                                                                                            <p className="text-xs sm:text-[13px] font-black text-emerald-400 uppercase tracking-tight leading-snug break-words">
+                                                                                                {card.description}
+                                                                                            </p>
+                                                                                            <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-tight break-words">
+                                                                                                {card.title}
+                                                                                            </p>
                                                                                         </div>
                                                                                     </div>
                                                                                 ))}
