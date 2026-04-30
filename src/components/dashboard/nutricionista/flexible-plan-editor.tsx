@@ -849,11 +849,12 @@ export function FlexiblePlanEditor({
                         </div>
                     </div>
                 ) : activeTab === "resumen" ? (
-                    <div className="flex flex-col gap-4 sm:gap-8 pb-32 animate-in slide-in-from-right-10 duration-500">
-                        <div className="flex flex-col md:flex-row justify-between items-center bg-[#151F32] p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group gap-4 sm:gap-10">
+                    <div className="flex flex-col gap-6 sm:gap-10 pb-32 animate-in slide-in-from-right-10 duration-500">
+                        {/* Control Panel: Toggles & Kcal */}
+                        <div className="flex flex-col md:flex-row justify-between items-center bg-[#151F32] p-6 sm:p-10 rounded-2xl sm:rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden group gap-6 sm:gap-10">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF7A00]/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-[#FF7A00]/10 transition-colors" />
 
-                            <div className="flex flex-wrap items-center justify-center gap-x-16 gap-y-8 relative z-30">
+                            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-6 sm:gap-x-12 sm:gap-y-8 relative z-30">
                                 {[
                                     { id: 'pre-entreno', label: 'PRE-ENTRENO' },
                                     { id: 'media-manana', label: 'MEDIA MAÑANA' },
@@ -866,20 +867,20 @@ export function FlexiblePlanEditor({
                                     return (
                                         <div 
                                             key={toggle.id} 
-                                            className="flex flex-col items-center gap-3 cursor-pointer group/toggle p-4 rounded-3xl hover:bg-white/5 transition-all"
+                                            className="flex flex-col items-center gap-3 cursor-pointer group/toggle p-4 sm:p-5 rounded-3xl hover:bg-white/5 transition-all"
                                             onClick={() => toggleMeal(toggle.id)}
                                         >
                                             <div className={cn(
                                                 "w-14 h-7 rounded-full relative transition-all duration-300 border shadow-inner",
-                                                isActive ? "bg-orange-600 border-orange-500 shadow-[0_0_20px_rgba(255,122,0,0.4)]" : "bg-slate-800 border-white/5"
+                                                isActive ? "bg-orange-600 border-orange-500 shadow-[0_0_20px_rgba(255,122,0,0.4)]" : "bg-slate-800 border-white/5 group-hover/toggle:border-slate-600"
                                             )}>
                                                 <div className={cn(
                                                     "absolute top-1 left-1 h-4.5 w-4.5 rounded-full transition-all duration-300 pointer-events-none shadow-lg",
-                                                    isActive ? "translate-x-7 bg-white" : "translate-x-0 bg-slate-500"
+                                                    isActive ? "translate-x-7 bg-white" : "translate-x-0 bg-slate-400"
                                                 )} />
                                             </div>
                                             <span className={cn(
-                                                "text-[9px] font-black uppercase tracking-[0.2em] transition-colors",
+                                                "text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] transition-colors",
                                                 isActive ? "text-orange-500" : "text-slate-500 group-hover/toggle:text-slate-300"
                                             )}>
                                                 {toggle.label}
@@ -889,12 +890,12 @@ export function FlexiblePlanEditor({
                                 })}
                             </div>
 
-                            <div className="flex items-center gap-12 relative z-10">
+                            <div className="flex items-center gap-8 sm:gap-12 relative z-10">
                                 <div className="h-16 w-px bg-white/5 hidden md:block" />
                                 <div className="text-right flex flex-col items-end">
                                     <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-1">Calorías Logradas</span>
                                     <div className="flex items-baseline gap-2">
-                                        <p className="text-4xl font-tech font-black text-white">{portionTable.totals.k}</p>
+                                        <p className="text-4xl sm:text-5xl font-tech font-black text-white drop-shadow-md">{portionTable.totals.k}</p>
                                         <span className="text-xs font-black text-slate-500">KCAL</span>
                                     </div>
                                 </div>
@@ -902,55 +903,59 @@ export function FlexiblePlanEditor({
                         </div>
 
                         {/* Meal Cards */}
-                        <div className="grid grid-cols-1 gap-8 max-w-6xl mx-auto w-full">
+                        <div className="grid grid-cols-1 gap-10 max-w-6xl mx-auto w-full">
                             {meals.filter(m => m.active).sort((a, b) => a.time.localeCompare(b.time)).map(meal => (
-                                <Card key={meal.id} className="bg-[#151F32] border-white/5 rounded-2xl sm:rounded-3xl flex flex-col md:flex-row overflow-hidden shadow-2xl group border-l-0">
-                                    <div className="w-full md:w-56 bg-[#0B1120] p-6 sm:p-10 flex flex-col justify-center items-center border-b md:border-b-0 md:border-r border-white/5 relative shrink-0">
-                                        <div className="absolute left-0 top-0 w-1.5 sm:w-2 h-full bg-[#FF7A00] shadow-[4px_0_15px_rgba(255,122,0,0.3)]" />
-                                        <span className="font-tech font-black text-base sm:text-xl text-white tracking-[0.2em] text-center leading-tight">{meal.name}</span>
-                                        <div className="mt-6 flex items-center gap-3 bg-[#151F32] px-4 py-2 rounded-2xl border border-white/5 shadow-inner">
-                                            <Clock className="h-4 w-4 text-orange-500" />
+                                <Card key={meal.id} className="bg-[#151F32] border-white/5 rounded-2xl sm:rounded-[2.5rem] flex flex-col md:flex-row overflow-hidden shadow-2xl shadow-black/50 group border-l-0">
+                                    {/* Left Sidebar: Title & Time */}
+                                    <div className="w-full md:w-64 bg-[#0B1120]/80 p-6 sm:p-10 flex flex-col justify-center items-center border-b md:border-b-0 md:border-r border-white/5 relative shrink-0">
+                                        <div className="absolute left-0 top-0 w-2 h-full bg-[#FF7A00] shadow-[4px_0_20px_rgba(255,122,0,0.4)]" />
+                                        <span className="font-tech font-black text-lg sm:text-2xl text-white tracking-[0.2em] text-center leading-tight drop-shadow-md">
+                                            {meal.name}
+                                        </span>
+                                        <div className="mt-8 flex items-center gap-3 bg-[#151F32] px-5 py-3 rounded-2xl border border-white/5 shadow-inner hover:border-[#FF7A00]/50 transition-colors">
+                                            <Clock className="h-5 w-5 text-orange-500" />
                                             <input
                                                 type="time"
                                                 value={meal.time}
                                                 onChange={e => setMeals(prev => prev.map(m => m.id === meal.id ? { ...m, time: e.target.value } : m))}
-                                                className="bg-transparent text-white text-xs font-black outline-none w-20 text-center"
+                                                className="bg-transparent text-white text-sm font-black outline-none w-20 text-center cursor-pointer"
                                             />
                                         </div>
                                     </div>
 
+                                    {/* Right Content: Dish Name & Ingredients */}
                                     <div className="flex-1 flex flex-col">
-                                        <div className="bg-[#FF7A00] p-4 flex items-center">
+                                        <div className="bg-gradient-to-r from-[#FF7A00] to-[#E66A00] p-5 sm:p-6 flex items-center shadow-lg relative z-10">
                                             <input
                                                 type="text"
                                                 value={meal.title}
                                                 onChange={e => setMeals(prev => prev.map(m => m.id === meal.id ? { ...m, title: e.target.value } : m))}
-                                                className="w-full bg-transparent text-white font-black text-center outline-none placeholder-white/50 text-xs uppercase tracking-[0.15em]"
+                                                className="w-full bg-transparent text-white font-black text-center outline-none placeholder-white/40 text-xs sm:text-sm uppercase tracking-[0.2em]"
                                                 placeholder="NOMBRE DEL MENÚ O PLATO..."
                                             />
                                         </div>
 
-                                        <div className="p-4 sm:p-8 flex flex-col gap-4 sm:gap-5">
-                                            {meal.rows.map((row, idx) => (
-                                                <div key={row.id} className="flex flex-col xl:flex-row items-stretch gap-4 animate-in fade-in duration-300 group/row">
-                                                    <div className="flex items-center gap-2 w-full xl:w-72 shrink-0">
+                                        <div className="p-4 sm:p-8 flex flex-col gap-4">
+                                            {meal.rows.map((row) => (
+                                                <div key={row.id} className="flex flex-col xl:flex-row items-stretch gap-3 sm:gap-4 animate-in fade-in duration-300 group/row bg-[#0B1120]/40 p-2 sm:p-3 rounded-[1.5rem] border border-white/5 hover:border-white/10 hover:bg-[#0B1120]/70 transition-all">
+                                                    <div className="flex items-center gap-3 w-full xl:w-80 shrink-0">
                                                         <Select value={row.group} onValueChange={(v) => setMeals(prev => prev.map(m => m.id === meal.id ? { ...m, rows: m.rows.map(r => r.id === row.id ? { ...r, group: v } : r) } : m))}>
-                                                            <SelectTrigger className="flex-1 bg-[#0B1120] border-white/5 rounded-xl h-11 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                            <SelectTrigger className="flex-1 bg-[#151F32] border-white/5 rounded-xl h-12 text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-300 hover:border-[#FF7A00]/50 transition-colors shadow-inner">
                                                                 <SelectValue />
                                                             </SelectTrigger>
-                                                            <SelectContent className="bg-[#151F32] border-white/10 text-white">
+                                                            <SelectContent className="bg-[#151F32] border-white/10 text-white rounded-xl">
                                                                 {Object.entries(DB_PORCIONES).map(([k, v]) => (
-                                                                    <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                                                                    <SelectItem key={k} value={k} className="text-xs font-bold">{v.label}</SelectItem>
                                                                 ))}
                                                             </SelectContent>
                                                         </Select>
-                                                        <div className="w-16 h-11 bg-[#0B1120] border border-white/5 rounded-xl flex items-center justify-center font-tech font-black text-white text-sm shadow-inner">
+                                                        <div className="w-16 h-12 bg-[#FF7A00]/10 border border-[#FF7A00]/20 rounded-xl flex items-center justify-center font-tech font-black text-[#FF7A00] text-sm shadow-inner">
                                                             {row.portions}
                                                         </div>
                                                     </div>
                                                     <div className="flex-1 relative flex gap-3">
                                                         <textarea
-                                                            className="flex-1 bg-[#0B1120] border border-white/5 rounded-2xl py-3 px-5 text-[11px] font-medium text-slate-300 min-h-[44px] outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all resize-none leading-relaxed"
+                                                            className="flex-1 bg-[#151F32] border border-white/5 rounded-xl py-3.5 px-5 text-xs font-medium text-slate-300 min-h-[48px] outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all resize-none leading-relaxed shadow-inner"
                                                             spellCheck="false"
                                                             value={row.comment}
                                                             onChange={e => setMeals(prev => prev.map(m => m.id === meal.id ? { ...m, rows: m.rows.map(r => r.id === row.id ? { ...r, comment: e.target.value } : r) } : m))}
@@ -960,7 +965,7 @@ export function FlexiblePlanEditor({
                                                             variant="ghost"
                                                             size="icon"
                                                             onClick={() => removeRow(meal.id, row.id)}
-                                                            className="h-11 w-11 rounded-xl bg-red-500/5 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 border border-white/5 opacity-0 group-hover/row:opacity-100 transition-all shrink-0"
+                                                            className="h-12 w-12 rounded-xl bg-red-500/5 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 border border-white/5 opacity-0 group-hover/row:opacity-100 transition-all shrink-0"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
@@ -970,7 +975,7 @@ export function FlexiblePlanEditor({
 
                                             <button
                                                 onClick={() => addRow(meal.id)}
-                                                className="mt-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-orange-500 hover:text-white hover:bg-orange-500/10 w-max px-4 py-2 rounded-xl transition-all"
+                                                className="mt-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-orange-500 hover:text-white hover:bg-[#FF7A00] border border-transparent hover:border-[#FF7A00] w-max px-5 py-3 rounded-xl transition-all shadow-sm"
                                             >
                                                 <Plus className="h-4 w-4" />
                                                 Agregar Fila de Alimento
@@ -979,7 +984,6 @@ export function FlexiblePlanEditor({
                                     </div>
                                 </Card>
                             ))}
-
                         </div>
                     </div>
                 ) : (
