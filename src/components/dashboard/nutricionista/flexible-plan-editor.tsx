@@ -65,6 +65,87 @@ interface MealBlock {
     rows: MealRow[];
 }
 
+// --- DEFAULT MEALS ---
+const DEFAULT_MEALS: MealBlock[] = [
+    {
+        id: 'pre-entreno',
+        name: 'PRE ENTRENO',
+        time: '08:30',
+        active: true,
+        title: 'Huevos cocidos + Bowl de fruta c/ yogurt',
+        rows: [
+            { id: '1', group: 'lac-semi', portions: 1, comment: 'Yogurt Dan Lac (100g) o Leche light roja Eva Gloria (100g)' },
+            { id: '2', group: 'pro-alta', portions: 1, comment: 'Huevos (1 unid) o Queso fresco (25g) o Hot dog San fernando vive bien (55g)' },
+            { id: '3', group: 'fruta', portions: 2, comment: 'Platano de seda (80*2)=160g - 1 unid o Papaya (240g*2)=480g - 2 tz o combinar (papaya 240g + piña 180g)' },
+            { id: '4', group: 'grasa', portions: 1, comment: 'Creatina + Jamaica' },
+        ]
+    },
+    {
+        id: 'desayuno',
+        name: 'DESAYUNO',
+        time: '10:00',
+        active: true,
+        title: 'Wraps de atún + Bowl de fruta',
+        rows: [
+            { id: '5', group: 'almidon', portions: 3, comment: 'Tostada Integral (60g)-3 Unid o Galleta salmas (3 paq) - o Rapiditas (84) - 3 unid' },
+            { id: '6', group: 'pro-bajo', portions: 2, comment: 'Jamon de pavita braedt (40*2)=80g o Claras de huevo (50*2)=100g o Queso light mozzarella (18*2)=36g o Quark (45*2)=90g o Atún en agua y sal (30*2)=60g' },
+            { id: '7', group: 'azucar', portions: 1, comment: 'Mermelada de fresa light campestre (40g)' },
+            { id: '8', group: 'grasa', portions: 1, comment: 'Cafe' },
+            { id: '9', group: 'fruta', portions: 1, comment: 'Plátano bizcochito (80g) - 3 unid' },
+        ]
+    },
+    {
+        id: 'media-manana',
+        name: 'MEDIA MAÑANA',
+        time: '11:30',
+        active: false,
+        title: 'Opciones de media mañana',
+        rows: [{ id: 'mm1', group: 'fruta', portions: 1, comment: '1 fruta de estación (Manzana, Mandarina, Pera)' }]
+    },
+    {
+        id: 'almuerzo',
+        name: 'ALMUERZO',
+        time: '13:00',
+        active: true,
+        title: 'Fideos rojos c/ verdura',
+        rows: [
+            { id: '10', group: 'almidon', portions: 2, comment: 'Papa amarilla (160g) o Camote (160g) o Fideos cocidos (102g)' },
+            { id: '11', group: 'verdura', portions: 2, comment: 'Verdura fresca o al vapor (2 tz)' },
+            { id: '12', group: 'pro-bajo', portions: 4, comment: 'Pescado Tilapia (100g) o Pollo pulpa (100g)' },
+            { id: '13', group: 'grasa', portions: 2, comment: 'Palta (88g) o Aceite (10g)' },
+        ]
+    },
+    {
+        id: 'media-tarde',
+        name: 'MEDIA TARDE',
+        time: '17:00',
+        active: false,
+        title: 'Opciones de media tarde',
+        rows: [{ id: 'mt1', group: 'fruta', portions: 1, comment: 'Frutos secos (15g)' }]
+    },
+    {
+        id: 'post-entreno',
+        name: 'POST ENTRENO',
+        time: '18:30',
+        active: false,
+        title: 'Recuperación post-entrenamiento',
+        rows: [{ id: 'pe1', group: 'pro-bajo', portions: 2, comment: 'Scoop de proteína o 4 claras de huevo' }]
+    },
+    {
+        id: 'cena',
+        name: 'CENA',
+        time: '20:00',
+        active: true,
+        title: 'Fideos c/ pollo + bowl de fruta',
+        rows: [
+            { id: '14', group: 'almidon', portions: 1, comment: 'Fideos cocidos (51g) o Galletas salmas (1 paq)' },
+            { id: '15', group: 'pro-bajo', portions: 3, comment: 'Pollo pulpa (90g) o Res (90g)' },
+            { id: '16', group: 'grasa', portions: 2, comment: 'Palta (88g) o Pecanas (14g)' },
+            { id: '17', group: 'fruta', portions: 1, comment: 'Mandarina (210g)' },
+        ]
+    }
+];
+
 export function FlexiblePlanEditor({ 
     patientId, 
     appointmentId,
@@ -119,85 +200,7 @@ export function FlexiblePlanEditor({
     });
 
     // --- MEAL BLOCKS ---
-    const [meals, setMeals] = useState<MealBlock[]>([
-        {
-            id: 'pre-entreno',
-            name: 'PRE ENTRENO',
-            time: '08:30',
-            active: true,
-            title: 'Huevos cocidos + Bowl de fruta c/ yogurt',
-            rows: [
-                { id: '1', group: 'lac-semi', portions: 1, comment: 'Yogurt Dan Lac (100g) o Leche light roja Eva Gloria (100g)' },
-                { id: '2', group: 'pro-alta', portions: 1, comment: 'Huevos (1 unid) o Queso fresco (25g) o Hot dog San fernando vive bien (55g)' },
-                { id: '3', group: 'fruta', portions: 2, comment: 'Platano de seda (80*2)=160g - 1 unid o Papaya (240g*2)=480g - 2 tz o combinar (papaya 240g + piña 180g)' },
-                { id: '4', group: 'grasa', portions: 1, comment: 'Creatina + Jamaica' },
-            ]
-        },
-        {
-            id: 'desayuno',
-            name: 'DESAYUNO',
-            time: '10:00',
-            active: true,
-            title: 'Wraps de atún + Bowl de fruta',
-            rows: [
-                { id: '5', group: 'almidon', portions: 3, comment: 'Tostada Integral (60g)-3 Unid o Galleta salmas (3 paq) - o Rapiditas (84) - 3 unid' },
-                { id: '6', group: 'pro-bajo', portions: 2, comment: 'Jamon de pavita braedt (40*2)=80g o Claras de huevo (50*2)=100g o Queso light mozzarella (18*2)=36g o Quark (45*2)=90g o Atún en agua y sal (30*2)=60g' },
-                { id: '7', group: 'azucar', portions: 1, comment: 'Mermelada de fresa light campestre (40g)' },
-                { id: '8', group: 'grasa', portions: 1, comment: 'Cafe' },
-                { id: '9', group: 'fruta', portions: 1, comment: 'Plátano bizcochito (80g) - 3 unid' },
-            ]
-        },
-        {
-            id: 'media-manana',
-            name: 'MEDIA MAÑANA',
-            time: '11:30',
-            active: false,
-            title: 'Opciones de media mañana',
-            rows: [{ id: 'mm1', group: 'fruta', portions: 1, comment: '1 fruta de estación (Manzana, Mandarina, Pera)' }]
-        },
-        {
-            id: 'almuerzo',
-            name: 'ALMUERZO',
-            time: '13:00',
-            active: true,
-            title: 'Fideos rojos c/ verdura',
-            rows: [
-                { id: '10', group: 'almidon', portions: 2, comment: 'Papa amarilla (160g) o Camote (160g) o Fideos cocidos (102g)' },
-                { id: '11', group: 'verdura', portions: 2, comment: 'Verdura fresca o al vapor (2 tz)' },
-                { id: '12', group: 'pro-bajo', portions: 4, comment: 'Pescado Tilapia (100g) o Pollo pulpa (100g)' },
-                { id: '13', group: 'grasa', portions: 2, comment: 'Palta (88g) o Aceite (10g)' },
-            ]
-        },
-        {
-            id: 'media-tarde',
-            name: 'MEDIA TARDE',
-            time: '17:00',
-            active: false,
-            title: 'Opciones de media tarde',
-            rows: [{ id: 'mt1', group: 'fruta', portions: 1, comment: 'Frutos secos (15g)' }]
-        },
-        {
-            id: 'post-entreno',
-            name: 'POST ENTRENO',
-            time: '18:30',
-            active: false,
-            title: 'Recuperación post-entrenamiento',
-            rows: [{ id: 'pe1', group: 'pro-bajo', portions: 2, comment: 'Scoop de proteína o 4 claras de huevo' }]
-        },
-        {
-            id: 'cena',
-            name: 'CENA',
-            time: '20:00',
-            active: true,
-            title: 'Fideos c/ pollo + bowl de fruta',
-            rows: [
-                { id: '14', group: 'almidon', portions: 1, comment: 'Fideos cocidos (51g) o Galletas salmas (1 paq)' },
-                { id: '15', group: 'pro-bajo', portions: 3, comment: 'Pollo pulpa (90g) o Res (90g)' },
-                { id: '16', group: 'grasa', portions: 2, comment: 'Palta (88g) o Pecanas (14g)' },
-                { id: '17', group: 'fruta', portions: 1, comment: 'Mandarina (210g)' },
-            ]
-        }
-    ]);
+    const [meals, setMeals] = useState<MealBlock[]>(DEFAULT_MEALS);
 
     // --- CALCULATIONS ---
     const bioCalculations = useMemo(() => {
@@ -440,7 +443,13 @@ export function FlexiblePlanEditor({
                 if (p.gChoKg) setGChoKg(p.gChoKg);
                 if (p.gProKg) setGProKg(p.gProKg);
                 if (p.portions) setPortions(p.portions);
-                if (p.meals) setMeals(p.meals);
+                if (p.meals) {
+                    const mergedMeals = DEFAULT_MEALS.map(defaultMeal => {
+                        const dbMeal = p.meals.find((m: any) => m.id === defaultMeal.id);
+                        return dbMeal ? dbMeal : defaultMeal;
+                    });
+                    setMeals(mergedMeals);
+                }
             }
         } catch (err) {
             console.error("Error loading plan:", err);
