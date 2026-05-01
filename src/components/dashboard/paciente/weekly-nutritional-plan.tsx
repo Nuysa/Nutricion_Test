@@ -530,7 +530,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                                                                 <img
                                                                                                     src={card.image_url}
                                                                                                     alt={card.title}
-                                                                                                    className="w-full h-full object-cover sm:object-contain transition-transform duration-500 group-hover/card:scale-105"
+                                                                                                    className="w-full h-full object-contain transition-transform duration-500 group-hover/card:scale-105"
                                                                                                 />
                                                                                             ) : (
                                                                                                 <div className="w-full h-full flex items-center justify-center opacity-20">
@@ -539,7 +539,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                                                             )}
                                                                                         </div>
                                                                                         <div className="p-3 sm:p-4 flex flex-col flex-1 justify-center gap-1.5 bg-gradient-to-b from-transparent to-[#151F32]/50">
-                                                                                            <p className="text-xs sm:text-[13px] font-black text-emerald-400 uppercase tracking-tight leading-snug break-words">
+                                                                                            <p className="text-xs sm:text-[13px] font-black text-emerald-400 tracking-tight leading-snug break-words">
                                                                                                 {card.description}
                                                                                             </p>
                                                                                             <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-tight break-words">
