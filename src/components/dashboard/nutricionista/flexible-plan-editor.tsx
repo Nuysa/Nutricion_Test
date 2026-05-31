@@ -452,7 +452,7 @@ export function FlexiblePlanEditor({
                 // Plan data takes priority for the specific week, except if we want live sync
                 // but usually the plan stores what was used for calculations
                 if (p.edad && !patient?.date_of_birth) setEdad(p.edad);
-                if (p.talla) setTalla(p.talla);
+                if (p.talla && !patient?.height_cm) setTalla(p.talla);
                 if (p.peso) {
                     // Match to find the saved type
                     const roundedPeso = Number(Number(p.peso).toFixed(1));
