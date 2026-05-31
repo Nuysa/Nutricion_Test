@@ -115,6 +115,48 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
         });
     }, [weekOffset]);
 
+    const visibleDays = useMemo(() => {
+        if (!flexiblePlan) return [];
+        // If we are in flexible plan, only show days that have at least one active meal with rows/content.
+        return daysOfWeek.filter(d => {
+            if (!flexiblePlan.mealsByDay) return true; // Fallback for legacy plans
+            const dayMeals = flexiblePlan.mealsByDay[d.key];
+            if (!dayMeals) return false;
+            // Check if there is at least one active meal that has active/valid configuration
+            return dayMeals.some((m: any) => m.active && m.rows && m.rows.length > 0);
+        });
+    }, [daysOfWeek, flexiblePlan]);
+
+    // Auto-select first active day if the current selectedDay is not active
+    useEffect(() => {
+        if (flexiblePlan && flexiblePlan.mealsByDay) {
+            const dayKeys = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+            const today = new Date();
+            const todayKey = dayKeys[today.getDay() === 0 ? 6 : today.getDay() - 1];
+            
+            // Check if today is active
+            const todayMeals = flexiblePlan.mealsByDay[todayKey];
+            const todayIsActive = todayMeals && todayMeals.some((m: any) => m.active && m.rows && m.rows.length > 0);
+            
+            const isCurrentSelectedActive = selectedDay && flexiblePlan.mealsByDay[selectedDay] && 
+                flexiblePlan.mealsByDay[selectedDay].some((m: any) => m.active && m.rows && m.rows.length > 0);
+
+            if (!isCurrentSelectedActive) {
+                if (todayIsActive) {
+                    setSelectedDay(todayKey);
+                } else {
+                    const firstActiveDay = dayKeys.find(key => {
+                        const dm = flexiblePlan.mealsByDay[key];
+                        return dm && dm.some((m: any) => m.active && m.rows && m.rows.length > 0);
+                    });
+                    if (firstActiveDay) {
+                        setSelectedDay(firstActiveDay);
+                    }
+                }
+            }
+        }
+    }, [flexiblePlan, selectedDay]);
+
     const supabase = createClient();
     const router = useRouter();
 
@@ -452,7 +494,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                         </div>
                         {/* Day selector pills for Flexible Plan */}
                         <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                            {daysOfWeek.map((d) => {
+                            {visibleDays.map((d) => {
                                 const isSelected = selectedDay === d.key;
                                 return (
                                     <button
@@ -487,28 +529,45 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                     <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em]">Instrucciones Detalladas</h3>
                                                 </div>
                                                 <Accordion type="multiple" className="space-y-4">
-                                                    {(((flexiblePlan.mealsByDay ? flexiblePlan.mealsByDay[selectedDay] : flexiblePlan.meals) || []).filter((m: any) => m.active)).map((meal: any) => (
-                                                        <AccordionItem key={meal.id} value={meal.id} className="border-none">
-                                                            <Card className="bg-[#151F32] border-white/5 rounded-3xl overflow-hidden shadow-2xl group transition-all hover:border-orange-500/30">
-                                                                <AccordionTrigger className="hover:no-underline p-0 px-4 sm:px-8 py-4 sm:py-6">
-                                                                    <div className="flex flex-col w-full pr-4 text-left gap-4">
-                                                                        <div className="flex items-center justify-between w-full">
-                                                                            <div className="flex items-center gap-3 sm:gap-6">
-                                                                                <div className="h-9 w-9 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500 shrink-0">
-                                                                                    <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
-                                                                                </div>
-                                                                                <span className="font-tech font-black text-xs sm:text-sm text-white tracking-widest uppercase block">{meal.name}</span>
-                                                                            </div>
-                                                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{meal.time}</span>
-                                                                        </div>
+                                                    {(((flexiblePlan.mealsByDay ? flexiblePlan.mealsByDay[selectedDay] : flexiblePlan.meals) || []).filter((m: any) => m.active)).map((meal: any) => {
+                                                        // Dynamically resolve icon and styling
+                                                        const getMealInfo = (id: string, name: string) => {
+                                                            const key = (id || "").toLowerCase();
+                                                            const nameKey = (name || "").toLowerCase();
+                                                            if (key.includes("breakfast") || nameKey.includes("desayuno")) return { icon: Coffee };
+                                                            if (key.includes("mid-morning") || nameKey.includes("media mañana") || nameKey.includes("mañana")) return { icon: Zap };
+                                                            if (key.includes("lunch") || nameKey.includes("almuerzo")) return { icon: Utensils };
+                                                            if (key.includes("mid-afternoon") || nameKey.includes("media tarde") || nameKey.includes("tarde")) return { icon: Coffee };
+                                                            if (key.includes("dinner") || nameKey.includes("cena")) return { icon: Moon };
+                                                            if (key.includes("pre") || nameKey.includes("pre")) return { icon: Zap };
+                                                            if (key.includes("post") || nameKey.includes("post")) return { icon: CheckCircle };
+                                                            return { icon: Utensils };
+                                                        };
+                                                        const mealMeta = getMealInfo(meal.id, meal.name);
+                                                        const IconComponent = mealMeta.icon;
 
-                                                                        <div className="flex">
-                                                                            <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-xl border border-orange-500/20">
-                                                                                {meal.title}
-                                                                            </span>
+                                                        return (
+                                                            <AccordionItem key={meal.id} value={meal.id} className="border-none">
+                                                                <Card className="bg-[#151F32] border-white/5 rounded-3xl overflow-hidden shadow-2xl group transition-all hover:border-orange-500/30">
+                                                                    <AccordionTrigger className="hover:no-underline p-0 px-4 sm:px-8 py-4 sm:py-6">
+                                                                        <div className="flex flex-col sm:flex-row sm:items-center w-full pr-4 text-left gap-4 sm:gap-6">
+                                                                            <div className="flex items-center gap-3 sm:gap-6 min-w-0 sm:min-w-[200px]">
+                                                                                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500 shrink-0">
+                                                                                    <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
+                                                                                </div>
+                                                                                <div className="text-left">
+                                                                                    <span className="font-tech font-black text-xs sm:text-sm text-white tracking-widest uppercase block leading-tight">{meal.name}</span>
+                                                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mt-0.5">{meal.time || "10:00 AM"}</span>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div className="flex-1 text-left">
+                                                                                <span className="text-[10px] sm:text-xs font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-3 py-1.5 rounded-xl border border-orange-500/20 inline-block break-words whitespace-normal">
+                                                                                    {meal.title}
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                </AccordionTrigger>
+                                                                    </AccordionTrigger>
                                                                 <AccordionContent className="p-0 border-t border-white/5">
                                                                     <div className="p-4 sm:p-8 space-y-4 sm:space-y-6 bg-[#0B1120]/30">
                                                                         {meal.rows.map((row: any) => (
@@ -535,7 +594,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                                 </AccordionContent>
                                                             </Card>
                                                         </AccordionItem>
-                                                    ))}
+                                                    )})}
                                                 </Accordion>
                                             </div>
 
