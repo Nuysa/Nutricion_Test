@@ -86,6 +86,35 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
     const [patientPlanType, setPatientPlanType] = useState<string>("sin plan");
     const [weekOffset, setWeekOffset] = useState(0);
     const [activeDay, setActiveDay] = useState("");
+    const [selectedDay, setSelectedDay] = useState<string>('lunes');
+
+    useEffect(() => {
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday, etc.
+        const dayKeys = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+        setSelectedDay(dayKeys[dayOfWeek]);
+    }, []);
+
+    const daysOfWeek = useMemo(() => {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) + (weekOffset * 7);
+        const monday = new Date(new Date(today).setDate(diff));
+        
+        const days = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
+        const dayKeys = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+        
+        return dayKeys.map((key, i) => {
+            const date = new Date(monday);
+            date.setDate(monday.getDate() + i);
+            return {
+                key,
+                label: `${days[i]}. ${date.getDate()}`,
+                date
+            };
+        });
+    }, [weekOffset]);
+
     const supabase = createClient();
     const router = useRouter();
 
@@ -421,13 +450,35 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                 <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-emerald-400 uppercase tracking-widest">LIPIDOS</p>
                             </Card>
                         </div>
+                        {/* Day selector pills for Flexible Plan */}
+                        <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                            {daysOfWeek.map((d) => {
+                                const isSelected = selectedDay === d.key;
+                                return (
+                                    <button
+                                        key={d.key}
+                                        onClick={() => setSelectedDay(d.key)}
+                                        className={cn(
+                                            "flex flex-col items-center justify-center min-w-[48px] sm:min-w-[70px] h-16 sm:h-20 rounded-xl sm:rounded-[1.5rem] transition-all relative border overflow-hidden",
+                                            isSelected
+                                                ? "bg-gradient-to-br from-[#FF7A00] to-[#FF9D42] text-white border-[#FF7A00] shadow-[0_10px_20px_rgba(255,122,0,0.2)] scale-110 z-10"
+                                                : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
+                                        )}
+                                    >
+                                        <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{d.label.split('. ')[0]}</span>
+                                        <span className="text-base sm:text-xl font-tech font-black">{d.date.getDate()}</span>
+                                        {isSelected && <div className="absolute top-0 right-0 p-1"><CheckCircle className="h-3 w-3 text-white/50" /></div>}
+                                    </button>
+                                );
+                            })}
+                        </div>
 
                         {/* Flexible Plan Details */}
                         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 sm:gap-10">
                             {/* Distribution / Plate View */}
                             <div className="xl:col-span-12 space-y-8 sm:space-y-12">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
-                                    {flexiblePlan && flexiblePlan.meals ? (
+                                    {flexiblePlan && (flexiblePlan.meals || flexiblePlan.mealsByDay) ? (
                                         <>
                                             {/* Column Left: Interactive Accordions (Detailed) */}
                                             <div className="space-y-6">
@@ -436,7 +487,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                     <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em]">Instrucciones Detalladas</h3>
                                                 </div>
                                                 <Accordion type="multiple" className="space-y-4">
-                                                    {flexiblePlan.meals.filter((m: any) => m.active).map((meal: any) => (
+                                                    {(((flexiblePlan.mealsByDay ? flexiblePlan.mealsByDay[selectedDay] : flexiblePlan.meals) || []).filter((m: any) => m.active)).map((meal: any) => (
                                                         <AccordionItem key={meal.id} value={meal.id} className="border-none">
                                                             <Card className="bg-[#151F32] border-white/5 rounded-3xl overflow-hidden shadow-2xl group transition-all hover:border-orange-500/30">
                                                                 <AccordionTrigger className="hover:no-underline p-0 px-4 sm:px-8 py-4 sm:py-6">
