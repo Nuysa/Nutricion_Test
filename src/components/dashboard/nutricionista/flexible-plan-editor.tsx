@@ -359,6 +359,7 @@ export function FlexiblePlanEditor({
         try {
             let calculatedIdeal: number | null = null;
             let calculatedCorregido: number | null = null;
+            let currentPatientWeight = 0;
 
             const { data: patient } = await supabase
                 .from("patients")
@@ -380,7 +381,7 @@ export function FlexiblePlanEditor({
                     .limit(1)
                     .maybeSingle();
 
-                const currentPatientWeight = latestRecord?.weight || patient.current_weight || 0;
+                currentPatientWeight = latestRecord?.weight || patient.current_weight || 0;
 
                 // Calculate Age
                 let age = 0;
@@ -455,7 +456,7 @@ export function FlexiblePlanEditor({
                     const roundedPeso = Number(Number(p.peso).toFixed(1));
                     const roundedIdeal = p.pesoIdeal ? Number(Number(p.pesoIdeal).toFixed(1)) : calculatedIdeal;
                     const roundedCorregido = p.pesoCorregido ? Number(Number(p.pesoCorregido).toFixed(1)) : calculatedCorregido;
-                    const roundedActual = p.pesoActual ? Number(Number(p.pesoActual).toFixed(1)) : Number(Number(patient?.current_weight || 0).toFixed(1));
+                    const roundedActual = Number(Number(currentPatientWeight).toFixed(1));
 
                     if (roundedIdeal !== null && Math.abs(roundedPeso - roundedIdeal) < 0.2) {
                         setPesoTipo("ideal");
@@ -468,7 +469,7 @@ export function FlexiblePlanEditor({
                         setPeso(roundedActual);
                     }
                 } else {
-                    const roundedActual = Number(Number(patient?.current_weight || 0).toFixed(1));
+                    const roundedActual = Number(Number(currentPatientWeight).toFixed(1));
                     setPesoTipo("actual");
                     setPeso(roundedActual);
                 }
@@ -759,12 +760,9 @@ export function FlexiblePlanEditor({
                                                     <SelectItem value="corregido">Corregido {pesoCorregido ? `(${pesoCorregido} kg)` : ""}</SelectItem>
                                                 </SelectContent>
                                             </Select>
-                                            <Input
-                                                type="number"
-                                                value={peso}
-                                                readOnly
-                                                className="w-20 bg-[#0B1120]/30 border-white/5 text-center font-tech font-bold text-xs h-9 rounded-xl text-white opacity-70 cursor-not-allowed focus-visible:ring-0 focus-visible:ring-offset-0"
-                                            />
+                                            <div className="flex items-center bg-[#0B1120]/50 rounded-xl border border-white/5 w-20 h-9 justify-center">
+                                                <span className="text-white font-tech font-bold text-xs">{peso}</span>
+                                            </div>
                                         </div>
                                     </div>
 
