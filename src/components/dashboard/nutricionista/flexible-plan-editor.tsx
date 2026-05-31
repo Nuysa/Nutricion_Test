@@ -878,7 +878,7 @@ export function FlexiblePlanEditor({
                                                 <td className="px-6 py-5">
                                                     <div className="flex items-center justify-center bg-[#0B1120] rounded-xl border border-white/5 w-24 mx-auto overflow-hidden">
                                                         <button onClick={() => setGChoKg(prev => Math.max(0, prev - 0.1))} className="w-7 h-7 text-slate-500 hover:text-white hover:bg-white/5">-</button>
-                                                        <input value={gChoKg} step="0.1" onChange={e => setGChoKg(parseFloat(e.target.value) || 0)} className="w-10 bg-transparent text-center text-sky-400 font-tech font-bold text-xs outline-none" />
+                                                        <input type="number" step="any" value={gChoKg} onChange={e => setGChoKg(parseFloat(e.target.value) || 0)} className="w-10 bg-transparent text-center text-sky-400 font-tech font-bold text-xs outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                                         <button onClick={() => setGChoKg(prev => prev + 0.1)} className="w-7 h-7 text-slate-500 hover:text-white hover:bg-white/5">+</button>
                                                     </div>
                                                 </td>
@@ -892,7 +892,7 @@ export function FlexiblePlanEditor({
                                                 <td className="px-6 py-5">
                                                     <div className="flex items-center justify-center bg-[#0B1120] rounded-xl border border-white/5 w-24 mx-auto overflow-hidden">
                                                         <button onClick={() => setGProKg(prev => Math.max(0, prev - 0.1))} className="w-7 h-7 text-slate-500 hover:text-white hover:bg-white/5">-</button>
-                                                        <input value={gProKg} step="0.1" onChange={e => setGProKg(parseFloat(e.target.value) || 0)} className="w-10 bg-transparent text-center text-orange-500 font-tech font-bold text-xs outline-none" />
+                                                        <input type="number" step="any" value={gProKg} onChange={e => setGProKg(parseFloat(e.target.value) || 0)} className="w-10 bg-transparent text-center text-orange-500 font-tech font-bold text-xs outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                                         <button onClick={() => setGProKg(prev => prev + 0.1)} className="w-7 h-7 text-slate-500 hover:text-white hover:bg-white/5">+</button>
                                                     </div>
                                                 </td>
@@ -912,7 +912,7 @@ export function FlexiblePlanEditor({
                                     </table>
                                 </div>
                             </Card>
-
+ 
                                                  <Card className="bg-[#151F32] border-white/5 rounded-2xl shadow-xl overflow-hidden mb-10">
                                 <div className="bg-gradient-to-r from-blue-500/10 to-transparent p-6 border-b border-white/5 flex items-center gap-4">
                                     <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/10">
@@ -939,7 +939,7 @@ export function FlexiblePlanEditor({
                                                     <td className="px-6 py-3">
                                                         <div className="flex items-center justify-center bg-[#0B1120] rounded-xl border border-white/5 w-24 mx-auto overflow-hidden">
                                                             <button onClick={() => updatePortion(key, portions[key] - 1)} className="w-7 h-7 text-slate-500 hover:text-white hover:bg-white/5">-</button>
-                                                            <input value={portions[key]} onChange={e => updatePortion(key, parseFloat(e.target.value) || 0)} className="w-10 bg-transparent text-center text-white font-tech font-bold text-xs outline-none" />
+                                                            <input type="number" step="any" value={portions[key]} onChange={e => updatePortion(key, parseFloat(e.target.value) || 0)} className="w-10 bg-transparent text-center text-white font-tech font-bold text-xs outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                                             <button onClick={() => updatePortion(key, portions[key] + 1)} className="w-7 h-7 text-slate-500 hover:text-white hover:bg-white/5">+</button>
                                                         </div>
                                                     </td>
@@ -959,13 +959,13 @@ export function FlexiblePlanEditor({
                                                 <td className="px-4 py-5 text-center text-orange-500 font-tech font-black text-lg">{portionTable.totals.pr.toFixed(1)}</td>
                                                 <td className="px-4 py-5 text-center text-yellow-500 font-tech font-black text-lg">{portionTable.totals.f.toFixed(1)}</td>
                                             </tr>
-                                            <tr className="bg-[#0B1120] border-t border-white/5 text-[10px]">
-                                                <td className="px-8 py-4 text-right font-black text-slate-500 tracking-widest uppercase">% ADECUACIÓN:</td>
-                                                <td className="px-6 py-4"></td>
-                                                <td className={cn("px-4 py-4 text-center font-tech font-black", portionTable.colors.k)}>{portionTable.adequacy.k}</td>
-                                                <td className={cn("px-4 py-4 text-center font-tech font-black", portionTable.colors.c)}>{portionTable.adequacy.c}</td>
-                                                <td className={cn("px-4 py-4 text-center font-tech font-black", portionTable.colors.pr)}>{portionTable.adequacy.pr}</td>
-                                                <td className={cn("px-4 py-4 text-center font-tech font-black", portionTable.colors.f)}>{portionTable.adequacy.f}</td>
+                                            <tr className="bg-[#0B1120] border-t border-white/5 text-xs">
+                                                <td className="px-8 py-5 text-right font-black text-slate-500 tracking-widest uppercase text-[10px]">% ADECUACIÓN:</td>
+                                                <td className="px-6 py-5"></td>
+                                                <td className={cn("px-4 py-5 text-center font-tech font-black text-lg", portionTable.colors.k)}>{portionTable.adequacy.k}</td>
+                                                <td className={cn("px-4 py-5 text-center font-tech font-black text-lg", portionTable.colors.c)}>{portionTable.adequacy.c}</td>
+                                                <td className={cn("px-4 py-5 text-center font-tech font-black text-lg", portionTable.colors.pr)}>{portionTable.adequacy.pr}</td>
+                                                <td className={cn("px-4 py-5 text-center font-tech font-black text-lg", portionTable.colors.f)}>{portionTable.adequacy.f}</td>
                                             </tr>
                                         </tfoot>
                                     </table>
