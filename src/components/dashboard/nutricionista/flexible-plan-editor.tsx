@@ -974,7 +974,44 @@ export function FlexiblePlanEditor({
                         </div>
                     </div>
                 ) : activeTab === "resumen" ? (
-                    <div className="flex flex-col gap-4 sm:gap-6 pb-32 animate-in slide-in-from-right-10 duration-500">
+                    <div className="flex flex-col gap-4 sm:gap-6 pb-32 animate-in slide-in-from-right-10 duration-500 max-w-6xl mx-auto w-full">
+                        {/* Comparison Bar - Sticky at the top of the Resumen content */}
+                        <div className="sticky top-0 z-20 bg-[#0B1120] pb-4 pt-1">
+                            <div className="bg-[#151F32] border border-white/5 rounded-2xl p-4 shadow-xl">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Comparativa de Porciones (Logrado en Comidas / Objetivo)</h4>
+                                <div className="flex flex-wrap gap-2 md:gap-3">
+                                    {Object.entries(DB_PORCIONES).map(([k, v]) => {
+                                        const sumLograda = meals
+                                            .filter(m => m.active)
+                                            .reduce((sum, m) => {
+                                                return sum + m.rows
+                                                    .filter(r => r.group === k)
+                                                    .reduce((rSum, r) => rSum + (Number(r.portions) || 0), 0);
+                                            }, 0);
+                                        const target = portions[k] || 0;
+                                        const diff = sumLograda - target;
+                                        const isMatch = Math.abs(diff) < 0.01;
+                                        const isOver = diff > 0.01;
+                                        
+                                        return (
+                                            <div key={k} className="flex flex-col bg-[#0B1120] border border-white/5 rounded-xl px-3 py-1.5 shrink-0 min-w-[105px] flex-1">
+                                                <span className="text-slate-500 uppercase tracking-widest text-[8px] truncate leading-none">{v.label}</span>
+                                                <div className="flex items-baseline gap-1 mt-1 font-tech">
+                                                    <span className={cn("text-xs font-black", isMatch ? "text-emerald-400" : isOver ? "text-rose-400" : "text-yellow-400")}>
+                                                        {Number(sumLograda.toFixed(2))}
+                                                    </span>
+                                                    <span className="text-[9px] text-slate-600">/</span>
+                                                    <span className="text-[10px] text-slate-400">
+                                                        {target}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Meal Cards */}
                         <div className="grid grid-cols-1 gap-6 max-w-6xl mx-auto w-full">
                             {meals.filter(m => m.active).sort((a, b) => a.time.localeCompare(b.time)).map(meal => (
@@ -1022,8 +1059,16 @@ export function FlexiblePlanEditor({
                                                                 ))}
                                                             </SelectContent>
                                                         </Select>
-                                                        <div className="w-14 h-10 bg-[#FF7A00]/10 border border-[#FF7A00]/20 rounded-xl flex items-center justify-center font-tech font-black text-[#FF7A00] text-sm shadow-inner">
-                                                            {row.portions}
+                                                        <div className="flex items-center bg-[#0B1120] rounded-xl border border-white/5 w-24 overflow-hidden shrink-0">
+                                                            <button onClick={() => setMeals(prev => prev.map(m => m.id === meal.id ? { ...m, rows: m.rows.map(r => r.id === row.id ? { ...r, portions: Math.max(0, Number((r.portions - 0.5).toFixed(1))) } : r) } : m))} className="w-7 h-10 text-slate-500 hover:text-white hover:bg-white/5 transition-all">-</button>
+                                                            <input
+                                                                type="number"
+                                                                step="any"
+                                                                value={row.portions}
+                                                                onChange={e => setMeals(prev => prev.map(m => m.id === meal.id ? { ...m, rows: m.rows.map(r => r.id === row.id ? { ...r, portions: parseFloat(e.target.value) || 0 } : r) } : m))}
+                                                                className="w-10 bg-transparent text-center text-[#FF7A00] font-tech font-black text-xs outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            />
+                                                            <button onClick={() => setMeals(prev => prev.map(m => m.id === meal.id ? { ...m, rows: m.rows.map(r => r.id === row.id ? { ...r, portions: Number((r.portions + 0.5).toFixed(1)) } : r) } : m))} className="w-7 h-10 text-slate-500 hover:text-white hover:bg-white/5 transition-all">+</button>
                                                         </div>
                                                     </div>
                                                     <div className="flex-1 relative flex gap-2">
