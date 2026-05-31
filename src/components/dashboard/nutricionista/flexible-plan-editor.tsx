@@ -774,7 +774,7 @@ export function FlexiblePlanEditor({
                                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Factor Actividad</label>
                                             <div className="flex items-center bg-[#0B1120] rounded-xl border border-white/5 w-32 overflow-hidden">
                                                 <button onClick={() => setFactorActividad(prev => Math.max(1, prev - 0.1))} className="w-9 h-9 text-slate-500 hover:text-white hover:bg-white/5">-</button>
-                                                <input type="number" value={factorActividad} step="0.1" onChange={e => setFactorActividad(parseFloat(e.target.value) || 1)} className="w-full bg-transparent text-center text-white font-bold text-xs outline-none" />
+                                                <input type="number" value={factorActividad} step="0.1" onChange={e => setFactorActividad(parseFloat(e.target.value) || 1)} className="w-full bg-transparent text-center text-white font-bold text-xs outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                                 <button onClick={() => setFactorActividad(prev => prev + 0.1)} className="w-9 h-9 text-slate-500 hover:text-white hover:bg-white/5">+</button>
                                             </div>
                                         </div>
@@ -782,14 +782,18 @@ export function FlexiblePlanEditor({
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gasto s/ Ejercicio</span>
                                             <span className="text-sm font-bold text-white">{bioCalculations.gastoBase}</span>
                                         </div>
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex justify-between items-center gap-4">
                                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Calorías Entrenamiento</span>
-                                            <input
-                                                type="number"
-                                                value={gastoEntrenamiento}
-                                                onChange={e => setGastoEntrenamiento(parseInt(e.target.value) || 0)}
-                                                className="w-24 bg-[#0B1120] border border-white/5 rounded-lg py-1 px-3 text-right text-xs font-bold text-slate-400 outline-none focus:border-orange-500 transition-colors"
-                                            />
+                                            <div className="flex items-center bg-[#0B1120] rounded-xl border border-white/5 w-32 overflow-hidden">
+                                                <button onClick={() => setGastoEntrenamiento(prev => Math.max(0, prev - 50))} className="w-9 h-9 text-slate-500 hover:text-white hover:bg-white/5">-</button>
+                                                <input
+                                                    type="number"
+                                                    value={gastoEntrenamiento}
+                                                    onChange={e => setGastoEntrenamiento(parseInt(e.target.value) || 0)}
+                                                    className="w-full bg-transparent text-center text-white font-bold text-xs outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                />
+                                                <button onClick={() => setGastoEntrenamiento(prev => prev + 50)} className="w-9 h-9 text-slate-500 hover:text-white hover:bg-white/5">+</button>
+                                            </div>
                                         </div>
                                         <div className="bg-white/5 p-4 rounded-xl border border-white/10 flex justify-between items-center">
                                             <span className="text-[10px] font-black text-white uppercase tracking-widest">Gasto Total (Día Activo)</span>
@@ -813,7 +817,7 @@ export function FlexiblePlanEditor({
                                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Días Entreno (0-7)</label>
                                         <div className="flex items-center bg-[#0B1120] rounded-xl border border-white/5 w-32 overflow-hidden">
                                             <button onClick={() => setDiasEntreno(prev => Math.max(0, prev - 1))} className="w-9 h-9 text-slate-500 hover:text-white hover:bg-white/5">-</button>
-                                            <input type="number" value={diasEntreno} min="0" max="7" onChange={e => setDiasEntreno(parseInt(e.target.value) || 0)} className="w-full bg-transparent text-center text-white font-bold text-xs outline-none" />
+                                            <input type="number" value={diasEntreno} min="0" max="7" onChange={e => setDiasEntreno(parseInt(e.target.value) || 0)} className="w-full bg-transparent text-center text-white font-bold text-xs outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                             <button onClick={() => setDiasEntreno(prev => Math.min(7, prev + 1))} className="w-9 h-9 text-slate-500 hover:text-white hover:bg-white/5">+</button>
                                         </div>
                                     </div>
@@ -827,7 +831,7 @@ export function FlexiblePlanEditor({
                                         <div className="flex items-center bg-yellow-500/5 rounded-xl border border-yellow-500/20 w-32 overflow-hidden group">
                                             <button onClick={() => setAjustePct(prev => prev - 1)} className="w-9 h-9 text-yellow-500/60 hover:text-yellow-400 hover:bg-yellow-500/10 transition-all">-</button>
                                             <div className="flex-1 flex items-center justify-center gap-1">
-                                                <input type="number" value={ajustePct} onChange={e => setAjustePct(parseInt(e.target.value) || 0)} className="w-12 bg-transparent text-right text-yellow-400 font-tech font-bold text-xs outline-none" />
+                                                <input type="number" value={ajustePct} onChange={e => setAjustePct(parseInt(e.target.value) || 0)} className="w-12 bg-transparent text-right text-yellow-400 font-tech font-bold text-xs outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                                 <span className="text-[10px] text-yellow-500/60 font-black">%</span>
                                             </div>
                                             <button onClick={() => setAjustePct(prev => prev + 1)} className="w-9 h-9 text-yellow-500/60 hover:text-yellow-400 hover:bg-yellow-500/10 transition-all">+</button>
