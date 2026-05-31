@@ -211,6 +211,16 @@ export function FlexiblePlanEditor({
 
     // --- MEAL BLOCKS ---
     const [meals, setMeals] = useState<MealBlock[]>(DEFAULT_MEALS);
+    const [selectedDay, setSelectedDay] = useState<string>('lunes');
+    const [mealsByDay, setMealsByDay] = useState<Record<string, MealBlock[]>>({
+        'lunes': DEFAULT_MEALS,
+        'martes': DEFAULT_MEALS,
+        'miercoles': DEFAULT_MEALS,
+        'jueves': DEFAULT_MEALS,
+        'viernes': DEFAULT_MEALS,
+        'sabado': DEFAULT_MEALS,
+        'domingo': DEFAULT_MEALS,
+    });
 
     // --- CALCULATIONS ---
     const bioCalculations = useMemo(() => {
@@ -242,6 +252,26 @@ export function FlexiblePlanEditor({
         const monday = new Date(new Date(today).setDate(diff));
         const sunday = new Date(new Date(monday).setDate(monday.getDate() + 6));
         return `${monday.toLocaleDateString("es-ES", { day: "2-digit", month: "short" })} - ${sunday.toLocaleDateString("es-ES", { day: "2-digit", month: "short" })} ${sunday.getFullYear()}`;
+    }, [weekOffset]);
+
+    const daysOfWeek = useMemo(() => {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) + (weekOffset * 7);
+        const monday = new Date(new Date(today).setDate(diff));
+        
+        const days = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
+        const dayKeys = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+        
+        return dayKeys.map((key, i) => {
+            const date = new Date(monday);
+            date.setDate(monday.getDate() + i);
+            return {
+                key,
+                label: `${days[i]}. ${date.getDate()}`,
+                date
+            };
+        });
     }, [weekOffset]);
 
     const macroReq = useMemo(() => {
@@ -328,12 +358,21 @@ export function FlexiblePlanEditor({
         });
     };
 
+    const handleDayChange = (newDay: string) => {
+        setMealsByDay(prev => ({
+            ...prev,
+            [selectedDay]: meals
+        }));
+        setMeals(mealsByDay[newDay] || DEFAULT_MEALS);
+        setSelectedDay(newDay);
+    };
+
     const addRow = (mealId: string) => {
         setMeals(prev => prev.map(m => {
             if (m.id === mealId) {
                 return {
                     ...m,
-                    rows: [...m.rows, { id: Math.random().toString(), group: 'almidon', portions: 1, comment: '' }]
+                    rows: [...m.rows, { id: Math.random().toString(), group: 'almidon', portions: 0, comment: '' }]
                 };
             }
             return m;
@@ -482,13 +521,50 @@ export function FlexiblePlanEditor({
                 if (p.gChoKg) setGChoKg(p.gChoKg);
                 if (p.gProKg) setGProKg(p.gProKg);
                 if (p.portions) setPortions(p.portions);
-                if (p.meals) {
+                if (p.mealsByDay) {
+                    setMealsByDay(p.mealsByDay);
+                    setMeals(p.mealsByDay[selectedDay] || DEFAULT_MEALS);
+                } else if (p.meals) {
                     const mergedMeals = DEFAULT_MEALS.map(defaultMeal => {
                         const dbMeal = p.meals.find((m: any) => m.id === defaultMeal.id);
                         return dbMeal ? dbMeal : defaultMeal;
                     });
+                    const initialMealsByDay = {
+                        'lunes': mergedMeals,
+                        'martes': mergedMeals,
+                        'miercoles': mergedMeals,
+                        'jueves': mergedMeals,
+                        'viernes': mergedMeals,
+                        'sabado': mergedMeals,
+                        'domingo': mergedMeals,
+                    };
+                    setMealsByDay(initialMealsByDay);
                     setMeals(mergedMeals);
+                } else {
+                    const resetMealsByDay = {
+                        'lunes': DEFAULT_MEALS,
+                        'martes': DEFAULT_MEALS,
+                        'miercoles': DEFAULT_MEALS,
+                        'jueves': DEFAULT_MEALS,
+                        'viernes': DEFAULT_MEALS,
+                        'sabado': DEFAULT_MEALS,
+                        'domingo': DEFAULT_MEALS,
+                    };
+                    setMealsByDay(resetMealsByDay);
+                    setMeals(DEFAULT_MEALS);
                 }
+            } else {
+                const resetMealsByDay = {
+                    'lunes': DEFAULT_MEALS,
+                    'martes': DEFAULT_MEALS,
+                    'miercoles': DEFAULT_MEALS,
+                    'jueves': DEFAULT_MEALS,
+                    'viernes': DEFAULT_MEALS,
+                    'sabado': DEFAULT_MEALS,
+                    'domingo': DEFAULT_MEALS,
+                };
+                setMealsByDay(resetMealsByDay);
+                setMeals(DEFAULT_MEALS);
             }
         } catch (err) {
             console.error("Error loading plan:", err);
@@ -500,9 +576,15 @@ export function FlexiblePlanEditor({
     const savePlan = async () => {
         if (!patientId) return;
         setIsSaving(true);
+        const finalMealsByDay = {
+            ...mealsByDay,
+            [selectedDay]: meals
+        };
         const planData = {
             genero, edad, talla, peso, factorActividad, gastoEntrenamiento,
-            diasEntreno, ajustePct, gChoKg, gProKg, portions, meals,
+            diasEntreno, ajustePct, gChoKg, gProKg, portions, 
+            meals,
+            mealsByDay: finalMealsByDay,
             pesoIdeal, pesoCorregido, pesoActual
         };
 
@@ -975,6 +1057,27 @@ export function FlexiblePlanEditor({
                     </div>
                 ) : activeTab === "resumen" ? (
                     <div className="flex flex-col gap-4 sm:gap-6 pb-32 animate-in slide-in-from-right-10 duration-500 max-w-6xl mx-auto w-full">
+                        {/* Day Selector Bar */}
+                        <div className="flex items-center gap-2 bg-[#151F32] border border-white/5 p-2 rounded-2xl shadow-xl overflow-x-auto scrollbar-none">
+                            {daysOfWeek.map((day) => {
+                                const isActive = selectedDay === day.key;
+                                return (
+                                    <button
+                                        key={day.key}
+                                        onClick={() => handleDayChange(day.key)}
+                                        className={cn(
+                                            "flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 shrink-0 min-w-[95px] border",
+                                            isActive 
+                                                ? "bg-gradient-to-r from-[#FF7A00] to-[#E66A00] text-white border-[#FF7A00] shadow-[0_0_15px_rgba(255,122,0,0.3)]" 
+                                                : "bg-[#0B1120] text-slate-400 border-white/5 hover:text-white hover:border-white/10"
+                                        )}
+                                    >
+                                        {day.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
                         {/* Comparison Bar - Sticky at the top of the Resumen content */}
                         <div className="sticky top-0 z-20 bg-[#0B1120] pb-4 pt-1">
                             <div className="bg-[#151F32] border border-white/5 rounded-2xl p-4 shadow-xl">
