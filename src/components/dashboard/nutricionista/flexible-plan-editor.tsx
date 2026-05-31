@@ -421,7 +421,10 @@ export function FlexiblePlanEditor({
                 let weightToLoad = currentPatientWeight;
                 setPesoTipo("actual");
 
-                if (patient.gender) setGenero(patient.gender === 'femenino' || patient.gender === 'F' ? 'F' : 'M');
+                if (patient.gender) {
+                    const g = patient.gender.toLowerCase();
+                    setGenero(g.startsWith('f') ? 'F' : 'M');
+                }
                 if (patient.height_cm) setTalla(Number(patient.height_cm));
                 if (weightToLoad > 0) setPeso(Number(weightToLoad));
                 setEdad(age);
@@ -448,7 +451,6 @@ export function FlexiblePlanEditor({
                 const p = data.data;
                 // Plan data takes priority for the specific week, except if we want live sync
                 // but usually the plan stores what was used for calculations
-                if (p.genero && !patient?.gender) setGenero(p.genero);
                 if (p.edad && !patient?.date_of_birth) setEdad(p.edad);
                 if (p.talla) setTalla(p.talla);
                 if (p.peso) {
@@ -716,15 +718,11 @@ export function FlexiblePlanEditor({
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center gap-4">
                                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Género</label>
-                                        <Select value={genero} onValueChange={(v: any) => setGenero(v)} disabled>
-                                            <SelectTrigger className="w-32 bg-[#0B1120] border-white/5 rounded-xl h-9 text-xs font-bold text-white opacity-70">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent className="bg-[#151F32] border-white/10 text-white">
-                                                <SelectItem value="M">Hombre</SelectItem>
-                                                <SelectItem value="F">Mujer</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="flex items-center bg-[#0B1120]/50 rounded-xl border border-white/5 w-32 h-9 justify-center">
+                                            <span className="text-white font-tech font-bold text-xs">
+                                                {genero === "F" ? "Mujer" : "Hombre"}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     {[
