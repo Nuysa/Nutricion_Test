@@ -1048,9 +1048,9 @@ export function FlexiblePlanEditor({
                                         <div className="p-3 sm:p-5 flex flex-col gap-3">
                                             {meal.rows.map((row) => (
                                                 <div key={row.id} className="flex flex-col xl:flex-row items-stretch gap-2 sm:gap-3 animate-in fade-in duration-300 group/row bg-[#0B1120]/40 p-1.5 sm:p-2 rounded-2xl border border-white/5 hover:border-white/10 hover:bg-[#0B1120]/70 transition-all">
-                                                    <div className="flex items-center gap-2 w-full xl:w-[380px] shrink-0">
+                                                    <div className="flex items-center gap-2 w-full xl:w-[460px] shrink-0">
                                                         <Select value={row.group} onValueChange={(v) => setMeals(prev => prev.map(m => m.id === meal.id ? { ...m, rows: m.rows.map(r => r.id === row.id ? { ...r, group: v } : r) } : m))}>
-                                                            <SelectTrigger className="flex-1 bg-[#151F32] border-white/5 rounded-xl h-10 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-300 hover:border-[#FF7A00]/50 transition-colors shadow-inner">
+                                                            <SelectTrigger className="flex-1 bg-[#151F32] border-white/5 rounded-xl h-10 text-[10px] sm:text-[11px] font-black uppercase tracking-normal text-slate-300 hover:border-[#FF7A00]/50 transition-colors shadow-inner">
                                                                 <SelectValue />
                                                             </SelectTrigger>
                                                             <SelectContent className="bg-[#151F32] border-white/10 text-white rounded-xl">
