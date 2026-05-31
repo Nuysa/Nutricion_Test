@@ -438,8 +438,8 @@ export function FlexiblePlanEditor({
                 const p = data.data;
                 // Plan data takes priority for the specific week, except if we want live sync
                 // but usually the plan stores what was used for calculations
-                if (p.genero) setGenero(p.genero);
-                if (p.edad) setEdad(p.edad);
+                if (p.genero && !patient?.gender) setGenero(p.genero);
+                if (p.edad && !patient?.date_of_birth) setEdad(p.edad);
                 if (p.talla) setTalla(p.talla);
                 if (p.peso) setPeso(p.peso);
                 if (p.factorActividad) setFactorActividad(p.factorActividad);
