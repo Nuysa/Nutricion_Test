@@ -451,17 +451,26 @@ export function FlexiblePlanEditor({
                 if (p.edad && !patient?.date_of_birth) setEdad(p.edad);
                 if (p.talla) setTalla(p.talla);
                 if (p.peso) {
-                    setPeso(p.peso);
-                    
                     // Match to find the saved type
                     const roundedPeso = Number(Number(p.peso).toFixed(1));
                     const roundedIdeal = p.pesoIdeal ? Number(Number(p.pesoIdeal).toFixed(1)) : calculatedIdeal;
                     const roundedCorregido = p.pesoCorregido ? Number(Number(p.pesoCorregido).toFixed(1)) : calculatedCorregido;
                     const roundedActual = p.pesoActual ? Number(Number(p.pesoActual).toFixed(1)) : Number(Number(patient?.current_weight || 0).toFixed(1));
 
-                    if (roundedIdeal !== null && roundedPeso === roundedIdeal) setPesoTipo("ideal");
-                    else if (roundedCorregido !== null && roundedPeso === roundedCorregido) setPesoTipo("corregido");
-                    else setPesoTipo("actual");
+                    if (roundedIdeal !== null && Math.abs(roundedPeso - roundedIdeal) < 0.2) {
+                        setPesoTipo("ideal");
+                        setPeso(roundedIdeal);
+                    } else if (roundedCorregido !== null && Math.abs(roundedPeso - roundedCorregido) < 0.2) {
+                        setPesoTipo("corregido");
+                        setPeso(roundedCorregido);
+                    } else {
+                        setPesoTipo("actual");
+                        setPeso(roundedActual);
+                    }
+                } else {
+                    const roundedActual = Number(Number(patient?.current_weight || 0).toFixed(1));
+                    setPesoTipo("actual");
+                    setPeso(roundedActual);
                 }
                 if (p.factorActividad) setFactorActividad(p.factorActividad);
                 if (p.gastoEntrenamiento) setGastoEntrenamiento(p.gastoEntrenamiento);
@@ -753,9 +762,8 @@ export function FlexiblePlanEditor({
                                             <Input
                                                 type="number"
                                                 value={peso}
-                                                step="0.1"
-                                                onChange={(e) => setPeso(parseFloat(e.target.value) || 0)}
-                                                className="w-20 bg-[#0B1120]/50 border-white/5 text-center font-tech font-bold text-xs h-9 rounded-xl text-white focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-orange-500"
+                                                readOnly
+                                                className="w-20 bg-[#0B1120]/30 border-white/5 text-center font-tech font-bold text-xs h-9 rounded-xl text-white opacity-70 cursor-not-allowed focus-visible:ring-0 focus-visible:ring-offset-0"
                                             />
                                         </div>
                                     </div>
