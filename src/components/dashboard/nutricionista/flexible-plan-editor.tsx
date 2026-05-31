@@ -913,17 +913,16 @@ export function FlexiblePlanEditor({
                                 </div>
                             </Card>
 
-                            {/* Equivalencias */}
-                            <Card className="bg-[#151F32] border-white/5 rounded-2xl shadow-xl overflow-hidden mb-10">
+                                                 <Card className="bg-[#151F32] border-white/5 rounded-2xl shadow-xl overflow-hidden mb-10">
                                 <div className="bg-gradient-to-r from-blue-500/10 to-transparent p-6 border-b border-white/5 flex items-center gap-4">
                                     <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/10">
                                         <Layers className="h-5 w-5" />
                                     </div>
                                     <h3 className="text-xs font-black text-white uppercase tracking-[0.4em]">Grupo de Alimentos (Equivalencias)</h3>
                                 </div>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead className="bg-[#0B1120] text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                                <div className="overflow-x-auto max-h-[480px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead className="sticky top-0 bg-[#0B1120] z-10 text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] shadow-[0_2px_4px_rgba(0,0,0,0.2)]">
                                             <tr>
                                                 <th className="px-8 py-3">GRUPO</th>
                                                 <th className="px-6 py-3 text-center">PORC.</th>
@@ -951,8 +950,8 @@ export function FlexiblePlanEditor({
                                                 </tr>
                                             ))}
                                         </tbody>
-                                        <tfoot className="border-t-2 border-white/10">
-                                            <tr className="bg-[#FF7A00]/5 text-xs">
+                                        <tfoot className="sticky bottom-0 z-10 bg-[#151F32] border-t-2 border-white/10 shadow-[0_-4px_10px_rgba(0,0,0,0.3)]">
+                                            <tr className="bg-[#1c2639] text-xs">
                                                 <td className="px-8 py-5 text-right font-black text-orange-500 tracking-widest uppercase text-[10px]">TOTALES LOGRADOS:</td>
                                                 <td className="px-6 py-5"></td>
                                                 <td className="px-4 py-5 text-center text-white font-tech font-black text-lg">{portionTable.totals.k}</td>
