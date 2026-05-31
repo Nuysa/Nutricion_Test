@@ -72,7 +72,7 @@ export function PatientHistoryCharts({
     // Mejoramos la ordenación cronológica para que sea robusta
     const chronoMeasurements = React.useMemo(() => {
         if (!measurements || measurements.length === 0) return [];
-        
+
         // Creamos una copia y ordenamos por fecha ascendente [ANTIGUO -> NUEVO]
         return [...measurements].sort((a, b) => {
             const dateA = new Date(a.date).getTime();
@@ -93,14 +93,14 @@ export function PatientHistoryCharts({
         const { variable_id, isSystem, label } = metric;
         const values: number[] = [];
         const labels: string[] = [];
-        
+
         // Búsqueda "Ultra-Fuzzy" para encontrar la variable (ID, Código o Nombre)
         const normalize = (s: string) => s?.toUpperCase().replace(/[\s_-]/g, '') || '';
         const targetNorm = normalize(variable_id);
-        
-        const v = clinicalVariables.find(cv => 
-            cv.id === variable_id || 
-            normalize(cv.code) === targetNorm || 
+
+        const v = clinicalVariables.find(cv =>
+            cv.id === variable_id ||
+            normalize(cv.code) === targetNorm ||
             normalize(cv.name) === targetNorm
         );
 
@@ -137,7 +137,7 @@ export function PatientHistoryCharts({
                         val = 0;
                     } else {
                         const mPrev = chronoMeasurements[idx - 1];
-                        
+
                         let currFat = parseFloat(m._computedInputs?.['GRASA_CORPORAL']);
                         if (isNaN(currFat)) {
                             const wCurr = parseFloat(m.weight || m._rawSource?.weight) || 0;
@@ -159,7 +159,7 @@ export function PatientHistoryCharts({
                         val = 0;
                     } else {
                         const mPrev = chronoMeasurements[idx - 1];
-                        
+
                         let currMusc = parseFloat(m._computedInputs?.['MASA_MUSCULAR_LEE']);
                         if (isNaN(currMusc)) {
                             const wCurr = parseFloat(m.weight || m._rawSource?.weight) || 0;
@@ -181,7 +181,7 @@ export function PatientHistoryCharts({
                 // 2. Caso Variable Clínica Específica
                 // Generamos todos los códigos posibles para buscar en _computedInputs
                 const possibleCodes = v ? [v.code, v.name, v.id] : [variable_id];
-                
+
                 // Prioridad 0: Si el ID de la variable mapeada es directamente una columna nativa
                 if (variable_id === 'body_fat_percentage' || variable_id === 'grasa') {
                     const natVal = parseFloat(m.body_fat_percentage || m._rawSource?.body_fat_percentage);
@@ -219,7 +219,7 @@ export function PatientHistoryCharts({
                     if (computed !== undefined && computed !== null) {
                         // Leemos la etiqueta si TrackingDashboard la guardó desde el rango
                         const computedLabel = computedKey ? m._computedInputs[`${computedKey}_LABEL`] : undefined;
-                        
+
                         if (computedLabel) {
                             textLabel = computedLabel;
                             val = parseFloat(computed) || 0;
@@ -248,7 +248,7 @@ export function PatientHistoryCharts({
 
                     const extraKey = Object.keys(parsedExtra).find(k => k === codeUpper || normalize(k) === codeNorm);
                     const extra = extraKey ? parsedExtra[extraKey] : undefined;
-                    
+
                     if (extra !== undefined && extra !== null) {
                         if (typeof extra === 'string' && isNaN(parseFloat(extra))) {
                             textLabel = extra;
@@ -291,7 +291,7 @@ export function PatientHistoryCharts({
 
         return dataPoints.map(val => {
             if (val === 0 || val === null || val === undefined) return "—";
-            
+
             // Buscamos en qué rango cae el valor
             const range = v.ranges.find((r: any) => {
                 const min = parseFloat(r.min);
@@ -343,22 +343,22 @@ export function PatientHistoryCharts({
                     offset: true,
                     grid: { display: false },
                     ticks: {
-                        color: '#64748b',
-                        font: { size: 9, weight: '800' as const, family: 'var(--font-tech)' },
-                        padding: 5,
+                        color: '#cbd5e1',
+                        font: { size: 18, weight: '800' as const, family: "'Inter', sans-serif" },
+                        padding: 6,
                         maxRotation: 0,
                         autoSkip: false,
                         callback: function (value: any, index: number) {
                             const val = dataPoints[index];
                             if (val === undefined || val === null) return "";
-                            
+
                             // Prioridad absoluta a las etiquetas de diagnóstico (customLabels)
                             if (customLabels && customLabels[index]) {
                                 if (customLabels[index] === "—") return val; // Si no hay rango, mostramos el número
                                 const labelText = Array.isArray(customLabels[index]) ? customLabels[index][0] : customLabels[index];
                                 return labelText;
                             }
-                            
+
                             return val;
                         }
                     },
@@ -370,7 +370,7 @@ export function PatientHistoryCharts({
                     max: maxVal + paddingY
                 }
             },
-            layout: { padding: { top: 10, bottom: 5, left: 0, right: 0 } }
+            layout: { padding: { top: 12, bottom: 5, left: 0, right: 0 } }
         } as any;
     };
 
@@ -420,9 +420,13 @@ export function PatientHistoryCharts({
                     {subtitle && <><br /><span className="text-[10px] text-slate-500 font-tech font-black tracking-widest uppercase mt-2 block opacity-60">{subtitle}</span></>}
                 </h3>
             </div>
-            <div className="flex-1 min-w-0 w-full h-[90px] relative z-10 overflow-hidden text-left flex items-center px-1">
+            <div className="flex-1 min-w-0 w-full h-[115px] relative z-10 overflow-hidden text-left flex items-center px-1">
                 <div className="w-full h-full relative flex justify-between">
-                    <Line options={getChartOptions(dataPoints, customLabels)} data={getChartData(dataPoints, lineColor)} />
+                    <Line
+                        key={`${title}_${dataPoints.join('-')}_${activeTab}`}
+                        options={getChartOptions(dataPoints, customLabels)}
+                        data={getChartData(dataPoints, lineColor)}
+                    />
                 </div>
             </div>
         </div>
@@ -440,9 +444,9 @@ export function PatientHistoryCharts({
                     const Icon = AVAILABLE_ICONS[config.icon] || Activity;
                     const isActive = activeTab === config.id || activeTab === config.name.toLowerCase();
                     return (
-                        <button 
-                            key={config.id} 
-                            onClick={() => setActiveTab(config.id)} 
+                        <button
+                            key={config.id}
+                            onClick={() => setActiveTab(config.id)}
                             className={cn(
                                 "rounded-2xl flex flex-col items-center justify-center py-1.5 w-[19%] transition-all cursor-pointer border border-transparent",
                                 isActive ? "bg-white/5 border-white/10 text-white shadow-2xl scale-105 relative before:absolute before:bottom-0 before:left-1/2 before:-translate-x-1/2 before:w-8 before:h-1 before:bg-nutrition-500 before:rounded-t-full" : "text-slate-500 hover:text-slate-300 hover:bg-white/[0.02]"
@@ -461,13 +465,13 @@ export function PatientHistoryCharts({
                     const { values, labels: extractedLabels } = getMetricData(metric);
                     const labelNorm = (metric.label || metric.visual_title || "").toUpperCase();
                     const isDiagnostic = labelNorm.includes('DIAGNOSTICO') || labelNorm.includes('DIAGNÓSTICO');
-                    
-                    const labels = isDiagnostic 
-                        ? getDiagnosticLabels(metric, values, extractedLabels) 
+
+                    const labels = isDiagnostic
+                        ? getDiagnosticLabels(metric, values, extractedLabels)
                         : undefined;
-                    
+
                     return (
-                        <ChartCard 
+                        <ChartCard
                             key={metric.id}
                             title={metric.label}
                             subtitle={metric.subtitle}
