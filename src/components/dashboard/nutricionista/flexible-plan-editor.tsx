@@ -181,6 +181,7 @@ export function FlexiblePlanEditor({
     const [pesoIdeal, setPesoIdeal] = useState<number | null>(null);
     const [pesoCorregido, setPesoCorregido] = useState<number | null>(null);
     const [pesoActual, setPesoActual] = useState<number | null>(null);
+    const [pesoTipo, setPesoTipo] = useState<string>("actual");
     const [factorActividad, setFactorActividad] = useState(1.3);
     const [gastoEntrenamiento, setGastoEntrenamiento] = useState(300);
 
@@ -356,6 +357,9 @@ export function FlexiblePlanEditor({
         if (!patientId) return;
         setIsLoading(true);
         try {
+            let calculatedIdeal: number | null = null;
+            let calculatedCorregido: number | null = null;
+
             const { data: patient } = await supabase
                 .from("patients")
                 .select("id, gender, date_of_birth, height_cm, current_weight")
@@ -412,17 +416,9 @@ export function FlexiblePlanEditor({
                     });
                 }
 
-                // Apply logic for loading initial weight
+                // Apply logic for loading initial weight - default to current weight
                 let weightToLoad = currentPatientWeight;
-                const diagnosis = diagnosisLabel.toLowerCase();
-
-                if (diagnosis.includes("sobrepeso")) {
-                    weightToLoad = inputs['PESO_IDEAL'] || currentPatientWeight;
-                } else if (diagnosis.includes("obesidad")) {
-                    weightToLoad = inputs['PESO_CORREGIDO'] || currentPatientWeight;
-                } else if (diagnosis.includes("normal") || diagnosis.includes("bajo peso")) {
-                    weightToLoad = currentPatientWeight;
-                }
+                setPesoTipo("actual");
 
                 if (patient.gender) setGenero(patient.gender === 'femenino' || patient.gender === 'F' ? 'F' : 'M');
                 if (patient.height_cm) setTalla(Number(patient.height_cm));
@@ -430,8 +426,14 @@ export function FlexiblePlanEditor({
                 setEdad(age);
 
                 setPesoActual(Number(currentPatientWeight));
-                if (inputs['PESO_IDEAL']) setPesoIdeal(Number(Number(inputs['PESO_IDEAL']).toFixed(1)));
-                if (inputs['PESO_CORREGIDO']) setPesoCorregido(Number(Number(inputs['PESO_CORREGIDO']).toFixed(1)));
+                if (inputs['PESO_IDEAL']) {
+                    calculatedIdeal = Number(Number(inputs['PESO_IDEAL']).toFixed(1));
+                    setPesoIdeal(calculatedIdeal);
+                }
+                if (inputs['PESO_CORREGIDO']) {
+                    calculatedCorregido = Number(Number(inputs['PESO_CORREGIDO']).toFixed(1));
+                    setPesoCorregido(calculatedCorregido);
+                }
             }
 
             const { data, error } = await supabase
@@ -448,7 +450,19 @@ export function FlexiblePlanEditor({
                 if (p.genero && !patient?.gender) setGenero(p.genero);
                 if (p.edad && !patient?.date_of_birth) setEdad(p.edad);
                 if (p.talla) setTalla(p.talla);
-                if (p.peso) setPeso(p.peso);
+                if (p.peso) {
+                    setPeso(p.peso);
+                    
+                    // Match to find the saved type
+                    const roundedPeso = Number(Number(p.peso).toFixed(1));
+                    const roundedIdeal = p.pesoIdeal ? Number(Number(p.pesoIdeal).toFixed(1)) : calculatedIdeal;
+                    const roundedCorregido = p.pesoCorregido ? Number(Number(p.pesoCorregido).toFixed(1)) : calculatedCorregido;
+                    const roundedActual = p.pesoActual ? Number(Number(p.pesoActual).toFixed(1)) : Number(Number(patient?.current_weight || 0).toFixed(1));
+
+                    if (roundedIdeal !== null && roundedPeso === roundedIdeal) setPesoTipo("ideal");
+                    else if (roundedCorregido !== null && roundedPeso === roundedCorregido) setPesoTipo("corregido");
+                    else setPesoTipo("actual");
+                }
                 if (p.factorActividad) setFactorActividad(p.factorActividad);
                 if (p.gastoEntrenamiento) setGastoEntrenamiento(p.gastoEntrenamiento);
                 if (p.diasEntreno) setDiasEntreno(p.diasEntreno);
@@ -476,7 +490,8 @@ export function FlexiblePlanEditor({
         setIsSaving(true);
         const planData = {
             genero, edad, talla, peso, factorActividad, gastoEntrenamiento,
-            diasEntreno, ajustePct, gChoKg, gProKg, portions, meals
+            diasEntreno, ajustePct, gChoKg, gProKg, portions, meals,
+            pesoIdeal, pesoCorregido, pesoActual
         };
 
         try {
@@ -718,7 +733,9 @@ export function FlexiblePlanEditor({
                                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Peso (kg)</label>
                                         <div className="flex items-center gap-2">
                                             <Select 
+                                                value={pesoTipo}
                                                 onValueChange={(val) => {
+                                                    setPesoTipo(val);
                                                     if (val === "actual" && pesoActual !== null) setPeso(pesoActual);
                                                     else if (val === "ideal" && pesoIdeal !== null) setPeso(pesoIdeal);
                                                     else if (val === "corregido" && pesoCorregido !== null) setPeso(pesoCorregido);
