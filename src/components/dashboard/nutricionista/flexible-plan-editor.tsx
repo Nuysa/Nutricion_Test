@@ -178,6 +178,9 @@ export function FlexiblePlanEditor({
     const [edad, setEdad] = useState(44);
     const [talla, setTalla] = useState(166);
     const [peso, setPeso] = useState(62.0);
+    const [pesoIdeal, setPesoIdeal] = useState<number | null>(null);
+    const [pesoCorregido, setPesoCorregido] = useState<number | null>(null);
+    const [pesoActual, setPesoActual] = useState<number | null>(null);
     const [factorActividad, setFactorActividad] = useState(1.3);
     const [gastoEntrenamiento, setGastoEntrenamiento] = useState(300);
 
@@ -425,6 +428,10 @@ export function FlexiblePlanEditor({
                 if (patient.height_cm) setTalla(Number(patient.height_cm));
                 if (weightToLoad > 0) setPeso(Number(weightToLoad));
                 setEdad(age);
+
+                setPesoActual(Number(currentPatientWeight));
+                if (inputs['PESO_IDEAL']) setPesoIdeal(Number(Number(inputs['PESO_IDEAL']).toFixed(1)));
+                if (inputs['PESO_CORREGIDO']) setPesoCorregido(Number(Number(inputs['PESO_CORREGIDO']).toFixed(1)));
             }
 
             const { data, error } = await supabase
@@ -698,7 +705,6 @@ export function FlexiblePlanEditor({
                                     {[
                                         { label: 'Edad (años)', val: edad },
                                         { label: 'Talla (cm)', val: talla },
-                                        { label: 'Peso (kg)', val: peso },
                                     ].map(field => (
                                         <div key={field.label} className="flex justify-between items-center gap-4">
                                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{field.label}</label>
@@ -707,6 +713,35 @@ export function FlexiblePlanEditor({
                                             </div>
                                         </div>
                                     ))}
+
+                                    <div className="flex justify-between items-center gap-4">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Peso (kg)</label>
+                                        <div className="flex items-center gap-2">
+                                            <Select 
+                                                onValueChange={(val) => {
+                                                    if (val === "actual" && pesoActual !== null) setPeso(pesoActual);
+                                                    else if (val === "ideal" && pesoIdeal !== null) setPeso(pesoIdeal);
+                                                    else if (val === "corregido" && pesoCorregido !== null) setPeso(pesoCorregido);
+                                                }}
+                                            >
+                                                <SelectTrigger className="w-36 bg-[#0B1120] border-white/5 rounded-xl h-9 text-[10px] font-bold text-white focus:ring-0">
+                                                    <SelectValue placeholder="Tipo de Peso" />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-[#151F32] border-white/10 text-white text-xs">
+                                                    <SelectItem value="actual">Actual {pesoActual ? `(${pesoActual} kg)` : ""}</SelectItem>
+                                                    <SelectItem value="ideal">Ideal {pesoIdeal ? `(${pesoIdeal} kg)` : ""}</SelectItem>
+                                                    <SelectItem value="corregido">Corregido {pesoCorregido ? `(${pesoCorregido} kg)` : ""}</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Input
+                                                type="number"
+                                                value={peso}
+                                                step="0.1"
+                                                onChange={(e) => setPeso(parseFloat(e.target.value) || 0)}
+                                                className="w-20 bg-[#0B1120]/50 border-white/5 text-center font-tech font-bold text-xs h-9 rounded-xl text-white focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-orange-500"
+                                            />
+                                        </div>
+                                    </div>
 
                                     <div className="bg-blue-500/5 p-4 rounded-xl border border-blue-500/10 flex justify-between items-center mt-6">
                                         <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Metabolismo Basal</span>
