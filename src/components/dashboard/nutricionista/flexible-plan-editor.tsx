@@ -24,7 +24,8 @@ import {
     Calendar,
     ChevronLeft,
     ChevronRight,
-    Eye
+    Eye,
+    Scale
 } from "lucide-react";
 import { WeeklyNutritionalPlan } from "../paciente/weekly-nutritional-plan";
 import { cn } from "@/lib/utils";
@@ -767,7 +768,7 @@ export function FlexiblePlanEditor({
                 {activeTab === "calculos" ? (
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-8 pb-20">
                         {/* Biometría y Gasto */}
-                        <div className="xl:col-span-4 space-y-6">
+                        <div className="xl:col-span-4 space-y-6 max-h-[78vh] overflow-y-auto pr-2 custom-scrollbar">
                             <Card className="bg-[#151F32] border-white/5 p-6 rounded-2xl shadow-xl">
                                 <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
                                     <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
@@ -906,6 +907,50 @@ export function FlexiblePlanEditor({
                                                 {bioCalculations.kcalTotales}
                                             </span>
                                         </div>
+                                    </div>
+                                </div>
+                            </Card>
+
+                            {/* Balance Energético */}
+                            <Card className="bg-[#151F32] border-white/5 p-6 rounded-2xl shadow-xl">
+                                <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
+                                    <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                                        <Scale className="h-4 w-4" />
+                                    </div>
+                                    Balance Energético
+                                </h3>
+
+                                <div className="space-y-4">
+                                    <div className="flex flex-col gap-1 border-b border-white/5 pb-3">
+                                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Déficit Calórico</span>
+                                    </div>
+
+                                    <div className="flex justify-between items-center gap-4">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">No entreno</label>
+                                        <input 
+                                            type="text" 
+                                            readOnly 
+                                            value={`${Math.round(portionTable.totals.k - bioCalculations.gastoBase)} kcal`}
+                                            className="w-32 bg-[#0B1120] border border-white/5 rounded-xl h-9 text-center text-white font-tech font-bold text-xs outline-none select-all" 
+                                        />
+                                    </div>
+                                    <div className="flex justify-between items-center gap-4">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Entreno</label>
+                                        <input 
+                                            type="text" 
+                                            readOnly 
+                                            value={`${Math.round(portionTable.totals.k - bioCalculations.gastoTotal)} kcal`}
+                                            className="w-32 bg-[#0B1120] border border-white/5 rounded-xl h-9 text-center text-white font-tech font-bold text-xs outline-none select-all" 
+                                        />
+                                    </div>
+                                    <div className="flex justify-between items-center gap-4">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Promedio</label>
+                                        <input 
+                                            type="text" 
+                                            readOnly 
+                                            value={`${Math.round(portionTable.totals.k - parseFloat(bioCalculations.promedio))} kcal`}
+                                            className="w-32 bg-[#0B1120] border border-white/5 rounded-xl h-9 text-center text-[#FF7A00] font-tech font-bold text-xs outline-none select-all" 
+                                        />
                                     </div>
                                 </div>
                             </Card>
