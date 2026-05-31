@@ -994,14 +994,14 @@ export function FlexiblePlanEditor({
                                         const isOver = diff > 0.01;
                                         
                                         return (
-                                            <div key={k} className="flex flex-col bg-[#0B1120] border border-white/5 rounded-xl px-3 py-1.5 shrink-0 min-w-[105px] flex-1">
-                                                <span className="text-slate-500 uppercase tracking-widest text-[8px] truncate leading-none">{v.label}</span>
-                                                <div className="flex items-baseline gap-1 mt-1 font-tech">
-                                                    <span className={cn("text-xs font-black", isMatch ? "text-emerald-400" : isOver ? "text-rose-400" : "text-yellow-400")}>
+                                            <div key={k} className="flex flex-col bg-[#0B1120] border border-white/5 rounded-xl px-4 py-2.5 shrink-0 min-w-[125px] flex-1 shadow-inner">
+                                                <span className="text-slate-400 uppercase tracking-wider text-[10px] truncate leading-tight font-black">{v.label}</span>
+                                                <div className="flex items-baseline gap-1.5 mt-2 font-tech">
+                                                    <span className={cn("text-lg font-black leading-none", isMatch ? "text-emerald-400" : isOver ? "text-rose-400" : "text-yellow-400")}>
                                                         {Number(sumLograda.toFixed(2))}
                                                     </span>
-                                                    <span className="text-[9px] text-slate-600">/</span>
-                                                    <span className="text-[10px] text-slate-400">
+                                                    <span className="text-xs text-slate-500 font-bold">/</span>
+                                                    <span className="text-sm text-slate-300 font-black">
                                                         {target}
                                                     </span>
                                                 </div>
