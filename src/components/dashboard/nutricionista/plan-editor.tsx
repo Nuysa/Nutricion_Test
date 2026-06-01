@@ -749,7 +749,7 @@ export function PlanEditor() {
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)] w-full bg-[#0B1120] text-white overflow-hidden font-sans border-t border-white/5">
             {/* --- TOP GLOBAL BAR --- */}
-            <div className="shrink-0 border-b border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-10 py-3 sm:py-0 sm:h-20 bg-[#0B1120] gap-3 sm:gap-0">
+            <div className="shrink-0 border-b border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-10 py-3 sm:py-0 sm:h-20 bg-[#0B1120] gap-3 sm:gap-0 no-print">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-10 w-full sm:w-auto">
                     <div className="bg-[#151F32] border border-white/5 rounded-2xl px-3 sm:px-5 py-2 sm:py-2.5 flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
                         <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 border border-orange-500/10 shrink-0">

@@ -101,10 +101,10 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
         const dayOfWeek = today.getDay();
         const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) + (weekOffset * 7);
         const monday = new Date(new Date(today).setDate(diff));
-        
+
         const days = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
         const dayKeys = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
-        
+
         return dayKeys.map((key, i) => {
             const date = new Date(monday);
             date.setDate(monday.getDate() + i);
@@ -134,12 +134,12 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
             const dayKeys = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
             const today = new Date();
             const todayKey = dayKeys[today.getDay() === 0 ? 6 : today.getDay() - 1];
-            
+
             // Check if today is active
             const todayMeals = flexiblePlan.mealsByDay[todayKey];
             const todayIsActive = todayMeals && todayMeals.some((m: any) => m.active && m.rows && m.rows.length > 0);
-            
-            const isCurrentSelectedActive = selectedDay && flexiblePlan.mealsByDay[selectedDay] && 
+
+            const isCurrentSelectedActive = selectedDay && flexiblePlan.mealsByDay[selectedDay] &&
                 flexiblePlan.mealsByDay[selectedDay].some((m: any) => m.active && m.rows && m.rows.length > 0);
 
             if (!isCurrentSelectedActive) {
@@ -403,7 +403,8 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                     </div>
                 ) : patientPlanType === "plan flexible" ? (
                     <>
-                        <style dangerouslySetInnerHTML={{ __html: `
+                        <style dangerouslySetInnerHTML={{
+                            __html: `
                             @media print {
                                 @page {
                                     margin: 15mm 20mm 15mm 20mm !important;
@@ -445,47 +446,81 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                     max-width: 780px !important;
                                     margin: 0 auto !important;
                                     width: 100% !important;
+                                    padding: 5mm 12mm !important;
+                                    display: flex !important;
+                                    flex-direction: column !important;
+                                    align-items: center !important;
+                                }
+                                /* Neutralize all heights, flex restrictions, and overflow limits on wrappers */
+                                div, main, body, html, #__next, .min-h-screen {
+                                    height: auto !important;
+                                    min-height: 0 !important;
+                                    max-height: none !important;
+                                    overflow: visible !important;
+                                }
+                                [data-radix-scroll-area-viewport],
+                                [data-slot="scroll-area"],
+                                div[class*="scroll-area"],
+                                div[class*="overflow-hidden"],
+                                div[class*="overflow-y-auto"],
+                                div[class*="overflow-x-auto"] {
+                                    overflow: visible !important;
+                                    max-height: none !important;
+                                    height: auto !important;
+                                }
+                                 /* Ensure Card wrappers around the plan don't constrain layout or add background colors */
+                                div[class*="rounded-[3rem]"] {
+                                    padding: 0 !important;
+                                    border: none !important;
+                                    box-shadow: none !important;
+                                    background: transparent !important;
+                                    overflow: visible !important;
                                 }
                             }
                         `}} />
 
                         {/* PRINT-ONLY MASTER CONTAINER */}
-                        <div className="hidden print:flex flex-col w-full max-w-[780px] mx-auto text-slate-100 bg-[#0B1120] p-0 m-0 space-y-8 font-sans items-center print-container">
-                            {/* PRINT HEADER mimicking Image 1 exactly (no overlapping, no refresh arrows) */}
-                            <div className="flex flex-row items-center justify-between w-full border-b border-white/10 pb-6 mb-8 gap-6">
-                                <div className="bg-[#151F32] border border-white/5 px-8 py-5 rounded-[2rem] text-left flex-1 min-w-0">
+
+                        <div className="h-1 w-full shrink-0" />
+
+                        <div className="hidden print:flex flex-col w-full max-w-[780px] mx-auto text-slate-100 bg-[#0B1120] p-0 m-0 space-y-4 font-sans items-center print-container">
+                            {/* PRINT HEADER mimicking Image 1 exactly (no overlapping, no refresh arrows, adjusted to text) */}
+                            <div className="flex flex-row items-center justify-between w-full border-b border-white/10 pb-3 mb-1 gap-6">
+                                <div className="bg-[#151F32] border border-white/5 px-6 py-4 rounded-[1.5rem] text-left w-fit shrink-0">
                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1.5">PACIENTE ASIGNADO</p>
-                                    <div className="flex items-center gap-4 flex-wrap">
-                                        <h1 className="text-2xl font-black text-white leading-none truncate">
+                                    <div className="flex items-center gap-3">
+                                        <h1 className="text-xl font-bold text-white leading-none">
                                             {patientName}
                                         </h1>
-                                        <span className="text-[9px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 rounded-md uppercase tracking-wider font-tech shrink-0">
+                                        <span className="text-[9px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-md uppercase tracking-wider font-tech shrink-0">
                                             FLEXIBLE
                                         </span>
                                     </div>
                                 </div>
-                                <div className="bg-[#FF7A00] text-white px-8 py-5 rounded-[1.5rem] font-black uppercase text-sm tracking-widest shadow-xl shadow-orange-500/20 text-center shrink-0">
+                                <div className="bg-[#FF7A00] text-white px-6 py-4 rounded-[1.2rem] font-black uppercase text-xs tracking-widest shadow-xl shadow-orange-500/20 text-center shrink-0">
                                     PLAN FLEXIBLE
                                 </div>
                             </div>
 
-                            {/* PRINT MACROS mimicking Image 2 exactly (no PDF download, no weight badge) */}
+                            <div className="h-6 w-full shrink-0" />
+
+                            {/* PRINT MACROS mimicking Image 2 exactly (no PDF download, no weight badge, centered) */}
                             <div className="w-full space-y-6">
-                                <div className="flex items-center justify-between w-full">
-                                    <div>
+                                <div className="flex flex-col items-center justify-center text-center w-full space-y-2 mt-1">
+                                    <div className="flex flex-row items-center justify-center gap-4">
                                         <h2 className="text-3xl font-black text-white tracking-tight leading-tight">Plan Flexible</h2>
-                                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mt-1">CUMPLIMIENTO DE MACROS Y PORCIONES</p>
+                                        <div className="bg-[#151F32] rounded-2xl px-5 py-2 border border-white/5 shadow-2xl flex items-center gap-2">
+                                            <Calendar className="h-4 w-4 text-[#FF7A00]" />
+                                            <span className="text-xs font-black text-white uppercase tracking-tight">
+                                                SEMANA: {weekRange.toUpperCase()}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="bg-[#151F32] rounded-2xl px-6 py-2.5 border border-white/5 shadow-2xl flex items-center gap-3">
-                                        <Calendar className="h-4 w-4 text-[#FF7A00]" />
-                                        <span className="text-xs font-black text-white uppercase tracking-tight">
-                                            SEMANA: {weekRange.toUpperCase()}
-                                        </span>
-                                    </div>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">CUMPLIMIENTO DE MACROS Y PORCIONES</p>
                                 </div>
 
                                 <div className="grid grid-cols-4 gap-4 w-full">
-                                    <div className="bg-[#151F32] border border-white/5 p-6 rounded-[2rem] shadow-2xl relative overflow-hidden">
+                                    <div className="bg-[#151F32] border border-white/5 p-4 rounded-[2rem] shadow-2xl relative overflow-hidden">
                                         <div className="absolute top-4 right-4">
                                             <Flame className="h-5 w-5 text-orange-500" />
                                         </div>
@@ -496,7 +531,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                         <p className="mt-3 text-[10px] font-black text-orange-500 uppercase tracking-widest">Calorías Totales</p>
                                     </div>
 
-                                    <div className="bg-[#151F32] border border-white/5 p-6 rounded-[2rem] shadow-2xl relative overflow-hidden">
+                                    <div className="bg-[#151F32] border border-white/5 p-4 rounded-[2rem] shadow-2xl relative overflow-hidden">
                                         <div className="absolute top-4 right-4">
                                             <Drumstick className="h-5 w-5 text-sky-400" />
                                         </div>
@@ -507,7 +542,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                         <p className="mt-3 text-[10px] font-black text-sky-400 uppercase tracking-widest">Proteínas</p>
                                     </div>
 
-                                    <div className="bg-[#151F32] border border-white/5 p-6 rounded-[2rem] shadow-2xl relative overflow-hidden">
+                                    <div className="bg-[#151F32] border border-white/5 p-4 rounded-[2rem] shadow-2xl relative overflow-hidden">
                                         <div className="absolute top-4 right-4">
                                             <Wheat className="h-5 w-5 text-yellow-500" />
                                         </div>
@@ -518,7 +553,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                         <p className="mt-3 text-[10px] font-black text-yellow-500 uppercase tracking-widest">Carbohidratos</p>
                                     </div>
 
-                                    <div className="bg-[#151F32] border border-white/5 p-6 rounded-[2rem] shadow-2xl relative overflow-hidden">
+                                    <div className="bg-[#151F32] border border-white/5 p-4 rounded-[2rem] shadow-2xl relative overflow-hidden">
                                         <div className="absolute top-4 right-4">
                                             <Droplets className="h-5 w-5 text-emerald-400" />
                                         </div>
@@ -531,44 +566,56 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                 </div>
                             </div>
 
-                            {/* PRINT HYDRATION (IMAGEN 2) below the cards on the first page */}
-                            <div className="w-full bg-gradient-to-br from-[#1E293B] to-[#0F172A] border border-white/5 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden mt-6 break-inside-avoid page-break-inside-avoid">
-                                <div className="absolute top-0 right-0 h-40 w-40 bg-blue-500/5 blur-[80px] rounded-full" />
-                                <div className="relative z-10 space-y-6">
-                                    <div className="flex items-center gap-3">
-                                        <Droplets className="h-5 w-5 text-blue-400 shrink-0" />
-                                        <h2 className="text-xs font-black text-white uppercase tracking-widest">Hidratación Diaria Recomendada</h2>
-                                    </div>
+                            {/* Spacing element to separate macros and hydration cards on print */}
+                            <div className="h-4 w-full shrink-0" />
 
-                                    <div className="text-center space-y-1">
-                                        <div className="flex items-center justify-center gap-2 text-white">
-                                            <h3 className="text-5xl font-tech font-black tracking-tighter">
-                                                {patientWeight ? (parseFloat(patientWeight) * 35).toLocaleString() : "2,100"}
-                                            </h3>
-                                            <span className="text-lg font-black text-blue-400 mt-4 ml-1">ml</span>
-                                        </div>
-                                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest font-tech">Requerimiento Base</p>
-                                    </div>
-
-                                    <div className="h-px bg-white/5 w-full" />
-
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div className="bg-white/5 rounded-2xl p-5 text-center space-y-2 border border-white/5">
-                                            <GlassWater className="h-6 w-6 text-blue-400 mx-auto" />
-                                            <div>
-                                                <h4 className="text-2xl font-tech font-black text-white">
-                                                    {patientWeight ? ((parseFloat(patientWeight) * 35) / 250).toFixed(1) : "8.4"}
-                                                </h4>
-                                                <p className="text-[11px] font-black text-slate-500 uppercase tracking-tighter">Vasos (250ml)</p>
+                            <div className="grid grid-cols-4 gap-4 w-full">
+                                <div className="col-start-2 col-span-2 px-5 bg-[#151F32] border border-white/5 rounded-[1.5rem] py-4 shadow-2xl relative overflow-hidden break-inside-avoid page-break-inside-avoid">
+                                    <div className="absolute top-0 right-0 h-40 w-40 bg-blue-500/5 blur-[80px] rounded-full" />
+                                    <div className="relative z-10 space-y-3">
+                                        {/* Header matching the mockup with 2 text lines and droplets icon on left */}
+                                        <div className="flex items-center gap-4 text-left">
+                                            <div className="h-8 w-8 rounded-lg bg-[#0B1120] flex items-center justify-center border border-white/5 text-blue-400 shrink-0">
+                                                <Droplets className="h-4 w-4 shrink-0" style={{ width: "16px", height: "16px" }} />
+                                            </div>
+                                            <div className="flex flex-col justify-center">
+                                                <h2 className="text-[10px] font-black text-white uppercase tracking-widest leading-tight">HIDRATACIÓN DIARIA</h2>
+                                                <h2 className="text-[10px] font-black text-white uppercase tracking-widest leading-tight">RECOMENDADA</h2>
                                             </div>
                                         </div>
-                                        <div className="bg-white/5 rounded-2xl p-5 text-center space-y-2 border border-white/5">
-                                            <Milk className="h-6 w-6 text-blue-550 mx-auto" />
-                                            <div>
-                                                <h4 className="text-2xl font-tech font-black text-white">
-                                                    {patientWeight ? ((parseFloat(patientWeight) * 35) / 500).toFixed(1) : "4.2"}
-                                                </h4>
-                                                <p className="text-[11px] font-black text-slate-500 uppercase tracking-tighter">Botellas (500ml)</p>
+
+                                        {/* Central Number matching mockup */}
+                                        <div className="text-center space-y-0.5 py-0">
+                                            <div className="flex items-center justify-center gap-1 text-white">
+                                                <h3 className="text-3xl font-tech font-black tracking-tighter leading-none">
+                                                    {patientWeight ? (parseFloat(patientWeight) * 35).toLocaleString() : "2,625"}
+                                                </h3>
+                                                <span className="text-lg font-black text-blue-400 self-end mb-1">ml</span>
+                                            </div>
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-tech leading-none">REQUERIMIENTO BASE</p>
+                                        </div>
+
+                                        <div className="h-px bg-white/5 w-full my-1" />
+
+                                        {/* Two sub-cards with darker background */}
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="bg-[#0B1120] rounded-xl p-3 text-center space-y-1 border border-white/5 flex flex-col items-center justify-center">
+                                                <GlassWater className="h-5 w-5 text-blue-400 shrink-0" style={{ width: "20px", height: "20px" }} />
+                                                <div>
+                                                    <h4 className="text-xl font-tech font-black text-white leading-none">
+                                                        {patientWeight ? ((parseFloat(patientWeight) * 35) / 250).toFixed(1) : "10.5"}
+                                                    </h4>
+                                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-tighter mt-1.5">VASOS (250ML)</p>
+                                                </div>
+                                            </div>
+                                            <div className="bg-[#0B1120] rounded-xl p-3 text-center space-y-1 border border-white/5 flex flex-col items-center justify-center">
+                                                <Milk className="h-5 w-5 text-blue-400 shrink-0" style={{ width: "20px", height: "20px" }} />
+                                                <div>
+                                                    <h4 className="text-xl font-tech font-black text-white leading-none">
+                                                        {patientWeight ? ((parseFloat(patientWeight) * 35) / 500).toFixed(1) : "5.3"}
+                                                    </h4>
+                                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-tighter mt-1.5">BOTELLAS (500ML)</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -576,13 +623,8 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                             </div>
 
                             {/* PRINT MEALS (starts clean on page 2) */}
-                            <div className="w-full space-y-6 pt-6 break-before-page print:break-before-page" style={{ pageBreakBefore: "always" }}>
-                                <div className="flex items-center gap-4 mb-6">
-                                    <div className="h-1 w-12 bg-orange-500 rounded-full" />
-                                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em]">Instrucciones Detalladas</h3>
-                                </div>
-
-                                <div className="space-y-6 w-full max-w-3xl mx-auto">
+                            <div className="w-full space-y-8 pt-6 break-before-page print:break-before-page" style={{ pageBreakBefore: "always" }}>
+                                <div className="space-y-8 w-full max-w-xl mx-auto print:mx-auto">
                                     {(((flexiblePlan.mealsByDay ? flexiblePlan.mealsByDay[selectedDay] : flexiblePlan.meals) || []).filter((m: any) => m.active)).map((meal: any) => {
                                         const getMealInfo = (id: string, name: string) => {
                                             const key = (id || "").toLowerCase();
@@ -598,42 +640,52 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                         const IconComponent = mealMeta.icon;
 
                                         return (
-                                            <div key={meal.id} className="bg-[#151F32] border border-white/5 rounded-3xl overflow-hidden shadow-2xl w-full break-inside-avoid page-break-inside-avoid">
-                                                <div className="px-8 py-5 border-b border-white/5 flex flex-row items-center justify-between gap-6 bg-[#151F32]/80">
-                                                    <div className="flex flex-row items-center gap-4">
+                                            <div key={meal.id} className="space-y-2 w-full max-w-xl mx-auto break-inside-avoid page-break-inside-avoid">
+                                                {/* Centered Instructions Title above each meal card */}
+                                                <div className="text-center py-1">
+                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">INSTRUCCIONES DETALLADAS</span>
+                                                </div>
+
+                                                <div className="bg-[#151F32] border border-white/5 rounded-3xl overflow-hidden shadow-2xl w-full">
+                                                    <div className="px-6 py-4 border-b border-white/5 flex flex-row items-center justify-between gap-4 bg-[#151F32]/80">
+                                                        {/* Left: Icon container adjusted to icon */}
                                                         <div className="h-10 w-10 rounded-xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500 shrink-0">
                                                             <IconComponent className="h-5 w-5 shrink-0" style={{ width: "20px", height: "20px" }} />
                                                         </div>
-                                                        <div className="text-left flex flex-col justify-center">
+
+                                                        {/* Center: Meal type name centered */}
+                                                        <div className="text-center flex-1 flex flex-col justify-center items-center">
                                                             <span className="font-tech font-black text-xs text-white tracking-widest uppercase block leading-none mb-1">{meal.name}</span>
                                                             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block leading-none">{meal.time || "10:00 AM"}</span>
                                                         </div>
+
+                                                        {/* Right: Food title/badge */}
+                                                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-xl border border-orange-500/20 text-right shrink-0">
+                                                            {meal.title}
+                                                        </span>
                                                     </div>
-                                                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-xl border border-orange-500/20 text-right shrink-0">
-                                                        {meal.title}
-                                                    </span>
-                                                </div>
-                                                <div className="p-8 space-y-6 bg-[#0B1120]/30">
-                                                    {meal.rows.map((row: any) => (
-                                                        <div key={row.id} className="space-y-3">
-                                                            <div className="flex items-center justify-between">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-                                                                    <span className="text-[11px] font-black text-white uppercase tracking-widest">
-                                                                        {DB_PORCIONES[row.group]?.label || row.group.replace('-', ' ')}
-                                                                    </span>
+                                                    <div className="p-8 space-y-6 bg-[#0B1120]/30">
+                                                        {meal.rows.map((row: any) => (
+                                                            <div key={row.id} className="space-y-3">
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="h-1.5 w-1.5 rounded-full bg-orange-500" />
+                                                                        <span className="text-[11px] font-black text-white uppercase tracking-widest">
+                                                                            {DB_PORCIONES[row.group]?.label || row.group.replace('-', ' ')}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="h-7 w-12 bg-[#0B1120] border border-white/5 rounded-lg flex items-center justify-center font-tech font-black text-orange-400 text-xs">
+                                                                        {row.portions}
+                                                                    </div>
                                                                 </div>
-                                                                <div className="h-7 w-12 bg-[#0B1120] border border-white/5 rounded-lg flex items-center justify-center font-tech font-black text-orange-400 text-xs">
-                                                                    {row.portions}
-                                                                </div>
+                                                                {row.comment && (
+                                                                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed bg-white/[0.03] p-4 rounded-2xl border border-white/5 italic">
+                                                                        "{row.comment}"
+                                                                    </p>
+                                                                )}
                                                             </div>
-                                                            {row.comment && (
-                                                                <p className="text-[11px] text-slate-400 font-medium leading-relaxed bg-white/[0.03] p-4 rounded-2xl border border-white/5 italic">
-                                                                    "{row.comment}"
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    ))}
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
@@ -641,388 +693,301 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                 </div>
                             </div>
                         </div>
-
                         {/* SCREEN-ONLY MASTER CONTAINER */}
-                        <div className="space-y-6 sm:space-y-12 print:hidden animate-in fade-in slide-in-from-bottom-6 duration-700">
-                        <style dangerouslySetInnerHTML={{ __html: `
-                            @media print {
-                                .no-print,
-                                header,
-                                nav,
-                                aside,
-                                footer,
-                                [role="navigation"],
-                                .sidebar,
-                                .topbar,
-                                button:not(.print-button) {
-                                    display: none !important;
-                                }
-                                body, html, #__next, main, [role="main"], .flex, .grid, .min-h-screen {
-                                    background-color: #0B1120 !important;
-                                    color: #F8FAFC !important;
-                                    -webkit-print-color-adjust: exact !important;
-                                    print-color-adjust: exact !important;
-                                    padding: 0 !important;
-                                    margin: 0 auto !important;
-                                    width: 100% !important;
-                                    max-width: 100% !important;
-                                }
-                                /* Target any potential layout wrappers that might have offset padding or margins */
-                                div[class*="pl-"], div[class*="ml-"], div[class*="sidebar"], div[class*="layout"] {
-                                    padding-left: 0 !important;
-                                    margin-left: 0 !important;
-                                }
-                                .container, .mx-auto, [class*="max-w-"] {
-                                    max-width: 100% !important;
-                                    width: 100% !important;
-                                    margin: 0 auto !important;
-                                    padding: 0 !important;
-                                }
-                                [data-state="closed"] > div,
-                                [data-state="closed"] > [data-radix-collapsible-content],
-                                .accordion-content,
-                                [data-radix-accordion-content],
-                                [role="region"],
-                                [data-state="closed"] [role="region"],
-                                [data-state="closed"] [data-state="closed"] {
-                                    display: block !important;
-                                    height: auto !important;
-                                    opacity: 1 !important;
-                                    overflow: visible !important;
-                                    visibility: visible !important;
-                                    max-height: none !important;
-                                }
-                                button svg.lucide-chevron-down,
-                                button svg.lucide-chevron-up,
-                                button[data-state] svg,
-                                .lucide-chevron-down,
-                                svg.chevron-icon {
-                                    display: none !important;
-                                }
-                                .card,
-                                [role="region"],
-                                .bg-\[\#151F32\] {
-                                    break-inside: avoid !important;
-                                    page-break-inside: avoid !important;
-                                }
-                            }
-                        `}} />
-
-                        {/* Print Header mimicking Image 1 */}
-                        <div className="hidden print:flex items-center justify-between w-full border-b border-white/10 pb-6 mb-8 gap-4">
-                            <div className="bg-[#151F32] border border-white/5 px-6 py-4 rounded-[2rem] flex items-center gap-4 min-w-[280px]">
-                                <div className="h-10 w-10 rounded-xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500">
-                                    <span className="text-lg">👤</span>
+                        <div className="space-y-6 sm:space-y-12 print:hidden no-print animate-in fade-in slide-in-from-bottom-6 duration-700">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
+                                <div className="flex items-center gap-4 sm:gap-6">
+                                    <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20 shrink-0">
+                                        <Zap className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500" />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white mb-1">Plan Flexible</h1>
+                                            <Button
+                                                onClick={() => window.print()}
+                                                variant="outline"
+                                                size="sm"
+                                                className="bg-[#151F32] border-white/10 hover:bg-[#FF7A00] hover:text-white hover:border-[#FF7A00] transition-all text-slate-300 rounded-xl px-4 py-2 flex items-center gap-2 no-print cursor-pointer"
+                                            >
+                                                <Download className="h-4 w-4" />
+                                                <span>Descargar PDF</span>
+                                            </Button>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">CUMPLIMIENTO DE MACROS Y PORCIONES</p>
+                                            {patientWeight && (
+                                                <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-lg w-fit no-print">
+                                                    <Scale className="h-3 w-3 text-orange-500" />
+                                                    <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">PESO ACTUAL: {patientWeight}kg</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">PACIENTE ASIGNADO</p>
-                                    <div className="flex items-center gap-3">
-                                        <h1 className="text-xl font-bold text-white leading-none">
-                                            {patientName}
-                                        </h1>
-                                        <span className="text-[9px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                                            FLEXIBLE
+
+                                {/* Week Navigation for Flexible Plan */}
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
+                                        className="text-slate-500 hover:text-white transition-colors no-print"
+                                    >
+                                        <ChevronLeft className="h-5 w-5" />
+                                    </button>
+
+                                    <div className="bg-[#151F32] rounded-2xl px-3 sm:px-6 py-2.5 border border-white/5 shadow-2xl flex items-center gap-2 sm:gap-4">
+                                        <Calendar className="h-4 w-4 text-[#FF7A00] shrink-0" />
+                                        <span className="text-[10px] sm:text-sm font-black text-white uppercase tracking-tight">
+                                            Semana: {weekRange}
                                         </span>
                                     </div>
-                                </div>
-                            </div>
-                            <div className="bg-[#FF7A00] text-white px-8 py-4 rounded-[1.5rem] font-black uppercase text-sm tracking-widest shadow-xl shadow-orange-500/20 text-center">
-                                PLAN FLEXIBLE
-                            </div>
-                        </div>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
-                            <div className="flex items-center gap-4 sm:gap-6">
-                                <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20 shrink-0">
-                                    <Zap className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500" />
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-3 flex-wrap">
-                                        <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white mb-1">Plan Flexible</h1>
-                                        <Button
-                                            onClick={() => window.print()}
-                                            variant="outline"
-                                            size="sm"
-                                            className="bg-[#151F32] border-white/10 hover:bg-[#FF7A00] hover:text-white hover:border-[#FF7A00] transition-all text-slate-300 rounded-xl px-4 py-2 flex items-center gap-2 no-print cursor-pointer"
-                                        >
-                                            <Download className="h-4 w-4" />
-                                            <span>Descargar PDF</span>
-                                        </Button>
-                                    </div>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">CUMPLIMIENTO DE MACROS Y PORCIONES</p>
-                                        {patientWeight && (
-                                            <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-lg w-fit no-print">
-                                                <Scale className="h-3 w-3 text-orange-500" />
-                                                <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">PESO ACTUAL: {patientWeight}kg</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Week Navigation for Flexible Plan */}
-                            <div className="flex items-center gap-4">
-                                <button
-                                    onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
-                                    className="text-slate-500 hover:text-white transition-colors no-print"
-                                >
-                                    <ChevronLeft className="h-5 w-5" />
-                                </button>
-
-                                <div className="bg-[#151F32] rounded-2xl px-3 sm:px-6 py-2.5 border border-white/5 shadow-2xl flex items-center gap-2 sm:gap-4">
-                                    <Calendar className="h-4 w-4 text-[#FF7A00] shrink-0" />
-                                    <span className="text-[10px] sm:text-sm font-black text-white uppercase tracking-tight">
-                                        Semana: {weekRange}
-                                    </span>
-                                </div>
-
-                                <button
-                                    onClick={() => setWeekOffset(prev => prev + 1)}
-                                    className="text-slate-500 hover:text-white transition-colors no-print"
-                                >
-                                    <ChevronRight className="h-5 w-5" />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                            <Card className="bg-[#151F32] border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl relative group overflow-hidden">
-                                <div className="absolute top-0 right-0 p-2 sm:p-4 flex flex-col items-end">
-                                    <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 mb-1" />
-                                    <span className="text-[8px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">KCAL</span>
-                                </div>
-                                <span className="text-3xl sm:text-5xl font-tech font-black text-white block mb-1">{goals.kcal}</span>
-                                <div className="h-1 sm:h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-orange-500 w-[100%] rounded-full shadow-[0_0_10px_rgba(255,122,0,0.5)]" />
-                                </div>
-                                <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-orange-500 uppercase tracking-widest">Calorías Totales</p>
-                            </Card>
-
-                            <Card className="bg-[#151F32] border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl relative group overflow-hidden">
-                                <div className="absolute top-0 right-0 p-2 sm:p-4 flex flex-col items-end">
-                                    <Drumstick className="h-4 w-4 sm:h-5 sm:w-5 text-sky-400 mb-1" />
-                                    <span className="text-[8px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">PROT</span>
-                                </div>
-                                <span className="text-3xl sm:text-5xl font-tech font-black text-sky-400 block mb-1">{goals.pro}g</span>
-                                <div className="h-1 sm:h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-sky-400 w-[100%] rounded-full" />
-                                </div>
-                                <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-sky-400 uppercase tracking-widest">Proteínas</p>
-                            </Card>
-
-                            <Card className="bg-[#151F32] border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl relative group overflow-hidden">
-                                <div className="absolute top-0 right-0 p-2 sm:p-4 flex flex-col items-end">
-                                    <Wheat className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 mb-1" />
-                                    <span className="text-[8px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">CHO</span>
-                                </div>
-                                <span className="text-3xl sm:text-5xl font-tech font-black text-yellow-500 block mb-1">{goals.car}g</span>
-                                <div className="h-1 sm:h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-yellow-500 w-[100%] rounded-full" />
-                                </div>
-                                <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-yellow-500 uppercase tracking-widest">Carbohidratos</p>
-                            </Card>
-
-                            <Card className="bg-[#151F32] border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl relative group overflow-hidden">
-                                <div className="absolute top-0 right-0 p-2 sm:p-4 flex flex-col items-end">
-                                    <Droplets className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400 mb-1" />
-                                    <span className="text-[8px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">GRASAS</span>
-                                </div>
-                                <span className="text-3xl sm:text-5xl font-tech font-black text-emerald-400 block mb-1">{goals.fat}g</span>
-                                <div className="h-1 sm:h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-emerald-400 w-[100%] rounded-full" />
-                                </div>
-                                <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-emerald-400 uppercase tracking-widest">LIPIDOS</p>
-                            </Card>
-                        </div>
-                        {/* Day selector pills for Flexible Plan */}
-                        <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide no-print">
-                            {visibleDays.map((d) => {
-                                const isSelected = selectedDay === d.key;
-                                return (
                                     <button
-                                        key={d.key}
-                                        onClick={() => setSelectedDay(d.key)}
-                                        className={cn(
-                                            "flex flex-col items-center justify-center min-w-[48px] sm:min-w-[70px] h-16 sm:h-20 rounded-xl sm:rounded-[1.5rem] transition-all relative border overflow-hidden",
-                                            isSelected
-                                                ? "bg-gradient-to-br from-[#FF7A00] to-[#FF9D42] text-white border-[#FF7A00] shadow-[0_10px_20px_rgba(255,122,0,0.2)] scale-110 z-10"
-                                                : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
-                                        )}
+                                        onClick={() => setWeekOffset(prev => prev + 1)}
+                                        className="text-slate-500 hover:text-white transition-colors no-print"
                                     >
-                                        <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{d.label.split('. ')[0]}</span>
-                                        <span className="text-base sm:text-xl font-tech font-black">{d.date.getDate()}</span>
-                                        {isSelected && <div className="absolute top-0 right-0 p-1"><CheckCircle className="h-3 w-3 text-white/50" /></div>}
+                                        <ChevronRight className="h-5 w-5" />
                                     </button>
-                                );
-                            })}
-                        </div>
+                                </div>
+                            </div>
 
-                        {/* Flexible Plan Details */}
-                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 sm:gap-10">
-                            {/* Distribution / Plate View */}
-                            <div className="xl:col-span-12 space-y-8 sm:space-y-12">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 print:grid-cols-1 gap-6 sm:gap-10 print:w-full print:max-w-3xl print:mx-auto">
-                                    {flexiblePlan && (flexiblePlan.meals || flexiblePlan.mealsByDay) ? (
-                                        <>
-                                            {/* Column Left: Interactive Accordions (Detailed) */}
-                                            <div className="space-y-6">
-                                                <div className="flex items-center gap-4 mb-6">
-                                                    <div className="h-1 w-12 bg-orange-500 rounded-full" />
-                                                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em]">Instrucciones Detalladas</h3>
-                                                </div>
-                                                <Accordion type="multiple" className="space-y-4">
-                                                    {(((flexiblePlan.mealsByDay ? flexiblePlan.mealsByDay[selectedDay] : flexiblePlan.meals) || []).filter((m: any) => m.active)).map((meal: any) => {
-                                                        // Dynamically resolve icon and styling
-                                                        const getMealInfo = (id: string, name: string) => {
-                                                            const key = (id || "").toLowerCase();
-                                                            const nameKey = (name || "").toLowerCase();
-                                                            if (key.includes("breakfast") || nameKey.includes("desayuno")) return { icon: Coffee };
-                                                            if (key.includes("mid-morning") || nameKey.includes("media mañana") || nameKey.includes("mañana")) return { icon: Zap };
-                                                            if (key.includes("lunch") || nameKey.includes("almuerzo")) return { icon: Utensils };
-                                                            if (key.includes("mid-afternoon") || nameKey.includes("media tarde") || nameKey.includes("tarde")) return { icon: Coffee };
-                                                            if (key.includes("dinner") || nameKey.includes("cena")) return { icon: Moon };
-                                                            if (key.includes("pre") || nameKey.includes("pre")) return { icon: Zap };
-                                                            if (key.includes("post") || nameKey.includes("post")) return { icon: CheckCircle };
-                                                            return { icon: Utensils };
-                                                        };
-                                                        const mealMeta = getMealInfo(meal.id, meal.name);
-                                                        const IconComponent = mealMeta.icon;
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                                <Card className="bg-[#151F32] border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl relative group overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-2 sm:p-4 flex flex-col items-end">
+                                        <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 mb-1" />
+                                        <span className="text-[8px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">KCAL</span>
+                                    </div>
+                                    <span className="text-3xl sm:text-5xl font-tech font-black text-white block mb-1">{goals.kcal}</span>
+                                    <div className="h-1 sm:h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-orange-500 w-[100%] rounded-full shadow-[0_0_10px_rgba(255,122,0,0.5)]" />
+                                    </div>
+                                    <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-orange-500 uppercase tracking-widest">Calorías Totales</p>
+                                </Card>
 
-                                                        return (
-                                                            <AccordionItem key={meal.id} value={meal.id} className="border-none">
-                                                                <Card className="bg-[#151F32] border-white/5 rounded-3xl overflow-hidden shadow-2xl group transition-all hover:border-orange-500/30">
-                                                                    <AccordionTrigger className="hover:no-underline p-0 px-4 sm:px-8 py-4 sm:py-6">
-                                                                        <div className="flex flex-col sm:flex-row sm:items-center w-full pr-4 text-left gap-4 sm:gap-6">
-                                                                            <div className="flex items-center gap-3 sm:gap-6 min-w-0 sm:min-w-[200px]">
-                                                                                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500 shrink-0">
-                                                                                    <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
-                                                                                </div>
-                                                                                <div className="text-left">
-                                                                                    <span className="font-tech font-black text-xs sm:text-sm text-white tracking-widest uppercase block leading-tight">{meal.name}</span>
-                                                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mt-0.5">{meal.time || "10:00 AM"}</span>
-                                                                                </div>
-                                                                            </div>
+                                <Card className="bg-[#151F32] border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl relative group overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-2 sm:p-4 flex flex-col items-end">
+                                        <Drumstick className="h-4 w-4 sm:h-5 sm:w-5 text-sky-400 mb-1" />
+                                        <span className="text-[8px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">PROT</span>
+                                    </div>
+                                    <span className="text-3xl sm:text-5xl font-tech font-black text-sky-400 block mb-1">{goals.pro}g</span>
+                                    <div className="h-1 sm:h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-sky-400 w-[100%] rounded-full" />
+                                    </div>
+                                    <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-sky-400 uppercase tracking-widest">Proteínas</p>
+                                </Card>
 
-                                                                            <div className="flex-1 text-left">
-                                                                                <span className="text-[10px] sm:text-xs font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-3 py-1.5 rounded-xl border border-orange-500/20 inline-block break-words whitespace-normal">
-                                                                                    {meal.title}
-                                                                                </span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </AccordionTrigger>
-                                                                <AccordionContent className="p-0 border-t border-white/5">
-                                                                    <div className="p-4 sm:p-8 space-y-4 sm:space-y-6 bg-[#0B1120]/30">
-                                                                        {meal.rows.map((row: any) => (
-                                                                            <div key={row.id} className="space-y-3">
-                                                                                <div className="flex items-center justify-between">
-                                                                                    <div className="flex items-center gap-3">
-                                                                                        <div className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-                                                                                        <span className="text-[11px] font-black text-white uppercase tracking-widest">
-                                                                                            {DB_PORCIONES[row.group]?.label || row.group.replace('-', ' ')}
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className="h-7 w-12 bg-[#0B1120] border border-white/5 rounded-lg flex items-center justify-center font-tech font-black text-orange-400 text-xs">
-                                                                                        {row.portions}
-                                                                                    </div>
-                                                                                </div>
-                                                                                {row.comment && (
-                                                                                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed bg-white/[0.03] p-4 rounded-2xl border border-white/5 italic">
-                                                                                        "{row.comment}"
-                                                                                    </p>
-                                                                                )}
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                </AccordionContent>
-                                                            </Card>
-                                                        </AccordionItem>
-                                                    )})}
-                                                </Accordion>
-                                            </div>
+                                <Card className="bg-[#151F32] border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl relative group overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-2 sm:p-4 flex flex-col items-end">
+                                        <Wheat className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 mb-1" />
+                                        <span className="text-[8px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">CHO</span>
+                                    </div>
+                                    <span className="text-3xl sm:text-5xl font-tech font-black text-yellow-500 block mb-1">{goals.car}g</span>
+                                    <div className="h-1 sm:h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-yellow-500 w-[100%] rounded-full" />
+                                    </div>
+                                    <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-yellow-500 uppercase tracking-widest">Carbohidratos</p>
+                                </Card>
 
-                                            <div className="space-y-6 sm:space-y-8 bg-[#0B1120]/20 p-4 sm:p-6 rounded-2xl sm:rounded-[2.5rem] border border-white/5 max-h-[500px] lg:max-h-[800px] overflow-y-auto custom-scrollbar relative no-print">
-                                                <div className="sticky top-[-24px] z-20 bg-[#0B1120]/80 backdrop-blur-md py-6 -mx-6 px-6 mb-2 border-b border-white/5">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="h-1.5 w-12 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
-                                                        <h3 className="text-xs font-black text-slate-300 uppercase tracking-[0.3em] drop-shadow-lg">Guía de Intercambio</h3>
+                                <Card className="bg-[#151F32] border-white/5 p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl relative group overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-2 sm:p-4 flex flex-col items-end">
+                                        <Droplets className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400 mb-1" />
+                                        <span className="text-[8px] sm:text-[11px] font-black text-slate-500 uppercase tracking-widest">GRASAS</span>
+                                    </div>
+                                    <span className="text-3xl sm:text-5xl font-tech font-black text-emerald-400 block mb-1">{goals.fat}g</span>
+                                    <div className="h-1 sm:h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-emerald-400 w-[100%] rounded-full" />
+                                    </div>
+                                    <p className="mt-2 sm:mt-3 text-[8px] sm:text-[11px] font-black text-emerald-400 uppercase tracking-widest">LIPIDOS</p>
+                                </Card>
+                            </div>
+                            {/* Day selector pills for Flexible Plan */}
+                            <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide no-print">
+                                {visibleDays.map((d) => {
+                                    const isSelected = selectedDay === d.key;
+                                    return (
+                                        <button
+                                            key={d.key}
+                                            onClick={() => setSelectedDay(d.key)}
+                                            className={cn(
+                                                "flex flex-col items-center justify-center min-w-[48px] sm:min-w-[70px] h-16 sm:h-20 rounded-xl sm:rounded-[1.5rem] transition-all relative border overflow-hidden",
+                                                isSelected
+                                                    ? "bg-gradient-to-br from-[#FF7A00] to-[#FF9D42] text-white border-[#FF7A00] shadow-[0_10px_20px_rgba(255,122,0,0.2)] scale-110 z-10"
+                                                    : "bg-white/5 border-white/5 text-slate-400 hover:bg-white/10"
+                                            )}
+                                        >
+                                            <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{d.label.split('. ')[0]}</span>
+                                            <span className="text-base sm:text-xl font-tech font-black">{d.date.getDate()}</span>
+                                            {isSelected && <div className="absolute top-0 right-0 p-1"><CheckCircle className="h-3 w-3 text-white/50" /></div>}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Flexible Plan Details */}
+                            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 sm:gap-10">
+                                {/* Distribution / Plate View */}
+                                <div className="xl:col-span-12 space-y-8 sm:space-y-12">
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 print:grid-cols-1 gap-6 sm:gap-10 print:w-full print:max-w-3xl print:mx-auto">
+                                        {flexiblePlan && (flexiblePlan.meals || flexiblePlan.mealsByDay) ? (
+                                            <>
+                                                {/* Column Left: Interactive Accordions (Detailed) */}
+                                                <div className="space-y-6">
+                                                    <div className="flex items-center gap-4 mb-6">
+                                                        <div className="h-1 w-12 bg-orange-500 rounded-full" />
+                                                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em]">Instrucciones Detalladas</h3>
                                                     </div>
-                                                </div>
+                                                    <Accordion type="multiple" className="space-y-4">
+                                                        {(((flexiblePlan.mealsByDay ? flexiblePlan.mealsByDay[selectedDay] : flexiblePlan.meals) || []).filter((m: any) => m.active)).map((meal: any) => {
+                                                            // Dynamically resolve icon and styling
+                                                            const getMealInfo = (id: string, name: string) => {
+                                                                const key = (id || "").toLowerCase();
+                                                                const nameKey = (name || "").toLowerCase();
+                                                                if (key.includes("breakfast") || nameKey.includes("desayuno")) return { icon: Coffee };
+                                                                if (key.includes("mid-morning") || nameKey.includes("media mañana") || nameKey.includes("mañana")) return { icon: Zap };
+                                                                if (key.includes("lunch") || nameKey.includes("almuerzo")) return { icon: Utensils };
+                                                                if (key.includes("mid-afternoon") || nameKey.includes("media tarde") || nameKey.includes("tarde")) return { icon: Coffee };
+                                                                if (key.includes("dinner") || nameKey.includes("cena")) return { icon: Moon };
+                                                                if (key.includes("pre") || nameKey.includes("pre")) return { icon: Zap };
+                                                                if (key.includes("post") || nameKey.includes("post")) return { icon: CheckCircle };
+                                                                return { icon: Utensils };
+                                                            };
+                                                            const mealMeta = getMealInfo(meal.id, meal.name);
+                                                            const IconComponent = mealMeta.icon;
 
-                                                {exchangeGuides.length === 0 ? (
-                                                    <div className="py-20 text-center opacity-30">
-                                                        <Repeat className="h-8 w-8 mx-auto mb-2 text-slate-500" />
-                                                        <p className="text-[10px] font-black uppercase tracking-widest">No hay guías disponibles</p>
-                                                    </div>
-                                                ) : (
-                                                    <div className="space-y-6">
-                                                        {exchangeGuides.map((guide) => (
-                                                            <div key={guide.id} className="bg-white/[0.02] border border-white/5 rounded-[2rem] overflow-hidden transition-all hover:bg-white/[0.04]">
-                                                                <button
-                                                                    onClick={() => setCollapsedExchanges(prev => ({ ...prev, [guide.id]: !prev[guide.id] }))}
-                                                                    className="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 transition-colors"
-                                                                >
-                                                                    <span className="text-[11px] font-black text-white uppercase tracking-widest">{guide.title}</span>
-                                                                    <div className={cn("text-slate-500 transition-transform duration-300", collapsedExchanges[guide.id] ? "rotate-180" : "")}>
-                                                                        <ChevronDown className="h-4 w-4" />
-                                                                    </div>
-                                                                </button>
+                                                            return (
+                                                                <AccordionItem key={meal.id} value={meal.id} className="border-none">
+                                                                    <Card className="bg-[#151F32] border-white/5 rounded-3xl overflow-hidden shadow-2xl group transition-all hover:border-orange-500/30">
+                                                                        <AccordionTrigger className="hover:no-underline p-0 px-4 sm:px-8 py-4 sm:py-6">
+                                                                            <div className="flex flex-col sm:flex-row sm:items-center w-full pr-4 text-left gap-4 sm:gap-6">
+                                                                                <div className="flex items-center gap-3 sm:gap-6 min-w-0 sm:min-w-[200px]">
+                                                                                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500 shrink-0">
+                                                                                        <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
+                                                                                    </div>
+                                                                                    <div className="text-left">
+                                                                                        <span className="font-tech font-black text-xs sm:text-sm text-white tracking-widest uppercase block leading-tight">{meal.name}</span>
+                                                                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mt-0.5">{meal.time || "10:00 AM"}</span>
+                                                                                    </div>
+                                                                                </div>
 
-                                                                {!collapsedExchanges[guide.id] && (
-                                                                    <div className="p-4 pt-0">
-                                                                        {/* Horizontal scroll with 2 rows content */}
-                                                                        <div className="overflow-x-auto pb-4 custom-scrollbar">
-                                                                            <div className="grid grid-flow-col grid-rows-2 gap-3 min-w-max">
-                                                                                {guide.cards.map((card: any, cidx: number) => (
-                                                                                    <div
-                                                                                        key={cidx}
-                                                                                        className="w-[160px] sm:w-[180px] bg-[#0B1120] rounded-2xl border border-white/5 overflow-hidden group/card shadow-lg flex flex-col h-full"
-                                                                                    >
-                                                                                        <div className="h-24 sm:h-28 bg-white/5 relative overflow-hidden shrink-0">
-                                                                                            {card.image_url ? (
-                                                                                                <img
-                                                                                                    src={card.image_url}
-                                                                                                    alt={card.title}
-                                                                                                    className="w-full h-full object-contain transition-transform duration-500 group-hover/card:scale-105"
-                                                                                                />
-                                                                                            ) : (
-                                                                                                <div className="w-full h-full flex items-center justify-center opacity-20">
-                                                                                                    <Utensils className="h-6 w-6" />
-                                                                                                </div>
-                                                                                            )}
+                                                                                <div className="flex-1 text-left">
+                                                                                    <span className="text-[10px] sm:text-xs font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-3 py-1.5 rounded-xl border border-orange-500/20 inline-block break-words whitespace-normal">
+                                                                                        {meal.title}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </AccordionTrigger>
+                                                                        <AccordionContent className="p-0 border-t border-white/5">
+                                                                            <div className="p-4 sm:p-8 space-y-4 sm:space-y-6 bg-[#0B1120]/30">
+                                                                                {meal.rows.map((row: any) => (
+                                                                                    <div key={row.id} className="space-y-3">
+                                                                                        <div className="flex items-center justify-between">
+                                                                                            <div className="flex items-center gap-3">
+                                                                                                <div className="h-1.5 w-1.5 rounded-full bg-orange-500" />
+                                                                                                <span className="text-[11px] font-black text-white uppercase tracking-widest">
+                                                                                                    {DB_PORCIONES[row.group]?.label || row.group.replace('-', ' ')}
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            <div className="h-7 w-12 bg-[#0B1120] border border-white/5 rounded-lg flex items-center justify-center font-tech font-black text-orange-400 text-xs">
+                                                                                                {row.portions}
+                                                                                            </div>
                                                                                         </div>
-                                                                                        <div className="p-3 sm:p-4 flex flex-col flex-1 justify-center gap-1.5 bg-gradient-to-b from-transparent to-[#151F32]/50">
-                                                                                            <p className="text-xs sm:text-[13px] font-black text-emerald-400 tracking-tight leading-snug break-words">
-                                                                                                {card.description}
+                                                                                        {row.comment && (
+                                                                                            <p className="text-[11px] text-slate-400 font-medium leading-relaxed bg-white/[0.03] p-4 rounded-2xl border border-white/5 italic">
+                                                                                                "{row.comment}"
                                                                                             </p>
-                                                                                            <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-tight break-words">
-                                                                                                {card.title}
-                                                                                            </p>
-                                                                                        </div>
+                                                                                        )}
                                                                                     </div>
                                                                                 ))}
                                                                             </div>
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        ))}
+                                                                        </AccordionContent>
+                                                                    </Card>
+                                                                </AccordionItem>
+                                                            )
+                                                        })}
+                                                    </Accordion>
+                                                </div>
+
+                                                <div className="space-y-6 sm:space-y-8 bg-[#0B1120]/20 p-4 sm:p-6 rounded-2xl sm:rounded-[2.5rem] border border-white/5 max-h-[500px] lg:max-h-[800px] overflow-y-auto custom-scrollbar relative no-print">
+                                                    <div className="sticky top-[-24px] z-20 bg-[#0B1120]/80 backdrop-blur-md py-6 -mx-6 px-6 mb-2 border-b border-white/5">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="h-1.5 w-12 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+                                                            <h3 className="text-xs font-black text-slate-300 uppercase tracking-[0.3em] drop-shadow-lg">Guía de Intercambio</h3>
+                                                        </div>
                                                     </div>
-                                                )}
+
+                                                    {exchangeGuides.length === 0 ? (
+                                                        <div className="py-20 text-center opacity-30">
+                                                            <Repeat className="h-8 w-8 mx-auto mb-2 text-slate-500" />
+                                                            <p className="text-[10px] font-black uppercase tracking-widest">No hay guías disponibles</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-6">
+                                                            {exchangeGuides.map((guide) => (
+                                                                <div key={guide.id} className="bg-white/[0.02] border border-white/5 rounded-[2rem] overflow-hidden transition-all hover:bg-white/[0.04]">
+                                                                    <button
+                                                                        onClick={() => setCollapsedExchanges(prev => ({ ...prev, [guide.id]: !prev[guide.id] }))}
+                                                                        className="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 transition-colors"
+                                                                    >
+                                                                        <span className="text-[11px] font-black text-white uppercase tracking-widest">{guide.title}</span>
+                                                                        <div className={cn("text-slate-500 transition-transform duration-300", collapsedExchanges[guide.id] ? "rotate-180" : "")}>
+                                                                            <ChevronDown className="h-4 w-4" />
+                                                                        </div>
+                                                                    </button>
+
+                                                                    {!collapsedExchanges[guide.id] && (
+                                                                        <div className="p-4 pt-0">
+                                                                            {/* Horizontal scroll with 2 rows content */}
+                                                                            <div className="overflow-x-auto pb-4 custom-scrollbar">
+                                                                                <div className="grid grid-flow-col grid-rows-2 gap-3 min-w-max">
+                                                                                    {guide.cards.map((card: any, cidx: number) => (
+                                                                                        <div
+                                                                                            key={cidx}
+                                                                                            className="w-[160px] sm:w-[180px] bg-[#0B1120] rounded-2xl border border-white/5 overflow-hidden group/card shadow-lg flex flex-col h-full"
+                                                                                        >
+                                                                                            <div className="h-24 sm:h-28 bg-white/5 relative overflow-hidden shrink-0">
+                                                                                                {card.image_url ? (
+                                                                                                    <img
+                                                                                                        src={card.image_url}
+                                                                                                        alt={card.title}
+                                                                                                        className="w-full h-full object-contain transition-transform duration-500 group-hover/card:scale-105"
+                                                                                                    />
+                                                                                                ) : (
+                                                                                                    <div className="w-full h-full flex items-center justify-center opacity-20">
+                                                                                                        <Utensils className="h-6 w-6" />
+                                                                                                    </div>
+                                                                                                )}
+                                                                                            </div>
+                                                                                            <div className="p-3 sm:p-4 flex flex-col flex-1 justify-center gap-1.5 bg-gradient-to-b from-transparent to-[#151F32]/50">
+                                                                                                <p className="text-xs sm:text-[13px] font-black text-emerald-400 tracking-tight leading-snug break-words">
+                                                                                                    {card.description}
+                                                                                                </p>
+                                                                                                <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-tight break-words">
+                                                                                                    {card.title}
+                                                                                                </p>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="col-span-full py-20 text-center space-y-4">
+                                                <div className="h-16 w-16 bg-slate-500/10 rounded-2xl flex items-center justify-center text-slate-500 mx-auto opacity-30">
+                                                    <Utensils className="h-8 w-8" />
+                                                </div>
+                                                <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">No hay un plan flexible guardado para esta semana.</p>
                                             </div>
-                                        </>
-                                    ) : (
-                                        <div className="col-span-full py-20 text-center space-y-4">
-                                            <div className="h-16 w-16 bg-slate-500/10 rounded-2xl flex items-center justify-center text-slate-500 mx-auto opacity-30">
-                                                <Utensils className="h-8 w-8" />
-                                            </div>
-                                            <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">No hay un plan flexible guardado para esta semana.</p>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
                     </>
                 ) : (
                     <>

@@ -676,7 +676,7 @@ export function FlexiblePlanEditor({
             )}
 
             {/* Tabs Selector + Control Panel Row */}
-            <div className="flex flex-col xl:flex-row justify-between items-center gap-4 sm:gap-6 mb-4 sm:mb-8">
+            <div className="flex flex-col xl:flex-row justify-between items-center gap-4 sm:gap-6 mb-4 sm:mb-8 no-print">
                 {/* Tabs Selector */}
                 <div className="flex bg-[#151F32] rounded-xl sm:rounded-2xl p-1 w-full xl:w-max border border-white/5 shadow-2xl overflow-x-auto shrink-0">
                     <button
