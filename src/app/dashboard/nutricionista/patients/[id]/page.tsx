@@ -50,6 +50,7 @@ export default function PatientDetailPage() {
     const [formLayout, setFormLayout] = useState<any[]>([]);
     const [clinicalVariables, setClinicalVariables] = useState<ClinicalVariable[]>([]);
     const [cardSlots, setCardSlots] = useState<any[]>([]);
+    const [fetchError, setFetchError] = useState<string | null>(null);
 
     const [showBioDialog, setShowBioDialog] = useState(false);
     const [showHistoryDialog, setShowHistoryDialog] = useState(false);
@@ -466,7 +467,8 @@ export default function PatientDetailPage() {
             });
 
         } catch (err: any) {
-            console.error("[fetchAllData] Error:", err.message);
+            console.error("[fetchAllData] Error:", err);
+            setFetchError(err.message || String(err));
         } finally {
             setLoading(false);
         }
@@ -822,6 +824,12 @@ export default function PatientDetailPage() {
     }, [records, patient, clinicalVariables]);
 
     if (loading && !patient) return <div className="p-20 text-center font-black animate-pulse text-slate-400 uppercase tracking-widest">Sincronizando...</div>;
+    if (fetchError) return (
+        <div className="p-20 text-center text-red-500 font-bold max-w-2xl mx-auto space-y-4">
+            <div>Error al cargar datos del paciente:</div>
+            <pre className="bg-red-500/10 p-4 rounded-xl text-left text-xs font-mono whitespace-pre-wrap">{fetchError}</pre>
+        </div>
+    );
     if (!patient) return <div className="p-20 text-center text-red-500 font-bold">Error: Paciente no encontrado</div>;
 
     const manualVars = clinicalVariables.filter(v => !v.is_calculated);
