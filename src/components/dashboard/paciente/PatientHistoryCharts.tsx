@@ -444,6 +444,7 @@ export function PatientHistoryCharts({
             <div className="bg-white/[0.02] border-b border-white/5 rounded-b-[2rem] sm:rounded-b-[3rem] px-4 sm:px-10 py-1.5 mb-4 flex justify-between items-center z-10 w-full relative overflow-x-auto no-scrollbar">
                 {tabConfigs.map((config) => {
                     const Icon = AVAILABLE_ICONS[config.icon] || Activity;
+                    const isActive = activeTab === config.id || activeTab === config.name.toLowerCase();
                     const displayName = (!showWeight && (config.id === 'peso' || config.name?.toLowerCase() === 'peso')) ? 'IMC' : config.name;
                     return (
                         <button
