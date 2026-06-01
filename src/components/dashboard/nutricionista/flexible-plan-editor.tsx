@@ -1163,12 +1163,23 @@ export function FlexiblePlanEditor({
                                     {/* Right Content: Dish Name & Ingredients */}
                                     <div className="flex-1 flex flex-col">
                                         <div className="bg-gradient-to-r from-[#FF7A00] to-[#E66A00] p-3 sm:p-4 flex items-center shadow-md relative z-10">
-                                            <input
-                                                type="text"
+                                            <textarea
                                                 value={meal.title}
-                                                onChange={e => setMeals(prev => prev.map(m => m.id === meal.id ? { ...m, title: e.target.value } : m))}
-                                                className="w-full bg-transparent text-white font-black text-center outline-none placeholder-white/40 text-xs sm:text-sm uppercase tracking-[0.2em]"
+                                                onChange={e => {
+                                                    setMeals(prev => prev.map(m => m.id === meal.id ? { ...m, title: e.target.value } : m));
+                                                    const target = e.target as HTMLTextAreaElement;
+                                                    target.style.height = 'auto';
+                                                    target.style.height = `${target.scrollHeight}px`;
+                                                }}
                                                 placeholder="NOMBRE DEL MENÚ O PLATO..."
+                                                rows={1}
+                                                className="w-full bg-transparent text-white font-black text-center outline-none placeholder-white/40 text-xs sm:text-sm uppercase tracking-[0.2em] resize-none overflow-hidden leading-relaxed py-1"
+                                                ref={(el) => {
+                                                    if (el) {
+                                                        el.style.height = 'auto';
+                                                        el.style.height = `${el.scrollHeight}px`;
+                                                    }
+                                                }}
                                             />
                                         </div>
 
