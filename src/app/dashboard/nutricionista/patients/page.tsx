@@ -179,9 +179,15 @@ export default function PatientsPage() {
             syncChannel.close();
         } catch (err: any) {
             console.error("Error updating patient show_weight:", err);
+            
+            const isSchemaCacheError = err?.message?.toLowerCase().includes("show_weight") || err?.message?.toLowerCase().includes("schema cache");
+            const friendlyMessage = isSchemaCacheError 
+                ? "La columna 'show_weight' no existe en la base de datos de Supabase. Para usar esta función, copie y ejecute la consulta del archivo 'supabase/migrations/20260601000000_add_show_weight_to_patients.sql' en su SQL Editor de Supabase."
+                : (err.message || "No se pudo actualizar la preferencia.");
+
             toast({
-                title: "Error",
-                description: err.message || "No se pudo actualizar la preferencia.",
+                title: isSchemaCacheError ? "Acción requerida" : "Error",
+                description: friendlyMessage,
                 variant: "destructive"
             });
             loadPatients();
