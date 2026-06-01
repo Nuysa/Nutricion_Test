@@ -92,7 +92,7 @@ export function HealthStats() {
             if (profile) {
                 const { data: pData } = await supabase
                     .from("patients")
-                    .select("id, current_weight, height_cm, date_of_birth, gender, show_weight")
+                    .select("*")
                     .eq("profile_id", profile.id)
                     .maybeSingle();
                 patientData = pData;

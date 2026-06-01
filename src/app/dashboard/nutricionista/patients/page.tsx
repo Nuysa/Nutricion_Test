@@ -56,11 +56,7 @@ export default function PatientsPage() {
             let query = supabase
                 .from("patients")
                 .select(`
-                    id, 
-                    plan_type,
-                    goal_weight, 
-                    current_weight,
-                    show_weight,
+                    *,
                     profile:profiles!profile_id(id, full_name, role, status, avatar_url, created_at)
                 `);
             

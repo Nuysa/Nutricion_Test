@@ -62,7 +62,7 @@ export function BMIGauge() {
 
             const { data: pData } = await supabase
                 .from("patients")
-                .select("id, goal_weight, current_weight, height_cm, show_weight")
+                .select("*")
                 .eq("profile_id", profile.id)
                 .single();
 
