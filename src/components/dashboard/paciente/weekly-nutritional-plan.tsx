@@ -172,6 +172,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
     const { toast } = useToast();
     const [patientId, setPatientId] = useState<string | null>(null);
     const [patientWeight, setPatientWeight] = useState<string | null>(null);
+    const [patientName, setPatientName] = useState<string>("");
     const [exchangeGuides, setExchangeGuides] = useState<any[]>([]);
     const [collapsedExchanges, setCollapsedExchanges] = useState<Record<string, boolean>>({});
 
@@ -200,18 +201,20 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
             if (!finalPatientId) {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) return;
-                const { data: profile } = await supabase.from("profiles").select("id").eq("user_id", user.id).single();
+                const { data: profile } = await supabase.from("profiles").select("id, full_name").eq("user_id", user.id).single();
                 if (!profile) return;
                 const { data: patient } = await supabase.from("patients").select("id, plan_type, current_weight").eq("profile_id", profile.id).single();
                 if (!patient) return;
                 finalPatientId = patient.id;
                 currentPatientPlanType = patient.plan_type || "sin plan";
                 currentWeight = patient.current_weight || 0;
+                setPatientName(profile.full_name || "");
             } else {
-                const { data: patient } = await supabase.from("patients").select("id, plan_type, current_weight").eq("id", finalPatientId).single();
+                const { data: patient } = await supabase.from("patients").select("id, plan_type, current_weight, profile:profiles!profile_id(full_name)").eq("id", finalPatientId).single();
                 if (patient) {
                     currentPatientPlanType = patient.plan_type || "sin plan";
                     currentWeight = patient.current_weight || 0;
+                    setPatientName((patient.profile as any)?.full_name || "");
                 }
             }
 
@@ -413,28 +416,39 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                 button:not(.print-button) {
                                     display: none !important;
                                 }
-                                body, html, #__next, main {
+                                body, html, #__next, main, [role="main"], .flex, .grid, .min-h-screen {
                                     background-color: #0B1120 !important;
                                     color: #F8FAFC !important;
                                     -webkit-print-color-adjust: exact !important;
                                     print-color-adjust: exact !important;
                                     padding: 0 !important;
-                                    margin: 0 !important;
+                                    margin: 0 auto !important;
+                                    width: 100% !important;
+                                    max-width: 100% !important;
                                 }
-                                .min-h-screen {
+                                /* Target any potential layout wrappers that might have offset padding or margins */
+                                div[class*="pl-"], div[class*="ml-"], div[class*="sidebar"], div[class*="layout"] {
+                                    padding-left: 0 !important;
+                                    margin-left: 0 !important;
+                                }
+                                .container, .mx-auto, [class*="max-w-"] {
+                                    max-width: 100% !important;
+                                    width: 100% !important;
+                                    margin: 0 auto !important;
                                     padding: 0 !important;
-                                    min-height: auto !important;
-                                    background-color: #0B1120 !important;
                                 }
                                 [data-state="closed"] > div,
                                 [data-state="closed"] > [data-radix-collapsible-content],
                                 .accordion-content,
-                                [data-radix-accordion-content] {
+                                [data-radix-accordion-content],
+                                [role="region"],
+                                [data-state="closed"] [role="region"] {
                                     display: block !important;
                                     height: auto !important;
                                     opacity: 1 !important;
                                     overflow: visible !important;
                                     visibility: visible !important;
+                                    max-height: none !important;
                                 }
                                 button svg.lucide-chevron-down,
                                 button svg.lucide-chevron-up,
@@ -452,6 +466,11 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
 
                         {/* Print Header showing the current selected day */}
                         <div className="hidden print:block mb-6 text-center border-b border-white/10 pb-4">
+                            {patientName && (
+                                <h1 className="text-xl font-bold text-white uppercase tracking-wider mb-2">
+                                    Paciente: {patientName}
+                                </h1>
+                            )}
                             <h2 className="text-2xl font-black text-[#FF7A00] uppercase tracking-[0.2em]">
                                 Plan Nutricional: {selectedDay.toUpperCase()}
                             </h2>
