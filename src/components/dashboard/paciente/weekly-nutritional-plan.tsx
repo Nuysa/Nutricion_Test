@@ -660,7 +660,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                         </div>
 
                                                         {/* Right: Food title/badge */}
-                                                        <div className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-xl border border-orange-500/20 text-right w-fit max-w-[55%] break-words leading-relaxed">
+                                                        <div className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-xl border border-orange-500/20 text-right inline-block w-auto max-w-[55%] break-words leading-relaxed">
                                                             {meal.title}
                                                         </div>
                                                     </div>
