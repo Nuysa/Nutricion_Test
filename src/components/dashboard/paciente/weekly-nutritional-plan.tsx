@@ -402,7 +402,201 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                         </div>
                     </div>
                 ) : patientPlanType === "plan flexible" ? (
-                    <div className="space-y-6 sm:space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                    <>
+                        <style dangerouslySetInnerHTML={{ __html: `
+                            @media print {
+                                .no-print,
+                                .print\\:hidden,
+                                header,
+                                nav,
+                                aside,
+                                footer,
+                                [role="navigation"],
+                                .sidebar,
+                                .topbar,
+                                button {
+                                    display: none !important;
+                                }
+                                body, html, #__next, main, [role="main"], .min-h-screen {
+                                    background-color: #0B1120 !important;
+                                    color: #F8FAFC !important;
+                                    -webkit-print-color-adjust: exact !important;
+                                    print-color-adjust: exact !important;
+                                    padding: 0 !important;
+                                    margin: 0 auto !important;
+                                    width: 100% !important;
+                                    max-width: 100% !important;
+                                }
+                                /* Target any potential layout wrappers that might have offset padding or margins */
+                                div[class*="pl-"], div[class*="ml-"], div[class*="sidebar"], div[class*="layout"] {
+                                    padding-left: 0 !important;
+                                    margin-left: 0 !important;
+                                }
+                                .container, .mx-auto, [class*="max-w-"] {
+                                    max-width: 100% !important;
+                                    width: 100% !important;
+                                    margin: 0 auto !important;
+                                    padding: 0 !important;
+                                }
+                            }
+                        `}} />
+
+                        {/* PRINT-ONLY MASTER CONTAINER */}
+                        <div className="hidden print:flex flex-col w-full text-slate-100 bg-[#0B1120] p-0 m-0 space-y-8 font-sans items-center">
+                            {/* PRINT HEADER mimicking Image 1 exactly */}
+                            <div className="flex items-center justify-between w-full border-b border-white/10 pb-6 mb-8 gap-4">
+                                <div className="bg-[#151F32] border border-white/5 px-6 py-4 rounded-[2rem] flex items-center gap-4 min-w-[280px]">
+                                    <div className="h-10 w-10 rounded-xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500 shrink-0">
+                                        <Repeat className="h-5 w-5" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">PACIENTE ASIGNADO</p>
+                                        <div className="flex items-center gap-3">
+                                            <h1 className="text-xl font-bold text-white leading-none">
+                                                {patientName}
+                                            </h1>
+                                            <span className="text-[9px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                                FLEXIBLE
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-[#FF7A00] text-white px-8 py-4 rounded-[1.5rem] font-black uppercase text-sm tracking-widest shadow-xl shadow-orange-500/20 text-center shrink-0">
+                                    PLAN FLEXIBLE
+                                </div>
+                            </div>
+
+                            {/* PRINT MACROS mimicking Image 2 exactly (no PDF download, no weight badge) */}
+                            <div className="w-full space-y-6">
+                                <div className="flex items-center justify-between w-full">
+                                    <div>
+                                        <h2 className="text-3xl font-black text-white tracking-tight leading-tight">Plan Flexible</h2>
+                                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mt-1">CUMPLIMIENTO DE MACROS Y PORCIONES</p>
+                                    </div>
+                                    <div className="bg-[#151F32] rounded-2xl px-6 py-2.5 border border-white/5 shadow-2xl flex items-center gap-3">
+                                        <Calendar className="h-4 w-4 text-[#FF7A00]" />
+                                        <span className="text-xs font-black text-white uppercase tracking-tight">
+                                            SEMANA: {weekRange.toUpperCase()}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-4 gap-4 w-full">
+                                    <div className="bg-[#151F32] border border-white/5 p-6 rounded-[2rem] shadow-2xl relative overflow-hidden">
+                                        <div className="absolute top-4 right-4">
+                                            <Flame className="h-5 w-5 text-orange-500" />
+                                        </div>
+                                        <span className="text-4xl font-tech font-black text-white block mb-1">{goals.kcal}</span>
+                                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                            <div className="h-full bg-orange-500 w-[100%] rounded-full shadow-[0_0_10px_rgba(255,122,0,0.5)]" />
+                                        </div>
+                                        <p className="mt-3 text-[10px] font-black text-orange-500 uppercase tracking-widest">Calorías Totales</p>
+                                    </div>
+
+                                    <div className="bg-[#151F32] border border-white/5 p-6 rounded-[2rem] shadow-2xl relative overflow-hidden">
+                                        <div className="absolute top-4 right-4">
+                                            <Drumstick className="h-5 w-5 text-sky-400" />
+                                        </div>
+                                        <span className="text-4xl font-tech font-black text-sky-400 block mb-1">{goals.pro}g</span>
+                                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                            <div className="h-full bg-sky-400 w-[100%] rounded-full" />
+                                        </div>
+                                        <p className="mt-3 text-[10px] font-black text-sky-400 uppercase tracking-widest">Proteínas</p>
+                                    </div>
+
+                                    <div className="bg-[#151F32] border border-white/5 p-6 rounded-[2rem] shadow-2xl relative overflow-hidden">
+                                        <div className="absolute top-4 right-4">
+                                            <Wheat className="h-5 w-5 text-yellow-500" />
+                                        </div>
+                                        <span className="text-4xl font-tech font-black text-yellow-500 block mb-1">{goals.car}g</span>
+                                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                            <div className="h-full bg-yellow-500 w-[100%] rounded-full" />
+                                        </div>
+                                        <p className="mt-3 text-[10px] font-black text-yellow-500 uppercase tracking-widest">Carbohidratos</p>
+                                    </div>
+
+                                    <div className="bg-[#151F32] border border-white/5 p-6 rounded-[2rem] shadow-2xl relative overflow-hidden">
+                                        <div className="absolute top-4 right-4">
+                                            <Droplets className="h-5 w-5 text-emerald-400" />
+                                        </div>
+                                        <span className="text-4xl font-tech font-black text-emerald-400 block mb-1">{goals.fat}g</span>
+                                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                            <div className="h-full bg-emerald-400 w-[100%] rounded-full" />
+                                        </div>
+                                        <p className="mt-3 text-[10px] font-black text-emerald-400 uppercase tracking-widest">LIPIDOS</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* PRINT MEALS mimicking Image 3 exactly (always expanded, centered) */}
+                            <div className="w-full space-y-6 pt-6">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="h-1 w-12 bg-orange-500 rounded-full" />
+                                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em]">Instrucciones Detalladas</h3>
+                                </div>
+
+                                <div className="space-y-6 w-full max-w-3xl mx-auto">
+                                    {(((flexiblePlan.mealsByDay ? flexiblePlan.mealsByDay[selectedDay] : flexiblePlan.meals) || []).filter((m: any) => m.active)).map((meal: any) => {
+                                        const getMealInfo = (id: string, name: string) => {
+                                            const key = (id || "").toLowerCase();
+                                            const nameKey = (name || "").toLowerCase();
+                                            if (key.includes("breakfast") || nameKey.includes("desayuno")) return { icon: Coffee };
+                                            if (key.includes("mid-morning") || nameKey.includes("media mañana") || nameKey.includes("mañana")) return { icon: Zap };
+                                            if (key.includes("lunch") || nameKey.includes("almuerzo")) return { icon: Utensils };
+                                            if (key.includes("mid-afternoon") || nameKey.includes("media tarde") || nameKey.includes("tarde")) return { icon: Coffee };
+                                            if (key.includes("dinner") || nameKey.includes("cena")) return { icon: Moon };
+                                            return { icon: Utensils };
+                                        };
+                                        const mealMeta = getMealInfo(meal.id, meal.name);
+                                        const IconComponent = mealMeta.icon;
+
+                                        return (
+                                            <div key={meal.id} className="bg-[#151F32] border border-white/5 rounded-3xl overflow-hidden shadow-2xl w-full break-inside-avoid page-break-inside-avoid">
+                                                <div className="px-8 py-5 border-b border-white/5 flex items-center justify-between gap-4 bg-white/[0.01]">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="h-10 w-10 rounded-xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500 shrink-0">
+                                                            <IconComponent className="h-5 w-5" />
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <span className="font-tech font-black text-xs text-white tracking-widest uppercase block leading-tight">{meal.name}</span>
+                                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mt-0.5">{meal.time || "10:00 AM"}</span>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-3 py-1.5 rounded-xl border border-orange-500/20 text-right">
+                                                        {meal.title}
+                                                    </span>
+                                                </div>
+                                                <div className="p-8 space-y-6 bg-[#0B1120]/30">
+                                                    {meal.rows.map((row: any) => (
+                                                        <div key={row.id} className="space-y-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="h-1.5 w-1.5 rounded-full bg-orange-500" />
+                                                                    <span className="text-[11px] font-black text-white uppercase tracking-widest">
+                                                                        {DB_PORCIONES[row.group]?.label || row.group.replace('-', ' ')}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="h-7 w-12 bg-[#0B1120] border border-white/5 rounded-lg flex items-center justify-center font-tech font-black text-orange-400 text-xs">
+                                                                    {row.portions}
+                                                                </div>
+                                                            </div>
+                                                            {row.comment && (
+                                                                <p className="text-[11px] text-slate-400 font-medium leading-relaxed bg-white/[0.03] p-4 rounded-2xl border border-white/5 italic">
+                                                                    "{row.comment}"
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* SCREEN-ONLY MASTER CONTAINER */}
+                        <div className="space-y-6 sm:space-y-12 print:hidden animate-in fade-in slide-in-from-bottom-6 duration-700">
                         <style dangerouslySetInnerHTML={{ __html: `
                             @media print {
                                 .no-print,
@@ -782,6 +976,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                             </div>
                         </div>
                     </div>
+                    </>
                 ) : (
                     <>
                         {/* Header Section */}
