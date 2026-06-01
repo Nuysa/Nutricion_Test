@@ -648,20 +648,24 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
 
                                                 <div className="bg-[#151F32] border border-white/5 rounded-3xl overflow-hidden shadow-2xl w-full">
                                                     <div className="px-6 py-4 border-b border-white/5 flex flex-row items-center justify-between gap-4 bg-[#151F32]/80">
-                                                        {/* Left: Icon container adjusted to icon */}
-                                                        <div className="h-10 w-10 rounded-xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500 shrink-0">
-                                                            <IconComponent className="h-5 w-5 shrink-0" style={{ width: "20px", height: "20px" }} />
+                                                        {/* Left: Icon container */}
+                                                        <div className="flex-1 flex justify-start items-center">
+                                                            <div className="h-10 w-10 rounded-xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500 shrink-0">
+                                                                <IconComponent className="h-5 w-5 shrink-0" style={{ width: "20px", height: "20px" }} />
+                                                            </div>
                                                         </div>
 
                                                         {/* Center: Meal type name centered */}
-                                                        <div className="text-center flex-1 flex flex-col justify-center items-center">
+                                                        <div className="text-center shrink-0 flex flex-col justify-center items-center min-w-[120px]">
                                                             <span className="font-tech font-black text-xs text-white tracking-widest uppercase block leading-none mb-1">{meal.name}</span>
                                                             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block leading-none">{meal.time || "10:00 AM"}</span>
                                                         </div>
 
-                                                        {/* Right: Food title/badge */}
-                                                        <div className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-xl border border-orange-500/20 text-right inline-block w-auto max-w-[55%] break-words leading-relaxed">
-                                                            {meal.title}
+                                                        {/* Right: Food title/badge with wrapping support */}
+                                                        <div className="flex-1 flex justify-end items-center">
+                                                            <div className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-xl border border-orange-500/20 text-right max-w-[85%] break-words leading-relaxed">
+                                                                {meal.title}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div className="p-8 space-y-6 bg-[#0B1120]/30">
