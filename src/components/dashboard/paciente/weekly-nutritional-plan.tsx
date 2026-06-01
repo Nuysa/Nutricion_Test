@@ -405,6 +405,9 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                     <>
                         <style dangerouslySetInnerHTML={{ __html: `
                             @media print {
+                                @page {
+                                    margin: 15mm 20mm 15mm 20mm !important;
+                                }
                                 .no-print,
                                 .print\\:hidden,
                                 header,
@@ -438,30 +441,30 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                     margin: 0 auto !important;
                                     padding: 0 !important;
                                 }
+                                .print-container {
+                                    max-width: 780px !important;
+                                    margin: 0 auto !important;
+                                    width: 100% !important;
+                                }
                             }
                         `}} />
 
                         {/* PRINT-ONLY MASTER CONTAINER */}
-                        <div className="hidden print:flex flex-col w-full text-slate-100 bg-[#0B1120] p-0 m-0 space-y-8 font-sans items-center">
-                            {/* PRINT HEADER mimicking Image 1 exactly */}
-                            <div className="flex items-center justify-between w-full border-b border-white/10 pb-6 mb-8 gap-4">
-                                <div className="bg-[#151F32] border border-white/5 px-6 py-4 rounded-[2rem] flex items-center gap-4 min-w-[280px]">
-                                    <div className="h-10 w-10 rounded-xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500 shrink-0">
-                                        <Repeat className="h-5 w-5" />
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">PACIENTE ASIGNADO</p>
-                                        <div className="flex items-center gap-3">
-                                            <h1 className="text-xl font-bold text-white leading-none">
-                                                {patientName}
-                                            </h1>
-                                            <span className="text-[9px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                                                FLEXIBLE
-                                            </span>
-                                        </div>
+                        <div className="hidden print:flex flex-col w-full max-w-[780px] mx-auto text-slate-100 bg-[#0B1120] p-0 m-0 space-y-8 font-sans items-center print-container">
+                            {/* PRINT HEADER mimicking Image 1 exactly (no overlapping, no refresh arrows) */}
+                            <div className="flex flex-row items-center justify-between w-full border-b border-white/10 pb-6 mb-8 gap-6">
+                                <div className="bg-[#151F32] border border-white/5 px-8 py-5 rounded-[2rem] text-left flex-1 min-w-0">
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1.5">PACIENTE ASIGNADO</p>
+                                    <div className="flex items-center gap-4 flex-wrap">
+                                        <h1 className="text-2xl font-black text-white leading-none truncate">
+                                            {patientName}
+                                        </h1>
+                                        <span className="text-[9px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 rounded-md uppercase tracking-wider font-tech shrink-0">
+                                            FLEXIBLE
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="bg-[#FF7A00] text-white px-8 py-4 rounded-[1.5rem] font-black uppercase text-sm tracking-widest shadow-xl shadow-orange-500/20 text-center shrink-0">
+                                <div className="bg-[#FF7A00] text-white px-8 py-5 rounded-[1.5rem] font-black uppercase text-sm tracking-widest shadow-xl shadow-orange-500/20 text-center shrink-0">
                                     PLAN FLEXIBLE
                                 </div>
                             </div>
@@ -528,8 +531,52 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                 </div>
                             </div>
 
-                            {/* PRINT MEALS mimicking Image 3 exactly (always expanded, centered) */}
-                            <div className="w-full space-y-6 pt-6">
+                            {/* PRINT HYDRATION (IMAGEN 2) below the cards on the first page */}
+                            <div className="w-full bg-gradient-to-br from-[#1E293B] to-[#0F172A] border border-white/5 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden mt-6 break-inside-avoid page-break-inside-avoid">
+                                <div className="absolute top-0 right-0 h-40 w-40 bg-blue-500/5 blur-[80px] rounded-full" />
+                                <div className="relative z-10 space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <Droplets className="h-5 w-5 text-blue-400 shrink-0" />
+                                        <h2 className="text-xs font-black text-white uppercase tracking-widest">Hidratación Diaria Recomendada</h2>
+                                    </div>
+
+                                    <div className="text-center space-y-1">
+                                        <div className="flex items-center justify-center gap-2 text-white">
+                                            <h3 className="text-5xl font-tech font-black tracking-tighter">
+                                                {patientWeight ? (parseFloat(patientWeight) * 35).toLocaleString() : "2,100"}
+                                            </h3>
+                                            <span className="text-lg font-black text-blue-400 mt-4 ml-1">ml</span>
+                                        </div>
+                                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest font-tech">Requerimiento Base</p>
+                                    </div>
+
+                                    <div className="h-px bg-white/5 w-full" />
+
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="bg-white/5 rounded-2xl p-5 text-center space-y-2 border border-white/5">
+                                            <GlassWater className="h-6 w-6 text-blue-400 mx-auto" />
+                                            <div>
+                                                <h4 className="text-2xl font-tech font-black text-white">
+                                                    {patientWeight ? ((parseFloat(patientWeight) * 35) / 250).toFixed(1) : "8.4"}
+                                                </h4>
+                                                <p className="text-[11px] font-black text-slate-500 uppercase tracking-tighter">Vasos (250ml)</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-white/5 rounded-2xl p-5 text-center space-y-2 border border-white/5">
+                                            <Milk className="h-6 w-6 text-blue-550 mx-auto" />
+                                            <div>
+                                                <h4 className="text-2xl font-tech font-black text-white">
+                                                    {patientWeight ? ((parseFloat(patientWeight) * 35) / 500).toFixed(1) : "4.2"}
+                                                </h4>
+                                                <p className="text-[11px] font-black text-slate-500 uppercase tracking-tighter">Botellas (500ml)</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* PRINT MEALS (starts clean on page 2) */}
+                            <div className="w-full space-y-6 pt-6 break-before-page print:break-before-page" style={{ pageBreakBefore: "always" }}>
                                 <div className="flex items-center gap-4 mb-6">
                                     <div className="h-1 w-12 bg-orange-500 rounded-full" />
                                     <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em]">Instrucciones Detalladas</h3>
@@ -552,17 +599,17 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
 
                                         return (
                                             <div key={meal.id} className="bg-[#151F32] border border-white/5 rounded-3xl overflow-hidden shadow-2xl w-full break-inside-avoid page-break-inside-avoid">
-                                                <div className="px-8 py-5 border-b border-white/5 flex items-center justify-between gap-4 bg-white/[0.01]">
-                                                    <div className="flex items-center gap-4">
+                                                <div className="px-8 py-5 border-b border-white/5 flex flex-row items-center justify-between gap-6 bg-[#151F32]/80">
+                                                    <div className="flex flex-row items-center gap-4">
                                                         <div className="h-10 w-10 rounded-xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500 shrink-0">
-                                                            <IconComponent className="h-5 w-5" />
+                                                            <IconComponent className="h-5 w-5 shrink-0" style={{ width: "20px", height: "20px" }} />
                                                         </div>
-                                                        <div className="text-left">
-                                                            <span className="font-tech font-black text-xs text-white tracking-widest uppercase block leading-tight">{meal.name}</span>
-                                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mt-0.5">{meal.time || "10:00 AM"}</span>
+                                                        <div className="text-left flex flex-col justify-center">
+                                                            <span className="font-tech font-black text-xs text-white tracking-widest uppercase block leading-none mb-1">{meal.name}</span>
+                                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block leading-none">{meal.time || "10:00 AM"}</span>
                                                         </div>
                                                     </div>
-                                                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-3 py-1.5 rounded-xl border border-orange-500/20 text-right">
+                                                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-xl border border-orange-500/20 text-right shrink-0">
                                                         {meal.title}
                                                     </span>
                                                 </div>
