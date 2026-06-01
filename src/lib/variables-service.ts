@@ -64,7 +64,7 @@ export const VariablesService = {
         const supabase = createClient();
         const { data, error } = await supabase
             .from('card_slots_config')
-            .select('*, clinical_variables(*)')
+            .select('*, clinical_variables!variable_id(*)')
             .eq('role', role)
             .order('slot_index', { ascending: true });
 
