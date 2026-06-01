@@ -92,7 +92,7 @@ export function HealthStats() {
             if (profile) {
                 const { data: pData } = await supabase
                     .from("patients")
-                    .select("id, current_weight, height_cm, date_of_birth, gender")
+                    .select("id, current_weight, height_cm, date_of_birth, gender, show_weight")
                     .eq("profile_id", profile.id)
                     .maybeSingle();
                 patientData = pData;
@@ -267,7 +267,12 @@ export function HealthStats() {
                 rangeColor: null
             };
 
-            setStats(finalDynamicStats.slice(0, 4));
+            const showWeight = patientData?.show_weight !== false;
+            let statsFiltered = finalDynamicStats.slice(0, 4);
+            if (!showWeight) {
+                statsFiltered = statsFiltered.filter(s => s && s.key !== "PESO" && !s.label.toLowerCase().includes("peso"));
+            }
+            setStats(statsFiltered);
         } catch (err) {
             console.error("[HealthStats] Error fatal:", err);
         } finally {

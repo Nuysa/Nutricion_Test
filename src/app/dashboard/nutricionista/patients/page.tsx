@@ -60,6 +60,7 @@ export default function PatientsPage() {
                     plan_type,
                     goal_weight, 
                     current_weight,
+                    show_weight,
                     profile:profiles!profile_id(id, full_name, role, status, avatar_url, created_at)
                 `);
             
@@ -111,7 +112,8 @@ export default function PatientsPage() {
                         currentMediciones: 0,
                         totalMediciones: 4,
                         startDate: profileData.created_at ? new Date(profileData.created_at).toLocaleDateString() : "N/A",
-                        profileId: profileData.id
+                        profileId: profileData.id,
+                        showWeight: p.show_weight !== false
                     };
                 }));
             }
@@ -157,6 +159,38 @@ export default function PatientsPage() {
         };
     }, [loadPatients, loadSupabaseData]);
 
+
+    const handleToggleShowWeight = async (patientId: string, currentVal: boolean) => {
+        try {
+            const newVal = !currentVal;
+            setPatients(prev => prev.map(p => p.id === patientId ? { ...p, showWeight: newVal } : p));
+            
+            const { error } = await supabase
+                .from("patients")
+                .update({ show_weight: newVal })
+                .eq("id", patientId);
+
+            if (error) throw error;
+
+            toast({
+                title: "Preferencia actualizada",
+                description: `Se ha configurado para ${newVal ? 'mostrar' : 'ocultar'} el peso al paciente.`,
+                variant: "success"
+            });
+
+            const syncChannel = new BroadcastChannel('nutrigo_global_sync');
+            syncChannel.postMessage('sync');
+            syncChannel.close();
+        } catch (err: any) {
+            console.error("Error updating patient show_weight:", err);
+            toast({
+                title: "Error",
+                description: err.message || "No se pudo actualizar la preferencia.",
+                variant: "destructive"
+            });
+            loadPatients();
+        }
+    };
 
     const handleOpenSchedule = (patient: any) => {
         const now = new Date();
@@ -323,6 +357,7 @@ export default function PatientsPage() {
                                     <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hidden sm:table-cell">Fecha Inicio</th>
                                     <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Estado</th>
                                     <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hidden md:table-cell">Suscripción</th>
+                                    <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Mostrar Peso</th>
                                     <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hidden lg:table-cell">Siguiente Visita</th>
                                     <th className="py-4 sm:py-6 px-3 sm:px-10"></th>
                                 </tr>
@@ -366,6 +401,24 @@ export default function PatientsPage() {
                                             <Badge variant="outline" className="text-[10px] font-black text-nutrition-400 border-nutrition-500/20 bg-nutrition-500/5 px-3 py-1 rounded-lg uppercase">
                                                 {patient.subscription}
                                             </Badge>
+                                        </td>
+                                        <td className="py-4 sm:py-6 px-3 sm:px-4">
+                                            <div className="flex items-center">
+                                                <button
+                                                    onClick={() => handleToggleShowWeight(patient.id, patient.showWeight)}
+                                                    className={cn(
+                                                        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-nutrition-500/20 focus:ring-offset-2",
+                                                        patient.showWeight ? "bg-nutrition-500" : "bg-slate-700"
+                                                    )}
+                                                >
+                                                    <span
+                                                        className={cn(
+                                                            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                                                            patient.showWeight ? "translate-x-5" : "translate-x-0"
+                                                        )}
+                                                    />
+                                                </button>
+                                            </div>
                                         </td>
                                         <td className="py-4 sm:py-6 px-3 sm:px-4 hidden lg:table-cell">
                                             {patient.nextVisit === "Sin programar" ? (

@@ -568,81 +568,86 @@ export function TrackingDashboard() {
     }, []);
 
 
-    return (
-        <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="bg-[#151F32] rounded-[2.5rem] animated-border-card group border-white/5 shadow-2XL overflow-hidden" style={{ '--border-glow-color': '#4ade80' } as any}>
-                    <div className="animated-border-inner bg-[#151F32]" />
-                    <CardContent className="p-6 relative z-10">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="h-10 w-10 rounded-xl bg-white/[0.03] flex items-center justify-center text-nutrition-400 border border-white/5 shadow-inner group-hover:scale-110 transition-transform">
-                                <FileText className="h-5 w-5" />
-                            </div>
-                            <span className="text-[10px] font-black text-nutrition-400 uppercase tracking-widest bg-nutrition-500/10 px-3 py-1 rounded-full border border-nutrition-500/20">Estado</span>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Módulo Clínico</p>
-                            <h3 className="text-xl font-black text-white tracking-tight leading-none">{stats.reportStatus}</h3>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-[#151F32] rounded-[2.5rem] animated-border-card group border-white/5 shadow-2XL overflow-hidden" style={{ '--border-glow-color': '#f97316' } as any}>
-                    <div className="animated-border-inner bg-[#151F32]" />
-                    <CardContent className="p-6 relative z-10">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="h-10 w-10 rounded-xl bg-white/[0.03] flex items-center justify-center text-orange-400 border border-white/5 shadow-inner group-hover:scale-110 transition-transform">
-                                <TrendingDown className="h-5 w-5" />
-                            </div>
-                            <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20">Meta</span>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Peso Objetivo</p>
-                            <div className="flex items-baseline gap-1">
-                                <h3 className="text-4xl font-tech font-black text-white tracking-tight">
-                                    {stats.targetWeight}
-                                </h3>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">kg</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-[#151F32] rounded-[2.5rem] animated-border-card group border-white/5 shadow-2XL overflow-hidden" style={{ '--border-glow-color': '#0ea5e9' } as any}>
-                    <div className="animated-border-inner bg-[#151F32]" />
-                    <CardContent className="p-6 relative z-10">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="h-10 w-10 rounded-xl bg-white/[0.03] flex items-center justify-center text-sky-400 border border-white/5 shadow-inner group-hover:scale-110 transition-transform">
-                                <Scale className="h-5 w-5" />
-                            </div>
-                            <span className="text-[10px] font-black text-sky-400 uppercase tracking-widest bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">Peso</span>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Peso Ideal</p>
-                            <div className="flex items-baseline gap-1">
-                                <h3 className="text-4xl font-tech font-black text-white tracking-tight">{stats.goalWeight}</h3>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">kg</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-[#151F32] rounded-[2.5rem] animated-border-card group border-white/5 shadow-2XL overflow-hidden" style={{ '--border-glow-color': '#ec4899' } as any}>
-                    <div className="animated-border-inner bg-[#151F32]" />
-                    <CardContent className="p-6 relative z-10">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="h-10 w-10 rounded-xl bg-white/[0.03] flex items-center justify-center text-pink-400 border border-white/5 shadow-inner group-hover:scale-110 transition-transform">
-                                <Users className="h-5 w-5" />
-                            </div>
-                            <span className="text-[10px] font-black text-pink-400 uppercase tracking-widest bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20">Equipo</span>
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Seguimiento</p>
-                            <h3 className="text-xl font-black text-white tracking-tight leading-none">{stats.specialistsCount} Profesional</h3>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+            const showWeight = patientData?.show_weight !== false;
+            return (
+                <div className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <Card className="bg-[#151F32] rounded-[2.5rem] animated-border-card group border-white/5 shadow-2XL overflow-hidden" style={{ '--border-glow-color': '#4ade80' } as any}>
+                            <div className="animated-border-inner bg-[#151F32]" />
+                            <CardContent className="p-6 relative z-10">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="h-10 w-10 rounded-xl bg-white/[0.03] flex items-center justify-center text-nutrition-400 border border-white/5 shadow-inner group-hover:scale-110 transition-transform">
+                                        <FileText className="h-5 w-5" />
+                                    </div>
+                                    <span className="text-[10px] font-black text-nutrition-400 uppercase tracking-widest bg-nutrition-500/10 px-3 py-1 rounded-full border border-nutrition-500/20">Estado</span>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Módulo Clínico</p>
+                                    <h3 className="text-xl font-black text-white tracking-tight leading-none">{stats.reportStatus}</h3>
+                                </div>
+                            </CardContent>
+                        </Card>
+        
+                        {showWeight && (
+                            <>
+                                <Card className="bg-[#151F32] rounded-[2.5rem] animated-border-card group border-white/5 shadow-2XL overflow-hidden" style={{ '--border-glow-color': '#f97316' } as any}>
+                                    <div className="animated-border-inner bg-[#151F32]" />
+                                    <CardContent className="p-6 relative z-10">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div className="h-10 w-10 rounded-xl bg-white/[0.03] flex items-center justify-center text-orange-400 border border-white/5 shadow-inner group-hover:scale-110 transition-transform">
+                                                <TrendingDown className="h-5 w-5" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20">Meta</span>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Peso Objetivo</p>
+                                            <div className="flex items-baseline gap-1">
+                                                <h3 className="text-4xl font-tech font-black text-white tracking-tight">
+                                                    {stats.targetWeight}
+                                                </h3>
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">kg</span>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+        
+                                <Card className="bg-[#151F32] rounded-[2.5rem] animated-border-card group border-white/5 shadow-2XL overflow-hidden" style={{ '--border-glow-color': '#0ea5e9' } as any}>
+                                    <div className="animated-border-inner bg-[#151F32]" />
+                                    <CardContent className="p-6 relative z-10">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <div className="h-10 w-10 rounded-xl bg-white/[0.03] flex items-center justify-center text-sky-400 border border-white/5 shadow-inner group-hover:scale-110 transition-transform">
+                                                <Scale className="h-5 w-5" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-sky-400 uppercase tracking-widest bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">Peso</span>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Peso Ideal</p>
+                                            <div className="flex items-baseline gap-1">
+                                                <h3 className="text-4xl font-tech font-black text-white tracking-tight">{stats.goalWeight}</h3>
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">kg</span>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </>
+                        )}
+        
+                        <Card className="bg-[#151F32] rounded-[2.5rem] animated-border-card group border-white/5 shadow-2XL overflow-hidden" style={{ '--border-glow-color': '#ec4899' } as any}>
+                            <div className="animated-border-inner bg-[#151F32]" />
+                            <CardContent className="p-6 relative z-10">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="h-10 w-10 rounded-xl bg-white/[0.03] flex items-center justify-center text-pink-400 border border-white/5 shadow-inner group-hover:scale-110 transition-transform">
+                                        <Users className="h-5 w-5" />
+                                    </div>
+                                    <span className="text-[10px] font-black text-pink-400 uppercase tracking-widest bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20">Equipo</span>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Seguimiento</p>
+                                    <h3 className="text-xl font-black text-white tracking-tight leading-none">{stats.specialistsCount} Profesional</h3>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
 
             <Card className="rounded-[3rem] shadow-2xl border-white/5 overflow-hidden bg-[#151F32]">
                 <CardHeader className="p-10 border-b border-white/5">
@@ -668,6 +673,7 @@ export function TrackingDashboard() {
                                 patientHeight={parseFloat(patientData?.height_cm?.toString() || "0")}
                                 patientGender={patientData?.gender}
                                 patientAge={patientAge}
+                                showWeight={showWeight}
                             />
                         </div>
                     ) : null}

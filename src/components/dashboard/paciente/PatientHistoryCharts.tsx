@@ -43,6 +43,7 @@ interface PatientHistoryChartsProps {
     patientHeight?: number;
     patientGender?: string;
     patientAge?: number;
+    showWeight?: boolean;
 }
 
 export function PatientHistoryCharts({
@@ -51,7 +52,8 @@ export function PatientHistoryCharts({
     clinicalVariables = [],
     patientHeight = 170,
     patientGender = 'femenino',
-    patientAge = 30
+    patientAge = 30,
+    showWeight = true
 }: PatientHistoryChartsProps) {
     const [activeTab, setActiveTab] = useState<string>('peso');
     const [tabConfigs, setTabConfigs] = useState<any[]>([]);
@@ -442,7 +444,7 @@ export function PatientHistoryCharts({
             <div className="bg-white/[0.02] border-b border-white/5 rounded-b-[2rem] sm:rounded-b-[3rem] px-4 sm:px-10 py-1.5 mb-4 flex justify-between items-center z-10 w-full relative overflow-x-auto no-scrollbar">
                 {tabConfigs.map((config) => {
                     const Icon = AVAILABLE_ICONS[config.icon] || Activity;
-                    const isActive = activeTab === config.id || activeTab === config.name.toLowerCase();
+                    const displayName = (!showWeight && (config.id === 'peso' || config.name?.toLowerCase() === 'peso')) ? 'IMC' : config.name;
                     return (
                         <button
                             key={config.id}
@@ -453,7 +455,7 @@ export function PatientHistoryCharts({
                             )}
                         >
                             <Icon className={cn("h-5 w-5 sm:h-6 sm:w-6 mb-1 sm:mb-2 transition-colors", !isActive && "text-slate-600")} style={isActive ? { color: config.lineColor || config.btnColor } : {}} />
-                            <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{config.name}</span>
+                            <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest">{displayName}</span>
                         </button>
                     );
                 })}
@@ -461,7 +463,16 @@ export function PatientHistoryCharts({
 
             <div className="flex-1 flex flex-col gap-3 px-4 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
                 <FechasRow />
-                {activeTabConfig && activeTabConfig.metrics.filter((m: any) => m.variable_id !== 'SYSTEM_DATE').map((metric: any) => {
+                {activeTabConfig && activeTabConfig.metrics
+                    .filter((m: any) => m.variable_id !== 'SYSTEM_DATE')
+                    .filter((m: any) => {
+                        if (!showWeight) {
+                            const isWeight = m.variable_id === 'weight' || m.fixed_variable === 'weight' || (m.label || '').toLowerCase().includes('peso') || (m.visual_title || '').toLowerCase().includes('peso');
+                            if (isWeight) return false;
+                        }
+                        return true;
+                    })
+                    .map((metric: any) => {
                     const { values, labels: extractedLabels } = getMetricData(metric);
                     const labelNorm = (metric.label || metric.visual_title || "").toUpperCase();
                     const isDiagnostic = labelNorm.includes('DIAGNOSTICO') || labelNorm.includes('DIAGNÓSTICO');

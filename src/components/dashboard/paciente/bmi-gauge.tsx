@@ -62,7 +62,7 @@ export function BMIGauge() {
 
             const { data: pData } = await supabase
                 .from("patients")
-                .select("id, goal_weight, current_weight, height_cm")
+                .select("id, goal_weight, current_weight, height_cm, show_weight")
                 .eq("profile_id", profile.id)
                 .single();
 
@@ -210,7 +210,8 @@ export function BMIGauge() {
                 info: dynamicInfo,
                 chartSegments: dynamicSegments,
                 findings: findingsValue,
-                recommendations: recommendationsValue
+                recommendations: recommendationsValue,
+                showWeight: pData.show_weight !== false
             });
 
         } catch (err) {
@@ -246,13 +247,14 @@ export function BMIGauge() {
         };
     }, [fetchBMI, supabase]);
 
-    const { currentIMC, currentWeight, initialWeight, goalWeight, targetWeight, info } = imcData || {
+    const { currentIMC, currentWeight, initialWeight, goalWeight, targetWeight, info, showWeight } = imcData || {
         currentIMC: 0,
         currentWeight: 0,
         initialWeight: 0,
         goalWeight: 0,
         targetWeight: 0,
-        info: fallbackGetBMIInfo(0)
+        info: fallbackGetBMIInfo(0),
+        showWeight: true
     };
     const progress = Math.min(Math.max((currentIMC - info.min) / (info.max - info.min), 0), 1);
     const progressPercent = Math.round(progress * 100);
@@ -374,29 +376,31 @@ export function BMIGauge() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4 w-full bg-nutri-base/50 border border-white/5 p-5 rounded-3xl mt-4">
-                                <div className="col-span-2 flex flex-col gap-0.5">
-                                    <p className="text-[14px] uppercase font-bold text-slate-500 tracking-wider">Peso Actual</p>
-                                    <p className="text-xl font-tech font-black text-white tracking-tight">{currentWeight.toFixed(1)} <span className="text-xl font-semibold text-slate-500">kg</span></p>
+                            {showWeight && (
+                                <div className="grid grid-cols-3 gap-4 w-full bg-nutri-base/50 border border-white/5 p-5 rounded-3xl mt-4">
+                                    <div className="col-span-2 flex flex-col gap-0.5">
+                                        <p className="text-[14px] uppercase font-bold text-slate-500 tracking-wider">Peso Actual</p>
+                                        <p className="text-xl font-tech font-black text-white tracking-tight">{currentWeight.toFixed(1)} <span className="text-xl font-semibold text-slate-500">kg</span></p>
+                                    </div>
+                                    <div className="flex flex-col gap-0.5 text-right">
+                                        <p className="text-[14px] uppercase font-bold text-slate-500 tracking-wider">Estado</p>
+                                        <p className="text-lg font-tech font-black tracking-tight"
+                                            style={{ color: info.color }}>{info.category}</p>
+                                    </div>
+                                    <div className="border-t border-white/5 pt-3">
+                                        <p className="text-[14px] font-bold text-slate-500 uppercase">Peso Inicial</p>
+                                        <p className="text-xl font-tech font-bold text-white tracking-tight">{initialWeight.toFixed(1)} kg</p>
+                                    </div>
+                                    <div className="border-t border-white/5 pt-3 text-center">
+                                        <p className="text-[14px] font-bold text-slate-500 uppercase">Peso Objetivo</p>
+                                        <p className="text-xl font-tech font-bold text-white tracking-tight">{targetWeight.toFixed(1)} kg</p>
+                                    </div>
+                                    <div className="border-t border-white/5 pt-3 text-right">
+                                        <p className="text-[14px] font-bold text-slate-500 uppercase">Peso Meta</p>
+                                        <p className="text-xl font-tech font-bold text-nutri-brand tracking-tight">{goalWeight.toFixed(1)} kg</p>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col gap-0.5 text-right">
-                                    <p className="text-[14px] uppercase font-bold text-slate-500 tracking-wider">Estado</p>
-                                    <p className="text-lg font-tech font-black tracking-tight"
-                                        style={{ color: info.color }}>{info.category}</p>
-                                </div>
-                                <div className="border-t border-white/5 pt-3">
-                                    <p className="text-[14px] font-bold text-slate-500 uppercase">Peso Inicial</p>
-                                    <p className="text-xl font-tech font-bold text-white tracking-tight">{initialWeight.toFixed(1)} kg</p>
-                                </div>
-                                <div className="border-t border-white/5 pt-3 text-center">
-                                    <p className="text-[14px] font-bold text-slate-500 uppercase">Peso Objetivo</p>
-                                    <p className="text-xl font-tech font-bold text-white tracking-tight">{targetWeight.toFixed(1)} kg</p>
-                                </div>
-                                <div className="border-t border-white/5 pt-3 text-right">
-                                    <p className="text-[14px] font-bold text-slate-500 uppercase">Peso Meta</p>
-                                    <p className="text-xl font-tech font-bold text-nutri-brand tracking-tight">{goalWeight.toFixed(1)} kg</p>
-                                </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* Right: Recommendations */}
