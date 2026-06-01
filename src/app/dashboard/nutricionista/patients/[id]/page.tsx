@@ -764,7 +764,7 @@ export default function PatientDetailPage() {
                 }
 
                 if (v.is_calculated) {
-                    const originalCalc = calculate(v, { gender: patient?.gender, age: patient?.age, inputs: latest._computedInputs });
+                    const originalCalc = calculate(v, { gender: patient?.gender, age: patient?.age, inputs: latest?._computedInputs || {} });
                     const resNum = Number(originalCalc.result);
                     val = !isNaN(resNum) ? (resNum % 1 !== 0 ? resNum.toFixed(2).replace(/\.?0+$/, '') : resNum.toString()) : (originalCalc.result?.toString() || "0");
                 } else {
