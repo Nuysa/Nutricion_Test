@@ -442,7 +442,8 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                 .accordion-content,
                                 [data-radix-accordion-content],
                                 [role="region"],
-                                [data-state="closed"] [role="region"] {
+                                [data-state="closed"] [role="region"],
+                                [data-state="closed"] [data-state="closed"] {
                                     display: block !important;
                                     height: auto !important;
                                     opacity: 1 !important;
@@ -452,7 +453,9 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                 }
                                 button svg.lucide-chevron-down,
                                 button svg.lucide-chevron-up,
-                                button[data-state] svg {
+                                button[data-state] svg,
+                                .lucide-chevron-down,
+                                svg.chevron-icon {
                                     display: none !important;
                                 }
                                 .card,
@@ -464,19 +467,27 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                             }
                         `}} />
 
-                        {/* Print Header showing the current selected day */}
-                        <div className="hidden print:block mb-6 text-center border-b border-white/10 pb-4">
-                            {patientName && (
-                                <h1 className="text-xl font-bold text-white uppercase tracking-wider mb-2">
-                                    Paciente: {patientName}
-                                </h1>
-                            )}
-                            <h2 className="text-2xl font-black text-[#FF7A00] uppercase tracking-[0.2em]">
-                                Plan Nutricional: {selectedDay.toUpperCase()}
-                            </h2>
-                            <p className="text-slate-400 text-sm font-semibold uppercase tracking-widest mt-1">
-                                Semana: {weekRange}
-                            </p>
+                        {/* Print Header mimicking Image 1 */}
+                        <div className="hidden print:flex items-center justify-between w-full border-b border-white/10 pb-6 mb-8 gap-4">
+                            <div className="bg-[#151F32] border border-white/5 px-6 py-4 rounded-[2rem] flex items-center gap-4 min-w-[280px]">
+                                <div className="h-10 w-10 rounded-xl bg-[#0B1120] flex items-center justify-center border border-white/5 text-orange-500">
+                                    <span className="text-lg">👤</span>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">PACIENTE ASIGNADO</p>
+                                    <div className="flex items-center gap-3">
+                                        <h1 className="text-xl font-bold text-white leading-none">
+                                            {patientName}
+                                        </h1>
+                                        <span className="text-[9px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                            FLEXIBLE
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-[#FF7A00] text-white px-8 py-4 rounded-[1.5rem] font-black uppercase text-sm tracking-widest shadow-xl shadow-orange-500/20 text-center">
+                                PLAN FLEXIBLE
+                            </div>
                         </div>
 
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
@@ -500,7 +511,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">CUMPLIMIENTO DE MACROS Y PORCIONES</p>
                                         {patientWeight && (
-                                            <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-lg w-fit">
+                                            <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-lg w-fit no-print">
                                                 <Scale className="h-3 w-3 text-orange-500" />
                                                 <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">PESO ACTUAL: {patientWeight}kg</span>
                                             </div>
@@ -510,10 +521,10 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                             </div>
 
                             {/* Week Navigation for Flexible Plan */}
-                            <div className="flex items-center gap-4 no-print">
+                            <div className="flex items-center gap-4">
                                 <button
                                     onClick={() => setWeekOffset(prev => Math.max(0, prev - 1))}
-                                    className="text-slate-500 hover:text-white transition-colors"
+                                    className="text-slate-500 hover:text-white transition-colors no-print"
                                 >
                                     <ChevronLeft className="h-5 w-5" />
                                 </button>
@@ -527,7 +538,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
 
                                 <button
                                     onClick={() => setWeekOffset(prev => prev + 1)}
-                                    className="text-slate-500 hover:text-white transition-colors"
+                                    className="text-slate-500 hover:text-white transition-colors no-print"
                                 >
                                     <ChevronRight className="h-5 w-5" />
                                 </button>
@@ -610,7 +621,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 sm:gap-10">
                             {/* Distribution / Plate View */}
                             <div className="xl:col-span-12 space-y-8 sm:space-y-12">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 print:grid-cols-1 gap-6 sm:gap-10 print:w-full print:max-w-3xl print:mx-auto">
                                     {flexiblePlan && (flexiblePlan.meals || flexiblePlan.mealsByDay) ? (
                                         <>
                                             {/* Column Left: Interactive Accordions (Detailed) */}
