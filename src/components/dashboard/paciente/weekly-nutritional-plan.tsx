@@ -660,9 +660,9 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                         </div>
 
                                                         {/* Right: Food title/badge */}
-                                                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-xl border border-orange-500/20 text-right shrink-0">
+                                                        <div className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-xl border border-orange-500/20 text-right max-w-[55%] break-words leading-relaxed">
                                                             {meal.title}
-                                                        </span>
+                                                        </div>
                                                     </div>
                                                     <div className="p-8 space-y-6 bg-[#0B1120]/30">
                                                         {meal.rows.map((row: any) => (
