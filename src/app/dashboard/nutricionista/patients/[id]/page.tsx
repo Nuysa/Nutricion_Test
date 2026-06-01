@@ -103,10 +103,10 @@ export default function PatientDetailPage() {
                 setCardSlots(slots);
             } else {
                 setCardSlots([
-                    { id: 'n1', slot_index: 0, variable_id: vars.find(v => v.code?.toUpperCase().includes('IMC'))?.id, is_active: true },
-                    { id: 'n2', slot_index: 1, variable_id: vars.find(v => v.code?.toUpperCase().includes('GRASA'))?.id, is_active: true },
-                    { id: 'n3', slot_index: 2, variable_id: vars.find(v => v.code?.toUpperCase().includes('MUSCULO_LEE'))?.id, is_active: true },
-                    { id: 'n4', slot_index: 3, variable_id: vars.find(v => v.code?.toUpperCase().includes('CINTURA'))?.id, is_active: true },
+                    { id: 'n1', slot_index: 0, variable_id: vars.find(v => v.code?.toUpperCase().includes('IMC'))?.id, diagnostico_variable_id: null, is_active: true },
+                    { id: 'n2', slot_index: 1, variable_id: vars.find(v => v.code?.toUpperCase().includes('GRASA'))?.id, diagnostico_variable_id: null, is_active: true },
+                    { id: 'n3', slot_index: 2, variable_id: vars.find(v => v.code?.toUpperCase().includes('MUSCULO_LEE'))?.id, diagnostico_variable_id: null, is_active: true },
+                    { id: 'n4', slot_index: 3, variable_id: vars.find(v => v.code?.toUpperCase().includes('CINTURA'))?.id, diagnostico_variable_id: null, is_active: true },
                 ]);
             }
 
@@ -653,54 +653,57 @@ export default function PatientDetailPage() {
         const h = latest?._computedInputs?.['TALLA'] || latest?._computedInputs?.['TALLA_CM'] || patient?.rawHeight || null;
         const w = latest?._computedInputs?.['PESO'] || latest?.weight || patient?.rawWeight || null;
 
-        const getDiag = (v: any) => {
-            if (!v || !latest?._computedInputs) return { value: 0, label: "—", color: "bg-white/10" };
+        const getDiag = (v: any, customDiagVar: any = null) => {
+            if (!v || !latest?._computedInputs) return { label: "—", color: "bg-white/10" };
             
             const code = (v.code || "").toUpperCase();
             const name = (v.name || "").toUpperCase();
             
-            // 1. Intentar obtener etiqueta precalculada en el motor de fórmulas
-            let label = "";
-            if (code.includes("GRASA") || name.includes("GRASA")) {
-                label = latest._computedInputs["DIAGNOSTICO_GRASA_LABEL"] || latest._computedInputs["DIAGNOSTICO_GRASA"] || "";
-            } else if (code.includes("MUSCULO") || name.includes("MUSCULO")) {
-                label = latest._computedInputs["DIAGNOSTICO_MUSCULO_LEE_LABEL"] || latest._computedInputs["DIAGNOSTICO_MUSCULO_LABEL"] || latest._computedInputs["DIAGNOSTICO_MUSCULO_LEE"] || latest._computedInputs["DIAGNOSTICO_MUSCULO"] || "";
-            } else if (code.includes("CINTURA") || name.includes("CINTURA")) {
-                label = latest._computedInputs["DIAGNOSTICO_CINTURA_LABEL"] || latest._computedInputs["DIAGNOSTICO_CINTURA"] || "";
-            } else if (code.includes("IMC") || name.includes("IMC")) {
-                label = latest._computedInputs["DIAGNOSTICO_IMC_LABEL"] || latest._computedInputs["DIAGNOSTICO_IMC"] || "";
-            }
+            // 1. Si se configuró una variable de diagnóstico específica en el editor, la priorizamos por completo
+            let diagVar = customDiagVar;
             
-            if (label && typeof label === 'string' && !label.includes('-') && label !== "0") {
-                // Si encontramos una etiqueta precalculada válida, la usamos
-                return {
-                    value: latest._computedInputs[code] || 0,
-                    label: label,
-                    color: "bg-orange-500/20 text-orange-500" // Valor por defecto o dinámico
-                };
-            }
-            
-            // 2. Si no hay precalculado, buscamos la variable con rangos correspondiente
-            let diagVar = v;
-            if (!((v as any).has_ranges || (v as any).hasRanges)) {
+            if (!diagVar) {
+                // 2. Intentar obtener etiqueta precalculada en el motor de fórmulas
+                let label = "";
                 if (code.includes("GRASA") || name.includes("GRASA")) {
-                    const related = clinicalVariables.find(cv => 
-                        (cv.name?.toUpperCase().includes('SUMA DE PLIEGUES') || cv.code?.toUpperCase().includes('SUMA_PLIEGUES')) && 
-                        (((cv as any).has_ranges) || ((cv as any).hasRanges))
-                    );
-                    if (related) diagVar = related;
+                    label = latest._computedInputs["DIAGNOSTICO_GRASA_LABEL"] || latest._computedInputs["DIAGNOSTICO_GRASA"] || "";
                 } else if (code.includes("MUSCULO") || name.includes("MUSCULO")) {
-                    const related = clinicalVariables.find(cv => 
-                        cv.name?.toUpperCase().includes('MUSCULO LEE') && 
-                        (((cv as any).has_ranges) || ((cv as any).hasRanges))
-                    );
-                    if (related) diagVar = related;
+                    label = latest._computedInputs["DIAGNOSTICO_MUSCULO_LEE_LABEL"] || latest._computedInputs["DIAGNOSTICO_MUSCULO_LABEL"] || latest._computedInputs["DIAGNOSTICO_MUSCULO_LEE"] || latest._computedInputs["DIAGNOSTICO_MUSCULO"] || "";
                 } else if (code.includes("CINTURA") || name.includes("CINTURA")) {
-                    const related = clinicalVariables.find(cv => 
-                        cv.name?.toUpperCase().includes('CINTURA') && 
-                        (((cv as any).has_ranges) || ((cv as any).hasRanges))
-                    );
-                    if (related) diagVar = related;
+                    label = latest._computedInputs["DIAGNOSTICO_CINTURA_LABEL"] || latest._computedInputs["DIAGNOSTICO_CINTURA"] || "";
+                } else if (code.includes("IMC") || name.includes("IMC")) {
+                    label = latest._computedInputs["DIAGNOSTICO_IMC_LABEL"] || latest._computedInputs["DIAGNOSTICO_IMC"] || "";
+                }
+                
+                if (label && typeof label === 'string' && !label.includes('-') && label !== "0") {
+                    return {
+                        label: label,
+                        color: "bg-orange-500/20 text-orange-500"
+                    };
+                }
+                
+                // 3. Si no hay precalculado, buscamos la variable con rangos correspondiente
+                diagVar = v;
+                if (!((v as any).has_ranges || (v as any).hasRanges)) {
+                    if (code.includes("GRASA") || name.includes("GRASA")) {
+                        const related = clinicalVariables.find(cv => 
+                            (cv.name?.toUpperCase().includes('SUMA DE PLIEGUES') || cv.code?.toUpperCase().includes('SUMA_PLIEGUES')) && 
+                            (((cv as any).has_ranges) || ((cv as any).hasRanges))
+                        );
+                        if (related) diagVar = related;
+                    } else if (code.includes("MUSCULO") || name.includes("MUSCULO")) {
+                        const related = clinicalVariables.find(cv => 
+                            cv.name?.toUpperCase().includes('MUSCULO LEE') && 
+                            (((cv as any).has_ranges) || ((cv as any).hasRanges))
+                        );
+                        if (related) diagVar = related;
+                    } else if (code.includes("CINTURA") || name.includes("CINTURA")) {
+                        const related = clinicalVariables.find(cv => 
+                            cv.name?.toUpperCase().includes('CINTURA') && 
+                            (((cv as any).has_ranges) || ((cv as any).hasRanges))
+                        );
+                        if (related) diagVar = related;
+                    }
                 }
             }
             
@@ -712,7 +715,6 @@ export default function PatientDetailPage() {
             }
             
             return {
-                value: calc.result,
                 label: finalLabel,
                 color: calc.range?.color ? `bg-${calc.range.color}-500/20 text-${calc.range.color}-500` : "bg-white/10 text-slate-400"
             };
@@ -746,7 +748,9 @@ export default function PatientDetailPage() {
                     diagColor = "bg-white/20 text-white";
                 }
             } else {
-                const diag = getDiag(v);
+                const diagVarId = slot.diagnostico_variable_id;
+                const diagV = diagVarId ? clinicalVariables.find(cv => cv.id === diagVarId) : null;
+                const diag = getDiag(v, diagV);
                 
                 let rawVal = 0;
                 if (latest?._computedInputs && latest._computedInputs[code] !== undefined && latest._computedInputs[code] !== null && latest._computedInputs[code] !== "") {

@@ -28,10 +28,10 @@ export function ConsultationFormEditor() {
     const [isSavingCards, setIsSavingCards] = useState(false);
 
     const DEFAULT_SLOTS = [
-        { id: 'n1', slot_index: 0, variable_id: '00000000-0000-0000-0000-00000000000b', icon: 'Activity', color: 'text-emerald-500', is_active: true }, // IMC
-        { id: 'n2', slot_index: 1, variable_id: '00000000-0000-0000-0000-00000000000e', icon: 'Droplet', color: 'text-orange-500', is_active: true }, // Grasa
-        { id: 'n3', slot_index: 2, variable_id: '00000000-0000-0000-0000-00000000000f', icon: 'BicepsFlexed', color: 'text-emerald-500', is_active: true }, // Músculo
-        { id: 'n4', slot_index: 3, variable_id: '00000000-0000-0000-0000-000000000010', icon: 'Ruler', color: 'text-indigo-500', is_active: true }, // Cintura
+        { id: 'n1', slot_index: 0, variable_id: '00000000-0000-0000-0000-00000000000b', diagnostico_variable_id: null, icon: 'Activity', color: 'text-emerald-500', is_active: true }, // IMC
+        { id: 'n2', slot_index: 1, variable_id: '00000000-0000-0000-0000-00000000000e', diagnostico_variable_id: null, icon: 'Droplet', color: 'text-orange-500', is_active: true }, // Grasa
+        { id: 'n3', slot_index: 2, variable_id: '00000000-0000-0000-0000-00000000000f', diagnostico_variable_id: null, icon: 'BicepsFlexed', color: 'text-emerald-500', is_active: true }, // Músculo
+        { id: 'n4', slot_index: 3, variable_id: '00000000-0000-0000-0000-000000000010', diagnostico_variable_id: null, icon: 'Ruler', color: 'text-indigo-500', is_active: true }, // Cintura
     ];
 
     // Dummy state para el Preview
@@ -57,6 +57,7 @@ export function ConsultationFormEditor() {
                             id: s.id,
                             slot_index: s.slot_index,
                             variable_id: s.variable_id,
+                            diagnostico_variable_id: s.diagnostico_variable_id,
                             icon: s.icon,
                             color: s.color,
                             is_active: s.is_active
@@ -411,21 +412,39 @@ export function ConsultationFormEditor() {
                                                         </CardContent>
 
                                                         {/* Dropdown overlay */}
-                                                        <div className="absolute inset-0 bg-black/60 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all flex flex-col justify-center p-6 z-20">
-                                                            <p className="text-[10px] font-black text-nutrition-400 uppercase tracking-widest mb-2 text-center">Cambiar Variable</p>
-                                                            <select
-                                                                value={slot.variable_id || ""}
-                                                                onChange={e => {
-                                                                    const val = e.target.value || null;
-                                                                    setCardSlots(prev => prev.map(s => s.id === slot.id ? { ...s, variable_id: val } : s));
-                                                                }}
-                                                                className="w-full h-11 rounded-xl border border-white/10 px-3 text-xs font-black uppercase text-white bg-slate-900 shadow-2xl outline-none cursor-pointer focus:ring-4 focus:ring-nutrition-500/20 transition-all"
-                                                            >
-                                                                <option value="" className="bg-slate-900">(Seleccione Variable)</option>
-                                                                {variables.map(v => (
-                                                                    <option key={v.id} value={v.id} className="bg-slate-900">{v.name}</option>
-                                                                ))}
-                                                            </select>
+                                                        <div className="absolute inset-0 bg-black/85 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all flex flex-col justify-center p-4 z-20 gap-2">
+                                                            <div>
+                                                                <p className="text-[8px] font-black text-nutrition-400 uppercase tracking-widest mb-1 text-center">Valor Numérico</p>
+                                                                <select
+                                                                    value={slot.variable_id || ""}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value || null;
+                                                                        setCardSlots(prev => prev.map(s => s.id === slot.id ? { ...s, variable_id: val } : s));
+                                                                    }}
+                                                                    className="w-full h-8 rounded-lg border border-white/10 px-2 text-[10px] font-black uppercase text-white bg-slate-900 outline-none cursor-pointer focus:ring-2 focus:ring-nutrition-500/20 transition-all"
+                                                                >
+                                                                    <option value="" className="bg-slate-900">(Variable Valor)</option>
+                                                                    {variables.map(v => (
+                                                                        <option key={v.id} value={v.id} className="bg-slate-900">{v.name}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[8px] font-black text-orange-400 uppercase tracking-widest mb-1 text-center">Etiqueta/Diagnóstico</p>
+                                                                <select
+                                                                    value={slot.diagnostico_variable_id || ""}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value || null;
+                                                                        setCardSlots(prev => prev.map(s => s.id === slot.id ? { ...s, diagnostico_variable_id: val } : s));
+                                                                    }}
+                                                                    className="w-full h-8 rounded-lg border border-white/10 px-2 text-[10px] font-black uppercase text-white bg-slate-900 outline-none cursor-pointer focus:ring-2 focus:ring-nutrition-500/20 transition-all"
+                                                                >
+                                                                    <option value="" className="bg-slate-900">(Variable Etiqueta/Diag)</option>
+                                                                    {variables.map(v => (
+                                                                        <option key={v.id} value={v.id} className="bg-slate-900">{v.name}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
                                                         </div>
                                                     </Card>
                                                 );

@@ -80,6 +80,7 @@ export const VariablesService = {
             // Validar que sea un UUID (los UUIDs generados por Supabase contienen guiones)
             // Permitimos también nuestros UUIDs estáticos para variables de sistema
             variable_id: (s.variable_id && s.variable_id.includes('-') && s.variable_id.length >= 36) ? s.variable_id : null,
+            diagnostico_variable_id: (s.diagnostico_variable_id && s.diagnostico_variable_id.includes('-') && s.diagnostico_variable_id.length >= 36) ? s.diagnostico_variable_id : null,
             icon: s.icon,
             color: s.color,
             is_active: s.is_active ?? true
