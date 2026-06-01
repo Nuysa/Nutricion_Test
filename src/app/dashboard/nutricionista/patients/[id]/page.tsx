@@ -655,10 +655,65 @@ export default function PatientDetailPage() {
 
         const getDiag = (v: any) => {
             if (!v || !latest?._computedInputs) return { value: 0, label: "—", color: "bg-white/10" };
-            const calc = calculate(v, { gender: patient?.gender, age: patient?.age, inputs: latest._computedInputs });
+            
+            const code = (v.code || "").toUpperCase();
+            const name = (v.name || "").toUpperCase();
+            
+            // 1. Intentar obtener etiqueta precalculada en el motor de fórmulas
+            let label = "";
+            if (code.includes("GRASA") || name.includes("GRASA")) {
+                label = latest._computedInputs["DIAGNOSTICO_GRASA_LABEL"] || latest._computedInputs["DIAGNOSTICO_GRASA"] || "";
+            } else if (code.includes("MUSCULO") || name.includes("MUSCULO")) {
+                label = latest._computedInputs["DIAGNOSTICO_MUSCULO_LEE_LABEL"] || latest._computedInputs["DIAGNOSTICO_MUSCULO_LABEL"] || latest._computedInputs["DIAGNOSTICO_MUSCULO_LEE"] || latest._computedInputs["DIAGNOSTICO_MUSCULO"] || "";
+            } else if (code.includes("CINTURA") || name.includes("CINTURA")) {
+                label = latest._computedInputs["DIAGNOSTICO_CINTURA_LABEL"] || latest._computedInputs["DIAGNOSTICO_CINTURA"] || "";
+            } else if (code.includes("IMC") || name.includes("IMC")) {
+                label = latest._computedInputs["DIAGNOSTICO_IMC_LABEL"] || latest._computedInputs["DIAGNOSTICO_IMC"] || "";
+            }
+            
+            if (label && typeof label === 'string' && !label.includes('-') && label !== "0") {
+                // Si encontramos una etiqueta precalculada válida, la usamos
+                return {
+                    value: latest._computedInputs[code] || 0,
+                    label: label,
+                    color: "bg-orange-500/20 text-orange-500" // Valor por defecto o dinámico
+                };
+            }
+            
+            // 2. Si no hay precalculado, buscamos la variable con rangos correspondiente
+            let diagVar = v;
+            if (!((v as any).has_ranges || (v as any).hasRanges)) {
+                if (code.includes("GRASA") || name.includes("GRASA")) {
+                    const related = clinicalVariables.find(cv => 
+                        (cv.name?.toUpperCase().includes('SUMA DE PLIEGUES') || cv.code?.toUpperCase().includes('SUMA_PLIEGUES')) && 
+                        (((cv as any).has_ranges) || ((cv as any).hasRanges))
+                    );
+                    if (related) diagVar = related;
+                } else if (code.includes("MUSCULO") || name.includes("MUSCULO")) {
+                    const related = clinicalVariables.find(cv => 
+                        cv.name?.toUpperCase().includes('MUSCULO LEE') && 
+                        (((cv as any).has_ranges) || ((cv as any).hasRanges))
+                    );
+                    if (related) diagVar = related;
+                } else if (code.includes("CINTURA") || name.includes("CINTURA")) {
+                    const related = clinicalVariables.find(cv => 
+                        cv.name?.toUpperCase().includes('CINTURA') && 
+                        (((cv as any).has_ranges) || ((cv as any).hasRanges))
+                    );
+                    if (related) diagVar = related;
+                }
+            }
+            
+            const calc = calculate(diagVar, { gender: patient?.gender, age: patient?.age, inputs: latest._computedInputs });
+            
+            let finalLabel = calc.range?.label || "Normal";
+            if (finalLabel && typeof finalLabel === 'string' && finalLabel.includes('-')) {
+                finalLabel = "Normal";
+            }
+            
             return {
                 value: calc.result,
-                label: calc.range?.label || "Normal",
+                label: finalLabel,
                 color: calc.range?.color ? `bg-${calc.range.color}-500/20 text-${calc.range.color}-500` : "bg-white/10 text-slate-400"
             };
         };
