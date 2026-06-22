@@ -1555,7 +1555,7 @@ export function FlexiblePlanEditor({
                                         Progreso en mis Compromisos
                                     </h3>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="flex flex-col gap-8">
                                         {/* Table 1: Cumplir la dieta 90% */}
                                         {renderCommitmentTable("Cumplir la dieta 90%", "diet", "%")}
 

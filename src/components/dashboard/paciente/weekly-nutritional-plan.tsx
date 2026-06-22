@@ -855,7 +855,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                             <div className="text-center py-1">
                                                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">PROGRESO EN MIS COMPROMISOS</span>
                                             </div>
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="flex flex-col gap-6">
                                                 {renderPrintCommitmentTable("Cumplir la dieta 90%", "diet", "%")}
                                                 {renderPrintCommitmentTable("Entreno 3 v/s", "training", "v/s")}
                                                 {renderPrintCommitmentTable("Cardio 2-3 v/s", "cardio", "v/s")}
