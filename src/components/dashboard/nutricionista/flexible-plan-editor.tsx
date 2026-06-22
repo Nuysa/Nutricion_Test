@@ -1362,8 +1362,8 @@ export function FlexiblePlanEditor({
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-[#0B1120] text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                                            <th className="px-6 py-4 border border-white/5 w-16 text-center">N°</th>
-                                            <th className="px-6 py-4 border border-white/5 min-w-[300px]">Pregunta</th>
+                                            <th className="px-6 py-4 border border-white/5 w-16 text-center sticky left-0 bg-[#0B1120] z-20">N°</th>
+                                            <th className="px-6 py-4 border border-white/5 min-w-[300px] sticky left-16 bg-[#0B1120] z-20">Pregunta</th>
                                             {appointments.map((appt, idx) => (
                                                 <th key={idx} className="px-6 py-4 border border-white/5 text-center min-w-[240px]">
                                                     Seguimiento {idx + 1}
@@ -1379,8 +1379,8 @@ export function FlexiblePlanEditor({
                                     <tbody className="divide-y divide-white/5 text-xs font-bold">
                                         {/* Fila 2: Fechas */}
                                         <tr className="hover:bg-white/[0.01]">
-                                            <td className="px-6 py-4 border border-white/5 text-slate-500 text-center font-tech">-</td>
-                                            <td className="px-6 py-4 border border-white/5 text-slate-300 font-bold uppercase tracking-widest text-[10px]">Fecha del Seguimiento</td>
+                                            <td className="px-6 py-4 border border-white/5 text-slate-500 text-center font-tech sticky left-0 bg-[#151F32] z-10">-</td>
+                                            <td className="px-6 py-4 border border-white/5 text-slate-300 font-bold uppercase tracking-widest text-[10px] sticky left-16 bg-[#151F32] z-10">Fecha del Seguimiento</td>
                                             {appointments.map((appt, idx) => (
                                                 <td key={idx} className="px-6 py-3 border border-white/5 text-center">
                                                     <input
@@ -1404,8 +1404,8 @@ export function FlexiblePlanEditor({
 
                                         {/* Fila 3: ¿Cómo te has sentido esta semana? */}
                                         <tr className="hover:bg-white/[0.01]">
-                                            <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech">1</td>
-                                            <td className="px-6 py-4 border border-white/5 text-white">¿Cómo te has sentido esta semana?</td>
+                                            <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech sticky left-0 bg-[#151F32] z-10">1</td>
+                                            <td className="px-6 py-4 border border-white/5 text-white sticky left-16 bg-[#151F32] z-10">¿Cómo te has sentido esta semana?</td>
                                             {appointments.map((appt, idx) => (
                                                 <td key={idx} className="px-6 py-3 border border-white/5">
                                                     <textarea
@@ -1430,8 +1430,8 @@ export function FlexiblePlanEditor({
 
                                         {/* Fila 4: ¿Has presentado hambre?, ¿En qué momento del día? */}
                                         <tr className="hover:bg-white/[0.01]">
-                                            <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech">2</td>
-                                            <td className="px-6 py-4 border border-white/5 text-white">¿Has presentado hambre?, ¿En qué momento del día?</td>
+                                            <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech sticky left-0 bg-[#151F32] z-10">2</td>
+                                            <td className="px-6 py-4 border border-white/5 text-white sticky left-16 bg-[#151F32] z-10">¿Has presentado hambre?, ¿En qué momento del día?</td>
                                             {appointments.map((appt, idx) => (
                                                 <td key={idx} className="px-6 py-3 border border-white/5">
                                                     <textarea
@@ -1456,8 +1456,8 @@ export function FlexiblePlanEditor({
 
                                         {/* Fila 5: ¿Presentas alguna molestia gastrointestinal (hinchazón abdominal, gases, regurgitación, etc.)? ¿Cómo están tus deposiciones? */}
                                         <tr className="hover:bg-white/[0.01]">
-                                            <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech">3</td>
-                                            <td className="px-6 py-4 border border-white/5 text-white">¿Presentas alguna molestia gastrointestinal (hinchazón abdominal, gases, regurgitación, etc.)? ¿Cómo están tus deposiciones?</td>
+                                            <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech sticky left-0 bg-[#151F32] z-10">3</td>
+                                            <td className="px-6 py-4 border border-white/5 text-white sticky left-16 bg-[#151F32] z-10">¿Presentas alguna molestia gastrointestinal (hinchazón abdominal, gases, regurgitación, etc.)? ¿Cómo están tus deposiciones?</td>
                                             {appointments.map((appt, idx) => (
                                                 <td key={idx} className="px-6 py-3 border border-white/5">
                                                     <textarea
@@ -1483,8 +1483,8 @@ export function FlexiblePlanEditor({
                                         {/* Fila 6: ¿Ciclo menstrual? (Si paciente es mujer) */}
                                         {genero === "F" && (
                                             <tr className="hover:bg-white/[0.01]">
-                                                <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech">4</td>
-                                                <td className="px-6 py-4 border border-white/5 text-white">¿Ciclo menstrual?</td>
+                                                <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech sticky left-0 bg-[#151F32] z-10">4</td>
+                                                <td className="px-6 py-4 border border-white/5 text-white sticky left-16 bg-[#151F32] z-10">¿Ciclo menstrual?</td>
                                                 {appointments.map((appt, idx) => (
                                                     <td key={idx} className="px-6 py-3 border border-white/5">
                                                         <textarea
@@ -1510,8 +1510,8 @@ export function FlexiblePlanEditor({
 
                                         {/* Fila 7: ¿Cuáles son las barreras que identificas en tu proceso? */}
                                         <tr className="hover:bg-white/[0.01]">
-                                            <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech">{genero === "F" ? "5" : "4"}</td>
-                                            <td className="px-6 py-4 border border-white/5 text-white">¿Cuáles son las barreras que identificas en tu proceso?</td>
+                                            <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech sticky left-0 bg-[#151F32] z-10">{genero === "F" ? "5" : "4"}</td>
+                                            <td className="px-6 py-4 border border-white/5 text-white sticky left-16 bg-[#151F32] z-10">¿Cuáles son las barreras que identificas en tu proceso?</td>
                                             {appointments.map((appt, idx) => (
                                                 <td key={idx} className="px-6 py-3 border border-white/5">
                                                     <textarea
