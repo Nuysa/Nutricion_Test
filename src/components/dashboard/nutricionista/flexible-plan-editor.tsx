@@ -1305,12 +1305,22 @@ export function FlexiblePlanEditor({
                 ) : activeTab === "seguimiento" ? (
                     <div className="pb-32 animate-in fade-in duration-700 max-w-6xl mx-auto w-full">
                         <Card className="bg-[#151F32] border-white/5 rounded-3xl p-6 shadow-2xl overflow-hidden">
-                            <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
-                                <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
-                                    <ClipboardList className="h-4 w-4" />
-                                </div>
-                                Seguimiento de Consultas
-                            </h3>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                                <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] flex items-center gap-3">
+                                    <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                                        <ClipboardList className="h-4 w-4" />
+                                    </div>
+                                    Seguimiento de Consultas
+                                </h3>
+                                <Button
+                                    onClick={savePlan}
+                                    disabled={isSaving}
+                                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl px-6 h-10 shadow-lg shadow-emerald-600/20"
+                                >
+                                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                                    Guardar Seguimiento
+                                </Button>
+                            </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
@@ -1318,7 +1328,7 @@ export function FlexiblePlanEditor({
                                             <th className="px-6 py-4 border border-white/5 w-16 text-center">N°</th>
                                             <th className="px-6 py-4 border border-white/5 min-w-[300px]">Pregunta</th>
                                             {appointments.map((appt, idx) => (
-                                                <th key={idx} className="px-6 py-4 border border-white/5 text-center min-w-[200px]">
+                                                <th key={idx} className="px-6 py-4 border border-white/5 text-center min-w-[240px]">
                                                     Seguimiento {idx + 1}
                                                 </th>
                                             ))}
@@ -1361,10 +1371,10 @@ export function FlexiblePlanEditor({
                                             <td className="px-6 py-4 border border-white/5 text-white">¿Cómo te has sentido esta semana?</td>
                                             {appointments.map((appt, idx) => (
                                                 <td key={idx} className="px-6 py-3 border border-white/5">
-                                                    <input
-                                                        type="text"
+                                                    <textarea
                                                         value={trackingData[idx]?.feeling || ""}
                                                         placeholder="Ingrese respuesta..."
+                                                        rows={3}
                                                         onChange={(e) => setTrackingData(prev => ({
                                                             ...prev,
                                                             [idx]: {
@@ -1372,7 +1382,7 @@ export function FlexiblePlanEditor({
                                                                 feeling: e.target.value
                                                             }
                                                         }))}
-                                                        className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full"
+                                                        className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2.5 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full resize-none min-h-[80px] scrollbar-thin scrollbar-thumb-white/10"
                                                     />
                                                 </td>
                                             ))}
@@ -1387,10 +1397,10 @@ export function FlexiblePlanEditor({
                                             <td className="px-6 py-4 border border-white/5 text-white">¿Has presentado hambre?, ¿En qué momento del día?</td>
                                             {appointments.map((appt, idx) => (
                                                 <td key={idx} className="px-6 py-3 border border-white/5">
-                                                    <input
-                                                        type="text"
+                                                    <textarea
                                                         value={trackingData[idx]?.hunger || ""}
                                                         placeholder="Ingrese respuesta..."
+                                                        rows={3}
                                                         onChange={(e) => setTrackingData(prev => ({
                                                             ...prev,
                                                             [idx]: {
@@ -1398,7 +1408,7 @@ export function FlexiblePlanEditor({
                                                                 hunger: e.target.value
                                                             }
                                                         }))}
-                                                        className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full"
+                                                        className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2.5 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full resize-none min-h-[80px] scrollbar-thin scrollbar-thumb-white/10"
                                                     />
                                                 </td>
                                             ))}
@@ -1413,10 +1423,10 @@ export function FlexiblePlanEditor({
                                             <td className="px-6 py-4 border border-white/5 text-white">¿Presentas alguna molestia gastrointestinal (hinchazón abdominal, gases, regurgitación, etc.)? ¿Cómo están tus deposiciones?</td>
                                             {appointments.map((appt, idx) => (
                                                 <td key={idx} className="px-6 py-3 border border-white/5">
-                                                    <input
-                                                        type="text"
+                                                    <textarea
                                                         value={trackingData[idx]?.gastro || ""}
                                                         placeholder="Ingrese respuesta..."
+                                                        rows={3}
                                                         onChange={(e) => setTrackingData(prev => ({
                                                             ...prev,
                                                             [idx]: {
@@ -1424,7 +1434,7 @@ export function FlexiblePlanEditor({
                                                                 gastro: e.target.value
                                                             }
                                                         }))}
-                                                        className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full"
+                                                        className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2.5 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full resize-none min-h-[80px] scrollbar-thin scrollbar-thumb-white/10"
                                                     />
                                                 </td>
                                             ))}
@@ -1440,10 +1450,10 @@ export function FlexiblePlanEditor({
                                                 <td className="px-6 py-4 border border-white/5 text-white">¿Ciclo menstrual?</td>
                                                 {appointments.map((appt, idx) => (
                                                     <td key={idx} className="px-6 py-3 border border-white/5">
-                                                        <input
-                                                            type="text"
+                                                        <textarea
                                                             value={trackingData[idx]?.menstrual || ""}
                                                             placeholder="Ingrese respuesta..."
+                                                            rows={3}
                                                             onChange={(e) => setTrackingData(prev => ({
                                                                 ...prev,
                                                                 [idx]: {
@@ -1451,7 +1461,7 @@ export function FlexiblePlanEditor({
                                                                     menstrual: e.target.value
                                                                 }
                                                             }))}
-                                                            className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full"
+                                                            className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2.5 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full resize-none min-h-[80px] scrollbar-thin scrollbar-thumb-white/10"
                                                         />
                                                     </td>
                                                 ))}
@@ -1467,10 +1477,10 @@ export function FlexiblePlanEditor({
                                             <td className="px-6 py-4 border border-white/5 text-white">¿Cuáles son las barreras que identificas en tu proceso?</td>
                                             {appointments.map((appt, idx) => (
                                                 <td key={idx} className="px-6 py-3 border border-white/5">
-                                                    <input
-                                                        type="text"
+                                                    <textarea
                                                         value={trackingData[idx]?.barriers || ""}
                                                         placeholder="Ingrese respuesta..."
+                                                        rows={3}
                                                         onChange={(e) => setTrackingData(prev => ({
                                                             ...prev,
                                                             [idx]: {
@@ -1478,7 +1488,7 @@ export function FlexiblePlanEditor({
                                                                 barriers: e.target.value
                                                             }
                                                         }))}
-                                                        className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full"
+                                                        className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2.5 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full resize-none min-h-[80px] scrollbar-thin scrollbar-thumb-white/10"
                                                     />
                                                 </td>
                                             ))}
