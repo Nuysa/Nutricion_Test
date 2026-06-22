@@ -147,14 +147,7 @@ export function FlexiblePlanEditor({
 
     const [activeTab, setActiveTab] = useState<"calculos" | "resumen" | "seguimiento" | "vista-paciente">("calculos");
     const [appointments, setAppointments] = useState<any[]>([]);
-    const [trackingData, setTrackingData] = useState<Record<number, {
-        date: string;
-        feeling: string;
-        hunger: string;
-        gastro: string;
-        menstrual: string;
-        barriers: string;
-    }>>({});
+    const [trackingData, setTrackingData] = useState<Record<number, any>>({});
     const [weekOffset, setWeekOffset] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -660,6 +653,60 @@ export function FlexiblePlanEditor({
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const renderCommitmentTable = (title: string, field: string, unit: string) => {
+        return (
+            <div className="bg-[#0B1120]/40 border border-white/5 rounded-2xl overflow-hidden shadow-lg">
+                <div className="bg-emerald-600 px-4 py-2 text-center">
+                    <span className="text-[11px] font-black text-white uppercase tracking-wider block">
+                        {title}
+                    </span>
+                </div>
+                <div className="overflow-x-auto text-slate-100">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-[#0B1120] text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-white/5">
+                                <th className="px-4 py-2 text-center border-r border-white/5 w-16">Día</th>
+                                {appointments.map((_, idx) => (
+                                    <th key={idx} className="px-4 py-2 text-center border-r border-white/5 last:border-r-0">
+                                        {idx + 1}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td className="px-4 py-2 text-[10px] font-black text-slate-300 uppercase tracking-wider border-r border-white/5">
+                                    Cumplió
+                                </td>
+                                {appointments.map((_, idx) => (
+                                    <td key={idx} className="px-3 py-2 border-r border-white/5 last:border-r-0 text-center">
+                                        <div className="flex items-center justify-center gap-1">
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                placeholder="-"
+                                                value={trackingData[idx]?.[field] ?? ""}
+                                                onChange={(e) => setTrackingData(prev => ({
+                                                    ...prev,
+                                                    [idx]: {
+                                                        ...(prev[idx] || { date: "", feeling: "", hunger: "", gastro: "", menstrual: "", barriers: "" }),
+                                                        [field]: e.target.value
+                                                    }
+                                                }))}
+                                                className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-lg px-2 py-1 text-xs font-bold font-tech text-center w-16 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            />
+                                            <span className="text-[10px] text-slate-500 font-bold uppercase">{unit}</span>
+                                        </div>
+                                    </td>
+                                ))}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
     };
 
     useEffect(() => {
@@ -1499,6 +1546,36 @@ export function FlexiblePlanEditor({
                                     </tbody>
                                 </table>
                             </div>
+
+                            {/* Progreso en mis Compromisos */}
+                            {appointments.length > 0 && (
+                                <div className="mt-12 space-y-8">
+                                    <h3 className="text-sm font-black text-white uppercase tracking-[0.25em] flex items-center gap-3">
+                                        <div className="h-1.5 w-10 bg-emerald-500 rounded-full" />
+                                        Progreso en mis Compromisos
+                                    </h3>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        {/* Table 1: Cumplir la dieta 90% */}
+                                        {renderCommitmentTable("Cumplir la dieta 90%", "diet", "%")}
+
+                                        {/* Table 2: Entreno 3 v/s */}
+                                        {renderCommitmentTable("Entreno 3 v/s", "training", "v/s")}
+
+                                        {/* Table 3: Cardio 2-3 v/s */}
+                                        {renderCommitmentTable("Cardio 2-3 v/s", "cardio", "v/s")}
+
+                                        {/* Table 4: Caminar: 6000 Pasos */}
+                                        {renderCommitmentTable("Caminar: 6000 Pasos", "steps", "k")}
+
+                                        {/* Table 5: Dormir: 7-8 horas */}
+                                        {renderCommitmentTable("Dormir: 7-8 horas", "sleep", "hrs")}
+
+                                        {/* Table 6: Hidratación: 6 a 8 vasos - 1.5-2 litros */}
+                                        {renderCommitmentTable("Hidratación: 6 a 8 vasos - 1.5-2 ltrs", "hydration", "ltrs")}
+                                    </div>
+                                </div>
+                            )}
                         </Card>
                     </div>
                 ) : (

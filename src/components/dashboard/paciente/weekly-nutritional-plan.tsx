@@ -392,6 +392,45 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
         return `${monday.toLocaleDateString("es-ES", { day: "2-digit", month: "short" })} - ${sunday.toLocaleDateString("es-ES", { day: "2-digit", month: "short" })} ${sunday.getFullYear()}`;
     }, [weekOffset]);
 
+    const renderPrintCommitmentTable = (title: string, field: string, unit: string) => {
+        return (
+            <div className="bg-[#151F32] border border-white/5 rounded-2xl overflow-hidden shadow-xl break-inside-avoid page-break-inside-avoid">
+                <div className="bg-emerald-600 px-4 py-2 text-center">
+                    <span className="text-[10px] font-black text-white uppercase tracking-wider block">
+                        {title}
+                    </span>
+                </div>
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="bg-[#0B1120] text-[8px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5">
+                            <th className="px-4 py-2 text-center border-r border-white/5 w-16">Día</th>
+                            {appointments.map((_, idx) => (
+                                <th key={idx} className="px-4 py-2 text-center border-r border-white/5 last:border-r-0">
+                                    {idx + 1}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr className="text-[10px] font-black text-slate-300">
+                            <td className="px-4 py-2 uppercase tracking-wider border-r border-white/5">
+                                Cumplió
+                            </td>
+                            {appointments.map((_, idx) => {
+                                const val = trackingData[idx]?.[field];
+                                return (
+                                    <td key={idx} className="px-3 py-2 border-r border-white/5 last:border-r-0 text-center text-white font-tech">
+                                        {val !== undefined && val !== "" ? `${val} ${unit}` : "-"}
+                                    </td>
+                                );
+                            })}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center p-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
@@ -810,6 +849,21 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                                 </tr>
                                             </tbody>
                                         </table>
+
+                                        {/* Progreso en mis Compromisos header and grid */}
+                                        <div className="space-y-4 pt-6 border-t border-white/5 break-before-page print:break-before-page" style={{ pageBreakBefore: "always" }}>
+                                            <div className="text-center py-1">
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">PROGRESO EN MIS COMPROMISOS</span>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {renderPrintCommitmentTable("Cumplir la dieta 90%", "diet", "%")}
+                                                {renderPrintCommitmentTable("Entreno 3 v/s", "training", "v/s")}
+                                                {renderPrintCommitmentTable("Cardio 2-3 v/s", "cardio", "v/s")}
+                                                {renderPrintCommitmentTable("Caminar: 6000 Pasos", "steps", "k")}
+                                                {renderPrintCommitmentTable("Dormir: 7-8 horas", "sleep", "hrs")}
+                                                {renderPrintCommitmentTable("Hidratación: 6 a 8 vasos - 1.5-2 litros", "hydration", "ltrs")}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}
