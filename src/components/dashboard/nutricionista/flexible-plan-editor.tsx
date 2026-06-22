@@ -1352,22 +1352,12 @@ export function FlexiblePlanEditor({
                 ) : activeTab === "seguimiento" ? (
                     <div className="pb-32 animate-in fade-in duration-700 max-w-6xl mx-auto w-full">
                         <Card className="bg-[#151F32] border-white/5 rounded-3xl p-6 shadow-2xl overflow-hidden">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                                <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] flex items-center gap-3">
-                                    <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
-                                        <ClipboardList className="h-4 w-4" />
-                                    </div>
-                                    Seguimiento de Consultas
-                                </h3>
-                                <Button
-                                    onClick={savePlan}
-                                    disabled={isSaving}
-                                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl px-6 h-10 shadow-lg shadow-emerald-600/20"
-                                >
-                                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                                    Guardar Seguimiento
-                                </Button>
-                            </div>
+                            <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                                    <ClipboardList className="h-4 w-4" />
+                                </div>
+                                Seguimiento de Consultas
+                            </h3>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
