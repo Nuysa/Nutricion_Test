@@ -88,6 +88,9 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
     const [weekOffset, setWeekOffset] = useState(0);
     const [activeDay, setActiveDay] = useState("");
     const [selectedDay, setSelectedDay] = useState<string>('lunes');
+    const [appointments, setAppointments] = useState<any[]>([]);
+    const [trackingData, setTrackingData] = useState<Record<number, any>>({});
+    const [patientGender, setPatientGender] = useState<string>("M");
 
     useEffect(() => {
         const today = new Date();
@@ -203,22 +206,40 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                 if (!user) return;
                 const { data: profile } = await supabase.from("profiles").select("id, full_name").eq("user_id", user.id).single();
                 if (!profile) return;
-                const { data: patient } = await supabase.from("patients").select("id, plan_type, current_weight").eq("profile_id", profile.id).single();
+                const { data: patient } = await supabase.from("patients").select("id, gender, plan_type, current_weight").eq("profile_id", profile.id).single();
                 if (!patient) return;
                 finalPatientId = patient.id;
                 currentPatientPlanType = patient.plan_type || "sin plan";
                 currentWeight = patient.current_weight || 0;
                 setPatientName(profile.full_name || "");
+                if (patient.gender) {
+                    const g = patient.gender.toLowerCase();
+                    setPatientGender(g.startsWith('f') ? 'F' : 'M');
+                }
             } else {
-                const { data: patient } = await supabase.from("patients").select("id, plan_type, current_weight, profile:profiles!profile_id(full_name)").eq("id", finalPatientId).single();
+                const { data: patient } = await supabase.from("patients").select("id, gender, plan_type, current_weight, profile:profiles!profile_id(full_name)").eq("id", finalPatientId).single();
                 if (patient) {
                     currentPatientPlanType = patient.plan_type || "sin plan";
                     currentWeight = patient.current_weight || 0;
                     setPatientName((patient.profile as any)?.full_name || "");
+                    if (patient.gender) {
+                        const g = patient.gender.toLowerCase();
+                        setPatientGender(g.startsWith('f') ? 'F' : 'M');
+                    }
                 }
             }
 
             if (!finalPatientId) return;
+
+            // Fetch appointments for columns
+            const { data: apptsData } = await supabase
+                .from("appointments")
+                .select("id, appointment_date, start_time")
+                .eq("patient_id", finalPatientId)
+                .order("appointment_date", { ascending: true })
+                .order("start_time", { ascending: true });
+            
+            setAppointments(apptsData || []);
 
             // Obtener el último peso registrado para cálculos más precisos
             const { data: latestRecord } = await supabase
@@ -261,6 +282,12 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                 const p = flexData.data;
                 const activeWeight = activePatientWeight > 0 ? activePatientWeight : (p.peso || 0);
 
+                if (p.tracking) {
+                    setTrackingData(p.tracking);
+                } else {
+                    setTrackingData({});
+                }
+
                 if (p.portions) {
                     let totK = 0, totC = 0, totPr = 0, totF = 0;
                     Object.entries(p.portions).forEach(([key, val]: [string, any]) => {
@@ -288,6 +315,7 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                 }
             } else {
                 setFlexiblePlan(null);
+                setTrackingData({});
             }
 
             const planByDay = DAYS_SHORT.map((day, index) => {
@@ -692,6 +720,99 @@ export function WeeklyNutritionalPlan({ overridePatientId }: { overridePatientId
                                     })}
                                 </div>
                             </div>
+                            
+                            {/* PRINT-ONLY SEGUIMIENTO TABLE */}
+                            {appointments.length > 0 && (
+                                <div className="w-full space-y-4 pt-6 break-before-page print:break-before-page" style={{ pageBreakBefore: "always" }}>
+                                    <div className="text-center py-1">
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">SEGUIMIENTO DE CONSULTAS</span>
+                                    </div>
+                                    <div className="bg-[#151F32] border border-white/5 rounded-3xl overflow-hidden shadow-2xl w-full p-6">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="bg-[#0B1120] text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                                                    <th className="px-4 py-3 border border-white/5 w-12 text-center">N°</th>
+                                                    <th className="px-4 py-3 border border-white/5 min-w-[200px]">Pregunta</th>
+                                                    {appointments.map((appt, idx) => (
+                                                        <th key={idx} className="px-4 py-3 border border-white/5 text-center">
+                                                            Seguimiento {idx + 1}
+                                                        </th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-white/5 text-[11px] font-bold">
+                                                {/* Fila 2: Fechas */}
+                                                <tr className="bg-white/[0.01]">
+                                                    <td className="px-4 py-3 border border-white/5 text-slate-500 text-center font-tech">-</td>
+                                                    <td className="px-4 py-3 border border-white/5 text-slate-300 font-bold uppercase tracking-widest text-[9px]">Fecha</td>
+                                                    {appointments.map((appt, idx) => (
+                                                        <td key={idx} className="px-4 py-3 border border-white/5 text-center text-white">
+                                                            {trackingData[idx]?.date || "-"}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+
+                                                {/* Fila 3: ¿Cómo te has sentido esta semana? */}
+                                                <tr>
+                                                    <td className="px-4 py-3 border border-white/5 text-slate-400 text-center font-tech">1</td>
+                                                    <td className="px-4 py-3 border border-white/5 text-white font-medium">¿Cómo te has sentido esta semana?</td>
+                                                    {appointments.map((appt, idx) => (
+                                                        <td key={idx} className="px-4 py-3 border border-white/5 text-slate-300 font-medium whitespace-normal break-words">
+                                                            {trackingData[idx]?.feeling || "-"}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+
+                                                {/* Fila 4: ¿Has presentado hambre?, ¿En qué momento del día? */}
+                                                <tr>
+                                                    <td className="px-4 py-3 border border-white/5 text-slate-400 text-center font-tech">2</td>
+                                                    <td className="px-4 py-3 border border-white/5 text-white font-medium">¿Has presentado hambre?, ¿En qué momento del día?</td>
+                                                    {appointments.map((appt, idx) => (
+                                                        <td key={idx} className="px-4 py-3 border border-white/5 text-slate-300 font-medium whitespace-normal break-words">
+                                                            {trackingData[idx]?.hunger || "-"}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+
+                                                {/* Fila 5: ¿Presentas alguna molestia gastrointestinal... */}
+                                                <tr>
+                                                    <td className="px-4 py-3 border border-white/5 text-slate-400 text-center font-tech">3</td>
+                                                    <td className="px-4 py-3 border border-white/5 text-white font-medium">¿Presentas alguna molestia gastrointestinal (hinchazón abdominal, gases, regurgitación, etc.)? ¿Cómo están tus deposiciones?</td>
+                                                    {appointments.map((appt, idx) => (
+                                                        <td key={idx} className="px-4 py-3 border border-white/5 text-slate-300 font-medium whitespace-normal break-words">
+                                                            {trackingData[idx]?.gastro || "-"}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+
+                                                {/* Fila 6: ¿Ciclo menstrual? (Si paciente es mujer) */}
+                                                {patientGender === "F" && (
+                                                    <tr>
+                                                        <td className="px-4 py-3 border border-white/5 text-slate-400 text-center font-tech">4</td>
+                                                        <td className="px-4 py-3 border border-white/5 text-white font-medium">¿Ciclo menstrual?</td>
+                                                        {appointments.map((appt, idx) => (
+                                                            <td key={idx} className="px-4 py-3 border border-white/5 text-slate-300 font-medium whitespace-normal break-words">
+                                                                {trackingData[idx]?.menstrual || "-"}
+                                                            </td>
+                                                        ))}
+                                                    </tr>
+                                                )}
+
+                                                {/* Fila 7: ¿Cuáles son las barreras que identificas en tu proceso? */}
+                                                <tr>
+                                                    <td className="px-4 py-3 border border-white/5 text-slate-400 text-center font-tech">{patientGender === "F" ? "5" : "4"}</td>
+                                                    <td className="px-4 py-3 border border-white/5 text-white font-medium">¿Cuáles son las barreras que identificas en tu proceso?</td>
+                                                    {appointments.map((appt, idx) => (
+                                                        <td key={idx} className="px-4 py-3 border border-white/5 text-slate-300 font-medium whitespace-normal break-words">
+                                                            {trackingData[idx]?.barriers || "-"}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         {/* SCREEN-ONLY MASTER CONTAINER */}
                         <div className="space-y-6 sm:space-y-12 print:hidden no-print animate-in fade-in slide-in-from-bottom-6 duration-700">

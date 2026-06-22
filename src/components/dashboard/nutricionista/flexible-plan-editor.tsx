@@ -145,7 +145,16 @@ export function FlexiblePlanEditor({
         setPortalNode(document.getElementById("top-bar-right-portal"));
     }, []);
 
-    const [activeTab, setActiveTab] = useState<"calculos" | "resumen" | "vista-paciente">("calculos");
+    const [activeTab, setActiveTab] = useState<"calculos" | "resumen" | "seguimiento" | "vista-paciente">("calculos");
+    const [appointments, setAppointments] = useState<any[]>([]);
+    const [trackingData, setTrackingData] = useState<Record<number, {
+        date: string;
+        feeling: string;
+        hunger: string;
+        gastro: string;
+        menstrual: string;
+        barriers: string;
+    }>>({});
     const [weekOffset, setWeekOffset] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -380,6 +389,17 @@ export function FlexiblePlanEditor({
             let calculatedCorregido: number | null = null;
             let currentPatientWeight = 0;
 
+            // Fetch appointments for columns
+            const { data: apptsData } = await supabase
+                .from("appointments")
+                .select("id, appointment_date, start_time")
+                .eq("patient_id", patientId)
+                .order("appointment_date", { ascending: true })
+                .order("start_time", { ascending: true });
+            
+            const appts = apptsData || [];
+            setAppointments(appts);
+
             const { data: patient } = await supabase
                 .from("patients")
                 .select("id, gender, date_of_birth, height_cm, current_weight")
@@ -533,6 +553,23 @@ export function FlexiblePlanEditor({
                     setMealsByDay(resetMealsByDay);
                     setMeals(DEFAULT_MEALS);
                 }
+
+                const initialTracking = p.tracking ? { ...p.tracking } : {};
+                appts.forEach((appt, idx) => {
+                    if (!initialTracking[idx]) {
+                        initialTracking[idx] = {
+                            date: appt.appointment_date || "",
+                            feeling: "",
+                            hunger: "",
+                            gastro: "",
+                            menstrual: "",
+                            barriers: ""
+                        };
+                    } else if (!initialTracking[idx].date && appt.appointment_date) {
+                        initialTracking[idx].date = appt.appointment_date;
+                    }
+                });
+                setTrackingData(initialTracking);
             } else {
                 const resetMealsByDay = {
                     'lunes': DEFAULT_MEALS,
@@ -545,6 +582,19 @@ export function FlexiblePlanEditor({
                 };
                 setMealsByDay(resetMealsByDay);
                 setMeals(DEFAULT_MEALS);
+
+                const initialTracking: Record<number, any> = {};
+                appts.forEach((appt, idx) => {
+                    initialTracking[idx] = {
+                        date: appt.appointment_date || "",
+                        feeling: "",
+                        hunger: "",
+                        gastro: "",
+                        menstrual: "",
+                        barriers: ""
+                    };
+                });
+                setTrackingData(initialTracking);
             }
         } catch (err) {
             console.error("Error loading plan:", err);
@@ -565,7 +615,8 @@ export function FlexiblePlanEditor({
             diasEntreno, ajustePct, gChoKg, gProKg, portions, 
             meals,
             mealsByDay: finalMealsByDay,
-            pesoIdeal, pesoCorregido, pesoActual
+            pesoIdeal, pesoCorregido, pesoActual,
+            tracking: trackingData
         };
 
         try {
@@ -696,6 +747,15 @@ export function FlexiblePlanEditor({
                         )}
                     >
                         Resumen
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("seguimiento")}
+                        className={cn(
+                            "flex-1 sm:flex-none px-4 sm:px-8 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all whitespace-nowrap",
+                            activeTab === "seguimiento" ? "bg-[#FF7A00] text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
+                        )}
+                    >
+                        Seguimiento
                     </button>
                     <button
                         onClick={() => setActiveTab("vista-paciente")}
@@ -1241,6 +1301,195 @@ export function FlexiblePlanEditor({
                                 </Card>
                             ))}
                         </div>
+                    </div>
+                ) : activeTab === "seguimiento" ? (
+                    <div className="pb-32 animate-in fade-in duration-700 max-w-6xl mx-auto w-full">
+                        <Card className="bg-[#151F32] border-white/5 rounded-3xl p-6 shadow-2xl overflow-hidden">
+                            <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                                    <ClipboardList className="h-4 w-4" />
+                                </div>
+                                Seguimiento de Consultas
+                            </h3>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-[#0B1120] text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                                            <th className="px-6 py-4 border border-white/5 w-16 text-center">N°</th>
+                                            <th className="px-6 py-4 border border-white/5 min-w-[300px]">Pregunta</th>
+                                            {appointments.map((appt, idx) => (
+                                                <th key={idx} className="px-6 py-4 border border-white/5 text-center min-w-[200px]">
+                                                    Seguimiento {idx + 1}
+                                                </th>
+                                            ))}
+                                            {appointments.length === 0 && (
+                                                <th className="px-6 py-4 border border-white/5 text-center text-slate-500 font-normal">
+                                                    No hay citas registradas
+                                                </th>
+                                            )}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5 text-xs font-bold">
+                                        {/* Fila 2: Fechas */}
+                                        <tr className="hover:bg-white/[0.01]">
+                                            <td className="px-6 py-4 border border-white/5 text-slate-500 text-center font-tech">-</td>
+                                            <td className="px-6 py-4 border border-white/5 text-slate-300 font-bold uppercase tracking-widest text-[10px]">Fecha del Seguimiento</td>
+                                            {appointments.map((appt, idx) => (
+                                                <td key={idx} className="px-6 py-3 border border-white/5 text-center">
+                                                    <input
+                                                        type="date"
+                                                        value={trackingData[idx]?.date || ""}
+                                                        onChange={(e) => setTrackingData(prev => ({
+                                                            ...prev,
+                                                            [idx]: {
+                                                                ...(prev[idx] || { date: "", feeling: "", hunger: "", gastro: "", menstrual: "", barriers: "" }),
+                                                                date: e.target.value
+                                                            }
+                                                        }))}
+                                                        className="bg-[#0B1120] text-white border border-white/5 rounded-xl px-3 py-2 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all text-center w-full"
+                                                    />
+                                                </td>
+                                            ))}
+                                            {appointments.length === 0 && (
+                                                <td className="px-6 py-4 border border-white/5 text-center text-slate-500">-</td>
+                                            )}
+                                        </tr>
+
+                                        {/* Fila 3: ¿Cómo te has sentido esta semana? */}
+                                        <tr className="hover:bg-white/[0.01]">
+                                            <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech">1</td>
+                                            <td className="px-6 py-4 border border-white/5 text-white">¿Cómo te has sentido esta semana?</td>
+                                            {appointments.map((appt, idx) => (
+                                                <td key={idx} className="px-6 py-3 border border-white/5">
+                                                    <input
+                                                        type="text"
+                                                        value={trackingData[idx]?.feeling || ""}
+                                                        placeholder="Ingrese respuesta..."
+                                                        onChange={(e) => setTrackingData(prev => ({
+                                                            ...prev,
+                                                            [idx]: {
+                                                                ...(prev[idx] || { date: "", feeling: "", hunger: "", gastro: "", menstrual: "", barriers: "" }),
+                                                                feeling: e.target.value
+                                                            }
+                                                        }))}
+                                                        className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full"
+                                                    />
+                                                </td>
+                                            ))}
+                                            {appointments.length === 0 && (
+                                                <td className="px-6 py-4 border border-white/5 text-center text-slate-500">-</td>
+                                            )}
+                                        </tr>
+
+                                        {/* Fila 4: ¿Has presentado hambre?, ¿En qué momento del día? */}
+                                        <tr className="hover:bg-white/[0.01]">
+                                            <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech">2</td>
+                                            <td className="px-6 py-4 border border-white/5 text-white">¿Has presentado hambre?, ¿En qué momento del día?</td>
+                                            {appointments.map((appt, idx) => (
+                                                <td key={idx} className="px-6 py-3 border border-white/5">
+                                                    <input
+                                                        type="text"
+                                                        value={trackingData[idx]?.hunger || ""}
+                                                        placeholder="Ingrese respuesta..."
+                                                        onChange={(e) => setTrackingData(prev => ({
+                                                            ...prev,
+                                                            [idx]: {
+                                                                ...(prev[idx] || { date: "", feeling: "", hunger: "", gastro: "", menstrual: "", barriers: "" }),
+                                                                hunger: e.target.value
+                                                            }
+                                                        }))}
+                                                        className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full"
+                                                    />
+                                                </td>
+                                            ))}
+                                            {appointments.length === 0 && (
+                                                <td className="px-6 py-4 border border-white/5 text-center text-slate-500">-</td>
+                                            )}
+                                        </tr>
+
+                                        {/* Fila 5: ¿Presentas alguna molestia gastrointestinal (hinchazón abdominal, gases, regurgitación, etc.)? ¿Cómo están tus deposiciones? */}
+                                        <tr className="hover:bg-white/[0.01]">
+                                            <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech">3</td>
+                                            <td className="px-6 py-4 border border-white/5 text-white">¿Presentas alguna molestia gastrointestinal (hinchazón abdominal, gases, regurgitación, etc.)? ¿Cómo están tus deposiciones?</td>
+                                            {appointments.map((appt, idx) => (
+                                                <td key={idx} className="px-6 py-3 border border-white/5">
+                                                    <input
+                                                        type="text"
+                                                        value={trackingData[idx]?.gastro || ""}
+                                                        placeholder="Ingrese respuesta..."
+                                                        onChange={(e) => setTrackingData(prev => ({
+                                                            ...prev,
+                                                            [idx]: {
+                                                                ...(prev[idx] || { date: "", feeling: "", hunger: "", gastro: "", menstrual: "", barriers: "" }),
+                                                                gastro: e.target.value
+                                                            }
+                                                        }))}
+                                                        className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full"
+                                                    />
+                                                </td>
+                                            ))}
+                                            {appointments.length === 0 && (
+                                                <td className="px-6 py-4 border border-white/5 text-center text-slate-500">-</td>
+                                            )}
+                                        </tr>
+
+                                        {/* Fila 6: ¿Ciclo menstrual? (Si paciente es mujer) */}
+                                        {genero === "F" && (
+                                            <tr className="hover:bg-white/[0.01]">
+                                                <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech">4</td>
+                                                <td className="px-6 py-4 border border-white/5 text-white">¿Ciclo menstrual?</td>
+                                                {appointments.map((appt, idx) => (
+                                                    <td key={idx} className="px-6 py-3 border border-white/5">
+                                                        <input
+                                                            type="text"
+                                                            value={trackingData[idx]?.menstrual || ""}
+                                                            placeholder="Ingrese respuesta..."
+                                                            onChange={(e) => setTrackingData(prev => ({
+                                                                ...prev,
+                                                                [idx]: {
+                                                                    ...(prev[idx] || { date: "", feeling: "", hunger: "", gastro: "", menstrual: "", barriers: "" }),
+                                                                    menstrual: e.target.value
+                                                                }
+                                                            }))}
+                                                            className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full"
+                                                        />
+                                                    </td>
+                                                ))}
+                                                {appointments.length === 0 && (
+                                                    <td className="px-6 py-4 border border-white/5 text-center text-slate-500">-</td>
+                                                )}
+                                            </tr>
+                                        )}
+
+                                        {/* Fila 7: ¿Cuáles son las barreras que identificas en tu proceso? */}
+                                        <tr className="hover:bg-white/[0.01]">
+                                            <td className="px-6 py-4 border border-white/5 text-slate-400 text-center font-tech">{genero === "F" ? "5" : "4"}</td>
+                                            <td className="px-6 py-4 border border-white/5 text-white">¿Cuáles son las barreras que identificas en tu proceso?</td>
+                                            {appointments.map((appt, idx) => (
+                                                <td key={idx} className="px-6 py-3 border border-white/5">
+                                                    <input
+                                                        type="text"
+                                                        value={trackingData[idx]?.barriers || ""}
+                                                        placeholder="Ingrese respuesta..."
+                                                        onChange={(e) => setTrackingData(prev => ({
+                                                            ...prev,
+                                                            [idx]: {
+                                                                ...(prev[idx] || { date: "", feeling: "", hunger: "", gastro: "", menstrual: "", barriers: "" }),
+                                                                barriers: e.target.value
+                                                            }
+                                                        }))}
+                                                        className="bg-[#0B1120] text-slate-300 border border-white/5 rounded-xl px-4 py-2 text-xs font-medium outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all w-full"
+                                                    />
+                                                </td>
+                                            ))}
+                                            {appointments.length === 0 && (
+                                                <td className="px-6 py-4 border border-white/5 text-center text-slate-500">-</td>
+                                            )}
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </Card>
                     </div>
                 ) : (
                     <div className="pb-32 animate-in fade-in duration-700">
