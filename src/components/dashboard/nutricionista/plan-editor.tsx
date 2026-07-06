@@ -867,7 +867,7 @@ export function PlanEditor() {
                         {/* --- CENTER SECTION --- */}
                         <main className="flex-1 flex flex-col overflow-hidden">
                             {/* Top Nav BAR */}
-                            <header className="min-h-[60px] sm:h-24 px-3 sm:px-10 py-2 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/5 bg-[#0B1120]/80 backdrop-blur-md z-40 gap-2 sm:gap-0">
+                            <header className="sticky top-0 min-h-[60px] sm:h-24 px-3 sm:px-10 py-2 sm:py-0 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/5 bg-[#0B1120] z-50 gap-2 sm:gap-0">
                                 <div className="flex items-center gap-6">
                                     <div className="space-y-1">
                                         <h1 className="text-2xl font-black tracking-tight text-white">Editor de Plan</h1>
