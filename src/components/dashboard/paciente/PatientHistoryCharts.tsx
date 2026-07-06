@@ -404,10 +404,14 @@ export function PatientHistoryCharts({
 
     const FechasRow = () => (
         <div className="flex flex-col sm:flex-row items-center bg-white/[0.03] py-2 rounded-2xl sm:rounded-[2rem] border border-white/5 mb-4 px-4 sm:px-6 w-full gap-4">
-            <div className="w-full sm:w-[260px] flex-none text-center sm:text-left"><h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Registro Histórico</h3></div>
-            <div className="flex-1 min-w-0 w-full flex px-2 text-[11px] font-tech font-black text-slate-400 uppercase tracking-widest relative overflow-hidden">
-                <div className="flex justify-between w-full relative">
-                    {renderFechas.map((f, i) => <div key={i} className="flex-1 text-center opacity-60 min-w-[50px]">{f}</div>)}
+            <div className="w-full sm:w-[260px] flex-none text-center sm:text-left">
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Registro Histórico</h3>
+            </div>
+            <div className="flex-1 w-full overflow-x-auto no-scrollbar">
+                <div className="min-w-[450px] flex px-2 text-[11px] font-tech font-black text-slate-400 uppercase tracking-widest relative">
+                    <div className="flex justify-between w-full relative">
+                        {renderFechas.map((f, i) => <div key={i} className="flex-1 text-center opacity-60 min-w-[50px]">{f}</div>)}
+                    </div>
                 </div>
             </div>
         </div>
@@ -422,13 +426,15 @@ export function PatientHistoryCharts({
                     {subtitle && <><br /><span className="text-[10px] text-slate-500 font-tech font-black tracking-widest uppercase mt-2 block opacity-60">{subtitle}</span></>}
                 </h3>
             </div>
-            <div className="flex-1 min-w-0 w-full h-[115px] relative z-10 overflow-hidden text-left flex items-center px-1">
-                <div className="w-full h-full relative flex justify-between">
-                    <Line
-                        key={`${title}_${dataPoints.join('-')}_${activeTab}`}
-                        options={getChartOptions(dataPoints, customLabels)}
-                        data={getChartData(dataPoints, lineColor)}
-                    />
+            <div className="flex-1 w-full overflow-x-auto no-scrollbar relative z-10">
+                <div className="min-w-[450px] h-[115px] text-left flex items-center px-1">
+                    <div className="w-full h-full relative">
+                        <Line
+                            key={`${title}_${dataPoints.join('-')}_${activeTab}`}
+                            options={getChartOptions(dataPoints, customLabels)}
+                            data={getChartData(dataPoints, lineColor)}
+                        />
+                    </div>
                 </div>
             </div>
         </div>
