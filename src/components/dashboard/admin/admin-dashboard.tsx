@@ -1228,19 +1228,19 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                         {selectedPlanType !== 'sin plan' && (
                                             <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">3. Cantidad de Mediciones</p>
-                                                <div className="grid grid-cols-3 gap-3">
-                                                    {[2, 4, 6].map(count => (
+                                                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
+                                                    {[2, 4, 6, 8, 12].map(count => (
                                                         <button
                                                             key={count}
                                                             onClick={() => setSelectedPlanMeasurements(count)}
                                                             className={cn(
-                                                                "p-4 rounded-xl border text-[10px] font-black uppercase tracking-tighter transition-all flex flex-col items-center gap-1",
+                                                                "p-3 sm:p-4 rounded-xl border text-[10px] font-black uppercase tracking-tighter transition-all flex flex-col items-center gap-1",
                                                                 selectedPlanMeasurements === count
                                                                     ? "bg-nutrition-500/10 border-nutrition-500/50 text-nutrition-400 shadow-lg shadow-nutrition-500/10"
                                                                     : "bg-white/[0.02] border-white/5 text-slate-500 hover:bg-white/5"
                                                             )}
                                                         >
-                                                            <span>{count}</span>
+                                                            <span className="text-xs sm:text-sm font-tech">{count}</span>
                                                             <span className="text-[8px] opacity-60">Mediciones</span>
                                                         </button>
                                                     ))}
