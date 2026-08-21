@@ -454,34 +454,35 @@ export function PatientHistoryCharts({
         };
     };
 
-    const scrollRefs = React.useRef<HTMLDivElement[]>([]);
-    const isScrolling = React.useRef<boolean>(false);
+    const scrollContainersRef = React.useRef<Set<HTMLDivElement>>(new Set());
+    const isSyncingScroll = React.useRef<boolean>(false);
 
-    // Limpia o inicializa la lista de refs en cada render
-    scrollRefs.current = [];
+    // Resetear refs al cambiar de tab
+    useEffect(() => {
+        scrollContainersRef.current.clear();
+    }, [activeTab]);
 
-    const addToRefs = (el: HTMLDivElement | null) => {
-        if (el && !scrollRefs.current.includes(el)) {
-            scrollRefs.current.push(el);
+    const registerScrollContainer = (el: HTMLDivElement | null) => {
+        if (el) {
+            scrollContainersRef.current.add(el);
         }
     };
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        if (isScrolling.current) return;
-        isScrolling.current = true;
+        if (isSyncingScroll.current) return;
+        const source = e.currentTarget;
+        const scrollLeft = source.scrollLeft;
 
-        const target = e.currentTarget;
-        const scrollLeft = target.scrollLeft;
-
-        scrollRefs.current.forEach((ref) => {
-            if (ref !== target) {
-                ref.scrollLeft = scrollLeft;
+        isSyncingScroll.current = true;
+        scrollContainersRef.current.forEach((container) => {
+            if (container && container !== source) {
+                container.scrollLeft = scrollLeft;
             }
         });
 
-        // Evitar loops infinitos de eventos de scroll usando un pequeño timeout o microtask
-        window.requestAnimationFrame(() => {
-            isScrolling.current = false;
+        // Usar requestAnimationFrame para liberar el bloqueo inmediatamente en el próximo frame
+        requestAnimationFrame(() => {
+            isSyncingScroll.current = false;
         });
     };
 
@@ -495,9 +496,9 @@ export function PatientHistoryCharts({
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Registro Histórico</h3>
             </div>
             <div 
-                ref={addToRefs}
+                ref={registerScrollContainer}
                 onScroll={handleScroll}
-                className="flex-1 w-full overflow-x-auto no-scrollbar scroll-smooth"
+                className="flex-1 w-full overflow-x-auto no-scrollbar"
             >
                 <div 
                     className="flex px-2 text-[10px] sm:text-[11px] font-tech font-black text-slate-400 uppercase tracking-widest relative"
@@ -529,9 +530,9 @@ export function PatientHistoryCharts({
                 </h3>
             </div>
             <div 
-                ref={addToRefs}
+                ref={registerScrollContainer}
                 onScroll={handleScroll}
-                className="flex-1 w-full overflow-x-auto no-scrollbar scroll-smooth relative z-10"
+                className="flex-1 w-full overflow-x-auto no-scrollbar relative z-10"
             >
                 <div 
                     className="h-[105px] sm:h-[115px] text-left flex items-center px-1"
