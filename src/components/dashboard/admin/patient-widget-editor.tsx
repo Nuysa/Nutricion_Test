@@ -134,6 +134,7 @@ export function PatientWidgetEditor() {
                             { id: 'm3', label: 'Grasa (%)', variable_id: grasaPctId },
                             { id: 'm4', label: 'Grasa corporal (kg)', variable_id: 'SYSTEM_CALC_FAT_KG', isSystem: true },
                             { id: 'm_diff_fat', label: 'Diferencia de grasa', variable_id: 'SYSTEM_DIFF_FAT', isSystem: true },
+                            { id: 'm_acum_fat', label: 'Acumulado', variable_id: 'SYSTEM_ACUM_FAT', isSystem: true },
                             { id: 'm_diag_fat', label: 'Diagnóstico (Suma Pliegues)', variable_id: grasaPctId, isSystem: true }
                         ]
                     },
@@ -144,6 +145,7 @@ export function PatientWidgetEditor() {
                             { id: 'm5', label: 'Músculo Lee (%)', variable_id: musculoPctId },
                             { id: 'm6', label: 'Masa muscular Lee (kg)', variable_id: 'SYSTEM_CALC_MUSCLE_KG', isSystem: true },
                             { id: 'm_diff_muscle', label: 'Diferencia de músculo', variable_id: 'SYSTEM_DIFF_MUSCLE', isSystem: true },
+                            { id: 'm_acum_muscle', label: 'Acumulado', variable_id: 'SYSTEM_ACUM_MUSCLE', isSystem: true },
                             { id: 'm_diag_muscle', label: 'Diagnóstico (Músculo Lee)', variable_id: musculoPctId, isSystem: true }
                         ]
                     },

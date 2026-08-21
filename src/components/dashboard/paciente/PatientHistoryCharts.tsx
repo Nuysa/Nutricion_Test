@@ -112,9 +112,11 @@ export function PatientHistoryCharts({
 
             const isDiffGrasa = label && label.toLowerCase().includes('diferencia de grasa');
             const isDiffMusculo = label && (label.toLowerCase().includes('diferencia de músculo') || label.toLowerCase().includes('diferencia de musculo'));
+            const isAcumGrasa = label && (label.toLowerCase().includes('acumulado') || label.toLowerCase().includes('acumulado de grasa')) && (variable_id === 'SYSTEM_ACUM_FAT' || activeTab.toLowerCase().includes('grasa') || (activeTabConfig?.name || '').toLowerCase().includes('grasa'));
+            const isAcumMusculo = label && (label.toLowerCase().includes('acumulado') || label.toLowerCase().includes('acumulado de músculo') || label.toLowerCase().includes('acumulado de musculo')) && (variable_id === 'SYSTEM_ACUM_MUSCLE' || activeTab.toLowerCase().includes('musculo') || activeTab.toLowerCase().includes('músculo') || (activeTabConfig?.name || '').toLowerCase().includes('musculo') || (activeTabConfig?.name || '').toLowerCase().includes('músculo'));
 
-            // 1. Caso Variables de Sistema o Diferencias
-            if (isSystem || (variable_id && variable_id.startsWith('SYSTEM_')) || isDiffGrasa || isDiffMusculo) {
+            // 1. Caso Variables de Sistema o Diferencias / Acumulados
+            if (isSystem || (variable_id && variable_id.startsWith('SYSTEM_')) || isDiffGrasa || isDiffMusculo || isAcumGrasa || isAcumMusculo) {
                 if (variable_id === 'SYSTEM_IMC' || (label && label.toUpperCase() === 'IMC')) {
                     const w = parseFloat(m.weight || m._rawSource?.weight) || 0;
                     val = w > 0 ? parseFloat((w / ((patientHeight / 100) * (patientHeight / 100))).toFixed(2)) : 0;
@@ -134,7 +136,7 @@ export function PatientHistoryCharts({
                         calcMusc = w * (pct / 100);
                     }
                     val = parseFloat(calcMusc.toFixed(2));
-                } else if (label && label.toLowerCase().includes('diferencia de grasa')) {
+                } else if (isDiffGrasa || variable_id === 'SYSTEM_DIFF_FAT') {
                     if (idx === 0) {
                         val = 0;
                     } else {
@@ -156,7 +158,30 @@ export function PatientHistoryCharts({
 
                         val = parseFloat((currFat - prevFat).toFixed(2));
                     }
-                } else if (label && (label.toLowerCase().includes('diferencia de músculo') || label.toLowerCase().includes('diferencia de musculo'))) {
+                } else if (isAcumGrasa || variable_id === 'SYSTEM_ACUM_FAT') {
+                    let runningSum = 0;
+                    for (let step = 1; step <= idx; step++) {
+                        const mStep = chronoMeasurements[step];
+                        const mPrevStep = chronoMeasurements[step - 1];
+
+                        let cFat = parseFloat(mStep._computedInputs?.['GRASA_CORPORAL']);
+                        if (isNaN(cFat)) {
+                            const w = parseFloat(mStep.weight || mStep._rawSource?.weight) || 0;
+                            const pct = parseFloat(mStep._computedInputs?.['GRASA'] || mStep.body_fat_percentage) || 0;
+                            cFat = w * (pct / 100);
+                        }
+
+                        let pFat = parseFloat(mPrevStep._computedInputs?.['GRASA_CORPORAL']);
+                        if (isNaN(pFat)) {
+                            const w = parseFloat(mPrevStep.weight || mPrevStep._rawSource?.weight) || 0;
+                            const pct = parseFloat(mPrevStep._computedInputs?.['GRASA'] || mPrevStep.body_fat_percentage) || 0;
+                            pFat = w * (pct / 100);
+                        }
+
+                        runningSum += (cFat - pFat);
+                    }
+                    val = parseFloat(runningSum.toFixed(2));
+                } else if (isDiffMusculo || variable_id === 'SYSTEM_DIFF_MUSCLE') {
                     if (idx === 0) {
                         val = 0;
                     } else {
@@ -178,6 +203,29 @@ export function PatientHistoryCharts({
 
                         val = parseFloat((currMusc - prevMusc).toFixed(2));
                     }
+                } else if (isAcumMusculo || variable_id === 'SYSTEM_ACUM_MUSCLE') {
+                    let runningSum = 0;
+                    for (let step = 1; step <= idx; step++) {
+                        const mStep = chronoMeasurements[step];
+                        const mPrevStep = chronoMeasurements[step - 1];
+
+                        let cMusc = parseFloat(mStep._computedInputs?.['MASA_MUSCULAR_LEE']);
+                        if (isNaN(cMusc)) {
+                            const w = parseFloat(mStep.weight || mStep._rawSource?.weight) || 0;
+                            const pct = parseFloat(mStep._computedInputs?.['MUSCULO']) || 0;
+                            cMusc = w * (pct / 100);
+                        }
+
+                        let pMusc = parseFloat(mPrevStep._computedInputs?.['MASA_MUSCULAR_LEE']);
+                        if (isNaN(pMusc)) {
+                            const w = parseFloat(mPrevStep.weight || mPrevStep._rawSource?.weight) || 0;
+                            const pct = parseFloat(mPrevStep._computedInputs?.['MUSCULO']) || 0;
+                            pMusc = w * (pct / 100);
+                        }
+
+                        runningSum += (cMusc - pMusc);
+                    }
+                    val = parseFloat(runningSum.toFixed(2));
                 }
             } else {
                 // 2. Caso Variable Clínica Específica
@@ -346,7 +394,11 @@ export function PatientHistoryCharts({
                     grid: { display: false },
                     ticks: {
                         color: '#cbd5e1',
-                        font: { size: 18, weight: '800' as const, family: "'Inter', sans-serif" },
+                        font: (context: any) => {
+                            const width = context.chart?.width || 300;
+                            const isSmall = width < 400;
+                            return { size: isSmall ? 13 : 16, weight: '800' as const, family: "'Inter', sans-serif" };
+                        },
                         padding: 6,
                         maxRotation: 0,
                         autoSkip: false,
@@ -433,19 +485,34 @@ export function PatientHistoryCharts({
         });
     };
 
+    // Ancho dinámico por columna: en mobile (~320px de contenedor visible), ~75px permite ver exactamente 4 columnas a la vez. En pantallas grandes min-w-[500px] o proporcional.
+    const columnWidthMobile = 75; // px por registro
+    const minContainerWidth = Math.max(totalSlots * columnWidthMobile, 450);
+
     const FechasRow = () => (
-        <div className="flex flex-col sm:flex-row items-center bg-white/[0.03] py-2 rounded-2xl sm:rounded-[2rem] border border-white/5 mb-4 px-4 sm:px-6 w-full gap-4">
+        <div className="flex flex-col sm:flex-row items-center bg-white/[0.03] py-2 rounded-2xl sm:rounded-[2rem] border border-white/5 mb-4 px-4 sm:px-6 w-full gap-2 sm:gap-4">
             <div className="w-full sm:w-[260px] flex-none text-center sm:text-left">
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Registro Histórico</h3>
             </div>
             <div 
                 ref={addToRefs}
                 onScroll={handleScroll}
-                className="flex-1 w-full overflow-x-auto no-scrollbar"
+                className="flex-1 w-full overflow-x-auto no-scrollbar scroll-smooth"
             >
-                <div className="min-w-[450px] flex px-2 text-[11px] font-tech font-black text-slate-400 uppercase tracking-widest relative">
+                <div 
+                    className="flex px-2 text-[10px] sm:text-[11px] font-tech font-black text-slate-400 uppercase tracking-widest relative"
+                    style={{ minWidth: `${Math.max(totalSlots * 75, 300)}px` }}
+                >
                     <div className="flex justify-between w-full relative">
-                        {renderFechas.map((f, i) => <div key={i} className="flex-1 text-center opacity-60 min-w-[50px]">{f}</div>)}
+                        {renderFechas.map((f, i) => (
+                            <div 
+                                key={i} 
+                                className="text-center opacity-60 flex-shrink-0"
+                                style={{ width: `${100 / Math.max(totalSlots, 1)}%`, minWidth: '70px' }}
+                            >
+                                {f}
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -453,20 +520,23 @@ export function PatientHistoryCharts({
     );
 
     const ChartCard = ({ title, subtitle, dataPoints, lineColor, customLabels }: { title: string, subtitle?: string, dataPoints: number[], lineColor: string, customLabels?: any[] }) => (
-        <div className="flex flex-col sm:flex-row items-center bg-[#151F32] py-4 sm:py-1 px-4 sm:px-6 rounded-2xl sm:rounded-[1.5rem] border border-white/5 shadow-2xl hover:border-white/10 transition-all group overflow-hidden relative w-full gap-4 sm:gap-0">
+        <div className="flex flex-col sm:flex-row items-center bg-[#151F32] py-4 sm:py-1 px-4 sm:px-6 rounded-2xl sm:rounded-[1.5rem] border border-white/5 shadow-2xl hover:border-white/10 transition-all group overflow-hidden relative w-full gap-2 sm:gap-0">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/[0.01] blur-3xl -mr-16 -mt-16" />
             <div className="w-full sm:w-[260px] flex-none relative z-10 pr-0 sm:pr-4 text-center sm:text-left">
-                <h3 className="text-lg sm:text-xl font-black text-white tracking-tight leading-none uppercase">
+                <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-none uppercase">
                     {title}
-                    {subtitle && <><br /><span className="text-[10px] text-slate-500 font-tech font-black tracking-widest uppercase mt-2 block opacity-60">{subtitle}</span></>}
+                    {subtitle && <><br /><span className="text-[9px] sm:text-[10px] text-slate-500 font-tech font-black tracking-widest uppercase mt-1 sm:mt-2 block opacity-60">{subtitle}</span></>}
                 </h3>
             </div>
             <div 
                 ref={addToRefs}
                 onScroll={handleScroll}
-                className="flex-1 w-full overflow-x-auto no-scrollbar relative z-10"
+                className="flex-1 w-full overflow-x-auto no-scrollbar scroll-smooth relative z-10"
             >
-                <div className="min-w-[450px] h-[115px] text-left flex items-center px-1">
+                <div 
+                    className="h-[105px] sm:h-[115px] text-left flex items-center px-1"
+                    style={{ minWidth: `${Math.max(totalSlots * 75, 300)}px` }}
+                >
                     <div className="w-full h-full relative">
                         <Line
                             key={`${title}_${dataPoints.join('-')}_${activeTab}`}
@@ -509,35 +579,72 @@ export function PatientHistoryCharts({
 
             <div className="flex-1 flex flex-col gap-3 px-4 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
                 <FechasRow />
-                {activeTabConfig && activeTabConfig.metrics
-                    .filter((m: any) => m.variable_id !== 'SYSTEM_DATE')
-                    .filter((m: any) => {
-                        if (!showWeight) {
-                            const isWeight = m.variable_id === 'weight' || m.fixed_variable === 'weight' || (m.label || '').toLowerCase().includes('peso') || (m.visual_title || '').toLowerCase().includes('peso');
-                            if (isWeight) return false;
+                {activeTabConfig && (() => {
+                    let metricsList = activeTabConfig.metrics
+                        .filter((m: any) => m.variable_id !== 'SYSTEM_DATE')
+                        .filter((m: any) => {
+                            if (!showWeight) {
+                                const isWeight = m.variable_id === 'weight' || m.fixed_variable === 'weight' || (m.label || '').toLowerCase().includes('peso') || (m.visual_title || '').toLowerCase().includes('peso');
+                                if (isWeight) return false;
+                            }
+                            return true;
+                        });
+
+                    // Si no tiene la métrica de Acumulado en el tab de Grasa, insertarla debajo de Diferencia de grasa
+                    const isGrasaTab = activeTab.toLowerCase().includes('grasa') || (activeTabConfig.name || '').toLowerCase().includes('grasa');
+                    const isMusculoTab = activeTab.toLowerCase().includes('musculo') || activeTab.toLowerCase().includes('músculo') || (activeTabConfig.name || '').toLowerCase().includes('musculo') || (activeTabConfig.name || '').toLowerCase().includes('músculo');
+
+                    const hasAcumMetric = metricsList.some((m: any) => (m.label || '').toLowerCase().includes('acumulado') || m.variable_id === 'SYSTEM_ACUM_FAT' || m.variable_id === 'SYSTEM_ACUM_MUSCLE');
+
+                    if (!hasAcumMetric) {
+                        if (isGrasaTab) {
+                            const diffIndex = metricsList.findIndex((m: any) => (m.label || '').toLowerCase().includes('diferencia') || m.variable_id === 'SYSTEM_DIFF_FAT');
+                            const acumMetric = { id: 'm_acum_fat_auto', label: 'Acumulado', subtitle: 'Grasa acumulada', variable_id: 'SYSTEM_ACUM_FAT', isSystem: true };
+                            if (diffIndex !== -1) {
+                                metricsList = [
+                                    ...metricsList.slice(0, diffIndex + 1),
+                                    acumMetric,
+                                    ...metricsList.slice(diffIndex + 1)
+                                ];
+                            } else {
+                                metricsList.push(acumMetric);
+                            }
+                        } else if (isMusculoTab) {
+                            const diffIndex = metricsList.findIndex((m: any) => (m.label || '').toLowerCase().includes('diferencia') || m.variable_id === 'SYSTEM_DIFF_MUSCLE');
+                            const acumMetric = { id: 'm_acum_muscle_auto', label: 'Acumulado', subtitle: 'Músculo acumulado', variable_id: 'SYSTEM_ACUM_MUSCLE', isSystem: true };
+                            if (diffIndex !== -1) {
+                                metricsList = [
+                                    ...metricsList.slice(0, diffIndex + 1),
+                                    acumMetric,
+                                    ...metricsList.slice(diffIndex + 1)
+                                ];
+                            } else {
+                                metricsList.push(acumMetric);
+                            }
                         }
-                        return true;
-                    })
-                    .map((metric: any) => {
-                    const { values, labels: extractedLabels } = getMetricData(metric);
-                    const labelNorm = (metric.label || metric.visual_title || "").toUpperCase();
-                    const isDiagnostic = labelNorm.includes('DIAGNOSTICO') || labelNorm.includes('DIAGNÓSTICO');
+                    }
 
-                    const labels = isDiagnostic
-                        ? getDiagnosticLabels(metric, values, extractedLabels)
-                        : undefined;
+                    return metricsList.map((metric: any) => {
+                        const { values, labels: extractedLabels } = getMetricData(metric);
+                        const labelNorm = (metric.label || metric.visual_title || "").toUpperCase();
+                        const isDiagnostic = labelNorm.includes('DIAGNOSTICO') || labelNorm.includes('DIAGNÓSTICO');
 
-                    return (
-                        <ChartCard
-                            key={metric.id}
-                            title={metric.label}
-                            subtitle={metric.subtitle}
-                            dataPoints={values}
-                            lineColor={activeTabConfig.lineColor || activeTabConfig.btnColor}
-                            customLabels={labels}
-                        />
-                    );
-                })}
+                        const labels = isDiagnostic
+                            ? getDiagnosticLabels(metric, values, extractedLabels)
+                            : undefined;
+
+                        return (
+                            <ChartCard
+                                key={metric.id}
+                                title={metric.label}
+                                subtitle={metric.subtitle}
+                                dataPoints={values}
+                                lineColor={activeTabConfig.lineColor || activeTabConfig.btnColor}
+                                customLabels={labels}
+                            />
+                        );
+                    });
+                })()}
 
                 {!activeTabConfig && (
                     <div className="p-20 text-center opacity-20">
