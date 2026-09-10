@@ -24,7 +24,7 @@ import {
 import {
     ChevronRight, ChevronLeft, Save, HeartPulse, User, Ruler, Activity,
     Moon, Utensils, Camera, AlertCircle, Sparkles, CheckCircle2, Clock,
-    Loader2, Upload, X, Plus, Download, Check
+    Loader2, Upload, X, Plus, Download, Check, Lock
 } from "lucide-react";
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -165,6 +165,7 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
     const [patientId, setPatientId] = useState<string | null>(externalPatientId || null);
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
     const [showExerciseOther, setShowExerciseOther] = useState(false);
+    const [canEditHistory, setCanEditHistory] = useState(true);
     const totalSteps = 10;
 
     const form = useForm<MedicalHistoryFormValues>({
@@ -269,12 +270,16 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
 
                     if (currentPatientId) {
                         setPatientId(currentPatientId);
-                        const { data: patient } = await supabase.from('patients').select('height_cm, current_weight, date_of_birth').eq('id', currentPatientId).single();
+                        const { data: patient } = await supabase.from('patients').select('height_cm, current_weight, date_of_birth, allow_edit_history').eq('id', currentPatientId).single();
                         
                         if (patient) {
                             if (patient.height_cm) form.setValue('height_cm', Number(patient.height_cm));
                             if (patient.current_weight) form.setValue('weight_kg', Number(patient.current_weight));
                             if (patient.date_of_birth) form.setValue('birth_date', patient.date_of_birth);
+                            // Set edit permission (default false if not set)
+                            if (!isNutritionistView) {
+                                setCanEditHistory(patient.allow_edit_history === true);
+                            }
                         }
 
                         // Check for existing medical history
@@ -565,7 +570,7 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
     }
 
     if (hasHistory && !isEditMode && !isNutritionistView) {
-        return <MedicalHistorySummary values={form.getValues()} onEdit={() => setIsEditMode(true)} hideWrapper={hideWrapper} />;
+        return <MedicalHistorySummary values={form.getValues()} onEdit={() => setIsEditMode(true)} hideWrapper={hideWrapper} canEdit={canEditHistory} />;
     }
 
     const FormContent = (
@@ -679,7 +684,7 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
     );
 }
 
-function MedicalHistorySummary({ values, onEdit, hideWrapper = false }: { values: any, onEdit: () => void, hideWrapper?: boolean }) {
+function MedicalHistorySummary({ values, onEdit, hideWrapper = false, canEdit = true }: { values: any, onEdit: () => void, hideWrapper?: boolean, canEdit?: boolean }) {
     const formatList = (val: any) => {
         if (!val) return 'Ninguno';
         if (Array.isArray(val)) return val.length > 0 ? val.join(', ') : 'Ninguno';
@@ -714,6 +719,20 @@ function MedicalHistorySummary({ values, onEdit, hideWrapper = false }: { values
                             Expediente clínico completo y detallado.
                         </CardDescription>
                     </div>
+                    {canEdit ? (
+                        <Button
+                            onClick={onEdit}
+                            className="px-6 h-12 rounded-2xl font-black uppercase tracking-widest bg-nutri-brand/10 text-nutri-brand border border-nutri-brand/20 hover:bg-nutri-brand hover:text-white transition-all text-[10px] gap-2"
+                        >
+                            <Sparkles className="h-4 w-4" />
+                            Editar Historia Clínica
+                        </Button>
+                    ) : (
+                        <div className="flex items-center gap-3 bg-white/5 border border-white/5 px-5 py-3 rounded-2xl">
+                            <Lock className="h-4 w-4 text-slate-500" />
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Solo lectura</span>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="p-8 lg:p-12 space-y-20 custom-scrollbar max-h-[70vh] overflow-y-auto bg-[#151F32]">

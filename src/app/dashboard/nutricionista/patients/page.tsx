@@ -109,7 +109,8 @@ export default function PatientsPage() {
                         totalMediciones: 4,
                         startDate: profileData.created_at ? new Date(profileData.created_at).toLocaleDateString() : "N/A",
                         profileId: profileData.id,
-                        showWeight: p.show_weight !== false
+                        showWeight: p.show_weight !== false,
+                        allowEditHistory: p.allow_edit_history === true
                     };
                 }));
             }
@@ -184,6 +185,44 @@ export default function PatientsPage() {
             const friendlyMessage = isSchemaCacheError 
                 ? "La columna 'show_weight' no existe en la base de datos de Supabase. Para usar esta función, copie y ejecute la consulta del archivo 'supabase/migrations/20260601000000_add_show_weight_to_patients.sql' en su SQL Editor de Supabase."
                 : (err.message || "No se pudo actualizar la preferencia.");
+
+            toast({
+                title: isSchemaCacheError ? "Acción requerida" : "Error",
+                description: friendlyMessage,
+                variant: "destructive"
+            });
+            loadPatients();
+        }
+    };
+
+    const handleToggleAllowEditHistory = async (patientId: string, currentVal: boolean) => {
+        try {
+            const newVal = !currentVal;
+            setPatients(prev => prev.map(p => p.id === patientId ? { ...p, allowEditHistory: newVal } : p));
+            
+            const { error } = await supabase
+                .from("patients")
+                .update({ allow_edit_history: newVal })
+                .eq("id", patientId);
+
+            if (error) throw error;
+
+            toast({
+                title: "Permiso actualizado",
+                description: `Se ha ${newVal ? 'habilitado' : 'deshabilitado'} la edición del historial clínico para este paciente.`,
+                variant: "success"
+            });
+
+            const syncChannel = new BroadcastChannel('nutrigo_global_sync');
+            syncChannel.postMessage('sync');
+            syncChannel.close();
+        } catch (err: any) {
+            console.error("Error updating patient allow_edit_history:", err);
+            
+            const isSchemaCacheError = err?.message?.toLowerCase().includes("allow_edit_history") || err?.message?.toLowerCase().includes("schema cache");
+            const friendlyMessage = isSchemaCacheError 
+                ? "La columna 'allow_edit_history' no existe en la base de datos de Supabase. Para usar esta función, copie y ejecute la consulta del archivo 'supabase/migrations/20260910000000_add_allow_edit_history_to_patients.sql' en su SQL Editor de Supabase."
+                : (err.message || "No se pudo actualizar el permiso.");
 
             toast({
                 title: isSchemaCacheError ? "Acción requerida" : "Error",
@@ -360,6 +399,7 @@ export default function PatientsPage() {
                                     <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Estado</th>
                                     <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hidden md:table-cell">Suscripción</th>
                                     <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Mostrar Peso</th>
+                                    <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hidden md:table-cell">Editar Historial</th>
                                     <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hidden lg:table-cell">Siguiente Visita</th>
                                     <th className="py-4 sm:py-6 px-3 sm:px-10"></th>
                                 </tr>
@@ -417,6 +457,24 @@ export default function PatientsPage() {
                                                         className={cn(
                                                             "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
                                                             patient.showWeight ? "translate-x-5" : "translate-x-0"
+                                                        )}
+                                                    />
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td className="py-4 sm:py-6 px-3 sm:px-4 hidden md:table-cell">
+                                            <div className="flex items-center">
+                                                <button
+                                                    onClick={() => handleToggleAllowEditHistory(patient.id, patient.allowEditHistory)}
+                                                    className={cn(
+                                                        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-nutrition-500/20 focus:ring-offset-2",
+                                                        patient.allowEditHistory ? "bg-nutrition-500" : "bg-slate-700"
+                                                    )}
+                                                >
+                                                    <span
+                                                        className={cn(
+                                                            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                                                            patient.allowEditHistory ? "translate-x-5" : "translate-x-0"
                                                         )}
                                                     />
                                                 </button>
