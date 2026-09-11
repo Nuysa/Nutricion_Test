@@ -608,19 +608,9 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                         {step === 9 && <Dislikes form={form} />}
                         {step === 10 && <Lifestyle form={form} />}
 
-                        <div className="flex items-center justify-between pt-8 border-t border-white/5">
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                onClick={prevStep}
-                                disabled={step === 1 || isUploadingPhoto}
-                                className="px-6 h-12 rounded-xl font-black uppercase tracking-widest text-slate-500 hover:text-white disabled:opacity-50 text-[10px]"
-                            >
-                                <ChevronLeft className="mr-1 h-4 w-4" /> Anterior
-                            </Button>
-
+                        <div className="flex flex-col gap-4 pt-8 border-t border-white/5">
                             {/* Mini Step Selector in Footer */}
-                            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar px-2 h-10 rounded-xl bg-white/[0.02] border border-white/5 mx-2">
+                            <div className="flex items-center justify-center gap-1 overflow-x-auto no-scrollbar px-2 h-10 rounded-xl bg-white/[0.02] border border-white/5">
                                 {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
                                     <button
                                         key={s}
@@ -638,35 +628,48 @@ export function MedicalHistoryForm({ externalPatientId, isNutritionistView = fal
                                 ))}
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                {(isEditMode || isNutritionistView) && step < totalSteps && (
-                                    <Button
-                                        type="submit"
-                                        disabled={loading || isUploadingPhoto}
-                                        className="px-8 h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all text-sm disabled:opacity-50 disabled:hover:scale-100"
-                                    >
-                                        {loading ? "Guardando..." : "Guardar Avance"} <Save className="ml-2 h-4 w-4" />
-                                    </Button>
-                                )}
+                            {/* Navigation Buttons */}
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={prevStep}
+                                    disabled={step === 1 || isUploadingPhoto}
+                                    className="px-4 sm:px-6 h-12 rounded-xl font-black uppercase tracking-widest text-slate-500 hover:text-white disabled:opacity-50 text-[10px]"
+                                >
+                                    <ChevronLeft className="mr-1 h-4 w-4" /> Anterior
+                                </Button>
 
-                                {step < totalSteps ? (
-                                    <Button
-                                        type="button"
-                                        onClick={nextStep}
-                                        disabled={isUploadingPhoto}
-                                        className="px-10 h-14 rounded-2xl font-black uppercase tracking-widest bg-nutri-brand text-white shadow-lg shadow-nutri-brand/20 hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
-                                    >
-                                        Siguiente <ChevronRight className="ml-2 h-5 w-5" />
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        type="submit"
-                                        disabled={loading || isUploadingPhoto}
-                                        className="px-12 h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
-                                    >
-                                        {loading ? "Guardando..." : "Finalizar y Guardar"} <Save className="ml-2 h-5 w-5" />
-                                    </Button>
-                                )}
+                                <div className="flex flex-wrap items-center gap-3">
+                                    {(isEditMode || isNutritionistView) && step < totalSteps && (
+                                        <Button
+                                            type="submit"
+                                            disabled={loading || isUploadingPhoto}
+                                            className="px-5 sm:px-8 h-12 sm:h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all text-xs sm:text-sm disabled:opacity-50 disabled:hover:scale-100"
+                                        >
+                                            {loading ? "Guardando..." : "Guardar"} <Save className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    )}
+
+                                    {step < totalSteps ? (
+                                        <Button
+                                            type="button"
+                                            onClick={nextStep}
+                                            disabled={isUploadingPhoto}
+                                            className="px-6 sm:px-10 h-12 sm:h-14 rounded-2xl font-black uppercase tracking-widest bg-nutri-brand text-white shadow-lg shadow-nutri-brand/20 hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs sm:text-sm"
+                                        >
+                                            Siguiente <ChevronRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            type="submit"
+                                            disabled={loading || isUploadingPhoto}
+                                            className="px-6 sm:px-12 h-12 sm:h-14 rounded-2xl font-black uppercase tracking-widest bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs sm:text-sm"
+                                        >
+                                            {loading ? "Guardando..." : "Finalizar y Guardar"} <Save className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </form>
