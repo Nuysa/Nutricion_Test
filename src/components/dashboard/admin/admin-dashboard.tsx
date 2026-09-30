@@ -14,7 +14,7 @@ import {
     Plus, Trash2, DatabaseZap as DbIcon, Mail, Edit3, Save, Loader2,
     BarChart3, TrendingUp, Target, DollarSign, Activity, AlertTriangle,
     Shield, ShieldPlus, User, FileText, ChevronRight, Play, Layers, Filter, LayoutGrid, LayoutList, LayoutTemplate, Stethoscope,
-    ChevronDown, ChevronUp, ShieldCheck, Repeat
+    ChevronDown, ChevronUp, ShieldCheck, Repeat, KeyRound
 } from "lucide-react";
 import { VariablesConfig } from "@/components/dashboard/admin/variables-config";
 import { TableEditor } from "@/components/dashboard/admin/table-editor";
@@ -23,6 +23,7 @@ import { FoodDatabase } from "@/components/dashboard/admin/food-database";
 import { AuthCMSEditor } from "@/components/dashboard/admin/auth-cms-editor";
 import { VisualAuthEditor } from "@/components/dashboard/admin/visual-auth-editor";
 import { ExchangeGuideEditor } from "@/components/dashboard/admin/exchange-guide-editor";
+import { PasswordRequestsAdminView } from "@/components/dashboard/admin/password-requests-view";
 import { MessagingService, GlobalProfile } from "@/lib/messaging-service";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -67,7 +68,7 @@ const getAppointmentStatus = (status: string, date: string, time: string) => {
 
 export function AdminStaffDashboardContent({ initialTab = "overview" }: { initialTab?: any }) {
     const { toast } = useToast();
-    const [activeTab, setActiveTab] = useState<"overview" | "verification" | "assignments" | "plan_assignments" | "subscriptions" | "metrics" | "calendar" | "settings" | "visualization" | "landing_cms" | "auth_cms" | "plans_management" | "food_database" | "users_management" | "exchange_guide">(initialTab);
+    const [activeTab, setActiveTab] = useState<"overview" | "verification" | "assignments" | "plan_assignments" | "subscriptions" | "metrics" | "calendar" | "settings" | "visualization" | "landing_cms" | "auth_cms" | "plans_management" | "food_database" | "users_management" | "exchange_guide" | "password_requests">(initialTab);
     const [plansEditMode, setPlansEditMode] = useState(true);
 
     const [profiles, setProfiles] = useState<GlobalProfile[]>([]);
@@ -638,6 +639,7 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                                 { id: "subscriptions", label: "Planes", fullLabel: "Suscripciones Pro", icon: DatabaseZap },
                                 { id: "calendar", label: "Agenda", fullLabel: "Agenda Global", icon: Calendar },
                                 ...(currentAdminRole === "administrador" ? [
+                                    { id: "password_requests", label: "Pass Ficticios", fullLabel: "Solicitudes Contraseñas", icon: KeyRound },
                                     { id: "users_management", label: "Usuarios", fullLabel: "Usuarios", icon: ShieldPlus }
                                 ] : []),
                             ].map(tab => (
@@ -2641,6 +2643,11 @@ export function AdminStaffDashboardContent({ initialTab = "overview" }: { initia
                         {activeTab === "exchange_guide" && currentAdminRole === 'administrador' && (
                             <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
                                 <ExchangeGuideEditor />
+                            </div>
+                        )}
+                        {activeTab === "password_requests" && currentAdminRole === 'administrador' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
+                                <PasswordRequestsAdminView />
                             </div>
                         )}
                     </div>

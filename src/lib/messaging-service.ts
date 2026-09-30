@@ -347,7 +347,9 @@ export const MessagingService = {
             return [];
         }
 
-        return data.map(a => {
+        return data
+            .filter(a => a.id !== "00000000-0000-0000-0000-000000000099")
+            .map(a => {
             const patientObj = (a.patient as any);
             const patientName = patientObj?.profiles?.full_name || "Paciente";
             const nutriName = (a.nutritionist as any)?.full_name || "Nutricionista";

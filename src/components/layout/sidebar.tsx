@@ -26,7 +26,8 @@ import {
     LayoutTemplate,
     Salad,
     UtensilsCrossed,
-    ChefHat
+    ChefHat,
+    KeyRound
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MessagingService } from "@/lib/messaging-service";
@@ -68,6 +69,7 @@ const staffNav: NavItem[] = [
 const adminNav: NavItem[] = [
     { label: "Dashboard", href: "/dashboard/administrador", icon: LayoutDashboard },
     { label: "Gestión de Pacientes", href: "/dashboard/administrador/patients", icon: Users },
+    { label: "Solicitudes Contraseñas", href: "/dashboard/administrador/solicitudes-password", icon: KeyRound },
     { label: "Métricas", href: "/dashboard/administrador/metrics", icon: BarChart3 },
     { label: "Mensajes", href: "/dashboard/administrador/messages", icon: MessageSquare },
     { label: "Gestión de Planes", href: "/dashboard/administrador/gestion-planes", icon: CreditCard },
