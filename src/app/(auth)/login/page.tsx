@@ -41,8 +41,6 @@ export default function LoginPage() {
     const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
     const [recoveryMode, setRecoveryMode] = useState<"standard" | "admin_request">("standard");
     const [recoveryEmail, setRecoveryEmail] = useState("");
-    const [requestedPassword, setRequestedPassword] = useState("");
-    const [showRequestedPassword, setShowRequestedPassword] = useState(false);
     const [recoveryNote, setRecoveryNote] = useState("");
     const [recoveryLoading, setRecoveryLoading] = useState(false);
     const [recoveryStatus, setRecoveryStatus] = useState<{
@@ -135,18 +133,10 @@ export default function LoginPage() {
     // Envío de solicitud directa al Administrador Root (cuenta con correo ficticio)
     const handleSendAdminRequest = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!recoveryEmail || !requestedPassword) {
+        if (!recoveryEmail) {
             setRecoveryStatus({
                 type: "error",
-                message: "Por favor indica tu correo ficticio y la contraseña que deseas solicitar."
-            });
-            return;
-        }
-
-        if (requestedPassword.length < 6) {
-            setRecoveryStatus({
-                type: "error",
-                message: "La contraseña solicitada debe tener al menos 6 caracteres."
+                message: "Por favor indica tu correo ficticio o registrado."
             });
             return;
         }
@@ -157,13 +147,12 @@ export default function LoginPage() {
         try {
             await PasswordRequestService.createRequest({
                 email: recoveryEmail,
-                requestedPassword: requestedPassword,
                 note: recoveryNote
             });
 
             setRecoveryStatus({
                 type: "success",
-                message: "¡Solicitud enviada con éxito! Ha sido registrada en el panel del Administrador Root con la contraseña solicitada. El administrador te la brindará directamente."
+                message: "¡Solicitud enviada con éxito! El Administrador Root generará un enlace único con el que podrás ingresar y renovar tu contraseña de forma segura."
             });
         } catch (err: any) {
             console.error("Error al enviar solicitud al admin:", err);
@@ -178,7 +167,6 @@ export default function LoginPage() {
 
     const openRecoveryModal = () => {
         setRecoveryEmail(email || "");
-        setRequestedPassword("");
         setRecoveryNote("");
         setRecoveryStatus(null);
         setRecoveryMode("standard");
@@ -377,7 +365,7 @@ export default function LoginPage() {
                                         className="w-full rounded-xl border-nutri-brand/30 bg-nutri-brand/10 text-nutri-brand hover:bg-nutri-brand hover:text-nutri-base text-[10px] font-black uppercase tracking-widest h-11 transition-all"
                                     >
                                         <KeyRound className="mr-2 h-4 w-4" />
-                                        Solicitar Contraseña al Administrador Root
+                                        Solicitar Enlace de Renovación al Administrador Root
                                     </Button>
                                 </div>
                             </form>
@@ -402,31 +390,12 @@ export default function LoginPage() {
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="requested-password" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-                                        Contraseña Solicitada
-                                    </Label>
-                                    <div className="relative group">
-                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-nutri-brand transition-colors" />
-                                        <Input
-                                            id="requested-password"
-                                            type={showRequestedPassword ? "text" : "password"}
-                                            placeholder="Escribe la contraseña que solicitas (mín. 6 caracteres)"
-                                            value={requestedPassword}
-                                            onChange={(e) => setRequestedPassword(e.target.value)}
-                                            className="pl-12 pr-12 h-14 bg-white/5 border-white/10 rounded-2xl text-white font-bold placeholder:text-slate-600 focus:ring-nutri-brand/20 focus:border-nutri-brand transition-all"
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowRequestedPassword(!showRequestedPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
-                                        >
-                                            {showRequestedPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                        </button>
-                                    </div>
-                                    <p className="text-[10px] text-slate-500 font-bold ml-1">
-                                        Esta contraseña aparecerá en la sección exclusiva del Administrador Root para que te sea brindada.
+                                <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
+                                    <p className="text-[11px] text-slate-300 font-bold leading-relaxed">
+                                        Al enviar esta solicitud, el <strong className="text-white">Administrador Root</strong> generará un <strong className="text-nutri-brand">enlace único e intransferible</strong> para ti, con el que podrás ingresar directamente y establecer tu nueva contraseña.
+                                    </p>
+                                    <p className="text-[10px] text-slate-500 font-bold">
+                                        El enlace solo funcionará una única vez y caducará tras su uso.
                                     </p>
                                 </div>
 

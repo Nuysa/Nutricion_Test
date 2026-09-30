@@ -4,12 +4,14 @@ import { createClient } from "@supabase/supabase-js";
 export interface PasswordRequestItem {
     id: string;
     email: string;
-    requestedPassword: string;
     note?: string;
-    status: "pending" | "resolved" | "dismissed";
+    status: "pending" | "link_generated" | "resolved";
+    token?: string;
+    tokenExpiresAt?: string;
+    used?: boolean;
     createdAt: string;
+    linkGeneratedAt?: string;
     resolvedAt?: string;
-    adminResponse?: string;
 }
 
 const SYSTEM_STORAGE_APPOINTMENT_ID = "00000000-0000-0000-0000-000000000099";
@@ -26,6 +28,13 @@ function getSupabaseClient() {
     return createClient(supabaseUrl, anonKey);
 }
 
+function generateSecureToken(): string {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        return `${crypto.randomUUID().replace(/-/g, "")}${Math.random().toString(36).substring(2, 10)}`;
+    }
+    return `tok_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+}
+
 export const PasswordRequestService = {
     // 1. Obtener todas las solicitudes registradas
     async getAll(): Promise<PasswordRequestItem[]> {
@@ -38,7 +47,7 @@ export const PasswordRequestService = {
                 .maybeSingle();
 
             if (error) {
-                console.error("Error al obtener solicitudes de citas:", error);
+                console.error("Error al obtener solicitudes de contraseñas:", error);
                 return [];
             }
 
@@ -59,14 +68,13 @@ export const PasswordRequestService = {
     },
 
     // 2. Crear una nueva solicitud desde la pantalla de login (pública/anónima)
-    async createRequest(payload: { email: string; requestedPassword: string; note?: string }): Promise<PasswordRequestItem> {
+    async createRequest(payload: { email: string; note?: string }): Promise<PasswordRequestItem> {
         const supabase = getSupabaseClient();
         const currentList = await this.getAll();
 
         const newItem: PasswordRequestItem = {
             id: `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
             email: payload.email.trim(),
-            requestedPassword: payload.requestedPassword,
             note: payload.note || "",
             status: "pending",
             createdAt: new Date().toISOString()
@@ -108,22 +116,34 @@ export const PasswordRequestService = {
         return newItem;
     },
 
-    // 3. Actualizar estado de una solicitud (ej. marcar atendida/resuelta por el admin)
-    async updateStatus(requestId: string, status: "pending" | "resolved" | "dismissed", adminResponse?: string): Promise<boolean> {
+    // 3. Generar un enlace único de renovación (acción del Administrador Root)
+    // El enlace caduca a las 48 horas y solo puede ser usado UNA vez
+    async generateRenewalLink(requestId: string, origin?: string): Promise<{ url: string; token: string }> {
         const supabase = getSupabaseClient();
         const currentList = await this.getAll();
 
+        const token = generateSecureToken();
+        const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(); // 48 horas
+
+        let found = false;
         const updatedList = currentList.map(item => {
             if (item.id === requestId) {
+                found = true;
                 return {
                     ...item,
-                    status,
-                    resolvedAt: status !== "pending" ? new Date().toISOString() : undefined,
-                    adminResponse: adminResponse || item.adminResponse
+                    status: "link_generated" as const,
+                    token,
+                    tokenExpiresAt: expiresAt,
+                    used: false,
+                    linkGeneratedAt: new Date().toISOString()
                 };
             }
             return item;
         });
+
+        if (!found) {
+            throw new Error("No se encontró la solicitud especificada.");
+        }
 
         const { error } = await supabase
             .from("appointments")
@@ -131,14 +151,77 @@ export const PasswordRequestService = {
             .eq("id", SYSTEM_STORAGE_APPOINTMENT_ID);
 
         if (error) {
-            console.error("Error al actualizar estado:", error);
+            console.error("Error al generar enlace de renovación:", error);
+            throw new Error(error.message || "No se pudo generar el enlace de renovación.");
+        }
+
+        const baseUrl = origin || (typeof window !== "undefined" ? window.location.origin : "");
+        const url = `${baseUrl}/renew-password?token=${encodeURIComponent(token)}`;
+
+        return { url, token };
+    },
+
+    // 4. Validar token para el formulario de cambio de contraseña
+    async validateToken(token: string): Promise<{
+        valid: boolean;
+        reason?: "not_found" | "already_used" | "expired";
+        request?: PasswordRequestItem;
+    }> {
+        if (!token) return { valid: false, reason: "not_found" };
+
+        const currentList = await this.getAll();
+        const item = currentList.find(req => req.token === token);
+
+        if (!item) {
+            return { valid: false, reason: "not_found" };
+        }
+
+        if (item.used) {
+            return { valid: false, reason: "already_used", request: item };
+        }
+
+        if (item.tokenExpiresAt && new Date() > new Date(item.tokenExpiresAt)) {
+            return { valid: false, reason: "expired", request: item };
+        }
+
+        return { valid: true, request: item };
+    },
+
+    // 5. Consumir token: marca el token como usado para que caduque inmediatamente
+    async consumeToken(token: string): Promise<boolean> {
+        const supabase = getSupabaseClient();
+        const currentList = await this.getAll();
+
+        let updated = false;
+        const updatedList = currentList.map(item => {
+            if (item.token === token) {
+                updated = true;
+                return {
+                    ...item,
+                    used: true,
+                    status: "resolved" as const,
+                    resolvedAt: new Date().toISOString()
+                };
+            }
+            return item;
+        });
+
+        if (!updated) return false;
+
+        const { error } = await supabase
+            .from("appointments")
+            .update({ notes: JSON.stringify(updatedList) })
+            .eq("id", SYSTEM_STORAGE_APPOINTMENT_ID);
+
+        if (error) {
+            console.error("Error al consumir token:", error);
             return false;
         }
 
         return true;
     },
 
-    // 4. Eliminar una solicitud
+    // 6. Eliminar una solicitud
     async deleteRequest(requestId: string): Promise<boolean> {
         const supabase = getSupabaseClient();
         const currentList = await this.getAll();

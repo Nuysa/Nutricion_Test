@@ -17,8 +17,10 @@ import {
     Shield,
     Mail,
     FileText,
-    Eye,
-    EyeOff
+    Link as LinkIcon,
+    ExternalLink,
+    AlertCircle,
+    Sparkles
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PasswordRequestService, PasswordRequestItem } from "@/lib/password-request-service";
@@ -28,9 +30,9 @@ export function PasswordRequestsAdminView() {
     const [requests, setRequests] = useState<PasswordRequestItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "resolved">("all");
+    const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "link_generated" | "resolved">("all");
     const [copiedId, setCopiedId] = useState<string | null>(null);
-    const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+    const [generatingId, setGeneratingId] = useState<string | null>(null);
 
     const loadRequests = async () => {
         setLoading(true);
@@ -53,13 +55,6 @@ export function PasswordRequestsAdminView() {
         loadRequests();
     }, []);
 
-    const togglePasswordVisibility = (id: string) => {
-        setVisiblePasswords(prev => ({
-            ...prev,
-            [id]: !prev[id]
-        }));
-    };
-
     const handleCopy = (text: string, id: string, label: string) => {
         navigator.clipboard.writeText(text);
         setCopiedId(id);
@@ -71,21 +66,33 @@ export function PasswordRequestsAdminView() {
         setTimeout(() => setCopiedId(null), 2500);
     };
 
-    const handleMarkResolved = async (requestId: string) => {
+    const handleGenerateLink = async (requestId: string) => {
+        setGeneratingId(requestId);
         try {
-            await PasswordRequestService.updateStatus(requestId, "resolved");
+            const origin = window.location.origin;
+            const result = await PasswordRequestService.generateRenewalLink(requestId, origin);
+            
             toast({
-                title: "Solicitud Marcada como Atendida",
-                description: "La contraseña solicitada ya puede ser brindada al usuario.",
+                title: "¡Enlace Único Generado!",
+                description: "El enlace caduca tras su primer uso. Cópialo y envíaselo al usuario.",
                 variant: "success"
             });
-            loadRequests();
+
+            // Copiar directamente al portapapeles para conveniencia
+            navigator.clipboard.writeText(result.url);
+            setCopiedId(requestId);
+            setTimeout(() => setCopiedId(null), 3000);
+
+            await loadRequests();
         } catch (error: any) {
+            console.error("Error al generar enlace:", error);
             toast({
-                title: "Error",
-                description: error.message || "No se pudo actualizar el estado.",
+                title: "Error al generar enlace",
+                description: error.message || "No se pudo generar el enlace.",
                 variant: "destructive"
             });
+        } finally {
+            setGeneratingId(null);
         }
     };
 
@@ -118,18 +125,26 @@ export function PasswordRequestsAdminView() {
     });
 
     const pendingCount = requests.filter(r => r.status === "pending").length;
+    const linkGeneratedCount = requests.filter(r => r.status === "link_generated").length;
+    const resolvedCount = requests.filter(r => r.status === "resolved").length;
+
+    const getRenewalUrl = (token?: string) => {
+        if (!token) return "";
+        const origin = typeof window !== "undefined" ? window.location.origin : "";
+        return `${origin}/renew-password?token=${encodeURIComponent(token)}`;
+    };
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 font-tech">
-            {/* Encabezado */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-1">
-                    <h2 className="text-3xl font-black text-white uppercase italic tracking-tight flex items-center gap-3">
-                        <KeyRound className="h-8 w-8 text-nutri-brand" />
-                        Solicitudes de Contraseña (Admin Root)
+        <div className="space-y-8 animate-in fade-in duration-500 font-tech">
+            {/* Cabecera de la sección */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+                <div>
+                    <h2 className="text-2xl sm:text-3xl font-black uppercase italic tracking-tight text-white flex items-center gap-3">
+                        <div className="h-3 w-1.5 bg-nutri-brand rounded-full" />
+                        Solicitudes de Renovación de Contraseña
                     </h2>
-                    <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px]">
-                        Contraseñas solicitadas por usuarios con correos ficticios o cuentas de prueba.
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
+                        Genera enlaces únicos de renovación para usuarios con cuentas o correos ficticios
                     </p>
                 </div>
 
@@ -137,66 +152,64 @@ export function PasswordRequestsAdminView() {
                     <Button
                         variant="outline"
                         onClick={loadRequests}
-                        className="rounded-2xl border-white/10 bg-white/5 text-white hover:bg-white/10 text-xs font-black uppercase tracking-widest h-12"
+                        disabled={loading}
+                        className="h-11 px-4 rounded-xl border-white/10 bg-white/5 hover:bg-white/10 text-white text-xs font-black uppercase tracking-wider"
                     >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
                         Actualizar
                     </Button>
                 </div>
             </div>
 
-            {/* Métricas rápidas */}
+            {/* Tarjetas de Resumen */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between">
-                    <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Pendientes de Entrega</p>
-                        <p className="text-3xl font-black text-nutri-brand mt-1">{pendingCount}</p>
+                <Card className="p-5 rounded-[2rem] bg-white/[0.02] border-white/5 space-y-2">
+                    <div className="flex items-center justify-between text-slate-400">
+                        <span className="text-[10px] font-black uppercase tracking-widest">Pendientes de Enlace</span>
+                        <Clock className="h-4 w-4 text-amber-400" />
                     </div>
-                    <div className="h-12 w-12 rounded-2xl bg-nutri-brand/10 border border-nutri-brand/20 flex items-center justify-center">
-                        <Clock className="h-6 w-6 text-nutri-brand" />
-                    </div>
-                </div>
+                    <div className="text-3xl font-black text-white">{pendingCount}</div>
+                    <p className="text-[10px] text-slate-500 font-bold">Solicitudes de usuarios esperando enlace</p>
+                </Card>
 
-                <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between">
-                    <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Atendidas / Resueltas</p>
-                        <p className="text-3xl font-black text-green-400 mt-1">
-                            {requests.filter(r => r.status === "resolved").length}
-                        </p>
+                <Card className="p-5 rounded-[2rem] bg-white/[0.02] border-white/5 space-y-2">
+                    <div className="flex items-center justify-between text-slate-400">
+                        <span className="text-[10px] font-black uppercase tracking-widest">Enlaces Activos</span>
+                        <LinkIcon className="h-4 w-4 text-nutri-brand" />
                     </div>
-                    <div className="h-12 w-12 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                        <CheckCircle2 className="h-6 w-6 text-green-400" />
-                    </div>
-                </div>
+                    <div className="text-3xl font-black text-nutri-brand">{linkGeneratedCount}</div>
+                    <p className="text-[10px] text-slate-500 font-bold">Enlaces generados listos o enviados</p>
+                </Card>
 
-                <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between">
-                    <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Total Solicitudes</p>
-                        <p className="text-3xl font-black text-white mt-1">{requests.length}</p>
+                <Card className="p-5 rounded-[2rem] bg-white/[0.02] border-white/5 space-y-2">
+                    <div className="flex items-center justify-between text-slate-400">
+                        <span className="text-[10px] font-black uppercase tracking-widest">Renovadas / Usadas</span>
+                        <CheckCircle2 className="h-4 w-4 text-green-400" />
                     </div>
-                    <div className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                        <Shield className="h-6 w-6 text-slate-400" />
-                    </div>
-                </div>
+                    <div className="text-3xl font-black text-green-400">{resolvedCount}</div>
+                    <p className="text-[10px] text-slate-500 font-bold">Enlaces usados y caducados</p>
+                </Card>
             </div>
 
-            {/* Barra de Búsqueda y Filtro */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-                <div className="relative flex-1">
+            {/* Barra de Filtros y Búsqueda */}
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+                <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                     <Input
-                        placeholder="Buscar por correo ficticio o nota..."
+                        type="text"
+                        placeholder="Buscar por correo o nota..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-12 h-12 rounded-2xl border-white/5 bg-white/5 text-white placeholder:text-slate-600 focus:ring-nutri-brand/50 font-bold text-xs"
                     />
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     {[
                         { id: "all", label: "Todas" },
                         { id: "pending", label: "Pendientes" },
-                        { id: "resolved", label: "Atendidas" }
+                        { id: "link_generated", label: "Enlace Generado" },
+                        { id: "resolved", label: "Renovadas" }
                     ].map(f => (
                         <button
                             key={f.id}
@@ -218,7 +231,7 @@ export function PasswordRequestsAdminView() {
                 <div className="py-20 text-center space-y-4">
                     <div className="h-10 w-10 border-4 border-nutri-brand border-t-transparent rounded-full animate-spin mx-auto" />
                     <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">
-                        Cargando solicitudes de contraseñas...
+                        Cargando solicitudes de renovación...
                     </p>
                 </div>
             ) : filteredRequests.length === 0 ? (
@@ -228,21 +241,25 @@ export function PasswordRequestsAdminView() {
                     <p className="text-xs text-slate-500 font-bold max-w-md mx-auto">
                         {searchTerm
                             ? "No se encontraron solicitudes que coincidan con la búsqueda."
-                            : "Cuando un usuario con correo ficticio solicite una contraseña desde el login, aparecerá aquí inmediatamente con su contraseña solicitada."}
+                            : "Cuando un usuario con correo ficticio solicite ayuda desde el login, aparecerá aquí para que le generes un enlace único de renovación."}
                     </p>
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {filteredRequests.map(req => {
-                        const isVisible = visiblePasswords[req.id];
                         const isPending = req.status === "pending";
+                        const isLinkGenerated = req.status === "link_generated";
+                        const isResolved = req.status === "resolved";
+                        const renewalUrl = getRenewalUrl(req.token);
 
                         return (
                             <Card
                                 key={req.id}
                                 className={`p-6 rounded-[2rem] border transition-all space-y-5 ${
                                     isPending
-                                        ? "bg-white/[0.03] border-nutri-brand/30 shadow-lg shadow-nutri-brand/5"
+                                        ? "bg-white/[0.03] border-amber-500/30 shadow-lg shadow-amber-500/5"
+                                        : isLinkGenerated
+                                        ? "bg-white/[0.03] border-nutri-brand/40 shadow-lg shadow-nutri-brand/5"
                                         : "bg-white/[0.01] border-white/5 opacity-80 hover:opacity-100"
                                 }`}
                             >
@@ -256,7 +273,7 @@ export function PasswordRequestsAdminView() {
                                             </span>
                                         </div>
                                         <p className="text-[10px] text-slate-500 font-bold">
-                                            Recibida: {new Date(req.createdAt).toLocaleString("es-ES", {
+                                            Solicitada: {new Date(req.createdAt).toLocaleString("es-ES", {
                                                 dateStyle: "short",
                                                 timeStyle: "short"
                                             })}
@@ -267,52 +284,13 @@ export function PasswordRequestsAdminView() {
                                         className={`px-3 py-1 font-black uppercase text-[9px] tracking-widest border-none ${
                                             isPending
                                                 ? "bg-amber-500/10 text-amber-400"
+                                                : isLinkGenerated
+                                                ? "bg-nutri-brand/10 text-nutri-brand border border-nutri-brand/20"
                                                 : "bg-green-500/10 text-green-400"
                                         }`}
                                     >
-                                        {isPending ? "Pendiente" : "Atendida"}
+                                        {isPending ? "Pendiente" : isLinkGenerated ? "Enlace Generado" : "Renovada / Usada"}
                                     </Badge>
-                                </div>
-
-                                {/* Contraseña solicitada para brindar al usuario */}
-                                <div className="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
-                                            <KeyRound className="h-3.5 w-3.5 text-nutri-brand" />
-                                            Contraseña Solicitada para el Usuario:
-                                        </span>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => togglePasswordVisibility(req.id)}
-                                            className="text-slate-400 hover:text-white transition-colors"
-                                            title={isVisible ? "Ocultar" : "Mostrar"}
-                                        >
-                                            {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                        </button>
-                                    </div>
-
-                                    <div className="flex items-center justify-between gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
-                                        <span className="font-mono text-base font-black text-nutri-brand tracking-wider select-all">
-                                            {isVisible ? req.requestedPassword : "•".repeat(Math.min(req.requestedPassword.length, 12))}
-                                        </span>
-
-                                        <Button
-                                            size="sm"
-                                            onClick={() => handleCopy(req.requestedPassword, req.id, "Contraseña")}
-                                            className="h-8 px-3 rounded-lg bg-white/10 hover:bg-nutri-brand hover:text-nutri-base text-white text-[10px] font-black uppercase transition-all"
-                                        >
-                                            {copiedId === req.id ? (
-                                                <>
-                                                    <Check className="h-3 w-3 mr-1 text-green-400" /> Copiado
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Copy className="h-3 w-3 mr-1" /> Copiar
-                                                </>
-                                            )}
-                                        </Button>
-                                    </div>
                                 </div>
 
                                 {/* Nota o detalles opcionales */}
@@ -325,19 +303,84 @@ export function PasswordRequestsAdminView() {
                                     </div>
                                 )}
 
-                                {/* Acciones */}
+                                {/* Sección de Enlace Único */}
+                                {isLinkGenerated && req.token && (
+                                    <div className="p-4 rounded-2xl bg-black/40 border border-nutri-brand/20 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                                                <LinkIcon className="h-3.5 w-3.5 text-nutri-brand" />
+                                                Enlace Único de Renovación (Caduca al usarse):
+                                            </span>
+                                            <span className="text-[9px] font-bold text-amber-400/90 uppercase">
+                                                Uso único
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center justify-between gap-2 bg-white/5 p-2.5 rounded-xl border border-white/5">
+                                            <span className="font-mono text-xs text-white truncate select-all flex-1">
+                                                {renewalUrl}
+                                            </span>
+
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleCopy(renewalUrl, req.id, "Enlace de Renovación")}
+                                                className="h-8 px-3 rounded-lg bg-nutri-brand hover:bg-white text-nutri-base text-[10px] font-black uppercase transition-all shrink-0"
+                                            >
+                                                {copiedId === req.id ? (
+                                                    <>
+                                                        <Check className="h-3 w-3 mr-1" /> Copiado
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Copy className="h-3 w-3 mr-1" /> Copiar Enlace
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+
+                                        <p className="text-[10px] text-slate-400 font-bold leading-relaxed">
+                                            Copia este enlace y envíaselo al usuario por WhatsApp, llamada o mensaje directo. Al ingresar podrá elegir su nueva contraseña y el enlace caducará automáticamente.
+                                        </p>
+                                    </div>
+                                )}
+
+                                {isResolved && (
+                                    <div className="p-3.5 rounded-xl bg-green-500/5 border border-green-500/20 flex items-center gap-2.5">
+                                        <CheckCircle2 className="h-4 w-4 text-green-400 shrink-0" />
+                                        <p className="text-[11px] text-green-400 font-bold leading-snug">
+                                            Contraseña renovada exitosamente por el usuario. El enlace ya fue consumido y caducó.
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Acciones del Admin */}
                                 <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/5">
-                                    {isPending ? (
+                                    {isPending && (
                                         <Button
-                                            onClick={() => handleMarkResolved(req.id)}
-                                            className="flex-1 h-10 rounded-xl bg-green-500/10 hover:bg-green-500 text-green-400 hover:text-nutri-base text-[10px] font-black uppercase tracking-widest border border-green-500/20 transition-all"
+                                            onClick={() => handleGenerateLink(req.id)}
+                                            disabled={generatingId === req.id}
+                                            className="flex-1 h-11 rounded-xl bg-nutri-brand hover:bg-white text-nutri-base text-xs font-black uppercase tracking-widest shadow-md transition-all"
                                         >
-                                            <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-                                            Marcar como Atendida
+                                            <Sparkles className="h-4 w-4 mr-2" />
+                                            {generatingId === req.id ? "Generando Enlace..." : "Generar Enlace de Renovación"}
                                         </Button>
-                                    ) : (
+                                    )}
+
+                                    {isLinkGenerated && (
+                                        <Button
+                                            onClick={() => handleGenerateLink(req.id)}
+                                            disabled={generatingId === req.id}
+                                            variant="outline"
+                                            className="h-10 px-4 rounded-xl border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-black uppercase tracking-wider"
+                                        >
+                                            <RefreshCw className="h-3 w-3 mr-1.5" />
+                                            Regenerar Nuevo Enlace
+                                        </Button>
+                                    )}
+
+                                    {isResolved && (
                                         <span className="text-[10px] font-bold text-slate-500 italic">
-                                            Atendida el {req.resolvedAt ? new Date(req.resolvedAt).toLocaleDateString("es-ES") : ""}
+                                            Finalizada el {req.resolvedAt ? new Date(req.resolvedAt).toLocaleDateString("es-ES") : ""}
                                         </span>
                                     )}
 
@@ -345,7 +388,7 @@ export function PasswordRequestsAdminView() {
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => handleDelete(req.id)}
-                                        className="h-10 px-3 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                        className="h-10 px-3 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all ml-auto"
                                         title="Eliminar solicitud"
                                     >
                                         <Trash2 className="h-4 w-4" />
