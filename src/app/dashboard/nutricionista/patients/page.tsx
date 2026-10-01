@@ -399,7 +399,7 @@ export default function PatientsPage() {
                                     <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Estado</th>
                                     <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hidden md:table-cell">Suscripción</th>
                                     <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Mostrar Peso</th>
-                                    <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hidden md:table-cell">Editar Historial</th>
+                                    <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Editar Historial</th>
                                     <th className="text-left py-4 sm:py-6 px-3 sm:px-4 text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hidden lg:table-cell">Siguiente Visita</th>
                                     <th className="py-4 sm:py-6 px-3 sm:px-10"></th>
                                 </tr>
@@ -462,7 +462,7 @@ export default function PatientsPage() {
                                                 </button>
                                             </div>
                                         </td>
-                                        <td className="py-4 sm:py-6 px-3 sm:px-4 hidden md:table-cell">
+                                        <td className="py-4 sm:py-6 px-3 sm:px-4">
                                             <div className="flex items-center">
                                                 <button
                                                     onClick={() => handleToggleAllowEditHistory(patient.id, patient.allowEditHistory)}
